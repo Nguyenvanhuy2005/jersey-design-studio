@@ -412,6 +412,7 @@ const CreateOrder = () => {
                       playerNumber={players[previewPlayer]?.number || 0}
                       logos={logos}
                       view={previewView}
+                      printConfig={printConfig}
                     />
                   </div>
                 </div>

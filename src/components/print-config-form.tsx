@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,6 +14,22 @@ interface PrintConfigFormProps {
 export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfigFormProps) {
   const [tempConfig, setTempConfig] = useState<PrintConfig>(printConfig);
   const [open, setOpen] = useState(false);
+  const [customFonts, setCustomFonts] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (tempConfig.customFontFile && !customFonts.includes(tempConfig.customFontFile.name.split('.')[0])) {
+      setCustomFonts(prev => [...prev, tempConfig.customFontFile!.name.split('.')[0]]);
+    }
+  }, [tempConfig.customFontFile]);
+
+  useEffect(() => {
+    if (printConfig.customFontFile && printConfig.customFontFile.name) {
+      const fontName = printConfig.customFontFile.name.split('.')[0];
+      if (!customFonts.includes(fontName)) {
+        setCustomFonts(prev => [...prev, fontName]);
+      }
+    }
+  }, []);
 
   const handleSave = () => {
     onPrintConfigChange(tempConfig);
@@ -31,11 +46,18 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     if (!file) return;
 
     const fontUrl = URL.createObjectURL(file);
+    const fontName = file.name.split('.')[0];
+    
     setTempConfig(prev => ({
       ...prev,
       customFontFile: file,
-      customFontUrl: fontUrl
+      customFontUrl: fontUrl,
+      font: fontName
     }));
+    
+    if (!customFonts.includes(fontName)) {
+      setCustomFonts(prev => [...prev, fontName]);
+    }
   };
 
   const materialOptions = [
@@ -51,6 +73,14 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     { value: "Xanh", label: "Xanh" }
   ];
 
+  const defaultFonts = [
+    { value: "Arial", label: "Arial" },
+    { value: "Times New Roman", label: "Times New Roman" },
+    { value: "Helvetica", label: "Helvetica" },
+    { value: "Roboto", label: "Roboto" },
+    { value: "Open Sans", label: "Open Sans" }
+  ];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -63,7 +93,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-          {/* Font selection */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="font">Font chữ/số mặc định</Label>
             <div className="flex flex-col md:flex-row md:items-end space-y-2 md:space-y-0 md:space-x-2">
@@ -81,6 +110,19 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                     <SelectItem value="Helvetica">Helvetica</SelectItem>
                     <SelectItem value="Roboto">Roboto</SelectItem>
                     <SelectItem value="Open Sans">Open Sans</SelectItem>
+                    
+                    {customFonts.length > 0 && (
+                      <>
+                        <SelectItem disabled value="divider">
+                          --- Font tùy chỉnh ---
+                        </SelectItem>
+                        {customFonts.map(fontName => (
+                          <SelectItem key={fontName} value={fontName}>
+                            {fontName}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -103,7 +145,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             )}
           </div>
           
-          {/* Back material */}
           <div className="space-y-2">
             <Label htmlFor="backMaterial">Chất liệu in lưng áo</Label>
             <Select
@@ -121,7 +162,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Back color */}
           <div className="space-y-2">
             <Label htmlFor="backColor">Màu in lưng áo</Label>
             <Select
@@ -139,7 +179,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Front material */}
           <div className="space-y-2">
             <Label htmlFor="frontMaterial">Chất liệu in mặt trước áo</Label>
             <Select
@@ -157,7 +196,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Front color */}
           <div className="space-y-2">
             <Label htmlFor="frontColor">Màu in mặt trước áo</Label>
             <Select
@@ -175,7 +213,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Sleeve material */}
           <div className="space-y-2">
             <Label htmlFor="sleeveMaterial">Chất liệu in tay áo</Label>
             <Select
@@ -193,7 +230,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Sleeve color */}
           <div className="space-y-2">
             <Label htmlFor="sleeveColor">Màu in tay áo</Label>
             <Select
@@ -211,7 +247,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Leg material */}
           <div className="space-y-2">
             <Label htmlFor="legMaterial">Chất liệu in ống quần</Label>
             <Select
@@ -229,7 +264,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </Select>
           </div>
           
-          {/* Leg color */}
           <div className="space-y-2">
             <Label htmlFor="legColor">Màu in ống quần</Label>
             <Select
@@ -248,7 +282,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
           </div>
         </div>
         
-        {/* Actions */}
         <div className="flex justify-end space-x-2">
           <Button variant="outline" onClick={handleCancel}>Hủy</Button>
           <Button onClick={handleSave}>Lưu cấu hình</Button>

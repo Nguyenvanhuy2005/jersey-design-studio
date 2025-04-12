@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Logo } from '@/types';
+import { Logo, PrintConfig } from '@/types';
 
 interface CanvasJerseyProps {
   teamName: string;
@@ -8,14 +8,47 @@ interface CanvasJerseyProps {
   playerNumber?: number;
   logos?: Logo[];
   view: 'front' | 'back';
+  printConfig?: PrintConfig;
 }
 
-export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], view }: CanvasJerseyProps) {
+export function CanvasJersey({ 
+  teamName, 
+  playerName, 
+  playerNumber, 
+  logos = [], 
+  view,
+  printConfig
+}: CanvasJerseyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
   const [draggedLogo, setDraggedLogo] = useState<string | null>(null);
   const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number }>>(new Map());
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+  const [loadedFont, setLoadedFont] = useState<boolean>(false);
+  const [fontFace, setFontFace] = useState<FontFace | null>(null);
+
+  // Load custom font if provided
+  useEffect(() => {
+    if (printConfig?.customFontUrl && printConfig.customFontFile) {
+      const fontName = printConfig.customFontFile.name.split('.')[0];
+      
+      try {
+        const font = new FontFace(fontName, `url(${printConfig.customFontUrl})`);
+        
+        font.load().then((loadedFont) => {
+          // Add font to document
+          document.fonts.add(loadedFont);
+          setFontFace(loadedFont);
+          setLoadedFont(true);
+          console.log(`Custom font loaded: ${fontName}`);
+        }).catch((error) => {
+          console.error('Error loading custom font:', error);
+        });
+      } catch (error) {
+        console.error('Error creating FontFace:', error);
+      }
+    }
+  }, [printConfig?.customFontUrl, printConfig?.customFontFile]);
 
   // Load logos when available
   useEffect(() => {
@@ -51,6 +84,19 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
     });
   }, [logos]);
 
+  // Helper function to get font for text
+  const getFont = (size: number = 20): string => {
+    let fontFamily = printConfig?.font || 'Arial';
+    
+    // If it's a default font, add fallbacks
+    if (['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(fontFamily)) {
+      return `bold ${size}px ${fontFamily}, sans-serif`;
+    } else {
+      // For custom fonts, use the loaded font name
+      return `bold ${size}px "${fontFamily}", sans-serif`;
+    }
+  };
+
   // Draw jersey on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,6 +104,17 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Only proceed if the custom font is loaded or if no custom font is needed
+    if ((printConfig?.customFontUrl && !loadedFont) && 
+        !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
+      // Wait for font to load
+      setTimeout(() => {
+        // Force a re-render
+        setLoadedFont(prev => !prev);
+      }, 100);
+      return;
+    }
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -104,7 +161,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
       // Draw player number on front center (chest)
       if (playerNumber) {
         ctx.fillStyle = '#1A1A1A';
-        ctx.font = 'bold 60px Arial';
+        ctx.font = getFont(60);
         ctx.textAlign = 'center';
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
@@ -142,7 +199,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
       
       // Position indicators (for guidance)
       ctx.fillStyle = '#1A1A1A';
-      ctx.font = 'bold 16px Arial';
+      ctx.font = getFont(16);
       ctx.textAlign = 'center';
       
       // Chest center position
@@ -191,7 +248,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
       // Draw player name (upper back - above number)
       if (playerName) {
         ctx.fillStyle = '#1A1A1A';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = getFont(24);
         ctx.textAlign = 'center';
         ctx.fillText(playerName, 150, 50);
       }
@@ -199,7 +256,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
       // Draw player number (center back)
       if (playerNumber) {
         ctx.fillStyle = '#1A1A1A';
-        ctx.font = 'bold 100px Arial';
+        ctx.font = getFont(100);
         ctx.textAlign = 'center';
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
@@ -207,17 +264,17 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], v
       // Draw team name (lower back - below number)
       if (teamName) {
         ctx.fillStyle = '#1A1A1A';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = getFont(18);
         ctx.textAlign = 'center';
         ctx.fillText(teamName, 150, 230);
       }
       
       // Draw pants number indicator
-      ctx.font = 'bold 20px Arial';
+      ctx.font = getFont(20);
       ctx.fillText("PANTS", 150, 280);
     }
     
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont]);
 
   // Handle logo dragging
   const startDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
