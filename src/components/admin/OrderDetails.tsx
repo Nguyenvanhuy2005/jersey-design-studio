@@ -39,7 +39,8 @@ export const OrderDetails = ({
       const { data } = supabase.storage
         .from('design_images')
         .getPublicUrl(designImage);
-        
+      
+      console.log("Design image URL in OrderDetails:", data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error("Error getting design image URL:", error);
@@ -112,6 +113,11 @@ export const OrderDetails = ({
                 onClick={() => {
                   const imageUrl = getDesignImageUrl(order.designImage);
                   if (imageUrl) onViewImage(imageUrl);
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://via.placeholder.com/400x300?text=Không+thể+tải+hình+ảnh';
+                  console.error("Failed to load design image:", order.designImage);
                 }}
               />
             </div>
@@ -203,30 +209,36 @@ export const OrderDetails = ({
             <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
             <div className="flex flex-wrap gap-2">
               {order.referenceImages.map((imagePath, index) => {
-                const imageUrl = supabase.storage
-                  .from('reference_images')
-                  .getPublicUrl(imagePath).data.publicUrl;
-                
-                return (
-                  <div 
-                    key={index}
-                    className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={`Reference ${index + 1}`}
-                      className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
-                      onClick={() => onViewImage(imageUrl)}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/150?text=Error';
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                      <ImageIcon className="h-6 w-6 text-white" />
+                try {
+                  const imageUrl = supabase.storage
+                    .from('reference_images')
+                    .getPublicUrl(imagePath).data.publicUrl;
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={`Reference ${index + 1}`}
+                        className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
+                        onClick={() => onViewImage(imageUrl)}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/150?text=Error';
+                          console.error("Failed to load reference image:", imagePath);
+                        }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                        <ImageIcon className="h-6 w-6 text-white" />
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                } catch (error) {
+                  console.error("Error rendering reference image:", error);
+                  return null;
+                }
               })}
             </div>
           </div>

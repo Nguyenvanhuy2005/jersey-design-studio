@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -187,8 +188,10 @@ const AdminOrders = () => {
               createdAt: new Date(order.created_at || ''),
               notes: order.notes || '',
               designImage: order.design_image || '',
-              referenceImages: order.design_data && typeof order.design_data === 'object' ? 
-                (order.design_data as DesignData).reference_images || [] : [],
+              referenceImages: order.reference_images && Array.isArray(order.reference_images) ? 
+                order.reference_images : 
+                (order.design_data && typeof order.design_data === 'object' ? 
+                  (order.design_data as DesignData).reference_images || [] : []),
               players: order.players ? order.players.map((player: any) => ({
                 id: player.id,
                 name: player.name || '',
@@ -291,6 +294,7 @@ const AdminOrders = () => {
   };
 
   const handleViewImage = (imageUrl: string | null) => {
+    console.log("Opening image viewer with URL:", imageUrl);
     setSelectedImage(imageUrl);
   };
 

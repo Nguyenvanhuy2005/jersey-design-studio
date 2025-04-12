@@ -45,6 +45,7 @@ export const OrdersList = ({
         .from('design_images')
         .getPublicUrl(designImage);
         
+      console.log("Design image URL:", data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error("Error getting design image URL:", error);
@@ -90,7 +91,7 @@ export const OrdersList = ({
           <td className="p-3">{getStatusBadge(order.status)}</td>
           <td className="p-3">{formatDate(order.createdAt)}</td>
           <td className="p-3">
-            {order.designImage && (
+            {order.designImage ? (
               <Button 
                 variant="outline" 
                 size="sm"
@@ -99,6 +100,8 @@ export const OrdersList = ({
               >
                 <ImageIcon className="h-4 w-4" /> Xem
               </Button>
+            ) : (
+              <span className="text-muted-foreground text-sm">Không có</span>
             )}
           </td>
           <td className="p-3">
