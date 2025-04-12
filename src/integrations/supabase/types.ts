@@ -16,6 +16,9 @@ export type Database = {
           id: string
           order_id: string | null
           position: string
+          scale: number | null
+          x_position: number | null
+          y_position: number | null
         }
         Insert: {
           created_at?: string | null
@@ -23,6 +26,9 @@ export type Database = {
           id?: string
           order_id?: string | null
           position?: string
+          scale?: number | null
+          x_position?: number | null
+          y_position?: number | null
         }
         Update: {
           created_at?: string | null
@@ -30,6 +36,9 @@ export type Database = {
           id?: string
           order_id?: string | null
           position?: string
+          scale?: number | null
+          x_position?: number | null
+          y_position?: number | null
         }
         Relationships: [
           {

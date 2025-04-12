@@ -24,12 +24,12 @@ export const getFont = (printConfig?: PrintConfig, size: number = 20): string =>
 
 export const loadLogoImages = (
   logos: Logo[], 
-  logoPositions: Map<string, { x: number, y: number }>,
+  logoPositions: Map<string, { x: number, y: number, scale: number }>,
   highQuality: boolean = false
 ): Promise<Map<string, HTMLImageElement>> => {
   return new Promise((resolve) => {
     const logoMap = new Map<string, HTMLImageElement>();
-    const positionMap = new Map<string, { x: number, y: number }>(logoPositions);
+    const positionMap = new Map<string, { x: number, y: number, scale: number }>(logoPositions);
     
     // If no logos, resolve immediately
     if (logos.length === 0) {
@@ -62,7 +62,11 @@ export const loadLogoImages = (
         // Set initial position if not already set
         if (!positionMap.has(logo.id!)) {
           const defaultPos = defaultLogoPositions[logo.position] || { x: 150, y: 150 };
-          positionMap.set(logo.id!, { ...defaultPos });
+          positionMap.set(logo.id!, { 
+            x: defaultPos.x, 
+            y: defaultPos.y,
+            scale: 1.0 
+          });
         }
         
         loadedCount++;
