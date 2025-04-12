@@ -4,15 +4,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
-import { Order, Player, DesignData } from "@/types";
-import { LogOut, AlertTriangle } from "lucide-react";
+import { Order } from "@/types";
+import { LogOut, AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { OrdersList } from "@/components/admin/OrdersList";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
-import { checkDesignImageExists } from "@/utils/image-utils";
+import { 
+  checkDesignImageExists, 
+  checkStorageBucketsExist, 
+  createStorageBucketsIfNeeded 
+} from "@/utils/image-utils";
 
 const mockOrders: Order[] = [
   {
@@ -121,7 +125,7 @@ const mockOrders: Order[] = [
     })),
     printConfig: {
       font: "Roboto",
-      backMaterial: "In chuyển nhiệt",
+      backMaterial: "In chuyển nhi���t",
       backColor: "Đen",
       frontMaterial: "In chuyển nhiệt",
       frontColor: "Trắng",
@@ -170,45 +174,44 @@ const AdminOrders = () => {
   const [storageBucketsStatus, setStorageBucketsStatus] = useState<{
     designImages: boolean;
     referenceImages: boolean;
+    checking: boolean;
+    error?: string;
   }>({
     designImages: false,
     referenceImages: false,
+    checking: true
   });
+  const [creatingBuckets, setCreatingBuckets] = useState<boolean>(false);
 
   useEffect(() => {
     const checkStorageBuckets = async () => {
+      if (!user) return;
+      
+      setStorageBucketsStatus(prev => ({ ...prev, checking: true }));
+      
       try {
-        const { data: designBuckets, error: designError } = await supabase
-          .storage
-          .listBuckets();
-        
-        if (designError) {
-          console.error("Error checking storage buckets:", designError);
-          return;
-        }
-        
-        const designBucketExists = designBuckets.some(bucket => bucket.name === 'design_images');
-        const refBucketExists = designBuckets.some(bucket => bucket.name === 'reference_images');
+        const result = await checkStorageBucketsExist();
         
         setStorageBucketsStatus({
-          designImages: designBucketExists,
-          referenceImages: refBucketExists
+          designImages: result.designImages,
+          referenceImages: result.referenceImages,
+          checking: false,
+          error: result.error
         });
         
-        console.log("Storage buckets check:", {
-          designImages: designBucketExists,
-          referenceImages: refBucketExists
-        });
+        console.log("Storage buckets check:", result);
         
-        if (!designBucketExists) {
-          toast.error("Bucket design_images không tồn tại trong storage");
-        }
-        
-        if (!refBucketExists) {
-          toast.error("Bucket reference_images không tồn tại trong storage");
+        if (!result.designImages || !result.referenceImages) {
+          toast.error("Bucket không tồn tại trong storage. Hãy tạo bucket để hiển thị hình ảnh.");
         }
       } catch (err) {
         console.error("Error checking storage buckets:", err);
+        setStorageBucketsStatus({
+          designImages: false,
+          referenceImages: false,
+          checking: false,
+          error: err instanceof Error ? err.message : 'Unknown error'
+        });
       }
     };
     
@@ -216,6 +219,38 @@ const AdminOrders = () => {
       checkStorageBuckets();
     }
   }, [user]);
+  
+  const handleCreateBuckets = async () => {
+    setCreatingBuckets(true);
+    
+    try {
+      const result = await createStorageBucketsIfNeeded();
+      
+      if (result.success) {
+        if (result.created.designImages || result.created.referenceImages) {
+          toast.success("Đã tạo bucket thành công!");
+          
+          // Re-check bucket status
+          const updatedStatus = await checkStorageBucketsExist();
+          setStorageBucketsStatus({
+            designImages: updatedStatus.designImages,
+            referenceImages: updatedStatus.referenceImages,
+            checking: false,
+            error: updatedStatus.error
+          });
+        } else {
+          toast.info("Buckets đã tồn tại, không cần tạo mới.");
+        }
+      } else {
+        toast.error(`Không thể tạo bucket: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Error creating buckets:", error);
+      toast.error("Có lỗi khi tạo bucket");
+    } finally {
+      setCreatingBuckets(false);
+    }
+  };
   
   useEffect(() => {
     if (user) {
@@ -440,7 +475,7 @@ const AdminOrders = () => {
           <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <h3 className="font-medium text-yellow-800">Lỗi cấu hình Storage</h3>
                 <ul className="list-disc list-inside text-sm text-yellow-700 mt-1">
                   {!storageBucketsStatus.designImages && (
@@ -453,6 +488,35 @@ const AdminOrders = () => {
                 <p className="text-sm mt-1 text-yellow-800">
                   Hình ảnh sẽ không hiển thị cho đến khi các bucket được tạo đúng.
                 </p>
+                
+                <div className="mt-3">
+                  <Button
+                    onClick={handleCreateBuckets}
+                    disabled={creatingBuckets || storageBucketsStatus.checking}
+                    size="sm"
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    {creatingBuckets ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang tạo bucket...
+                      </>
+                    ) : storageBucketsStatus.checking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang kiểm tra...
+                      </>
+                    ) : (
+                      'Tạo bucket'
+                    )}
+                  </Button>
+                </div>
+                
+                {storageBucketsStatus.error && (
+                  <p className="text-sm mt-2 text-red-600">
+                    Lỗi: {storageBucketsStatus.error}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -486,7 +550,16 @@ const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.length > 0 ? (
+                {isLoading || fetchingData ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center">
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        <span>Đang tải dữ liệu...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : orders.length > 0 ? (
                   <OrdersList 
                     orders={orders}
                     statusFilter={statusFilter}
