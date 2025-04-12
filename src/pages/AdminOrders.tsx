@@ -458,7 +458,8 @@ const AdminOrders = () => {
           </div>
         )}
         
-        {fetchError && <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
             <div className="flex gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
               <div>
@@ -466,7 +467,8 @@ const AdminOrders = () => {
                 <p className="text-sm text-red-700 mt-1">{fetchError}</p>
               </div>
             </div>
-          </div>}
+          </div>
+        )}
         
         <div className="bg-card rounded-md shadow overflow-hidden">
           <div className="overflow-x-auto">
@@ -484,18 +486,24 @@ const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {isLoading || fetchingData ? <tr>
+                {isLoading || fetchingData ? (
+                  <tr>
                     <td colSpan={8} className="p-4 text-center">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
                         <span>Đang tải dữ liệu...</span>
                       </div>
                     </td>
-                  </tr> : orders.length > 0 ? <OrdersList orders={orders} statusFilter={statusFilter} onViewDetails={handleViewDetails} onViewImage={handleViewImage} onStatusChange={handleStatusChange} /> : <tr>
-                    <td colSpan={8} className="p-4 text-center text-muted-foreground">
-                      {fetchError ? "Không thể tải dữ liệu đơn hàng" : "Không có đơn hàng nào"}
-                    </td>
-                  </tr>}
+                  </tr>
+                ) : (
+                  <OrdersList 
+                    orders={orders} 
+                    statusFilter={statusFilter} 
+                    onViewDetails={handleViewDetails} 
+                    onViewImage={handleViewImage} 
+                    onStatusChange={handleStatusChange} 
+                  />
+                )}
               </tbody>
             </table>
           </div>
