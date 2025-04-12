@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -13,7 +12,7 @@ import { ProductLineTable } from "@/components/product-line-table";
 import { OrderSummary } from "@/components/order-summary";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Order, Player, PrintConfig, ProductLine } from "@/types";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
