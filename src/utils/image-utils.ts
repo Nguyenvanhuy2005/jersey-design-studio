@@ -327,9 +327,10 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
 export const uploadDesignImage = async (
   orderId: string, 
   imageFile: File,
+  fileNameSuffix: string = 'design',
   retries: number = 2
 ): Promise<string> => {
-  const filePath = `${orderId}/design.png`;
+  const filePath = `${orderId}/${fileNameSuffix}.png`;
   
   // First, ensure the bucket exists
   await createStorageBucketsIfNeeded();

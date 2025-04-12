@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -225,64 +226,100 @@ const CreateOrder = () => {
     return file;
   };
 
-  const generateOrderDesignImage = async (orderId: string): Promise<string> => {
+  const generateOrderDesignImages = async (orderId: string): Promise<{ frontPath: string; backPath: string }> => {
     try {
       setIsGeneratingDesign(true);
-      setPreviewView('front');
       
       // Ensure the storage buckets exist
       const bucketsCheck = await createStorageBucketsIfNeeded();
       if (!bucketsCheck.success) {
         console.error("Failed to ensure storage buckets exist:", bucketsCheck.message);
         toast.error(`Không thể khởi tạo kho lưu trữ: ${bucketsCheck.message}`);
-        return '';
+        return { frontPath: '', backPath: '' };
       }
       
-      // Increase delay to ensure canvas is fully rendered
-      console.log("Waiting for canvas to fully render...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      if (jerseyCanvasRef.current) {
-        console.log(`Generating order design image...`);
-        console.log("Canvas dimensions:", jerseyCanvasRef.current.width, "x", jerseyCanvasRef.current.height);
-        
-        const frontFileName = `design-${orderId}.png`;
-        
-        const designImageFile = await convertCanvasToFile(
-          jerseyCanvasRef.current, 
-          orderId,
-          frontFileName
-        );
-        
-        // Use the new uploadDesignImage function with retry logic
-        const uploadedPath = await uploadDesignImage(orderId, designImageFile);
-        
-        if (!uploadedPath) {
-          console.error("Failed to upload design image after multiple attempts");
-          toast.error("Không thể tải lên ảnh thiết kế sau nhiều lần thử");
-          return '';
-        }
-        
-        const { data } = supabase.storage
-          .from('design_images')
-          .getPublicUrl(uploadedPath);
-          
-        console.log(`Successfully uploaded order design image: ${uploadedPath}`);
-        console.log(`Public URL: ${data.publicUrl}`);
-        toast.success(`Đã lưu hình ảnh thiết kế`);
-        return uploadedPath;
-      } else {
+      if (!jerseyCanvasRef.current) {
         console.error("Canvas reference is not available");
         toast.error("Không thể tạo ảnh thiết kế: Canvas không khả dụng");
+        return { frontPath: '', backPath: '' };
       }
+      
+      // Generate front view design
+      console.log("Capturing front view design...");
+      setPreviewView('front');
+      
+      // Add a delay to ensure the canvas is properly rendered
+      console.log("Waiting for front view canvas to render...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Now capture the front view
+      const frontFileName = `front-design-${orderId}.png`;
+      const frontDesignFile = await convertCanvasToFile(
+        jerseyCanvasRef.current, 
+        orderId,
+        frontFileName
+      );
+      
+      // Upload front view image with retry logic
+      const frontPath = await uploadDesignImage(orderId, frontDesignFile, 'front-design');
+      
+      if (!frontPath) {
+        console.error("Failed to upload front design image");
+        toast.error("Không thể tải lên ảnh thiết kế mặt trước");
+      } else {
+        console.log("Front design image uploaded successfully:", frontPath);
+        const { data: frontUrlData } = supabase.storage
+          .from('design_images')
+          .getPublicUrl(frontPath);
+        console.log("Front design public URL:", frontUrlData.publicUrl);
+      }
+      
+      // Switch to back view and generate back design image
+      console.log("Switching to back view design...");
+      setPreviewView('back');
+      
+      // Add a delay to ensure the canvas is properly rendered with back view
+      console.log("Waiting for back view canvas to render...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Now capture the back view
+      const backFileName = `back-design-${orderId}.png`;
+      const backDesignFile = await convertCanvasToFile(
+        jerseyCanvasRef.current, 
+        orderId,
+        backFileName
+      );
+      
+      // Upload back view image with retry logic
+      const backPath = await uploadDesignImage(orderId, backDesignFile, 'back-design');
+      
+      if (!backPath) {
+        console.error("Failed to upload back design image");
+        toast.error("Không thể tải lên ảnh thiết kế mặt sau");
+      } else {
+        console.log("Back design image uploaded successfully:", backPath);
+        const { data: backUrlData } = supabase.storage
+          .from('design_images')
+          .getPublicUrl(backPath);
+        console.log("Back design public URL:", backUrlData.publicUrl);
+      }
+      
+      // Switch back to front view for display
+      setPreviewView('front');
+      
+      toast.success(`Đã lưu hình ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : backPath ? 'mặt sau' : ''}`);
+      
+      return { 
+        frontPath, 
+        backPath 
+      };
     } catch (err) {
-      console.error(`Error capturing order design image:`, err);
-      toast.error(`Có lỗi khi t���o ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error(`Error capturing order design images:`, err);
+      toast.error(`Có lỗi khi tạo ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return { frontPath: '', backPath: '' };
     } finally {
       setIsGeneratingDesign(false);
     }
-    
-    return '';
   };
 
   const uploadReferenceImages = async (orderId: string): Promise<string[]> => {
@@ -355,22 +392,23 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Generate and upload the design image - with better tracking
-      console.log("Starting design image generation...");
-      const designImagePath = await generateOrderDesignImage(orderId);
+      // Generate and upload both design images - front and back
+      console.log("Starting design images generation...");
+      const { frontPath, backPath } = await generateOrderDesignImages(orderId);
       
-      if (!designImagePath) {
-        console.error("Failed to generate design image");
+      if (!frontPath && !backPath) {
+        console.error("Failed to generate any design images");
         toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại.");
         setIsSubmitting(false);
         return;
       }
       
-      console.log("Design image generated successfully:", designImagePath);
+      console.log("Design images generated successfully:", { frontPath, backPath });
       
       // Upload reference images
       const referenceImagePaths = await uploadReferenceImages(orderId);
       
+      // Upload logos
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -416,10 +454,12 @@ const CreateOrder = () => {
           font: printConfig.font,
           color: printConfig.backColor
         })),
-        reference_images: referenceImagePaths
+        reference_images: referenceImagePaths,
+        design_image_front: frontPath,
+        design_image_back: backPath
       };
 
-      console.log("Inserting order with design_image:", designImagePath);
+      console.log("Inserting order with design_images:", { frontPath, backPath });
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -430,7 +470,9 @@ const CreateOrder = () => {
           total_cost: totalCost,
           notes: notes,
           design_data: designData,
-          design_image: designImagePath,
+          design_image: frontPath, // Keep for backwards compatibility
+          design_image_front: frontPath,
+          design_image_back: backPath,
           reference_images: referenceImagePaths
         });
         
@@ -533,7 +575,8 @@ const CreateOrder = () => {
         totalCost,
         status: "new",
         notes,
-        designImage: designImagePath,
+        designImageFront: frontPath,
+        designImageBack: backPath,
         referenceImages: referenceImagePaths,
         createdAt: new Date()
       };
@@ -551,15 +594,26 @@ const CreateOrder = () => {
     try {
       const testId = uuidv4();
       toast.info("Đang kiểm tra tạo ảnh thiết kế...");
-      const imagePath = await generateOrderDesignImage(testId);
       
-      if (imagePath) {
-        const { data } = supabase.storage
-          .from('design_images')
-          .getPublicUrl(imagePath);
+      // Test both front and back design images
+      const { frontPath, backPath } = await generateOrderDesignImages(testId);
+      
+      if (frontPath || backPath) {
+        toast.success(`Tạo ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : 'mặt sau'} thành công!`);
         
-        toast.success("Tạo ảnh thiết kế thành công!");
-        console.log("Test design image URL:", data.publicUrl);
+        if (frontPath) {
+          const { data: frontData } = supabase.storage
+            .from('design_images')
+            .getPublicUrl(frontPath);
+          console.log("Test front design image URL:", frontData.publicUrl);
+        }
+        
+        if (backPath) {
+          const { data: backData } = supabase.storage
+            .from('design_images')
+            .getPublicUrl(backPath);
+          console.log("Test back design image URL:", backData.publicUrl);
+        }
       } else {
         toast.error("Không thể tạo ảnh thiết kế");
       }
@@ -720,7 +774,7 @@ const CreateOrder = () => {
                 
                 <div className="p-3 bg-green-50 border border-green-200 rounded-md">
                   <p className="text-sm text-green-700">
-                    Hình ảnh thiết kế này sẽ được lưu làm hình ảnh đại diện cho toàn bộ đơn hàng khi bạn đặt đơn hàng.
+                    Hệ thống sẽ lưu thiết kế cho cả mặt trước và mặt sau khi bạn đặt đơn hàng.
                   </p>
                   <div className="mt-2">
                     <Button 
