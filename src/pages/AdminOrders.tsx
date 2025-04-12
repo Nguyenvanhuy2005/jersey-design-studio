@@ -178,7 +178,8 @@ const AdminOrders = () => {
           // Fall back to mock data for demo
           setOrders(mockOrders);
         } else if (data && data.length > 0) {
-          setOrders(data.map(order => ({
+          // Transform data to match our Order type
+          const transformedOrders: Order[] = data.map(order => ({
             id: order.id,
             teamName: order.team_name || '',
             status: order.status as 'new' | 'processing' | 'completed',
@@ -186,20 +187,46 @@ const AdminOrders = () => {
             createdAt: new Date(order.created_at || ''),
             notes: order.notes || '',
             designImage: order.design_image || '',
-            players: order.players || [],
-            productLines: order.product_lines || [],
-            printConfig: order.print_configs ? {
-              font: order.print_configs.font || 'Arial',
-              backMaterial: order.print_configs.back_material || '',
-              backColor: order.print_configs.back_color || '',
-              frontMaterial: order.print_configs.front_material || '',
-              frontColor: order.print_configs.front_color || '',
-              sleeveMaterial: order.print_configs.sleeve_material || '',
-              sleeveColor: order.print_configs.sleeve_color || '',
-              legMaterial: order.print_configs.leg_material || '',
-              legColor: order.print_configs.leg_color || '',
-            } : {} as any
-          })));
+            players: order.players ? order.players.map((player: any) => ({
+              id: player.id,
+              name: player.name || '',
+              number: player.number,
+              size: player.size as 'S' | 'M' | 'L' | 'XL',
+              printImage: player.print_image || false // Map print_image from DB to printImage in our type
+            })) : [],
+            productLines: order.product_lines ? order.product_lines.map((line: any) => ({
+              id: line.id,
+              product: line.product,
+              position: line.position,
+              material: line.material,
+              size: line.size,
+              points: line.points || 0,
+              content: line.content || ''
+            })) : [],
+            printConfig: order.print_configs && order.print_configs.length > 0 ? {
+              id: order.print_configs[0].id,
+              font: order.print_configs[0].font || 'Arial',
+              backMaterial: order.print_configs[0].back_material || '',
+              backColor: order.print_configs[0].back_color || '',
+              frontMaterial: order.print_configs[0].front_material || '',
+              frontColor: order.print_configs[0].front_color || '',
+              sleeveMaterial: order.print_configs[0].sleeve_material || '',
+              sleeveColor: order.print_configs[0].sleeve_color || '',
+              legMaterial: order.print_configs[0].leg_material || '',
+              legColor: order.print_configs[0].leg_color || ''
+            } : {
+              font: 'Arial',
+              backMaterial: 'In chuyển nhiệt',
+              backColor: 'Đen',
+              frontMaterial: 'In chuyển nhiệt',
+              frontColor: 'Đen',
+              sleeveMaterial: 'In chuyển nhiệt',
+              sleeveColor: 'Đen',
+              legMaterial: 'In chuyển nhiệt',
+              legColor: 'Đen'
+            }
+          }));
+          setOrders(transformedOrders);
         } else {
           // Fall back to mock data for demo
           setOrders(mockOrders);
