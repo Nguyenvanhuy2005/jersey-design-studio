@@ -66,4 +66,5 @@ export interface Order {
   status: 'new' | 'processing' | 'completed';
   createdAt?: Date;
   notes?: string;
+  designImage?: string;
 }

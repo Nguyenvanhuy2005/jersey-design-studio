@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           created_at: string | null
           design_data: Json | null
+          design_image: string | null
           id: string
           logo_url: string | null
           notes: string | null
@@ -65,6 +66,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           design_data?: Json | null
+          design_image?: string | null
           id?: string
           logo_url?: string | null
           notes?: string | null
@@ -76,6 +78,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           design_data?: Json | null
+          design_image?: string | null
           id?: string
           logo_url?: string | null
           notes?: string | null

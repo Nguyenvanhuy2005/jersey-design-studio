@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -16,6 +17,7 @@ interface CanvasJerseyProps {
   logos?: Logo[];
   view: 'front' | 'back';
   printConfig?: PrintConfig;
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
 export function CanvasJersey({ 
@@ -24,9 +26,12 @@ export function CanvasJersey({
   playerNumber, 
   logos = [], 
   view,
-  printConfig
+  printConfig,
+  canvasRef: externalCanvasRef
 }: CanvasJerseyProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = externalCanvasRef || internalCanvasRef;
+  
   const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
   const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number, scale: number }>>(new Map());
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
@@ -391,6 +396,7 @@ export function CanvasJersey({
         width={canvasWidth * pixelRatio} 
         height={canvasHeight * pixelRatio} 
         className="jersey-canvas mx-auto"
+        id="jersey-design-canvas"
         onMouseDown={startDrag}
         onMouseMove={continueDrag}
         onMouseUp={endDrag}

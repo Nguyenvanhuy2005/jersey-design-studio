@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ const CreateOrder = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [notes, setNotes] = useState<string>("");
+  
+  const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const [printConfig, setPrintConfig] = useState<PrintConfig>({
     font: "Arial",
@@ -154,6 +156,25 @@ const CreateOrder = () => {
     return totalCost;
   }, [productLines, players.length, logos.length]);
 
+  const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string): Promise<File> => {
+    const imageData = canvas.toDataURL('image/png');
+    
+    const base64String = imageData.split(',')[1];
+    const byteCharacters = atob(base64String);
+    const byteNumbers = new Array(byteCharacters.length);
+    
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    
+    const file = new File([blob], `design-${orderId}.png`, { type: 'image/png' });
+    
+    return file;
+  };
+
   const submitOrder = async () => {
     if (players.length === 0) {
       toast.error("Vui lòng thêm ít nhất một cầu thủ");
@@ -167,7 +188,35 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Prepare design data
+      setPreviewView('front');
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      let designImagePath = '';
+      if (jerseyCanvasRef.current) {
+        try {
+          const designImageFile = await convertCanvasToFile(jerseyCanvasRef.current, orderId);
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('design_images')
+            .upload(`${orderId}/design.png`, designImageFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error('Error uploading design image:', uploadError);
+            toast.error("Không thể tải lên hình ảnh thiết kế");
+          } else {
+            designImagePath = uploadData.path;
+            toast.success("Đã lưu hình ảnh thiết kế");
+          }
+        } catch (err) {
+          console.error("Error capturing canvas image:", err);
+          toast.error("Không thể tạo hình ảnh thiết kế");
+        }
+      }
+      
       const designData = {
         logos: logos.map(logo => ({
           logo_id: logo.id,
@@ -179,13 +228,12 @@ const CreateOrder = () => {
         players: players.map(player => ({
           name: player.name,
           number: player.number,
-          position: 'Trên số lưng', // You might want to make this configurable
+          position: 'Trên số lưng',
           font: printConfig.font,
           color: printConfig.backColor
         }))
       };
 
-      // Existing logo upload logic
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -216,7 +264,6 @@ const CreateOrder = () => {
         }
       }
       
-      // Insert order with design data
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -226,7 +273,8 @@ const CreateOrder = () => {
           status: 'new',
           total_cost: totalCost,
           notes: notes,
-          design_data: designData // Save design data
+          design_data: designData,
+          design_image: designImagePath
         });
         
       if (orderError) {
@@ -324,6 +372,7 @@ const CreateOrder = () => {
         totalCost,
         status: "new",
         notes,
+        designImage: designImagePath,
         createdAt: new Date()
       };
       
@@ -439,6 +488,7 @@ const CreateOrder = () => {
                       logos={logos}
                       view={previewView}
                       printConfig={printConfig}
+                      canvasRef={jerseyCanvasRef}
                     />
                   </div>
                 </div>
