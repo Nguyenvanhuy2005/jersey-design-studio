@@ -167,6 +167,25 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
+      // Prepare design data
+      const designData = {
+        logos: logos.map(logo => ({
+          logo_id: logo.id,
+          position: logo.position,
+          x_position: 0,
+          y_position: 0,
+          scale: 1.0
+        })),
+        players: players.map(player => ({
+          name: player.name,
+          number: player.number,
+          position: 'Trên số lưng', // You might want to make this configurable
+          font: printConfig.font,
+          color: printConfig.backColor
+        }))
+      };
+
+      // Existing logo upload logic
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -197,6 +216,7 @@ const CreateOrder = () => {
         }
       }
       
+      // Insert order with design data
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -205,7 +225,8 @@ const CreateOrder = () => {
           logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
           status: 'new',
           total_cost: totalCost,
-          notes: notes
+          notes: notes,
+          design_data: designData // Save design data
         });
         
       if (orderError) {
