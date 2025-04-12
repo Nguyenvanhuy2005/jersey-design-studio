@@ -24,16 +24,22 @@ export const OrdersList = ({
   onStatusChange
 }: OrdersListProps) => {
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
-  const [imageAvailability, setImageAvailability] = useState<Record<string, boolean>>({});
+  const [imageAvailability, setImageAvailability] = useState<Record<string, {front: boolean, back: boolean}>>({});
   
   // Check image availability when orders change
   useEffect(() => {
     const checkImagesExistence = async () => {
-      const availability: Record<string, boolean> = {};
+      const availability: Record<string, {front: boolean, back: boolean}> = {};
       
       for (const order of orders) {
-        if (order.id && order.designImage) {
-          availability[order.id] = await checkDesignImageExists(order.designImage);
+        if (order.id) {
+          const frontAvailable = await checkDesignImageExists(order.designImageFront || order.designImage);
+          const backAvailable = await checkDesignImageExists(order.designImageBack);
+          
+          availability[order.id] = {
+            front: frontAvailable,
+            back: backAvailable
+          };
         }
       }
       
@@ -88,10 +94,12 @@ export const OrdersList = ({
   return (
     <>
       {filteredOrders.map((order) => {
-        // Check if order has design image and if it's available
-        const hasDesignImage = !!order.designImage;
-        const isDesignImageAvailable = order.id ? imageAvailability[order.id] : false;
-        const hasDesignImageError = order.id ? imageLoadErrors[order.id!] : false;
+        // Check if order has front/back design images and if they're available
+        const hasFrontDesignImage = !!(order.designImageFront || order.designImage);
+        const hasBackDesignImage = !!order.designImageBack;
+        const designImageAvailability = order.id ? imageAvailability[order.id] : { front: false, back: false };
+        const hasFrontDesignImageError = order.id ? imageLoadErrors[`${order.id}-front`] : false;
+        const hasBackDesignImageError = order.id ? imageLoadErrors[`${order.id}-back`] : false;
         
         return (
           <tr key={order.id} className="border-t border-muted">
@@ -102,35 +110,63 @@ export const OrdersList = ({
             <td className="p-3">{getStatusBadge(order.status)}</td>
             <td className="p-3">{formatDate(order.createdAt)}</td>
             <td className="p-3">
-              {hasDesignImage ? (
-                <div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      console.log(`Order design image path:`, order.designImage);
-                      const imageUrl = getDesignImageUrl(order.designImage);
-                      console.log(`Generated design image URL:`, imageUrl);
-                      
-                      if (imageUrl) {
-                        onViewImage(imageUrl);
-                        console.log(`Viewing design image: ${imageUrl}`);
-                      } else {
-                        console.error(`Failed to get URL for design image: ${order.designImage}`);
-                        toast.error("Không thể tải hình ảnh thiết kế");
-                        // Use fallback image
-                        onViewImage(getFallbackImageUrl('design'));
-                      }
-                    }}
-                    className="flex items-center gap-1"
-                  >
-                    <ImageIcon className="h-4 w-4" /> Xem
-                  </Button>
+              {(hasFrontDesignImage || hasBackDesignImage) ? (
+                <div className="flex flex-col gap-2">
+                  {hasFrontDesignImage && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        console.log(`Order front design image path:`, order.designImageFront || order.designImage);
+                        const imageUrl = getDesignImageUrl(order.designImageFront || order.designImage);
+                        console.log(`Generated front design image URL:`, imageUrl);
+                        
+                        if (imageUrl) {
+                          onViewImage(imageUrl);
+                          console.log(`Viewing front design image: ${imageUrl}`);
+                        } else {
+                          console.error(`Failed to get URL for front design image: ${order.designImageFront || order.designImage}`);
+                          toast.error("Không thể tải hình ảnh thiết kế mặt trước");
+                          onViewImage(getFallbackImageUrl('design'));
+                        }
+                      }}
+                      className="flex items-center gap-1 w-full"
+                    >
+                      <ImageIcon className="h-4 w-4" /> Xem mặt trước
+                    </Button>
+                  )}
                   
-                  {(!isDesignImageAvailable || hasDesignImageError) && (
+                  {hasBackDesignImage && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        console.log(`Order back design image path:`, order.designImageBack);
+                        const imageUrl = getDesignImageUrl(order.designImageBack);
+                        console.log(`Generated back design image URL:`, imageUrl);
+                        
+                        if (imageUrl) {
+                          onViewImage(imageUrl);
+                          console.log(`Viewing back design image: ${imageUrl}`);
+                        } else {
+                          console.error(`Failed to get URL for back design image: ${order.designImageBack}`);
+                          toast.error("Không thể tải hình ảnh thiết kế mặt sau");
+                          onViewImage(getFallbackImageUrl('design'));
+                        }
+                      }}
+                      className="flex items-center gap-1 w-full"
+                    >
+                      <ImageIcon className="h-4 w-4" /> Xem mặt sau
+                    </Button>
+                  )}
+                  
+                  {((!designImageAvailability?.front && hasFrontDesignImage) || 
+                    (!designImageAvailability?.back && hasBackDesignImage) ||
+                    hasFrontDesignImageError || 
+                    hasBackDesignImageError) && (
                     <div className="flex items-center mt-1 text-red-500 text-xs">
                       <AlertTriangle className="h-3 w-3 mr-1" /> 
-                      Có vấn đề với hình ảnh
+                      Có vấn đề với hình ảnh thiết kế
                     </div>
                   )}
                 </div>

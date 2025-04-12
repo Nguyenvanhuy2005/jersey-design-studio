@@ -5,7 +5,6 @@ export interface Player {
   number: number;
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
-  // Removed design_image field as per requirements
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';
@@ -94,6 +93,8 @@ export interface Order {
   status: 'new' | 'processing' | 'completed';
   createdAt?: Date;
   notes?: string;
-  designImage?: string;
-  referenceImages: string[]; // Using string[] to match what we're transforming data to
+  designImage?: string;        // Legacy field - kept for backward compatibility
+  designImageFront?: string;   // Front design image path
+  designImageBack?: string;    // Back design image path
+  referenceImages: string[];   // Using string[] to match what we're transforming data to
 }

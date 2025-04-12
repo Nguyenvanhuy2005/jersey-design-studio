@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -65,6 +64,11 @@ export const checkDesignImageExists = async (imagePath?: string): Promise<boolea
     const folderPath = imagePath.split('/').slice(0, -1).join('/');
     const fileName = imagePath.split('/').pop();
     
+    if (!fileName) {
+      console.error("Invalid image path:", imagePath);
+      return false;
+    }
+    
     const { data, error } = await supabase.storage
       .from('design_images')
       .list(folderPath, {
@@ -78,7 +82,9 @@ export const checkDesignImageExists = async (imagePath?: string): Promise<boolea
       return false;
     }
     
-    return data && data.length > 0 && data.some(file => file.name === fileName);
+    const fileExists = data && data.length > 0 && data.some(file => file.name === fileName);
+    console.log(`Design image ${imagePath} exists: ${fileExists}`);
+    return fileExists;
   } catch (error) {
     console.error("Error checking if design image exists:", error);
     return false;
@@ -354,6 +360,7 @@ export const uploadDesignImage = async (
   fileNameSuffix: string = 'design',
   retries: number = 2
 ): Promise<string> => {
+  // Create file path using suffix for front/back differentiation
   const filePath = `${orderId}/${fileNameSuffix}.png`;
   
   // First, ensure the bucket exists (but don't fail if we can't create it due to RLS)
@@ -478,4 +485,3 @@ export const verifyImageUpload = async (
     return { success: false, publicUrl: null };
   }
 };
-

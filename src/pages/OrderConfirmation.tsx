@@ -8,10 +8,9 @@ import { useState, useEffect } from "react";
 import { 
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger 
+  DialogDescription
 } from "@/components/ui/dialog";
 import { getDesignImageUrl, getReferenceImageUrls } from "@/utils/image-utils";
 
@@ -19,12 +18,14 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const order = location.state?.order as Order | undefined;
-  const [designImageUrl, setDesignImageUrl] = useState<string | null>(null);
+  const [designImageFrontUrl, setDesignImageFrontUrl] = useState<string | null>(null);
+  const [designImageBackUrl, setDesignImageBackUrl] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState({
-    design: false,
+    frontDesign: false,
+    backDesign: false,
     references: [] as boolean[]
   });
   
@@ -35,10 +36,19 @@ const OrderConfirmation = () => {
 
   // Get the public URLs for design and reference images
   useEffect(() => {
-    if (order.designImage) {
-      const url = getDesignImageUrl(order.designImage);
-      setDesignImageUrl(url);
-      console.log("Design image URL in OrderConfirmation:", url);
+    // Front design (either from designImageFront or fallback to designImage for compatibility)
+    const frontDesignPath = order.designImageFront || order.designImage;
+    if (frontDesignPath) {
+      const url = getDesignImageUrl(frontDesignPath);
+      setDesignImageFrontUrl(url);
+      console.log("Front design image URL in OrderConfirmation:", url);
+    }
+    
+    // Back design
+    if (order.designImageBack) {
+      const url = getDesignImageUrl(order.designImageBack);
+      setDesignImageBackUrl(url);
+      console.log("Back design image URL in OrderConfirmation:", url);
     }
 
     // Get the public URLs for reference images if they exist
@@ -51,16 +61,18 @@ const OrderConfirmation = () => {
       }));
       console.log("Reference image URLs in OrderConfirmation:", urls);
     }
-  }, [order.designImage, order.referenceImages]);
+  }, [order.designImage, order.designImageFront, order.designImageBack, order.referenceImages]);
 
   const openImageDialog = (imageUrl: string) => {
     setSelectedImageUrl(imageUrl);
     setIsImageDialogOpen(true);
   };
 
-  const handleImageLoad = (type: 'design' | 'reference', index?: number) => {
-    if (type === 'design') {
-      setImagesLoaded(prev => ({ ...prev, design: true }));
+  const handleImageLoad = (type: 'frontDesign' | 'backDesign' | 'reference', index?: number) => {
+    if (type === 'frontDesign') {
+      setImagesLoaded(prev => ({ ...prev, frontDesign: true }));
+    } else if (type === 'backDesign') {
+      setImagesLoaded(prev => ({ ...prev, backDesign: true }));
     } else if (type === 'reference' && typeof index === 'number') {
       setImagesLoaded(prev => {
         const newReferences = [...prev.references];
@@ -70,10 +82,12 @@ const OrderConfirmation = () => {
     }
   };
 
-  const handleImageError = (type: 'design' | 'reference', imagePath?: string, index?: number) => {
+  const handleImageError = (type: 'frontDesign' | 'backDesign' | 'reference', imagePath?: string, index?: number) => {
     console.error(`Failed to load ${type} image in OrderConfirmation:`, imagePath);
-    if (type === 'design') {
-      setImagesLoaded(prev => ({ ...prev, design: false }));
+    if (type === 'frontDesign') {
+      setImagesLoaded(prev => ({ ...prev, frontDesign: false }));
+    } else if (type === 'backDesign') {
+      setImagesLoaded(prev => ({ ...prev, backDesign: false }));
     } else if (type === 'reference' && typeof index === 'number') {
       setImagesLoaded(prev => {
         const newReferences = [...prev.references];
@@ -127,27 +141,54 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
-            {/* Design image section */}
-            {designImageUrl && (
+            {/* Design images section */}
+            {(designImageFrontUrl || designImageBackUrl) && (
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">Hình ảnh thiết kế</h3>
-                <div className="cursor-pointer mx-auto max-w-[200px]" onClick={() => openImageDialog(designImageUrl)}>
-                  <img 
-                    src={designImageUrl} 
-                    alt="Thiết kế áo" 
-                    className="w-full h-auto rounded-md border shadow-sm" 
-                    onLoad={() => handleImageLoad('design')}
-                    onError={() => handleImageError('design', order.designImage)}
-                  />
-                  <p className="text-center text-xs text-muted-foreground mt-1">
-                    (Nhấp để xem kích thước đầy đủ)
-                  </p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {designImageFrontUrl && (
+                    <div className="cursor-pointer" onClick={() => openImageDialog(designImageFrontUrl)}>
+                      <div className="text-center mb-1">
+                        <span className="text-sm font-medium">Mặt trước</span>
+                      </div>
+                      <img 
+                        src={designImageFrontUrl} 
+                        alt="Thiết kế áo mặt trước" 
+                        className="w-40 h-auto rounded-md border shadow-sm" 
+                        onLoad={() => handleImageLoad('frontDesign')}
+                        onError={() => handleImageError('frontDesign', order.designImageFront || order.designImage)}
+                      />
+                      {!imagesLoaded.frontDesign && (
+                        <p className="text-center text-xs text-red-500 mt-1">
+                          Không thể tải hình ảnh
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {designImageBackUrl && (
+                    <div className="cursor-pointer" onClick={() => openImageDialog(designImageBackUrl)}>
+                      <div className="text-center mb-1">
+                        <span className="text-sm font-medium">Mặt sau</span>
+                      </div>
+                      <img 
+                        src={designImageBackUrl} 
+                        alt="Thiết kế áo mặt sau" 
+                        className="w-40 h-auto rounded-md border shadow-sm" 
+                        onLoad={() => handleImageLoad('backDesign')}
+                        onError={() => handleImageError('backDesign', order.designImageBack)}
+                      />
+                      {!imagesLoaded.backDesign && (
+                        <p className="text-center text-xs text-red-500 mt-1">
+                          Không thể tải hình ảnh
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {!imagesLoaded.design && (
-                  <p className="text-center text-sm text-red-500 mt-2">
-                    Không thể tải hình ảnh thiết kế. Vui lòng kiểm tra quyền truy cập.
-                  </p>
-                )}
+                <p className="text-center text-xs text-muted-foreground mt-3">
+                  (Nhấp để xem kích thước đầy đủ)
+                </p>
               </div>
             )}
 
@@ -155,7 +196,7 @@ const OrderConfirmation = () => {
             {referenceImageUrls.length > 0 && (
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">Hình ảnh tham khảo</h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 justify-center">
                   {referenceImageUrls.map((url, index) => (
                     <div 
                       key={index}
@@ -210,6 +251,9 @@ const OrderConfirmation = () => {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Xem hình ảnh</DialogTitle>
+            <DialogDescription>
+              Xem chi tiết hình ảnh thiết kế
+            </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center">
             {selectedImageUrl && (
