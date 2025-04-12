@@ -45,7 +45,7 @@ export function CanvasJersey({
     startDrag, 
     drag, 
     endDrag, 
-    handleWheel, 
+    handleResize,
     selectedLogo 
   } = useDragLogos({
     logos,
@@ -250,7 +250,8 @@ export function CanvasJersey({
         logos: logos || [],
         fontFamily: fontToUse,
         highQuality: true,
-        selectedLogo
+        selectedLogo,
+        onLogoResize: handleResize
       });
     } else {
       console.log('Rendering back jersey view');
@@ -270,7 +271,7 @@ export function CanvasJersey({
   useEffect(() => {
     if (logos && logos.length > 0 && view === 'front') {
       toast.info(
-        "You can drag logos to reposition them and use the mouse wheel to resize selected logos. Positions will be saved automatically.",
+        "You can drag logos to reposition them and use the + and - buttons to resize selected logos. Positions will be saved automatically.",
         { 
           id: "logo-drag-instructions",
           duration: 5000
@@ -289,7 +290,6 @@ export function CanvasJersey({
       onMouseMove={drag}
       onMouseUp={endDrag}
       onMouseLeave={endDrag}
-      onWheel={handleWheel}
       style={{
         width: `${canvasWidth}px`,
         height: `${canvasHeight}px`

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Logo } from '@/types';
 import { getFont } from '@/utils/jersey-utils';
+import { Plus, Minus } from 'lucide-react';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
@@ -12,6 +13,7 @@ interface JerseyFrontProps {
   fontFamily: string;
   highQuality?: boolean;
   selectedLogo?: string | null;
+  onLogoResize?: (logoId: string, scaleChange: number) => void;
 }
 
 export const JerseyFront = ({ 
@@ -22,7 +24,8 @@ export const JerseyFront = ({
   logos,
   fontFamily,
   highQuality = false,
-  selectedLogo = null
+  selectedLogo = null,
+  onLogoResize
 }: JerseyFrontProps) => {
   // Draw front jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
@@ -139,43 +142,51 @@ export const JerseyFront = ({
           height + 6
         );
         
-        // Add resize indicators
-        ctx.fillStyle = '#3B82F6';
+        // Reset line dash
         ctx.setLineDash([]);
         
-        // Draw resize handles at corners
-        const handleSize = 6;
+        // Draw resize buttons
+        const buttonSize = 22;
+        const buttonPadding = 12;
         
-        // Top-left handle
+        // "+" button (increase size)
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(
-          posX - width/2 - handleSize/2, 
-          posY - height/2 - handleSize/2, 
-          handleSize, 
-          handleSize
+          posX + width/2 + buttonPadding - buttonSize/2,
+          posY - buttonSize/2,
+          buttonSize,
+          buttonSize
         );
         
-        // Top-right handle
-        ctx.fillRect(
-          posX + width/2 - handleSize/2, 
-          posY - height/2 - handleSize/2, 
-          handleSize, 
-          handleSize
+        // Draw "+" symbol
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          "+",
+          posX + width/2 + buttonPadding,
+          posY
         );
         
-        // Bottom-left handle
+        // "-" button (decrease size)
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(
-          posX - width/2 - handleSize/2, 
-          posY + height/2 - handleSize/2, 
-          handleSize, 
-          handleSize
+          posX - width/2 - buttonPadding - buttonSize/2, 
+          posY - buttonSize/2, 
+          buttonSize, 
+          buttonSize
         );
         
-        // Bottom-right handle
-        ctx.fillRect(
-          posX + width/2 - handleSize/2, 
-          posY + height/2 - handleSize/2, 
-          handleSize, 
-          handleSize
+        // Draw "-" symbol
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          "-",
+          posX - width/2 - buttonPadding,
+          posY
         );
         
         // Add hint text
@@ -183,7 +194,8 @@ export const JerseyFront = ({
         ctx.fillRect(posX - 75, posY + height/2 + 10, 150, 30);
         ctx.fillStyle = '#FFF';
         ctx.font = '10px Arial';
-        ctx.fillText('Use mouse wheel to resize', posX, posY + height/2 + 30);
+        ctx.textAlign = 'center';
+        ctx.fillText('Use + and - buttons to resize', posX, posY + height/2 + 30);
       }
       
     } catch (e) {

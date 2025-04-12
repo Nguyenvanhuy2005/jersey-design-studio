@@ -14,7 +14,7 @@ interface UseDragLogosReturn {
   startDrag: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   drag: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   endDrag: () => void;
-  handleWheel: (e: React.WheelEvent<HTMLCanvasElement>) => void;
+  handleResize: (logoId: string, scaleChange: number) => void;
   selectLogo: (id: string | null) => void;
 }
 
@@ -38,6 +38,51 @@ export const useDragLogos = ({
     // Check if click is within any logo
     let draggedId: string | null = null;
     
+    // First, check if the click is on any resize button when a logo is selected
+    if (selectedLogo) {
+      const position = logoPositions.get(selectedLogo);
+      if (position) {
+        const logo = logos.find(l => l.id === selectedLogo);
+        if (logo) {
+          // Base size for different positions
+          let baseWidth = logo.position.includes('sleeve') ? 40 : 60;
+          let baseHeight = logo.position.includes('sleeve') ? 40 : 60;
+          
+          // Apply scale
+          const width = baseWidth * position.scale;
+          const height = baseHeight * position.scale;
+          
+          const buttonSize = 22;
+          const buttonPadding = 12;
+          
+          // Check if clicked on "+" button
+          if (
+            x >= position.x + width/2 + buttonPadding - buttonSize/2 &&
+            x <= position.x + width/2 + buttonPadding + buttonSize/2 &&
+            y >= position.y - buttonSize/2 &&
+            y <= position.y + buttonSize/2
+          ) {
+            console.log("+ button clicked");
+            handleResize(selectedLogo, 0.1); // Increase size by 10%
+            return; // Exit early as we handled the button click
+          }
+          
+          // Check if clicked on "-" button
+          if (
+            x >= position.x - width/2 - buttonPadding - buttonSize/2 &&
+            x <= position.x - width/2 - buttonPadding + buttonSize/2 &&
+            y >= position.y - buttonSize/2 &&
+            y <= position.y + buttonSize/2
+          ) {
+            console.log("- button clicked");
+            handleResize(selectedLogo, -0.1); // Decrease size by 10%
+            return; // Exit early as we handled the button click
+          }
+        }
+      }
+    }
+    
+    // If not clicking on buttons, check if clicking on logos
     logos.forEach(logo => {
       if (!logo.id) return;
       
@@ -113,36 +158,32 @@ export const useDragLogos = ({
     setDraggedLogo(null);
   }, []);
   
-  // Add wheel handler for scaling logos
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
-    if (!selectedLogo) return;
-    
-    e.preventDefault(); // Prevent page scrolling
-    
-    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1; // Scale down on scroll down, up on scroll up
-    
+  // Resize handler for buttons
+  const handleResize = useCallback((logoId: string, scaleChange: number) => {
     setLogoPositions(prev => {
       const updatedPositions = new Map(prev);
-      const currentPosition = updatedPositions.get(selectedLogo) || { 
+      const currentPosition = updatedPositions.get(logoId) || { 
         x: 0, 
         y: 0, 
         scale: 1.0 
       };
       
       // Apply scaling with limits
-      let newScale = currentPosition.scale * scaleFactor;
+      let newScale = currentPosition.scale + scaleChange;
       
       // Apply min/max constraints (0.5 to 2.0)
       newScale = Math.max(0.5, Math.min(2.0, newScale));
       
-      updatedPositions.set(selectedLogo, {
+      console.log(`Resizing logo ${logoId}: ${currentPosition.scale} -> ${newScale}`);
+      
+      updatedPositions.set(logoId, {
         ...currentPosition,
         scale: newScale
       });
       
       return updatedPositions;
     });
-  }, [selectedLogo, setLogoPositions]);
+  }, [setLogoPositions]);
   
   // Add explicit logo selection function
   const selectLogo = useCallback((id: string | null) => {
@@ -155,7 +196,7 @@ export const useDragLogos = ({
     startDrag,
     drag,
     endDrag,
-    handleWheel,
+    handleResize,
     selectLogo
   };
 };
