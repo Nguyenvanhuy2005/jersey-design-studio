@@ -52,8 +52,9 @@ export const useDragLogos = ({
           const width = baseWidth * position.scale;
           const height = baseHeight * position.scale;
           
-          const buttonSize = 24;
-          const buttonPadding = 14;
+          // Adjust button size and padding for better touchability
+          const buttonSize = 28; // Increased from 24
+          const buttonPadding = 18; // Increased from 14
           
           // Calculate distance from click to "+" button center
           const distToPlus = Math.sqrt(
@@ -68,14 +69,16 @@ export const useDragLogos = ({
           );
           
           // Check if clicked on "+" button (using distance for circular buttons)
-          if (distToPlus <= buttonSize/2) {
+          // Increased detection radius for easier clicking
+          if (distToPlus <= buttonSize/2 + 5) {
             console.log("+ button clicked");
             handleResize(selectedLogo, 0.1); // Increase size by 10%
             return; // Exit early as we handled the button click
           }
           
           // Check if clicked on "-" button (using distance for circular buttons)
-          if (distToMinus <= buttonSize/2) {
+          // Increased detection radius for easier clicking
+          if (distToMinus <= buttonSize/2 + 5) {
             console.log("- button clicked");
             handleResize(selectedLogo, -0.1); // Decrease size by 10%
             return; // Exit early as we handled the button click
@@ -85,7 +88,8 @@ export const useDragLogos = ({
     }
     
     // If not clicking on buttons, check if clicking on logos
-    for (let i = 0; i < logos.length; i++) {
+    for (let i = logos.length - 1; i >= 0; i--) {
+      // Process in reverse order so we select the top-most logo if overlapping
       const logo = logos[i];
       if (!logo.id) continue;
       
@@ -111,6 +115,7 @@ export const useDragLogos = ({
         y <= position.y + height/2
       ) {
         draggedId = logo.id;
+        console.log(`Selected logo: ${logo.id}`);
         break; // Exit the loop once we've found a match
       }
     }
@@ -121,6 +126,7 @@ export const useDragLogos = ({
       setStartPosition({ x, y });
     } else {
       // If clicked outside any logo, deselect
+      console.log("No logo selected, deselecting");
       setSelectedLogo(null);
     }
   }, [logos, logoPositions]);

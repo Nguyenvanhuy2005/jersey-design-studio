@@ -132,25 +132,25 @@ export const JerseyFront = ({
       
       // If this logo is selected, draw a highlight around it
       if (selectedLogo === logoId) {
-        // Draw selection outline
+        // Draw selection outline with more visibility
         ctx.strokeStyle = '#3B82F6'; // Blue highlight
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]); // Dashed line
         ctx.strokeRect(
-          posX - width/2 - 3, 
-          posY - height/2 - 3, 
-          width + 6, 
-          height + 6
+          posX - width/2 - 5, 
+          posY - height/2 - 5, 
+          width + 10, 
+          height + 10
         );
         
         // Reset line dash
         ctx.setLineDash([]);
         
-        // Draw resize buttons with better visibility
-        const buttonSize = 24;
-        const buttonPadding = 14;
+        // Draw resize buttons with better visibility and improved clickability
+        const buttonSize = 28;
+        const buttonPadding = 18;
         
-        // "+" button (increase size) - top right of logo
+        // "+" button (increase size) - right of logo
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.beginPath();
         ctx.arc(
@@ -161,10 +161,21 @@ export const JerseyFront = ({
           Math.PI * 2
         );
         ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(
+          posX + width/2 + buttonPadding, 
+          posY, 
+          buttonSize/2, 
+          0, 
+          Math.PI * 2
+        );
+        ctx.stroke();
         
-        // Draw "+" symbol
+        // Draw "+" symbol with improved visibility
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = 'bold 22px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -173,7 +184,7 @@ export const JerseyFront = ({
           posY
         );
         
-        // "-" button (decrease size) - top left of logo
+        // "-" button (decrease size) - left of logo
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.beginPath();
         ctx.arc(
@@ -184,10 +195,21 @@ export const JerseyFront = ({
           Math.PI * 2
         );
         ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(
+          posX - width/2 - buttonPadding, 
+          posY, 
+          buttonSize/2, 
+          0, 
+          Math.PI * 2
+        );
+        ctx.stroke();
         
-        // Draw "-" symbol
+        // Draw "-" symbol with improved visibility
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 18px Arial';
+        ctx.font = 'bold 22px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -196,13 +218,13 @@ export const JerseyFront = ({
           posY
         );
         
-        // Add more visible hint text
+        // Add more visible hint text on a semi-transparent background
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(posX - 75, posY + height/2 + 10, 150, 30);
+        ctx.fillRect(posX - 75, posY + height/2 + 15, 150, 30);
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Use + and - buttons to resize', posX, posY + height/2 + 25);
+        ctx.fillText('Nhấn + hoặc - để điều chỉnh kích thước', posX, posY + height/2 + 30);
       }
       
     } catch (e) {

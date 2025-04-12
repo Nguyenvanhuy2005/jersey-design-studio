@@ -94,6 +94,18 @@ export function CanvasJersey({
               
               if (error) {
                 console.error("Error fetching logo position:", error);
+                // For non-UUID IDs, we'll just use default positions
+                const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
+                                logo.position === 'chest_right' ? { x: 220, y: 60 } :
+                                logo.position === 'chest_center' ? { x: 150, y: 100 } :
+                                logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
+                                { x: 270, y: 40 };
+                
+                initialPositions.set(logo.id, {
+                  x: defaultPos.x,
+                  y: defaultPos.y,
+                  scale: 1.0
+                });
                 continue;
               }
               
@@ -115,6 +127,18 @@ export function CanvasJersey({
               }
             } catch (err) {
               console.error("Error in fetchLogoPositions:", err);
+              // Set default position if error occurs
+              const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
+                              logo.position === 'chest_right' ? { x: 220, y: 60 } :
+                              logo.position === 'chest_center' ? { x: 150, y: 100 } :
+                              logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
+                              { x: 270, y: 40 };
+              
+              initialPositions.set(logo.id, {
+                x: defaultPos.x,
+                y: defaultPos.y,
+                scale: 1.0
+              });
             }
           }
         }
@@ -129,6 +153,14 @@ export function CanvasJersey({
               console.warn(`Warning: Only ${logoMap.size} out of ${logos.length} logos were loaded`);
             }
             setLoadedLogos(logoMap);
+            
+            // Auto-select the first logo if only one logo exists
+            if (logos.length === 1 && logos[0].id) {
+              // Small delay to ensure the canvas is rendered first
+              setTimeout(() => {
+                console.log("Auto-selecting the only logo:", logos[0].id);
+              }, 500);
+            }
           })
           .catch(err => {
             console.error("Error loading logos:", err);
@@ -280,20 +312,47 @@ export function CanvasJersey({
     }
   }, [logos, view]);
 
+  // Add a more descriptive label for clearer instructions in Vietnamese
+  useEffect(() => {
+    if (logos && logos.length > 0 && view === 'front') {
+      const instructionDiv = document.createElement('div');
+      instructionDiv.className = 'mt-2 text-sm text-center text-gray-700';
+      instructionDiv.textContent = 'Nhấp vào logo để chọn và hiển thị nút điều chỉnh kích thước.';
+      
+      const canvas = canvasRef.current;
+      if (canvas && canvas.parentNode) {
+        // Check if instruction already exists
+        const existingInstruction = canvas.parentNode.querySelector('.mt-2.text-sm.text-center');
+        if (!existingInstruction) {
+          canvas.parentNode.appendChild(instructionDiv);
+        }
+      }
+    }
+  }, [logos, view]);
+
   return (
-    <canvas 
-      ref={canvasRef} 
-      width={canvasWidth * pixelRatio} 
-      height={canvasHeight * pixelRatio} 
-      className="jersey-canvas mx-auto cursor-move"
-      onMouseDown={startDrag}
-      onMouseMove={drag}
-      onMouseUp={endDrag}
-      onMouseLeave={endDrag}
-      style={{
-        width: `${canvasWidth}px`,
-        height: `${canvasHeight}px`
-      }}
-    />
+    <div className="relative">
+      <canvas 
+        ref={canvasRef} 
+        width={canvasWidth * pixelRatio} 
+        height={canvasHeight * pixelRatio} 
+        className="jersey-canvas mx-auto cursor-move"
+        onMouseDown={startDrag}
+        onMouseMove={drag}
+        onMouseUp={endDrag}
+        onMouseLeave={endDrag}
+        style={{
+          width: `${canvasWidth}px`,
+          height: `${canvasHeight}px`
+        }}
+      />
+      {logos && logos.length > 0 && view === 'front' && (
+        <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
+          <p className="text-sm text-gray-700">
+            Nhấp vào logo để chọn và hiển thị nút điều chỉnh kích thước (+/-)
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
