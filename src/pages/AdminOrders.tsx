@@ -59,7 +59,8 @@ const mockOrders: Order[] = [
     totalCost: 3500000,
     status: "new",
     designImage: "order-1/design.png",
-    createdAt: new Date(2023, 3, 15)
+    createdAt: new Date(2023, 3, 15),
+    referenceImages: [] // Added required property
   },
   {
     id: "order-2",
@@ -105,7 +106,8 @@ const mockOrders: Order[] = [
     totalCost: 4200000,
     status: "processing",
     designImage: "order-2/design.png",
-    createdAt: new Date(2023, 3, 20)
+    createdAt: new Date(2023, 3, 20),
+    referenceImages: [] // Added required property
   },
   {
     id: "order-3",
@@ -151,7 +153,8 @@ const mockOrders: Order[] = [
     totalCost: 5400000,
     status: "completed",
     designImage: "order-3/design.png",
-    createdAt: new Date(2023, 2, 10)
+    createdAt: new Date(2023, 2, 10),
+    referenceImages: [] // Added required property
   }
 ];
 
