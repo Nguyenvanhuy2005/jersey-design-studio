@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -224,6 +225,12 @@ export const checkStorageBucketsExist = async (): Promise<{
     const designBucketExists = buckets.some(bucket => bucket.name === 'design_images');
     const refBucketExists = buckets.some(bucket => bucket.name === 'reference_images');
     
+    console.log("Storage buckets check:", {
+      designImages: designBucketExists,
+      referenceImages: refBucketExists,
+      bucketsFound: buckets.map(b => b.name).join(', ')
+    });
+    
     return {
       designImages: designBucketExists,
       referenceImages: refBucketExists
@@ -271,8 +278,11 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
       if (createError) {
         console.error("Error creating design_images bucket:", createError);
       } else {
+        console.log("Successfully created design_images bucket");
         created.designImages = true;
       }
+    } else {
+      console.log("design_images bucket already exists");
     }
     
     // Create reference_images bucket if it doesn't exist
@@ -285,8 +295,11 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
       if (createError) {
         console.error("Error creating reference_images bucket:", createError);
       } else {
+        console.log("Successfully created reference_images bucket");
         created.referenceImages = true;
       }
+    } else {
+      console.log("reference_images bucket already exists");
     }
     
     return { 
@@ -302,4 +315,64 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
       created
     };
   }
+};
+
+/**
+ * Uploads a design image to Supabase storage with retry logic
+ * @param orderId The order ID for the path
+ * @param imageFile The image file to upload
+ * @param retries Number of retry attempts (default: 2)
+ * @returns Promise resolving to the uploaded file path or empty string on failure
+ */
+export const uploadDesignImage = async (
+  orderId: string, 
+  imageFile: File,
+  retries: number = 2
+): Promise<string> => {
+  const filePath = `${orderId}/design.png`;
+  
+  // First, ensure the bucket exists
+  await createStorageBucketsIfNeeded();
+  
+  // Try to upload with retries
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      console.log(`Uploading design image to ${filePath} (attempt ${attempt + 1}/${retries + 1})...`);
+      
+      const { data, error } = await supabase.storage
+        .from('design_images')
+        .upload(filePath, imageFile, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (error) {
+        console.error(`Error uploading design image (attempt ${attempt + 1}):`, error);
+        
+        // If this is the last attempt, give up
+        if (attempt === retries) {
+          return '';
+        }
+        
+        // Wait before retrying (increased delay with each attempt)
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        continue;
+      }
+      
+      console.log(`Successfully uploaded design image on attempt ${attempt + 1}:`, data.path);
+      return data.path;
+    } catch (err) {
+      console.error(`Exception uploading design image (attempt ${attempt + 1}):`, err);
+      
+      // If this is the last attempt, give up
+      if (attempt === retries) {
+        return '';
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+  
+  return '';
 };

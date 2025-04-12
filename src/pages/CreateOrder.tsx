@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { X } from "lucide-react";
+import { createStorageBucketsIfNeeded, uploadDesignImage } from "@/utils/image-utils";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const CreateOrder = () => {
   const [previewPlayer, setPreviewPlayer] = useState<number>(0);
   const [previewView, setPreviewView] = useState<'front' | 'back'>('front');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   
   const [teamName, setTeamName] = useState<string>("");
   const [players, setPlayers] = useState<Player[]>([]);
@@ -85,7 +87,6 @@ const CreateOrder = () => {
     setReferenceImagesPreview(updatedPreviews);
   };
   
-  // Clean up object URLs when component unmounts
   useEffect(() => {
     return () => {
       referenceImagesPreview.forEach(url => URL.revokeObjectURL(url));
@@ -204,6 +205,7 @@ const CreateOrder = () => {
   }, [productLines, players.length, logos.length]);
 
   const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string, fileName: string): Promise<File> => {
+    console.log("Converting canvas to file...");
     const imageData = canvas.toDataURL('image/png');
     
     const base64String = imageData.split(',')[1];
@@ -218,19 +220,31 @@ const CreateOrder = () => {
     const blob = new Blob([byteArray], { type: 'image/png' });
     
     const file = new File([blob], fileName, { type: 'image/png' });
+    console.log("Canvas converted to file successfully, size:", (file.size / 1024).toFixed(2), "KB");
     
     return file;
   };
 
   const generateOrderDesignImage = async (orderId: string): Promise<string> => {
     try {
+      setIsGeneratingDesign(true);
       setPreviewView('front');
       
+      // Ensure the storage buckets exist
+      const bucketsCheck = await createStorageBucketsIfNeeded();
+      if (!bucketsCheck.success) {
+        console.error("Failed to ensure storage buckets exist:", bucketsCheck.message);
+        toast.error(`Không thể khởi tạo kho lưu trữ: ${bucketsCheck.message}`);
+        return '';
+      }
+      
       // Increase delay to ensure canvas is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Waiting for canvas to fully render...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       if (jerseyCanvasRef.current) {
         console.log(`Generating order design image...`);
+        console.log("Canvas dimensions:", jerseyCanvasRef.current.width, "x", jerseyCanvasRef.current.height);
         
         const frontFileName = `design-${orderId}.png`;
         
@@ -240,36 +254,32 @@ const CreateOrder = () => {
           frontFileName
         );
         
-        const filePath = `${orderId}/design.png`;
+        // Use the new uploadDesignImage function with retry logic
+        const uploadedPath = await uploadDesignImage(orderId, designImageFile);
         
-        // Add more logging
-        console.log(`Uploading design image to ${filePath}...`);
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('design_images')
-          .upload(filePath, designImageFile, {
-            cacheControl: '3600',
-            upsert: true
-          });
-          
-        if (uploadError) {
-          console.error(`Error uploading order design image:`, uploadError);
-          toast.error(`Không thể tải lên ảnh thiết kế: ${uploadError.message}`);
+        if (!uploadedPath) {
+          console.error("Failed to upload design image after multiple attempts");
+          toast.error("Không thể tải lên ảnh thiết kế sau nhiều lần thử");
           return '';
-        } else {
-          const { data } = supabase.storage
-            .from('design_images')
-            .getPublicUrl(uploadData.path);
-            
-          console.log(`Successfully uploaded order design image: ${uploadData.path}`);
-          console.log(`Public URL: ${data.publicUrl}`);
-          toast.success(`Đã lưu hình ảnh thiết kế`);
-          return uploadData.path;
         }
+        
+        const { data } = supabase.storage
+          .from('design_images')
+          .getPublicUrl(uploadedPath);
+          
+        console.log(`Successfully uploaded order design image: ${uploadedPath}`);
+        console.log(`Public URL: ${data.publicUrl}`);
+        toast.success(`Đã lưu hình ảnh thiết kế`);
+        return uploadedPath;
+      } else {
+        console.error("Canvas reference is not available");
+        toast.error("Không thể tạo ảnh thiết kế: Canvas không khả dụng");
       }
     } catch (err) {
       console.error(`Error capturing order design image:`, err);
-      toast.error(`Có lỗi khi tạo ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast.error(`Có lỗi khi t���o ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsGeneratingDesign(false);
     }
     
     return '';
@@ -338,12 +348,25 @@ const CreateOrder = () => {
     setIsSubmitting(true);
     
     try {
+      // Ensure buckets exist before starting the order process
+      await createStorageBucketsIfNeeded();
+      
       const totalCost = calculateTotalCost();
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Generate and upload the design image
+      // Generate and upload the design image - with better tracking
+      console.log("Starting design image generation...");
       const designImagePath = await generateOrderDesignImage(orderId);
+      
+      if (!designImagePath) {
+        console.error("Failed to generate design image");
+        toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      console.log("Design image generated successfully:", designImagePath);
       
       // Upload reference images
       const referenceImagePaths = await uploadReferenceImages(orderId);
@@ -393,9 +416,10 @@ const CreateOrder = () => {
           font: printConfig.font,
           color: printConfig.backColor
         })),
-        reference_images: referenceImagePaths // Add reference image paths to design data
+        reference_images: referenceImagePaths
       };
 
+      console.log("Inserting order with design_image:", designImagePath);
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -411,6 +435,7 @@ const CreateOrder = () => {
         });
         
       if (orderError) {
+        console.error("Error creating order:", orderError);
         throw orderError;
       }
 
@@ -519,6 +544,28 @@ const CreateOrder = () => {
       toast.error("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const testDesignImage = async () => {
+    try {
+      const testId = uuidv4();
+      toast.info("Đang kiểm tra tạo ảnh thiết kế...");
+      const imagePath = await generateOrderDesignImage(testId);
+      
+      if (imagePath) {
+        const { data } = supabase.storage
+          .from('design_images')
+          .getPublicUrl(imagePath);
+        
+        toast.success("Tạo ảnh thiết kế thành công!");
+        console.log("Test design image URL:", data.publicUrl);
+      } else {
+        toast.error("Không thể tạo ảnh thiết kế");
+      }
+    } catch (err) {
+      console.error("Test design image error:", err);
+      toast.error("Lỗi khi kiểm tra tạo ảnh thiết kế");
     }
   };
 
@@ -675,6 +722,16 @@ const CreateOrder = () => {
                   <p className="text-sm text-green-700">
                     Hình ảnh thiết kế này sẽ được lưu làm hình ảnh đại diện cho toàn bộ đơn hàng khi bạn đặt đơn hàng.
                   </p>
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={testDesignImage}
+                      disabled={isGeneratingDesign}
+                    >
+                      {isGeneratingDesign ? "Đang xử lý..." : "Kiểm tra tạo ảnh"}
+                    </Button>
+                  </div>
                 </div>
               </div>
               
