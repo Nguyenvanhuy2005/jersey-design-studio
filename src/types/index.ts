@@ -95,5 +95,5 @@ export interface Order {
   createdAt?: Date;
   notes?: string;
   designImage?: string;
-  referenceImages?: string[]; // This needs to be string[] to match the expected type
+  referenceImages: string[]; // Using string[] to match what we're transforming data to
 }

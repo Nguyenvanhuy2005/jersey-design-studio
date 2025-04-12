@@ -192,16 +192,23 @@ const AdminOrders = () => {
               }
               
               // Check design_data for reference_images as fallback
-              if (order.design_data && 
-                  typeof order.design_data === 'object' && 
-                  order.design_data.reference_images && 
-                  Array.isArray(order.design_data.reference_images)) {
-                processedReferenceImages = [
-                  ...processedReferenceImages,
-                  ...order.design_data.reference_images
+              if (order.design_data) {
+                // Safely check if design_data is an object and has reference_images property
+                const designData = order.design_data as { reference_images?: any[] };
+                if (designData && 
+                    typeof designData === 'object' && 
+                    designData.reference_images && 
+                    Array.isArray(designData.reference_images)) {
+                  
+                  const refImagesFromDesignData = designData.reference_images
                     .filter(item => typeof item === 'string')
-                    .map(item => String(item))
-                ];
+                    .map(item => String(item));
+                  
+                  processedReferenceImages = [
+                    ...processedReferenceImages,
+                    ...refImagesFromDesignData
+                  ];
+                }
               }
               
               return {
