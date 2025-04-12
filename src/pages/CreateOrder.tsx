@@ -178,41 +178,72 @@ const CreateOrder = () => {
   const generatePlayerDesignImage = async (player: Player, orderId: string): Promise<string> => {
     setPreviewPlayer(players.indexOf(player));
     
-    setPreviewView('front');
+    setPreviewView('back');
     
     await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
       if (jerseyCanvasRef.current) {
-        console.log(`Generating design image for player: ${player.name} (${player.number})`);
+        console.log(`Generating back design image for player: ${player.name} (${player.number})`);
         
-        const fileName = `jersey-${orderId}-player-${player.number}.png`;
+        const backFileName = `jersey-back-${orderId}-player-${player.number}.png`;
         
-        const designImageFile = await convertCanvasToFile(
+        const backDesignImageFile = await convertCanvasToFile(
           jerseyCanvasRef.current, 
           orderId,
-          fileName
+          backFileName
         );
         
-        const filePath = `${orderId}/players/${fileName}`;
+        const backFilePath = `${orderId}/players/${backFileName}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: backUploadData, error: backUploadError } = await supabase.storage
           .from('design_images')
-          .upload(filePath, designImageFile, {
+          .upload(backFilePath, backDesignImageFile, {
             cacheControl: '3600',
             upsert: true
           });
           
-        if (uploadError) {
-          console.error(`Error uploading design image for player ${player.name}:`, uploadError);
-          return '';
+        if (backUploadError) {
+          console.error(`Error uploading back design image for player ${player.name}:`, backUploadError);
+          toast.error(`Không thể tải lên ảnh mặt sau cho cầu thủ ${player.name || player.number}`);
+        } else {
+          console.log(`Successfully uploaded back design image: ${backUploadData.path}`);
         }
         
-        console.log(`Successfully uploaded design image for player ${player.name}: ${uploadData.path}`);
-        return uploadData.path;
+        setPreviewView('front');
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const frontFileName = `jersey-front-${orderId}-player-${player.number}.png`;
+        
+        const frontDesignImageFile = await convertCanvasToFile(
+          jerseyCanvasRef.current, 
+          orderId,
+          frontFileName
+        );
+        
+        const frontFilePath = `${orderId}/players/${frontFileName}`;
+        
+        const { data: frontUploadData, error: frontUploadError } = await supabase.storage
+          .from('design_images')
+          .upload(frontFilePath, frontDesignImageFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (frontUploadError) {
+          console.error(`Error uploading front design image for player ${player.name}:`, frontUploadError);
+          toast.error(`Không thể tải lên ảnh mặt trước cho cầu thủ ${player.name || player.number}`);
+          return backUploadData?.path || '';
+        }
+        
+        console.log(`Successfully uploaded front design image: ${frontUploadData.path}`);
+        
+        return frontUploadData.path;
       }
     } catch (err) {
       console.error(`Error capturing canvas image for player ${player.name}:`, err);
+      toast.error(`Có lỗi khi tạo ảnh demo cho cầu thủ ${player.name || player.number}`);
     }
     
     return '';
@@ -333,7 +364,10 @@ const CreateOrder = () => {
       console.log(`Generating design images for ${players.length} players...`);
       
       for (const player of players) {
-        toast.info(`Đang tạo ảnh demo cho ${player.name || `cầu thủ số ${player.number}`}...`);
+        toast.info(`Đang tạo ảnh demo cho ${player.name || `cầu thủ số ${player.number}`}...`, {
+          duration: 3000,
+          id: `player-design-${player.number}`
+        });
         
         const playerDesignImage = await generatePlayerDesignImage(player, orderId);
         

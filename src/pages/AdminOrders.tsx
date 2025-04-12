@@ -312,6 +312,10 @@ const AdminOrders = () => {
     if (!designImage) return null;
     
     try {
+      if (designImage.startsWith('http')) {
+        return designImage;
+      }
+      
       const { data } = supabase.storage
         .from('design_images')
         .getPublicUrl(designImage);
@@ -475,26 +479,29 @@ const AdminOrders = () => {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {order.players.map((player, index) => (
-                                          <TableRow key={player.id || index}>
-                                            <TableCell>{player.name}</TableCell>
-                                            <TableCell>{player.number}</TableCell>
-                                            <TableCell>{player.size}</TableCell>
-                                            <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
-                                            <TableCell>
-                                              {player.design_image ? (
-                                                <img 
-                                                  src={getDesignImageUrl(player.design_image)}
-                                                  alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
-                                                  className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
-                                                  onClick={() => setSelectedImage(getDesignImageUrl(player.design_image))}
-                                                />
-                                              ) : (
-                                                <span className="text-sm text-muted-foreground">Không có</span>
-                                              )}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
+                                        {order.players.map((player, index) => {
+                                          const imageUrl = getDesignImageUrl(player.design_image);
+                                          return (
+                                            <TableRow key={player.id || index}>
+                                              <TableCell>{player.name}</TableCell>
+                                              <TableCell>{player.number}</TableCell>
+                                              <TableCell>{player.size}</TableCell>
+                                              <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
+                                              <TableCell>
+                                                {imageUrl ? (
+                                                  <img 
+                                                    src={imageUrl}
+                                                    alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
+                                                    className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
+                                                    onClick={() => setSelectedImage(imageUrl)}
+                                                  />
+                                                ) : (
+                                                  <span className="text-sm text-muted-foreground">Không có</span>
+                                                )}
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })}
                                       </TableBody>
                                     </Table>
                                   </div>
@@ -712,26 +719,29 @@ const AdminOrders = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {selectedOrder.players.map((player, index) => (
-                          <TableRow key={player.id || index}>
-                            <TableCell>{player.name}</TableCell>
-                            <TableCell>{player.number}</TableCell>
-                            <TableCell>{player.size}</TableCell>
-                            <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
-                            <TableCell>
-                              {player.design_image ? (
-                                <img 
-                                  src={getDesignImageUrl(player.design_image)}
-                                  alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
-                                  className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
-                                  onClick={() => setSelectedImage(getDesignImageUrl(player.design_image))}
-                                />
-                              ) : (
-                                <span className="text-sm text-muted-foreground">Không có</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {selectedOrder.players.map((player, index) => {
+                          const imageUrl = getDesignImageUrl(player.design_image);
+                          return (
+                            <TableRow key={player.id || index}>
+                              <TableCell>{player.name}</TableCell>
+                              <TableCell>{player.number}</TableCell>
+                              <TableCell>{player.size}</TableCell>
+                              <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
+                              <TableCell>
+                                {imageUrl ? (
+                                  <img 
+                                    src={imageUrl}
+                                    alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
+                                    className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
+                                    onClick={() => setSelectedImage(imageUrl)}
+                                  />
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">Không có</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
