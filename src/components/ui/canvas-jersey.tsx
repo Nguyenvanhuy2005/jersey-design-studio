@@ -1,6 +1,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig } from '@/types';
+import { loadLogoImages, getFont } from '@/utils/jersey-utils';
+import { loadCustomFont } from '@/utils/font-utils';
+import { useDragLogos } from '@/components/jersey/useDragLogos';
+import { JerseyFront } from '@/components/jersey/JerseyFront';
+import { JerseyBack } from '@/components/jersey/JerseyBack';
 
 interface CanvasJerseyProps {
   teamName: string;
@@ -21,81 +26,39 @@ export function CanvasJersey({
 }: CanvasJerseyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
-  const [draggedLogo, setDraggedLogo] = useState<string | null>(null);
   const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number }>>(new Map());
-  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
   const [fontFace, setFontFace] = useState<FontFace | null>(null);
+  
+  // Custom hook for logo dragging functionality
+  const { startDrag, drag, endDrag } = useDragLogos({
+    logos,
+    logoPositions,
+    setLogoPositions
+  });
 
   // Load custom font if provided
   useEffect(() => {
     if (printConfig?.customFontUrl && printConfig.customFontFile) {
       const fontName = printConfig.customFontFile.name.split('.')[0];
       
-      try {
-        const font = new FontFace(fontName, `url(${printConfig.customFontUrl})`);
-        
-        font.load().then((loadedFont) => {
-          // Add font to document
-          document.fonts.add(loadedFont);
-          setFontFace(loadedFont);
-          setLoadedFont(true);
-          console.log(`Custom font loaded: ${fontName}`);
-        }).catch((error) => {
-          console.error('Error loading custom font:', error);
+      loadCustomFont(printConfig.customFontUrl, fontName)
+        .then(loadedFont => {
+          if (loadedFont) {
+            setFontFace(loadedFont);
+            setLoadedFont(true);
+          }
         });
-      } catch (error) {
-        console.error('Error creating FontFace:', error);
-      }
     }
   }, [printConfig?.customFontUrl, printConfig?.customFontFile]);
 
   // Load logos when available
   useEffect(() => {
-    const logoMap = new Map<string, HTMLImageElement>();
-    const positionMap = new Map<string, { x: number, y: number }>(logoPositions);
-    
-    // Default positions for each logo location
-    const defaultPositions: Record<string, { x: number, y: number }> = {
-      'chest_left': { x: 80, y: 60 },
-      'chest_right': { x: 220, y: 60 },
-      'chest_center': { x: 150, y: 100 },
-      'sleeve_left': { x: 30, y: 40 },
-      'sleeve_right': { x: 270, y: 40 }
-    };
-    
-    logos.forEach(logo => {
-      if (!logo.previewUrl) return;
-      
-      const img = new Image();
-      img.src = logo.previewUrl;
-      img.onload = () => {
-        logoMap.set(logo.id!, img);
-        
-        // Set initial position if not already set
-        if (!positionMap.has(logo.id!)) {
-          const defaultPos = defaultPositions[logo.position] || { x: 150, y: 150 };
-          positionMap.set(logo.id!, { ...defaultPos });
-        }
-        
-        setLoadedLogos(new Map(logoMap));
-        setLogoPositions(new Map(positionMap));
-      };
-    });
+    loadLogoImages(logos, logoPositions)
+      .then(logoMap => {
+        setLoadedLogos(logoMap);
+      });
   }, [logos]);
-
-  // Helper function to get font for text
-  const getFont = (size: number = 20): string => {
-    let fontFamily = printConfig?.font || 'Arial';
-    
-    // If it's a default font, add fallbacks
-    if (['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(fontFamily)) {
-      return `bold ${size}px ${fontFamily}, sans-serif`;
-    } else {
-      // For custom fonts, use the loaded font name
-      return `bold ${size}px "${fontFamily}", sans-serif`;
-    }
-  };
 
   // Draw jersey on canvas
   useEffect(() => {
@@ -119,225 +82,32 @@ export function CanvasJersey({
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw jersey base
-    ctx.fillStyle = '#FFD700'; // Yellow jersey
-    
-    if (view === 'front') {
-      // Draw front jersey
-      ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.lineTo(250, 0);
-      ctx.lineTo(250, 300);
-      ctx.lineTo(50, 300);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw collar
-      ctx.fillStyle = '#1A1A1A'; // Black collar
-      ctx.beginPath();
-      ctx.moveTo(125, 0);
-      ctx.lineTo(175, 0);
-      ctx.lineTo(175, 30);
-      ctx.lineTo(125, 30);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw sleeves
-      ctx.fillStyle = '#FFD700'; // Yellow sleeves
-      ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.lineTo(20, 80);
-      ctx.lineTo(50, 80);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.beginPath();
-      ctx.moveTo(250, 0);
-      ctx.lineTo(280, 80);
-      ctx.lineTo(250, 80);
-      ctx.closePath();
-      ctx.fill();
+    // Get the font to use
+    const fontToUse = getFont(printConfig);
 
-      // Draw player number on front center (chest)
-      if (playerNumber) {
-        ctx.fillStyle = '#1A1A1A';
-        ctx.font = getFont(60);
-        ctx.textAlign = 'center';
-        ctx.fillText(playerNumber.toString(), 150, 150);
-      }
-      
-      // Draw logos based on position - now handles multiple logos at different positions
-      if (loadedLogos.size > 0) {
-        // First, draw regular front logos (chest positions)
-        logos.forEach(logo => {
-          const img = loadedLogos.get(logo.id!);
-          if (!img || logo.position === 'sleeve_left' || logo.position === 'sleeve_right') return;
-          
-          const position = logoPositions.get(logo.id!) || { 
-            x: logo.position === 'chest_left' ? 80 : 
-               logo.position === 'chest_right' ? 220 : 150,
-            y: logo.position === 'chest_center' ? 100 : 60
-          };
-          
-          const logoWidth = 60;
-          const logoHeight = 60;
-          
-          ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
-        });
-      }
-      
-      // Draw logos on sleeves - separately handle sleeve logos
-      if (loadedLogos.size > 0) {
-        logos.forEach(logo => {
-          if (logo.position !== 'sleeve_left' && logo.position !== 'sleeve_right') return;
-          
-          const img = loadedLogos.get(logo.id!);
-          if (!img) return;
-          
-          const position = logoPositions.get(logo.id!) || 
-            (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
-          
-          const logoWidth = 40;
-          const logoHeight = 40;
-          
-          ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
-        });
-      }
-      
+    // Draw the appropriate jersey view
+    if (view === 'front') {
+      // Render front jersey
+      JerseyFront({
+        ctx,
+        playerNumber,
+        loadedLogos,
+        logoPositions,
+        logos,
+        fontFamily: fontToUse
+      });
     } else {
-      // Draw back jersey
-      ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.lineTo(250, 0);
-      ctx.lineTo(250, 300);
-      ctx.lineTo(50, 300);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw collar
-      ctx.fillStyle = '#1A1A1A'; // Black collar
-      ctx.beginPath();
-      ctx.moveTo(125, 0);
-      ctx.lineTo(175, 0);
-      ctx.lineTo(175, 20);
-      ctx.lineTo(125, 20);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw sleeves
-      ctx.fillStyle = '#FFD700'; // Yellow sleeves
-      ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.lineTo(20, 80);
-      ctx.lineTo(50, 80);
-      ctx.closePath();
-      ctx.fill();
-      
-      ctx.beginPath();
-      ctx.moveTo(250, 0);
-      ctx.lineTo(280, 80);
-      ctx.lineTo(250, 80);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw player name (upper back - above number)
-      if (playerName) {
-        ctx.fillStyle = '#1A1A1A';
-        ctx.font = getFont(24);
-        ctx.textAlign = 'center';
-        ctx.fillText(playerName, 150, 50);
-      }
-      
-      // Draw player number (center back)
-      if (playerNumber) {
-        ctx.fillStyle = '#1A1A1A';
-        ctx.font = getFont(100);
-        ctx.textAlign = 'center';
-        ctx.fillText(playerNumber.toString(), 150, 150);
-      }
-      
-      // Draw team name (lower back - below number)
-      if (teamName) {
-        ctx.fillStyle = '#1A1A1A';
-        ctx.font = getFont(18);
-        ctx.textAlign = 'center';
-        ctx.fillText(teamName, 150, 230);
-      }
-      
-      // Draw pants number indicator
-      ctx.font = getFont(20);
-      ctx.fillText("PANTS", 150, 280);
+      // Render back jersey
+      JerseyBack({
+        ctx,
+        teamName,
+        playerName,
+        playerNumber,
+        fontFamily: fontToUse
+      });
     }
     
   }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont]);
-
-  // Handle logo dragging
-  const startDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (view !== 'front' || loadedLogos.size === 0) return;
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Check if click is within any logo
-    let draggedId: string | null = null;
-    
-    logos.forEach(logo => {
-      const position = logoPositions.get(logo.id!) || { x: 0, y: 0 };
-      const width = logo.position.includes('sleeve') ? 40 : 60;
-      const height = logo.position.includes('sleeve') ? 40 : 60;
-      
-      // Check if click is within the logo (accounting for centered drawing)
-      if (
-        x >= position.x - width/2 && 
-        x <= position.x + width/2 && 
-        y >= position.y - height/2 && 
-        y <= position.y + height/2
-      ) {
-        draggedId = logo.id!;
-      }
-    });
-    
-    if (draggedId) {
-      setDraggedLogo(draggedId);
-      setStartPosition({ x, y });
-    }
-  };
-
-  const drag = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!draggedLogo) return;
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const dx = x - startPosition.x;
-    const dy = y - startPosition.y;
-    
-    setLogoPositions(prev => {
-      const updatedPositions = new Map(prev);
-      const currentPosition = updatedPositions.get(draggedLogo) || { x: 0, y: 0 };
-      
-      updatedPositions.set(draggedLogo, {
-        x: currentPosition.x + dx,
-        y: currentPosition.y + dy
-      });
-      
-      return updatedPositions;
-    });
-    
-    setStartPosition({ x, y });
-  };
-
-  const endDrag = () => {
-    setDraggedLogo(null);
-  };
 
   return (
     <canvas 
