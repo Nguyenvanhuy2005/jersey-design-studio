@@ -108,7 +108,11 @@ export const OrderDetails = ({
               <img 
                 src={getDesignImageUrl(order.designImage)} 
                 alt="Design Preview" 
-                className="max-h-64 object-contain"
+                className="max-h-64 object-contain cursor-pointer"
+                onClick={() => {
+                  const imageUrl = getDesignImageUrl(order.designImage);
+                  if (imageUrl) onViewImage(imageUrl);
+                }}
               />
             </div>
           </div>
@@ -204,13 +208,24 @@ export const OrderDetails = ({
                   .getPublicUrl(imagePath).data.publicUrl;
                 
                 return (
-                  <img
+                  <div 
                     key={index}
-                    src={imageUrl}
-                    alt={`Reference Image ${index + 1}`}
-                    className="h-16 w-16 object-cover cursor-pointer rounded border hover:opacity-80"
-                    onClick={() => onViewImage(imageUrl)}
-                  />
+                    className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Reference ${index + 1}`}
+                      className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
+                      onClick={() => onViewImage(imageUrl)}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/150?text=Error';
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                      <ImageIcon className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
                 );
               })}
             </div>

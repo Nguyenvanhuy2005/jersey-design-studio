@@ -58,6 +58,7 @@ export type Database = {
           id: string
           logo_url: string | null
           notes: string | null
+          reference_images: Json | null
           status: string
           team_name: string | null
           total_cost: number
@@ -70,6 +71,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notes?: string | null
+          reference_images?: Json | null
           status?: string
           team_name?: string | null
           total_cost?: number
@@ -82,6 +84,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notes?: string | null
+          reference_images?: Json | null
           status?: string
           team_name?: string | null
           total_cost?: number
