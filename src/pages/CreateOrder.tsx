@@ -156,7 +156,7 @@ const CreateOrder = () => {
     return totalCost;
   }, [productLines, players.length, logos.length]);
 
-  const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string): Promise<File> => {
+  const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string, fileName: string): Promise<File> => {
     const imageData = canvas.toDataURL('image/png');
     
     const base64String = imageData.split(',')[1];
@@ -170,29 +170,35 @@ const CreateOrder = () => {
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'image/png' });
     
-    const file = new File([blob], `design-${orderId}.png`, { type: 'image/png' });
+    const file = new File([blob], fileName, { type: 'image/png' });
     
     return file;
   };
 
   const generatePlayerDesignImage = async (player: Player, orderId: string): Promise<string> => {
-    // Set the current player for preview
     setPreviewPlayer(players.indexOf(player));
+    
     setPreviewView('front');
     
-    // Wait for the canvas to update with the player's jersey
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
       if (jerseyCanvasRef.current) {
+        console.log(`Generating design image for player: ${player.name} (${player.number})`);
+        
+        const fileName = `jersey-${orderId}-player-${player.number}.png`;
+        
         const designImageFile = await convertCanvasToFile(
           jerseyCanvasRef.current, 
-          `${orderId}-player-${player.number}`
+          orderId,
+          fileName
         );
+        
+        const filePath = `${orderId}/players/${fileName}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('design_images')
-          .upload(`${orderId}/players/jersey-${player.number}.png`, designImageFile, {
+          .upload(filePath, designImageFile, {
             cacheControl: '3600',
             upsert: true
           });
@@ -200,8 +206,9 @@ const CreateOrder = () => {
         if (uploadError) {
           console.error(`Error uploading design image for player ${player.name}:`, uploadError);
           return '';
-        } 
+        }
         
+        console.log(`Successfully uploaded design image for player ${player.name}: ${uploadData.path}`);
         return uploadData.path;
       }
     } catch (err) {
@@ -224,16 +231,18 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Set to front view for capturing images
       setPreviewView('front');
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Save the overall design image
       let designImagePath = '';
       if (jerseyCanvasRef.current) {
         try {
-          const designImageFile = await convertCanvasToFile(jerseyCanvasRef.current, orderId);
+          const designImageFile = await convertCanvasToFile(
+            jerseyCanvasRef.current, 
+            orderId,
+            `design-${orderId}.png`
+          );
           
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('design_images')
@@ -302,7 +311,6 @@ const CreateOrder = () => {
         }))
       };
 
-      // Create the order record first
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -320,10 +328,17 @@ const CreateOrder = () => {
         throw orderError;
       }
 
-      // Generate individual jersey designs for each player
       const playersWithDesigns = [];
+      
+      console.log(`Generating design images for ${players.length} players...`);
+      
       for (const player of players) {
+        toast.info(`Đang tạo ảnh demo cho ${player.name || `cầu thủ số ${player.number}`}...`);
+        
         const playerDesignImage = await generatePlayerDesignImage(player, orderId);
+        
+        console.log(`Design image path for player ${player.name}: ${playerDesignImage}`);
+        
         playersWithDesigns.push({
           name: player.name,
           number: player.number,
@@ -334,13 +349,15 @@ const CreateOrder = () => {
         });
       }
       
-      // Insert players with their design images
       const { error: playersError } = await supabase
         .from('players')
         .insert(playersWithDesigns);
         
       if (playersError) {
+        console.error("Error adding players:", playersError);
         throw playersError;
+      } else {
+        console.log("Successfully added players with design images");
       }
       
       let fontFileUrl = null;

@@ -17,6 +17,9 @@ export const JerseyBack = ({
   playerNumber,
   fontFamily
 }: JerseyBackProps) => {
+  // Clear the canvas before drawing
+  ctx.clearRect(0, 0, ctx.canvas.width / window.devicePixelRatio, ctx.canvas.height / window.devicePixelRatio);
+  
   // Draw back jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
   ctx.beginPath();
