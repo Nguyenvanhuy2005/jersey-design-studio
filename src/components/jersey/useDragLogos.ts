@@ -9,12 +9,10 @@ interface UseDragLogosProps {
 }
 
 interface UseDragLogosReturn {
-  draggedLogo: string | null;
   selectedLogo: string | null;
   startDrag: (e: React.MouseEvent<HTMLCanvasElement>) => void;
-  drag: (e: React.MouseEvent<HTMLCanvasElement>) => void;
-  endDrag: () => void;
   handleResize: (logoId: string, scaleChange: number) => void;
+  handleMove: (logoId: string, direction: 'up' | 'down' | 'left' | 'right') => void;
   selectLogo: (id: string | null) => void;
 }
 
@@ -23,9 +21,7 @@ export const useDragLogos = ({
   logoPositions, 
   setLogoPositions 
 }: UseDragLogosProps): UseDragLogosReturn => {
-  const [draggedLogo, setDraggedLogo] = useState<string | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
-  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
   
   const startDrag = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = e.currentTarget;
@@ -41,7 +37,7 @@ export const useDragLogos = ({
     console.log(`Mouse down at coordinates: (${x}, ${y})`);
     
     // Check if click is within any logo
-    let draggedId: string | null = null;
+    let selectedId: string | null = null;
     
     // First, check if the click is on any resize button when a logo is selected
     if (selectedLogo) {
@@ -73,9 +69,34 @@ export const useDragLogos = ({
             Math.pow(y - position.y, 2)
           );
           
-          console.log(`Distance to + button: ${distToPlus}, Distance to - button: ${distToMinus}`);
+          // Check for directional buttons
+          // Up button (above logo)
+          const distToUp = Math.sqrt(
+            Math.pow(x - position.x, 2) +
+            Math.pow(y - (position.y - height/2 - buttonPadding), 2)
+          );
           
-          // Check if clicked on "+" button (using distance for circular buttons)
+          // Down button (below logo)
+          const distToDown = Math.sqrt(
+            Math.pow(x - position.x, 2) +
+            Math.pow(y - (position.y + height/2 + buttonPadding), 2)
+          );
+          
+          // Left button (left of logo)
+          const distToLeft = Math.sqrt(
+            Math.pow(x - (position.x - width/2 - buttonPadding*2), 2) +
+            Math.pow(y - position.y, 2)
+          );
+          
+          // Right button (right of logo)
+          const distToRight = Math.sqrt(
+            Math.pow(x - (position.x + width/2 + buttonPadding*2), 2) +
+            Math.pow(y - position.y, 2)
+          );
+          
+          console.log(`Distance to buttons: + (${distToPlus}), - (${distToMinus}), ↑ (${distToUp}), ↓ (${distToDown}), ← (${distToLeft}), → (${distToRight})`);
+          
+          // Check if clicked on any button (using distance for circular buttons)
           // Increased detection radius for easier clicking
           if (distToPlus <= buttonSize/2 + 5) {
             console.log("+ button clicked");
@@ -83,11 +104,33 @@ export const useDragLogos = ({
             return; // Exit early as we handled the button click
           }
           
-          // Check if clicked on "-" button (using distance for circular buttons)
-          // Increased detection radius for easier clicking
           if (distToMinus <= buttonSize/2 + 5) {
             console.log("- button clicked");
             handleResize(selectedLogo, -0.1); // Decrease size by 10%
+            return; // Exit early as we handled the button click
+          }
+          
+          if (distToUp <= buttonSize/2 + 5) {
+            console.log("↑ button clicked");
+            handleMove(selectedLogo, 'up');
+            return; // Exit early as we handled the button click
+          }
+          
+          if (distToDown <= buttonSize/2 + 5) {
+            console.log("↓ button clicked");
+            handleMove(selectedLogo, 'down');
+            return; // Exit early as we handled the button click
+          }
+          
+          if (distToLeft <= buttonSize/2 + 5) {
+            console.log("← button clicked");
+            handleMove(selectedLogo, 'left');
+            return; // Exit early as we handled the button click
+          }
+          
+          if (distToRight <= buttonSize/2 + 5) {
+            console.log("→ button clicked");
+            handleMove(selectedLogo, 'right');
             return; // Exit early as we handled the button click
           }
         }
@@ -125,17 +168,15 @@ export const useDragLogos = ({
         y >= position.y - height/2 && 
         y <= position.y + height/2
       ) {
-        draggedId = logo.id;
+        selectedId = logo.id;
         console.log(`Selected logo: ${logo.id}`);
         break; // Exit the loop once we've found a match
       }
     }
     
-    if (draggedId) {
-      setDraggedLogo(draggedId);
-      setSelectedLogo(draggedId);
-      setStartPosition({ x, y });
-      console.log(`Selected and started dragging logo: ${draggedId}`);
+    if (selectedId) {
+      setSelectedLogo(selectedId);
+      console.log(`Selected logo: ${selectedId}`);
     } else {
       // If clicked outside any logo, deselect
       console.log("No logo selected, deselecting");
@@ -143,45 +184,43 @@ export const useDragLogos = ({
     }
   }, [logos, logoPositions]);
   
-  const drag = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!draggedLogo) return;
-    
-    const canvas = e.currentTarget;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    // Improve coordinate calculation with correct scaling for high-DPI displays
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX / window.devicePixelRatio;
-    const y = (e.clientY - rect.top) * scaleY / window.devicePixelRatio;
-    
-    const dx = x - startPosition.x;
-    const dy = y - startPosition.y;
+  // Move handler for directional buttons
+  const handleMove = useCallback((logoId: string, direction: 'up' | 'down' | 'left' | 'right') => {
+    const moveDistance = 5; // Move 5px at a time
     
     setLogoPositions(prev => {
       const updatedPositions = new Map(prev);
-      const currentPosition = updatedPositions.get(draggedLogo) || { 
-        x: 0, 
-        y: 0,
-        scale: 1.0
-      };
+      const currentPosition = updatedPositions.get(logoId) || { x: 0, y: 0, scale: 1.0 };
       
-      updatedPositions.set(draggedLogo, {
-        x: currentPosition.x + dx,
-        y: currentPosition.y + dy,
+      let newX = currentPosition.x;
+      let newY = currentPosition.y;
+      
+      switch (direction) {
+        case 'up':
+          newY = Math.max(20, currentPosition.y - moveDistance); // Prevent moving out of canvas
+          break;
+        case 'down':
+          newY = Math.min(280, currentPosition.y + moveDistance); // Prevent moving out of canvas
+          break;
+        case 'left':
+          newX = Math.max(20, currentPosition.x - moveDistance); // Prevent moving out of canvas
+          break;
+        case 'right':
+          newX = Math.min(280, currentPosition.x + moveDistance); // Prevent moving out of canvas
+          break;
+      }
+      
+      console.log(`Moving logo ${logoId} ${direction}: (${currentPosition.x}, ${currentPosition.y}) -> (${newX}, ${newY})`);
+      
+      updatedPositions.set(logoId, {
+        x: newX,
+        y: newY,
         scale: currentPosition.scale
       });
       
       return updatedPositions;
     });
-    
-    setStartPosition({ x, y });
-  }, [draggedLogo, setLogoPositions]);
-  
-  const endDrag = useCallback(() => {
-    setDraggedLogo(null);
-  }, []);
+  }, [setLogoPositions]);
   
   // Resize handler for buttons
   const handleResize = useCallback((logoId: string, scaleChange: number) => {
@@ -216,12 +255,10 @@ export const useDragLogos = ({
   }, []);
   
   return {
-    draggedLogo,
     selectedLogo,
     startDrag,
-    drag,
-    endDrag,
     handleResize,
+    handleMove,
     selectLogo
   };
 };

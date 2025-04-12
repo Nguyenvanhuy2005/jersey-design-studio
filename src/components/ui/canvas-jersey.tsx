@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -40,12 +39,11 @@ export function CanvasJersey({
   const canvasWidth = 300;
   const canvasHeight = 300;
 
-  // Custom hook for logo dragging and resizing functionality
+  // Custom hook for logo selection, movement and resizing functionality
   const { 
     startDrag, 
-    drag, 
-    endDrag, 
     handleResize,
+    handleMove,
     selectedLogo 
   } = useDragLogos({
     logos,
@@ -175,7 +173,7 @@ export function CanvasJersey({
     }
   }, [logos]);
   
-  // Save logo positions to database when they change
+  // Save logo positions to database when they change - with improved error handling
   useEffect(() => {
     // Skip if no logos or positions
     if (logos.length === 0 || logoPositions.size === 0) return;
@@ -201,11 +199,13 @@ export function CanvasJersey({
           
           if (error) {
             console.error(`Error updating position for logo ${logoId}:`, error);
+            toast.error(`Không thể lưu vị trí logo: ${error.message}`);
           } else {
             console.log(`Updated position for logo ${logoId}:`, position);
           }
         } catch (err) {
           console.error("Error saving logo position:", err);
+          toast.error(`Không thể lưu vị trí logo: ${err}`);
         }
       }
     }, 500); // 500ms debounce
@@ -263,7 +263,7 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
-    console.log('Selected logo for resize controls:', selectedLogo);
+    console.log('Selected logo for control buttons:', selectedLogo);
     
     // Clear canvas with proper scaling
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -284,7 +284,8 @@ export function CanvasJersey({
         fontFamily: fontToUse,
         highQuality: true,
         selectedLogo,
-        onLogoResize: handleResize
+        onLogoResize: handleResize,
+        onLogoMove: handleMove
       });
     } else {
       console.log('Rendering back jersey view');
@@ -300,13 +301,13 @@ export function CanvasJersey({
     
   }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo]);
 
-  // Instructions for logo drag and resize
+  // Instructions for logo selection and control
   useEffect(() => {
     if (logos && logos.length > 0 && view === 'front') {
       toast.info(
-        "Bạn có thể kéo logo để thay đổi vị trí và nhấn vào logo để hiển thị nút điều chỉnh kích thước (+/-).",
+        "Nhấn vào logo để chọn, sử dụng các nút +/- để thay đổi kích thước và ←/→/↑/↓ để di chuyển logo.",
         { 
-          id: "logo-drag-instructions",
+          id: "logo-instructions",
           duration: 5000
         }
       );
@@ -319,20 +320,18 @@ export function CanvasJersey({
         ref={canvasRef} 
         width={canvasWidth * pixelRatio} 
         height={canvasHeight * pixelRatio} 
-        className="jersey-canvas mx-auto cursor-move"
+        className="jersey-canvas mx-auto"
         onMouseDown={startDrag}
-        onMouseMove={drag}
-        onMouseUp={endDrag}
-        onMouseLeave={endDrag}
         style={{
           width: `${canvasWidth}px`,
-          height: `${canvasHeight}px`
+          height: `${canvasHeight}px`,
+          cursor: 'pointer'
         }}
       />
       {logos && logos.length > 0 && view === 'front' && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
-            Nhấp vào logo để chọn và hiển thị nút điều chỉnh kích thước (+/-)
+            Nhấp vào logo để chọn và hiển thị các nút điều khiển (+/-, ←/→/↑/↓)
           </p>
         </div>
       )}

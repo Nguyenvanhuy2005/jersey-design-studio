@@ -2,7 +2,7 @@
 import React from 'react';
 import { Logo } from '@/types';
 import { getFont } from '@/utils/jersey-utils';
-import { Plus, Minus } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Plus, Minus } from 'lucide-react';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
@@ -13,6 +13,7 @@ interface JerseyFrontProps {
   fontFamily: string;
   highQuality?: boolean;
   selectedLogo?: string | null;
+  onLogoMove?: (logoId: string, direction: 'up' | 'down' | 'left' | 'right') => void;
   onLogoResize?: (logoId: string, scaleChange: number) => void;
 }
 
@@ -25,6 +26,7 @@ export const JerseyFront = ({
   fontFamily,
   highQuality = false,
   selectedLogo = null,
+  onLogoMove,
   onLogoResize
 }: JerseyFrontProps) => {
   // Draw front jersey
@@ -71,7 +73,7 @@ export const JerseyFront = ({
     ctx.fillText(playerNumber.toString(), 150, 150);
   }
   
-  // Enhanced logo drawing function with better selection and resizing UX
+  // Enhanced logo drawing function with better selection and control buttons
   const drawLogo = (
     img: HTMLImageElement, 
     posX: number, 
@@ -128,10 +130,9 @@ export const JerseyFront = ({
         height
       );
       
-      // If this logo is selected, draw a highlight around it
+      // If this logo is selected, draw a highlight around it and control buttons
       if (selectedLogo === logoId) {
-        // Clear console log for production
-        console.log(`Rendering selected logo: ${logoId} with resize buttons`);
+        console.log(`Rendering selected logo: ${logoId} with resize and movement buttons`);
         
         // Draw selection outline with more visibility
         ctx.strokeStyle = '#3B82F6'; // Blue highlight
@@ -147,91 +148,61 @@ export const JerseyFront = ({
         // Reset line dash
         ctx.setLineDash([]);
         
-        // Draw resize buttons with better visibility, larger size for easier clicking
+        // Button styling config
         const buttonSize = 32; // Increased button size
         const buttonPadding = 20; // Increased padding
         
-        // "+" button (increase size) - right of logo
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.beginPath();
-        ctx.arc(
-          posX + width/2 + buttonPadding, 
-          posY, 
-          buttonSize/2, 
-          0, 
-          Math.PI * 2
-        );
-        ctx.fill();
+        // Helper function for drawing circular buttons
+        const drawButton = (x: number, y: number, icon: string) => {
+          // Button background
+          ctx.fillStyle = 'rgba(0,0,0,0.8)';
+          ctx.beginPath();
+          ctx.arc(x, y, buttonSize/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // White border around button
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, buttonSize/2, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Button icon/text
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 24px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icon, x, y);
+        };
         
-        // Add white border around button for contrast
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(
-          posX + width/2 + buttonPadding, 
-          posY, 
-          buttonSize/2, 
-          0, 
-          Math.PI * 2
-        );
-        ctx.stroke();
+        // Draw movement buttons
+        // Up button
+        drawButton(posX, posY - height/2 - buttonPadding, "↑");
         
-        // Draw "+" symbol with improved visibility
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 24px Arial'; // Larger font
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(
-          "+",
-          posX + width/2 + buttonPadding,
-          posY
-        );
+        // Down button
+        drawButton(posX, posY + height/2 + buttonPadding, "↓");
         
-        // "-" button (decrease size) - left of logo
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.beginPath();
-        ctx.arc(
-          posX - width/2 - buttonPadding, 
-          posY, 
-          buttonSize/2, 
-          0, 
-          Math.PI * 2
-        );
-        ctx.fill();
+        // Left button
+        drawButton(posX - width/2 - buttonPadding*2, posY, "←");
         
-        // Add white border around button for contrast
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(
-          posX - width/2 - buttonPadding, 
-          posY, 
-          buttonSize/2, 
-          0, 
-          Math.PI * 2
-        );
-        ctx.stroke();
+        // Right button
+        drawButton(posX + width/2 + buttonPadding*2, posY, "→");
         
-        // Draw "-" symbol with improved visibility
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 24px Arial'; // Larger font
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(
-          "-",
-          posX - width/2 - buttonPadding,
-          posY
-        );
+        // Draw resize buttons
+        // "+" button (increase size)
+        drawButton(posX + width/2 + buttonPadding, posY, "+");
+        
+        // "-" button (decrease size)
+        drawButton(posX - width/2 - buttonPadding, posY, "-");
         
         // Add more visible hint text on a semi-transparent background
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(posX - 75, posY + height/2 + 15, 150, 30);
+        ctx.fillRect(posX - 120, posY + height/2 + 15, 240, 30);
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Nhấn + hoặc - để điều chỉnh kích thước', posX, posY + height/2 + 30);
+        ctx.fillText('Nhấn nút +/- để thay đổi kích thước và ←/→/↑/↓ để di chuyển', posX, posY + height/2 + 30);
       }
-      
     } catch (e) {
       console.error('Error drawing logo:', e);
     }
