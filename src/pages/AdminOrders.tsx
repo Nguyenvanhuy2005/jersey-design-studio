@@ -188,13 +188,13 @@ const AdminOrders = () => {
               createdAt: new Date(order.created_at || ''),
               notes: order.notes || '',
               designImage: order.design_image || '',
+              referenceImages: order.design_data?.reference_images || [],
               players: order.players ? order.players.map((player: any) => ({
                 id: player.id,
                 name: player.name || '',
                 number: player.number,
                 size: player.size as 'S' | 'M' | 'L' | 'XL',
-                printImage: player.print_image || false,
-                design_image: player.design_image || ''
+                printImage: player.print_image || false
               })) : [],
               productLines: order.product_lines ? order.product_lines.map((line: any) => ({
                 id: line.id,
@@ -475,30 +475,16 @@ const AdminOrders = () => {
                                           <TableHead>Số áo</TableHead>
                                           <TableHead>Kích thước</TableHead>
                                           <TableHead>In hình</TableHead>
-                                          <TableHead>Hình ảnh demo</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
                                         {order.players.map((player, index) => {
-                                          const imageUrl = getDesignImageUrl(player.design_image);
                                           return (
                                             <TableRow key={player.id || index}>
                                               <TableCell>{player.name}</TableCell>
                                               <TableCell>{player.number}</TableCell>
                                               <TableCell>{player.size}</TableCell>
                                               <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
-                                              <TableCell>
-                                                {imageUrl ? (
-                                                  <img 
-                                                    src={imageUrl}
-                                                    alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
-                                                    className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
-                                                    onClick={() => setSelectedImage(imageUrl)}
-                                                  />
-                                                ) : (
-                                                  <span className="text-sm text-muted-foreground">Không có</span>
-                                                )}
-                                              </TableCell>
                                             </TableRow>
                                           );
                                         })}
@@ -715,30 +701,16 @@ const AdminOrders = () => {
                           <TableHead>Số áo</TableHead>
                           <TableHead>Kích thước</TableHead>
                           <TableHead>In hình</TableHead>
-                          <TableHead>Hình ảnh demo</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedOrder.players.map((player, index) => {
-                          const imageUrl = getDesignImageUrl(player.design_image);
                           return (
                             <TableRow key={player.id || index}>
                               <TableCell>{player.name}</TableCell>
                               <TableCell>{player.number}</TableCell>
                               <TableCell>{player.size}</TableCell>
                               <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
-                              <TableCell>
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl}
-                                    alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
-                                    className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
-                                    onClick={() => setSelectedImage(imageUrl)}
-                                  />
-                                ) : (
-                                  <span className="text-sm text-muted-foreground">Không có</span>
-                                )}
-                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -799,6 +771,29 @@ const AdminOrders = () => {
                   </Button>
                 </div>
               </div>
+
+                {selectedOrder.referenceImages && selectedOrder.referenceImages.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedOrder.referenceImages.map((imagePath, index) => {
+                        const imageUrl = supabase.storage
+                          .from('reference_images')
+                          .getPublicUrl(imagePath).data.publicUrl;
+                        
+                        return (
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Reference Image ${index + 1}`}
+                            className="h-16 w-16 object-cover cursor-pointer rounded border hover:opacity-80"
+                            onClick={() => setSelectedImage(imageUrl)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
             </>
           )}
         </DialogContent>
