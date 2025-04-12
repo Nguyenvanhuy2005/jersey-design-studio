@@ -56,6 +56,33 @@ export interface ProductLine {
   content: string;
 }
 
+export interface DesignData {
+  logos?: Array<{
+    logo_id: string;
+    position: string;
+    x_position: number;
+    y_position: number;
+    scale: number;
+  }>;
+  player_name?: {
+    position: string;
+    content: string;
+    font: string;
+    font_file?: string;
+    color: string;
+    material: string;
+  };
+  player_number?: {
+    position: string;
+    content: string;
+    font: string;
+    font_file?: string;
+    color: string;
+    material: string;
+  };
+  reference_images?: string[];
+}
+
 export interface Order {
   id?: string;
   teamName: string;
