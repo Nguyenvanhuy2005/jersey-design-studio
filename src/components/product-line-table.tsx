@@ -47,6 +47,26 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
     onProductLinesChange(updatedProductLines);
   };
 
+  const printPositions = [
+    { value: "In số quần", label: "In số quần" },
+    { value: "In số lưng", label: "In số lưng" },
+    { value: "In trên số lưng", label: "In trên số lưng" },
+    { value: "In dưới số lưng", label: "In dưới số lưng" },
+    { value: "In logo tay trái", label: "In logo tay trái" },
+    { value: "In logo tay phải", label: "In logo tay phải" },
+    { value: "In logo ngực trái", label: "In logo ngực trái" },
+    { value: "In logo ngực phải", label: "In logo ngực phải" },
+    { value: "In logo giữa bụng", label: "In logo giữa bụng" },
+    { value: "In số tay trái", label: "In số tay trái" },
+    { value: "In số tay phải", label: "In số tay phải" },
+    { value: "In số giữa bụng", label: "In số giữa bụng" }
+  ];
+
+  const materialOptions = [
+    { value: "In chuyển nhiệt", label: "In chuyển nhiệt" },
+    { value: "In decal", label: "In decal" }
+  ];
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Sản phẩm in</h2>
@@ -108,11 +128,9 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
             <SelectValue placeholder="Vị trí in" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Lưng trên">Lưng trên</SelectItem>
-            <SelectItem value="Lưng giữa">Lưng giữa</SelectItem>
-            <SelectItem value="Lưng dưới">Lưng dưới</SelectItem>
-            <SelectItem value="Tay">Tay</SelectItem>
-            <SelectItem value="Ống quần">Ống quần</SelectItem>
+            {printPositions.map(option => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         
@@ -124,8 +142,9 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
             <SelectValue placeholder="Chất liệu" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="In chuyển nhiệt">In chuyển nhiệt</SelectItem>
-            <SelectItem value="In trực tiếp">In trực tiếp</SelectItem>
+            {materialOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         

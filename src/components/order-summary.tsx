@@ -1,48 +1,44 @@
 
 import { useCallback, useMemo } from "react";
-import { Order, Player, ProductLine } from "@/types";
+import { Logo, Player, ProductLine } from "@/types";
 
 interface OrderSummaryProps {
   teamName: string;
   players: Player[];
+  logos?: Logo[];
   productLines: ProductLine[];
 }
 
-export function OrderSummary({ teamName, players, productLines }: OrderSummaryProps) {
-  // Calculate costs
+export function OrderSummary({ teamName, players, logos = [], productLines }: OrderSummaryProps) {
+  // Calculate costs based on position
   const calculateCost = useCallback((position: string): number => {
-    switch (position) {
-      case "Lưng trên":
-      case "Lưng giữa": 
-      case "Lưng dưới":
-      case "Tay":
-      case "Ống quần":
-        return 10000; // 10,000 VND
-      default:
-        return 0;
+    if (position.includes("logo")) {
+      return 20000; // 20,000 VND for logo positions
+    } else {
+      return 10000; // 10,000 VND for number/text positions
     }
   }, []);
-
-  // Calculate logo cost - assuming there's a logo if any player has printImage = true
-  const logoPrice = 20000; // 20,000 VND
-  const hasLogo = useMemo(() => players.some(p => p.printImage), [players]);
-  const logoCost = hasLogo ? logoPrice : 0;
 
   // Calculate product line costs
   const productLineCosts = useMemo(() => {
     return productLines.map(line => ({
-      description: `${line.position} (${line.product})`,
+      description: line.position,
       quantity: players.length,
       unitPrice: calculateCost(line.position),
       total: players.length * calculateCost(line.position)
     }));
   }, [players.length, productLines, calculateCost]);
 
+  // Logo costs - now calculated based on number of logos
+  const logosCost = useMemo(() => {
+    return logos.length * 20000; // 20,000 VND per logo
+  }, [logos.length]);
+
   // Total cost
   const totalCost = useMemo(() => {
     const lineTotal = productLineCosts.reduce((sum, item) => sum + item.total, 0);
-    return lineTotal + logoCost;
-  }, [productLineCosts, logoCost]);
+    return lineTotal + logosCost;
+  }, [productLineCosts, logosCost]);
 
   return (
     <div className="bg-secondary/10 rounded-md p-4 space-y-4">
@@ -50,10 +46,13 @@ export function OrderSummary({ teamName, players, productLines }: OrderSummaryPr
       
       <div className="space-y-2">
         <p>
-          <span className="font-semibold">Tên đội:</span> {teamName}
+          <span className="font-semibold">Tên đội:</span> {teamName || "(Không có)"}
         </p>
         <p>
           <span className="font-semibold">Số lượng áo:</span> {players.length}
+        </p>
+        <p>
+          <span className="font-semibold">Số lượng logo:</span> {logos.length}
         </p>
       </div>
       
@@ -80,12 +79,12 @@ export function OrderSummary({ teamName, players, productLines }: OrderSummaryPr
                 </tr>
               ))}
               
-              {hasLogo && (
+              {logos.length > 0 && (
                 <tr className="border-b">
-                  <td className="p-2">Logo</td>
-                  <td className="text-center p-2">1</td>
-                  <td className="text-right p-2">{logoPrice.toLocaleString()} VNĐ</td>
-                  <td className="text-right p-2">{logoCost.toLocaleString()} VNĐ</td>
+                  <td className="p-2">Logo ({logos.length})</td>
+                  <td className="text-center p-2">{logos.length}</td>
+                  <td className="text-right p-2">20,000 VNĐ</td>
+                  <td className="text-right p-2">{logosCost.toLocaleString()} VNĐ</td>
                 </tr>
               )}
               

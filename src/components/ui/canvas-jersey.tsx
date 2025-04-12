@@ -77,7 +77,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
       ctx.closePath();
       ctx.fill();
 
-      // Draw player number on front (chest)
+      // Draw player number on front center (chest)
       if (playerNumber) {
         ctx.fillStyle = '#1A1A1A';
         ctx.font = 'bold 60px Arial';
@@ -85,12 +85,29 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
       
-      // Draw logo if available
+      // Draw logo on chest if available
       if (logo) {
         const logoWidth = 60;
         const logoHeight = 60;
         ctx.drawImage(logo, logoPosition.x, logoPosition.y, logoWidth, logoHeight);
       }
+      
+      // Additional positions for front
+      // Draw chest left number/text (placeholder)
+      ctx.fillStyle = '#1A1A1A';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText("L", 80, 100); // Left chest indicator
+      
+      // Draw chest right number/text (placeholder)
+      ctx.fillText("R", 220, 100); // Right chest indicator
+      
+      // Draw sleeve left number (placeholder)
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText("SL", 30, 60); // Sleeve left indicator
+      
+      // Draw sleeve right number (placeholder)
+      ctx.fillText("SR", 270, 60); // Sleeve right indicator
       
     } else {
       // Draw back jersey
@@ -128,7 +145,7 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
       ctx.closePath();
       ctx.fill();
       
-      // Draw player name (upper back)
+      // Draw player name (upper back - above number)
       if (playerName) {
         ctx.fillStyle = '#1A1A1A';
         ctx.font = 'bold 24px Arial';
@@ -144,11 +161,17 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
       
-      // Draw team name (lower back)
-      ctx.fillStyle = '#1A1A1A';
-      ctx.font = 'bold 18px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(teamName, 150, 230);
+      // Draw team name (lower back - below number)
+      if (teamName) {
+        ctx.fillStyle = '#1A1A1A';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(teamName, 150, 230);
+      }
+      
+      // Draw pants number indicator
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText("PANTS", 150, 280);
     }
     
   }, [teamName, playerName, playerNumber, logo, view, logoPosition]);

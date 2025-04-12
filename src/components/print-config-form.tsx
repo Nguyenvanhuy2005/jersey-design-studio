@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrintConfig } from "@/types";
 
@@ -25,6 +26,31 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     setOpen(false);
   };
 
+  const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fontUrl = URL.createObjectURL(file);
+    setTempConfig(prev => ({
+      ...prev,
+      customFontFile: file,
+      customFontUrl: fontUrl
+    }));
+  };
+
+  const materialOptions = [
+    { value: "In chuyển nhiệt", label: "In chuyển nhiệt" },
+    { value: "In decal", label: "In decal" }
+  ];
+
+  const colorOptions = [
+    { value: "Đen", label: "Đen" },
+    { value: "Trắng", label: "Trắng" },
+    { value: "Đỏ", label: "Đỏ" },
+    { value: "Vàng", label: "Vàng" },
+    { value: "Xanh", label: "Xanh" }
+  ];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -38,22 +64,43 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
           {/* Font selection */}
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="font">Font chữ/số mặc định</Label>
-            <Select
-              value={tempConfig.font}
-              onValueChange={(value) => setTempConfig(prev => ({ ...prev, font: value }))}
-            >
-              <SelectTrigger id="font">
-                <SelectValue placeholder="Chọn font" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Arial">Arial</SelectItem>
-                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                <SelectItem value="Helvetica">Helvetica</SelectItem>
-                <SelectItem value="Roboto">Roboto</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col md:flex-row md:items-end space-y-2 md:space-y-0 md:space-x-2">
+              <div className="flex-1">
+                <Select
+                  value={tempConfig.font}
+                  onValueChange={(value) => setTempConfig(prev => ({ ...prev, font: value }))}
+                >
+                  <SelectTrigger id="font">
+                    <SelectValue placeholder="Chọn font" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Arial">Arial</SelectItem>
+                    <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                    <SelectItem value="Helvetica">Helvetica</SelectItem>
+                    <SelectItem value="Roboto">Roboto</SelectItem>
+                    <SelectItem value="Open Sans">Open Sans</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex-1">
+                <Label htmlFor="customFont" className="mb-2 block">Tải lên font tùy chỉnh (.ttf/.otf)</Label>
+                <Input 
+                  id="customFont" 
+                  type="file" 
+                  accept=".ttf,.otf" 
+                  onChange={handleCustomFontUpload}
+                />
+              </div>
+            </div>
+            
+            {tempConfig.customFontUrl && (
+              <p className="text-sm text-muted-foreground">
+                Đã tải font tùy chỉnh: {tempConfig.customFontFile?.name}
+              </p>
+            )}
           </div>
           
           {/* Back material */}
@@ -67,8 +114,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn chất liệu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="In chuyển nhiệt">In chuyển nhiệt</SelectItem>
-                <SelectItem value="In trực tiếp">In trực tiếp</SelectItem>
+                {materialOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -84,8 +132,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn màu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Đen">Đen</SelectItem>
-                <SelectItem value="Trắng">Trắng</SelectItem>
+                {colorOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -101,8 +150,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn chất liệu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="In chuyển nhiệt">In chuyển nhiệt</SelectItem>
-                <SelectItem value="In trực tiếp">In trực tiếp</SelectItem>
+                {materialOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -118,8 +168,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn màu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Đen">Đen</SelectItem>
-                <SelectItem value="Trắng">Trắng</SelectItem>
+                {colorOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -135,8 +186,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn chất liệu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="In chuyển nhiệt">In chuyển nhiệt</SelectItem>
-                <SelectItem value="In trực tiếp">In trực tiếp</SelectItem>
+                {materialOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -152,8 +204,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn màu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Đen">Đen</SelectItem>
-                <SelectItem value="Trắng">Trắng</SelectItem>
+                {colorOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -169,8 +222,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn chất liệu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="In chuyển nhiệt">In chuyển nhiệt</SelectItem>
-                <SelectItem value="In trực tiếp">In trực tiếp</SelectItem>
+                {materialOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -186,8 +240,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                 <SelectValue placeholder="Chọn màu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Đen">Đen</SelectItem>
-                <SelectItem value="Trắng">Trắng</SelectItem>
+                {colorOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

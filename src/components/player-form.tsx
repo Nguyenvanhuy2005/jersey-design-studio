@@ -24,7 +24,10 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
   });
 
   const addPlayer = () => {
-    if (!newPlayer.name || newPlayer.number <= 0) return;
+    if (newPlayer.number <= 0) {
+      alert("Vui lòng nhập số áo lớn hơn 0");
+      return;
+    }
     
     const updatedPlayers = [...players, { ...newPlayer, id: `player-${Date.now()}` }];
     onPlayersChange(updatedPlayers);
@@ -74,7 +77,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
             <tbody>
               {players.map((player, index) => (
                 <tr key={player.id || index} className="border-b border-muted">
-                  <td className="p-2">{player.name}</td>
+                  <td className="p-2">{player.name || "(Không tên)"}</td>
                   <td className="p-2">{player.number}</td>
                   <td className="p-2">{player.size}</td>
                   <td className="p-2">{player.printImage ? "Có" : "Không"}</td>
@@ -98,7 +101,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
             id="playerName"
             value={newPlayer.name}
             onChange={(e) => setNewPlayer(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="Nhập tên cầu thủ"
+            placeholder="Tên cầu thủ (không bắt buộc)"
           />
         </div>
         
@@ -155,7 +158,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
           onChange={handleExcelUpload}
         />
         <p className="text-xs text-muted-foreground mt-2">
-          Format: Lưng trên (tên), Lưng giữa (số), Lưng dưới (đội), In hình (Yes/No)
+          Format: Tên cầu thủ (không bắt buộc), Số áo, Kích thước, In hình (Yes/No)
         </p>
       </div>
     </div>

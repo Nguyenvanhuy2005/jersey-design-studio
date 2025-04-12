@@ -7,9 +7,20 @@ export interface Player {
   printImage: boolean;
 }
 
+export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';
+
+export interface Logo {
+  id?: string;
+  file: File;
+  position: LogoPosition;
+  previewUrl: string;
+}
+
 export interface PrintConfig {
   id?: string;
   font: string;
+  customFontFile?: File;
+  customFontUrl?: string;
   backMaterial: string;
   backColor: string;
   frontMaterial: string;
@@ -19,6 +30,20 @@ export interface PrintConfig {
   legMaterial: string;
   legColor: string;
 }
+
+export type PrintPosition = 
+  | 'pants_number' 
+  | 'back_number' 
+  | 'above_back_number' 
+  | 'below_back_number'
+  | 'logo_sleeve_left'
+  | 'logo_sleeve_right'
+  | 'logo_chest_left'
+  | 'logo_chest_right'
+  | 'logo_chest_center'
+  | 'number_sleeve_left'
+  | 'number_sleeve_right'
+  | 'number_chest_center';
 
 export interface ProductLine {
   id: string;
@@ -34,7 +59,7 @@ export interface Order {
   id?: string;
   teamName: string;
   players: Player[];
-  logoUrl?: string;
+  logos?: Logo[];
   printConfig: PrintConfig;
   productLines: ProductLine[];
   totalCost: number;
