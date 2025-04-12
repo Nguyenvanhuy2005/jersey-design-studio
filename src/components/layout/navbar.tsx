@@ -1,0 +1,40 @@
+
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+export function Navbar() {
+  return (
+    <header className="bg-secondary text-secondary-foreground">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Link to="/" className="font-bold text-xl">
+            Jersey Design Studio
+          </Link>
+        </div>
+        
+        <nav className="hidden md:flex items-center gap-6">
+          <Link to="/" className="hover:text-primary transition-colors">
+            Trang chủ
+          </Link>
+          <Link to="/create-order" className="hover:text-primary transition-colors">
+            Tạo đơn hàng
+          </Link>
+        </nav>
+        
+        <div className="flex items-center gap-2">
+          <Link to="/admin">
+            <Button variant="outline" className="text-secondary-foreground">
+              Đăng nhập Admin
+            </Button>
+          </Link>
+          
+          <Link to="/create-order">
+            <Button>
+              Tạo đơn hàng
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
