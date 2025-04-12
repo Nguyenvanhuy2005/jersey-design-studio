@@ -24,7 +24,8 @@ export const getFont = (printConfig?: PrintConfig, size: number = 20): string =>
 
 export const loadLogoImages = (
   logos: Logo[], 
-  logoPositions: Map<string, { x: number, y: number }>
+  logoPositions: Map<string, { x: number, y: number }>,
+  highQuality: boolean = false
 ): Promise<Map<string, HTMLImageElement>> => {
   return new Promise((resolve) => {
     const logoMap = new Map<string, HTMLImageElement>();
@@ -48,7 +49,18 @@ export const loadLogoImages = (
       }
       
       const img = new Image();
-      img.src = logo.previewUrl;
+      
+      // Set image attributes for high quality
+      if (highQuality) {
+        // Prevent browser caching which might lead to low quality
+        img.src = `${logo.previewUrl}?quality=high&t=${Date.now()}`;
+        
+        // Use crossOrigin for CORS if needed (for Supabase storage)
+        img.crossOrigin = 'anonymous';
+      } else {
+        img.src = logo.previewUrl;
+      }
+      
       img.onload = () => {
         logoMap.set(logo.id!, img);
         
@@ -64,6 +76,7 @@ export const loadLogoImages = (
         }
       };
       img.onerror = () => {
+        console.error(`Failed to load logo image: ${logo.previewUrl}`);
         loadedCount++;
         if (loadedCount === logos.length) {
           resolve(logoMap);

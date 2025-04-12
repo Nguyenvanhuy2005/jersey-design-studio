@@ -53,11 +53,14 @@ export const JerseyBack = ({
   ctx.closePath();
   ctx.fill();
   
+  // Set high quality text rendering
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  
   // Draw player name (upper back - above number)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '24px'); // Adjust size for player name
-    ctx.textAlign = 'center';
     ctx.fillText(playerName, 150, 50);
   }
   
@@ -65,7 +68,6 @@ export const JerseyBack = ({
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '100px'); // Adjust size for player number
-    ctx.textAlign = 'center';
     ctx.fillText(playerNumber.toString(), 150, 150);
   }
   
@@ -73,7 +75,6 @@ export const JerseyBack = ({
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '18px'); // Adjust size for team name
-    ctx.textAlign = 'center';
     ctx.fillText(teamName, 150, 230);
   }
   

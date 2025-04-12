@@ -10,6 +10,7 @@ interface JerseyFrontProps {
   logoPositions: Map<string, { x: number; y: number }>;
   logos: Logo[];
   fontFamily: string;
+  highQuality?: boolean;
 }
 
 export const JerseyFront = ({ 
@@ -18,7 +19,8 @@ export const JerseyFront = ({
   loadedLogos, 
   logoPositions, 
   logos,
-  fontFamily 
+  fontFamily,
+  highQuality = false
 }: JerseyFrontProps) => {
   // Draw front jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
@@ -64,6 +66,52 @@ export const JerseyFront = ({
     ctx.fillText(playerNumber.toString(), 150, 150);
   }
   
+  // Enhanced logo drawing function to maintain aspect ratio and quality
+  const drawLogo = (
+    img: HTMLImageElement, 
+    posX: number, 
+    posY: number, 
+    maxWidth: number, 
+    maxHeight: number
+  ) => {
+    // Calculate aspect ratio
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    let width = maxWidth;
+    let height = maxHeight;
+    
+    // Maintain aspect ratio
+    if (aspectRatio > 1) {
+      // Wider than tall
+      height = width / aspectRatio;
+    } else {
+      // Taller than wide
+      width = height * aspectRatio;
+    }
+    
+    // Save context state
+    ctx.save();
+    
+    // Set high quality rendering
+    if (highQuality) {
+      ctx.imageSmoothingEnabled = true;
+      if ('imageSmoothingQuality' in ctx) {
+        (ctx as any).imageSmoothingQuality = 'high';
+      }
+    }
+    
+    // Draw with preserved transparency
+    ctx.drawImage(
+      img, 
+      posX - width/2, 
+      posY - height/2, 
+      width, 
+      height
+    );
+    
+    // Restore context state
+    ctx.restore();
+  };
+  
   // Draw logos based on position
   if (loadedLogos.size > 0) {
     // First, draw regular front logos (chest positions)
@@ -77,10 +125,8 @@ export const JerseyFront = ({
         y: logo.position === 'chest_center' ? 100 : 60
       };
       
-      const logoWidth = 60;
-      const logoHeight = 60;
-      
-      ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
+      // Use enhanced drawing function with proper dimensions
+      drawLogo(img, position.x, position.y, 60, 60);
     });
   }
   
@@ -95,10 +141,8 @@ export const JerseyFront = ({
       const position = logoPositions.get(logo.id!) || 
         (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
       
-      const logoWidth = 40;
-      const logoHeight = 40;
-      
-      ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
+      // Use enhanced drawing function with smaller dimensions for sleeves
+      drawLogo(img, position.x, position.y, 40, 40);
     });
   }
   

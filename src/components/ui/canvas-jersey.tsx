@@ -30,6 +30,13 @@ export function CanvasJersey({
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
   const [fontFace, setFontFace] = useState<FontFace | null>(null);
   
+  // Device pixel ratio for high-resolution displays
+  const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  
+  // Canvas dimensions - for high-resolution rendering
+  const canvasWidth = 300;
+  const canvasHeight = 300;
+
   // Custom hook for logo dragging functionality
   const { startDrag, drag, endDrag } = useDragLogos({
     logos,
@@ -52,21 +59,38 @@ export function CanvasJersey({
     }
   }, [printConfig?.customFontUrl, printConfig?.customFontFile]);
 
-  // Load logos when available
+  // Load logos when available - with high-quality settings
   useEffect(() => {
-    loadLogoImages(logos, logoPositions)
+    loadLogoImages(logos, logoPositions, true) // passing true for high quality option
       .then(logoMap => {
         setLoadedLogos(logoMap);
       });
   }, [logos]);
 
-  // Draw jersey on canvas
+  // Configure high-DPI canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Set the canvas dimensions based on device pixel ratio
+    canvas.width = canvasWidth * pixelRatio;
+    canvas.height = canvasHeight * pixelRatio;
+    
+    // Set the display size to maintain visual dimensions
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Scale the context to match the device pixel ratio
+    ctx.scale(pixelRatio, pixelRatio);
+    
+    // Enable high-quality image smoothing
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) {
+      (ctx as any).imageSmoothingQuality = 'high';
+    }
 
     // Only proceed if the custom font is loaded or if no custom font is needed
     if ((printConfig?.customFontUrl && !loadedFont) && 
@@ -79,13 +103,13 @@ export function CanvasJersey({
       return;
     }
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with proper scaling
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Get the font to use
     const fontToUse = getFont(printConfig);
 
-    // Draw the appropriate jersey view
+    // Draw the appropriate jersey view with proper scaling
     if (view === 'front') {
       // Render front jersey
       JerseyFront({
@@ -94,7 +118,8 @@ export function CanvasJersey({
         loadedLogos,
         logoPositions,
         logos,
-        fontFamily: fontToUse
+        fontFamily: fontToUse,
+        highQuality: true
       });
     } else {
       // Render back jersey
@@ -107,18 +132,22 @@ export function CanvasJersey({
       });
     }
     
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio]);
 
   return (
     <canvas 
       ref={canvasRef} 
-      width={300} 
-      height={300} 
+      width={canvasWidth * pixelRatio} 
+      height={canvasHeight * pixelRatio} 
       className="jersey-canvas mx-auto"
       onMouseDown={startDrag}
       onMouseMove={drag}
       onMouseUp={endDrag}
       onMouseLeave={endDrag}
+      style={{
+        width: `${canvasWidth}px`,
+        height: `${canvasHeight}px`
+      }}
     />
   );
 }
