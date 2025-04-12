@@ -5,6 +5,7 @@ export interface Player {
   number: number;
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
+  design_image?: string; // Add the design_image field
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';

@@ -61,11 +61,12 @@ export const JerseyBack = ({
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '24px'); // Adjust size for player name
-    ctx.fillText(playerName, 150, 50);
+    const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
+    ctx.fillText(playerNameDisplayed, 150, 50, 180);
   }
   
   // Draw player number (center back)
-  if (playerNumber) {
+  if (playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '100px'); // Adjust size for player number
     ctx.fillText(playerNumber.toString(), 150, 150);
@@ -75,12 +76,9 @@ export const JerseyBack = ({
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '18px'); // Adjust size for team name
-    ctx.fillText(teamName, 150, 230);
+    const teamNameDisplayed = teamName.length > 20 ? teamName.substring(0, 20) + '...' : teamName;
+    ctx.fillText(teamNameDisplayed, 150, 230, 180);
   }
-  
-  // Draw pants number indicator
-  ctx.font = fontFamily;
-  ctx.fillText("PANTS", 150, 280);
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };

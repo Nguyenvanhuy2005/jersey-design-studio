@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,14 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
-import { Order } from "@/types";
+import { Order, Player } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronDown, Mail, Eye, LogOut, Image as ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-// Mock data for demo - with design images added
 const mockOrders: Order[] = [
   {
     id: "order-1",
@@ -165,7 +164,6 @@ const AdminOrders = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   useEffect(() => {
-    // Load orders from Supabase if user is authenticated
     if (user) {
       const fetchOrders = async () => {
         const { data, error } = await supabase
@@ -175,10 +173,8 @@ const AdminOrders = () => {
         if (error) {
           console.error("Error fetching orders:", error);
           toast.error("Không thể tải dữ liệu đơn hàng");
-          // Fall back to mock data for demo
           setOrders(mockOrders);
         } else if (data && data.length > 0) {
-          // Transform data to match our Order type
           const transformedOrders: Order[] = data.map(order => ({
             id: order.id,
             teamName: order.team_name || '',
@@ -192,7 +188,7 @@ const AdminOrders = () => {
               name: player.name || '',
               number: player.number,
               size: player.size as 'S' | 'M' | 'L' | 'XL',
-              printImage: player.print_image || false // Map print_image from DB to printImage in our type
+              printImage: player.print_image || false
             })) : [],
             productLines: order.product_lines ? order.product_lines.map((line: any) => ({
               id: line.id,
@@ -228,7 +224,6 @@ const AdminOrders = () => {
           }));
           setOrders(transformedOrders);
         } else {
-          // Fall back to mock data for demo
           setOrders(mockOrders);
         }
       };
@@ -237,7 +232,6 @@ const AdminOrders = () => {
     }
   }, [user]);
 
-  // If still checking authentication
   if (isLoading) {
     return (
       <Layout>
@@ -249,13 +243,11 @@ const AdminOrders = () => {
   }
   
   const handleStatusChange = (orderId: string, newStatus: 'new' | 'processing' | 'completed') => {
-    // Update order status
     const updatedOrders = orders.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     );
     setOrders(updatedOrders);
     
-    // Update in Supabase
     supabase
       .from('orders')
       .update({ status: newStatus })
@@ -294,7 +286,6 @@ const AdminOrders = () => {
   };
 
   const handleExportCSV = (order: Order) => {
-    // In a real app, this would generate and download a CSV file
     toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${order.teamName}`);
   };
 
@@ -454,26 +445,39 @@ const AdminOrders = () => {
                                 <div>
                                   <h3 className="font-semibold mb-2">Danh sách cầu thủ</h3>
                                   <div className="overflow-x-auto">
-                                    <table className="w-full border-collapse">
-                                      <thead className="bg-muted">
-                                        <tr>
-                                          <th className="p-2 text-left">Tên</th>
-                                          <th className="p-2 text-left">Số áo</th>
-                                          <th className="p-2 text-left">Kích thước</th>
-                                          <th className="p-2 text-left">In hình</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Tên</TableHead>
+                                          <TableHead>Số áo</TableHead>
+                                          <TableHead>Kích thước</TableHead>
+                                          <TableHead>In hình</TableHead>
+                                          <TableHead>Hình ảnh demo</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
                                         {order.players.map((player, index) => (
-                                          <tr key={player.id || index} className="border-b border-muted">
-                                            <td className="p-2">{player.name}</td>
-                                            <td className="p-2">{player.number}</td>
-                                            <td className="p-2">{player.size}</td>
-                                            <td className="p-2">{player.printImage ? "Có" : "Không"}</td>
-                                          </tr>
+                                          <TableRow key={player.id || index}>
+                                            <TableCell>{player.name}</TableCell>
+                                            <TableCell>{player.number}</TableCell>
+                                            <TableCell>{player.size}</TableCell>
+                                            <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
+                                            <TableCell>
+                                              {player.design_image ? (
+                                                <img 
+                                                  src={getDesignImageUrl(player.design_image)}
+                                                  alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
+                                                  className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
+                                                  onClick={() => setSelectedImage(getDesignImageUrl(player.design_image))}
+                                                />
+                                              ) : (
+                                                <span className="text-sm text-muted-foreground">Không có</span>
+                                              )}
+                                            </TableCell>
+                                          </TableRow>
                                         ))}
-                                      </tbody>
-                                    </table>
+                                      </TableBody>
+                                    </Table>
                                   </div>
                                 </div>
                                 
@@ -579,7 +583,6 @@ const AdminOrders = () => {
                         )}
                       </td>
                       <td className="p-3">
-                        {/* Same actions as above, shortened for brevity */}
                         <div className="flex justify-center gap-2">
                           <Dialog>
                             <DialogTrigger asChild>
@@ -600,7 +603,19 @@ const AdminOrders = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {/* Status change options */}
+                              {order.status === 'new' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(order.id!, 'processing')}>
+                                  Chuyển sang "Đang xử lý"
+                                </DropdownMenuItem>
+                              )}
+                              {order.status === 'processing' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(order.id!, 'completed')}>
+                                  Chuyển sang "Đã hoàn thành"
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleSendEmail(order)}>
+                                <Mail className="h-4 w-4 mr-2" /> Gửi email
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -621,7 +636,145 @@ const AdminOrders = () => {
         </div>
       </div>
       
-      {/* Image preview dialog */}
+      <Dialog>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Chi tiết đơn hàng: {selectedOrder.teamName}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4 my-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold">Thông tin cơ bản</h3>
+                    <p><span className="text-muted-foreground">ID:</span> {selectedOrder.id}</p>
+                    <p><span className="text-muted-foreground">Tên đội:</span> {selectedOrder.teamName}</p>
+                    <p><span className="text-muted-foreground">Số lượng áo:</span> {selectedOrder.players.length}</p>
+                    <p><span className="text-muted-foreground">Tổng chi phí:</span> {selectedOrder.totalCost.toLocaleString()} VNĐ</p>
+                    <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(selectedOrder.status)}</p>
+                    <p><span className="text-muted-foreground">Ngày tạo:</span> {formatDate(selectedOrder.createdAt)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold">Cấu hình in</h3>
+                    <p><span className="text-muted-foreground">Font:</span> {selectedOrder.printConfig.font}</p>
+                    <p><span className="text-muted-foreground">Chất liệu in lưng:</span> {selectedOrder.printConfig.backMaterial}</p>
+                    <p><span className="text-muted-foreground">Màu in lưng:</span> {selectedOrder.printConfig.backColor}</p>
+                    <p><span className="text-muted-foreground">Chất liệu in mặt trước:</span> {selectedOrder.printConfig.frontMaterial}</p>
+                    <p><span className="text-muted-foreground">Màu in mặt trước:</span> {selectedOrder.printConfig.frontColor}</p>
+                  </div>
+                </div>
+                
+                {selectedOrder.designImage && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Hình ảnh thiết kế</h3>
+                    <div className="border rounded p-2 flex justify-center">
+                      <img 
+                        src={getDesignImageUrl(selectedOrder.designImage)} 
+                        alt="Design Preview" 
+                        className="max-h-64 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Danh sách cầu thủ</h3>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tên</TableHead>
+                          <TableHead>Số áo</TableHead>
+                          <TableHead>Kích thước</TableHead>
+                          <TableHead>In hình</TableHead>
+                          <TableHead>Hình ảnh demo</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedOrder.players.map((player, index) => (
+                          <TableRow key={player.id || index}>
+                            <TableCell>{player.name}</TableCell>
+                            <TableCell>{player.number}</TableCell>
+                            <TableCell>{player.size}</TableCell>
+                            <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
+                            <TableCell>
+                              {player.design_image ? (
+                                <img 
+                                  src={getDesignImageUrl(player.design_image)}
+                                  alt={`Jersey design for ${player.name || `Player ${player.number}`}`}
+                                  className="h-16 w-16 object-contain cursor-pointer hover:opacity-80"
+                                  onClick={() => setSelectedImage(getDesignImageUrl(player.design_image))}
+                                />
+                              ) : (
+                                <span className="text-sm text-muted-foreground">Không có</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-2">Sản phẩm in</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="p-2 text-left">Sản phẩm</th>
+                          <th className="p-2 text-left">Vị trí</th>
+                          <th className="p-2 text-left">Chất liệu</th>
+                          <th className="p-2 text-left">Kích thước</th>
+                          <th className="p-2 text-left">Nội dung</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedOrder.productLines.map((line) => (
+                          <tr key={line.id} className="border-b border-muted">
+                            <td className="p-2">{line.product}</td>
+                            <td className="p-2">{line.position}</td>
+                            <td className="p-2">{line.material}</td>
+                            <td className="p-2">{line.size}</td>
+                            <td className="p-2">{line.content}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => handleExportCSV(selectedOrder)}>
+                    Tải danh sách cầu thủ
+                  </Button>
+                  
+                  <Button size="sm" variant="secondary" onClick={() => handleConfirmPrint(selectedOrder)}>
+                    Xác nhận in tất cả
+                  </Button>
+                  
+                  <Select value={branch} onValueChange={setBranch}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Chọn nhánh" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="print">CÓ IN</SelectItem>
+                      <SelectItem value="noprint">KHÔNG IN</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button size="sm" variant="default" onClick={() => handleConfirmSale(selectedOrder)} disabled={!branch}>
+                    Xác nhận bán
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
           <DialogContent className="max-w-3xl">

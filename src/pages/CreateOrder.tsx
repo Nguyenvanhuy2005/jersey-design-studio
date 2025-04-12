@@ -175,6 +175,42 @@ const CreateOrder = () => {
     return file;
   };
 
+  const generatePlayerDesignImage = async (player: Player, orderId: string): Promise<string> => {
+    // Set the current player for preview
+    setPreviewPlayer(players.indexOf(player));
+    setPreviewView('front');
+    
+    // Wait for the canvas to update with the player's jersey
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+      if (jerseyCanvasRef.current) {
+        const designImageFile = await convertCanvasToFile(
+          jerseyCanvasRef.current, 
+          `${orderId}-player-${player.number}`
+        );
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('design_images')
+          .upload(`${orderId}/players/jersey-${player.number}.png`, designImageFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+          
+        if (uploadError) {
+          console.error(`Error uploading design image for player ${player.name}:`, uploadError);
+          return '';
+        } 
+        
+        return uploadData.path;
+      }
+    } catch (err) {
+      console.error(`Error capturing canvas image for player ${player.name}:`, err);
+    }
+    
+    return '';
+  };
+
   const submitOrder = async () => {
     if (players.length === 0) {
       toast.error("Vui lòng thêm ít nhất một cầu thủ");
@@ -188,10 +224,12 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
+      // Set to front view for capturing images
       setPreviewView('front');
       
       await new Promise(resolve => setTimeout(resolve, 300));
       
+      // Save the overall design image
       let designImagePath = '';
       if (jerseyCanvasRef.current) {
         try {
@@ -217,23 +255,6 @@ const CreateOrder = () => {
         }
       }
       
-      const designData = {
-        logos: logos.map(logo => ({
-          logo_id: logo.id,
-          position: logo.position,
-          x_position: 0,
-          y_position: 0,
-          scale: 1.0
-        })),
-        players: players.map(player => ({
-          name: player.name,
-          number: player.number,
-          position: 'Trên số lưng',
-          font: printConfig.font,
-          color: printConfig.backColor
-        }))
-      };
-
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -264,6 +285,24 @@ const CreateOrder = () => {
         }
       }
       
+      const designData = {
+        logos: logos.map(logo => ({
+          logo_id: logo.id,
+          position: logo.position,
+          x_position: 0,
+          y_position: 0,
+          scale: 1.0
+        })),
+        players: players.map(player => ({
+          name: player.name,
+          number: player.number,
+          position: 'Trên số lưng',
+          font: printConfig.font,
+          color: printConfig.backColor
+        }))
+      };
+
+      // Create the order record first
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -280,18 +319,25 @@ const CreateOrder = () => {
       if (orderError) {
         throw orderError;
       }
+
+      // Generate individual jersey designs for each player
+      const playersWithDesigns = [];
+      for (const player of players) {
+        const playerDesignImage = await generatePlayerDesignImage(player, orderId);
+        playersWithDesigns.push({
+          name: player.name,
+          number: player.number,
+          size: player.size,
+          print_image: player.printImage,
+          order_id: orderId,
+          design_image: playerDesignImage
+        });
+      }
       
-      const playersToInsert = players.map(player => ({
-        name: player.name,
-        number: player.number,
-        size: player.size,
-        print_image: player.printImage,
-        order_id: orderId
-      }));
-      
+      // Insert players with their design images
       const { error: playersError } = await supabase
         .from('players')
-        .insert(playersToInsert);
+        .insert(playersWithDesigns);
         
       if (playersError) {
         throw playersError;
