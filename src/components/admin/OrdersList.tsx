@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Mail, Eye, Image as ImageIcon } from "lucide-react";
+import { ChevronDown, Mail, Eye, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { Order } from "@/types";
 import { toast } from "sonner";
-import { getDesignImageUrl } from "@/utils/image-utils";
+import { getDesignImageUrl, checkDesignImageExists, getFallbackImageUrl } from "@/utils/image-utils";
 
 interface OrdersListProps {
   orders: Order[];
@@ -24,6 +24,25 @@ export const OrdersList = ({
   onStatusChange
 }: OrdersListProps) => {
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
+  const [imageAvailability, setImageAvailability] = useState<Record<string, boolean>>({});
+  
+  // Check image availability when orders change
+  useEffect(() => {
+    const checkImagesExistence = async () => {
+      const availability: Record<string, boolean> = {};
+      
+      for (const order of orders) {
+        if (order.id && order.designImage) {
+          availability[order.id] = await checkDesignImageExists(order.designImage);
+        }
+      }
+      
+      setImageAvailability(availability);
+      console.log("Design images availability checked:", availability);
+    };
+    
+    checkImagesExistence();
+  }, [orders]);
   
   const handleSendEmail = (order: Order) => {
     toast.success(`Email đã được gửi đến khách hàng về đơn hàng: ${order.teamName}`);
@@ -68,75 +87,94 @@ export const OrdersList = ({
 
   return (
     <>
-      {filteredOrders.map((order) => (
-        <tr key={order.id} className="border-t border-muted">
-          <td className="p-3">{order.id}</td>
-          <td className="p-3 font-medium">{order.teamName}</td>
-          <td className="p-3">{order.players.length}</td>
-          <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
-          <td className="p-3">{getStatusBadge(order.status)}</td>
-          <td className="p-3">{formatDate(order.createdAt)}</td>
-          <td className="p-3">
-            {order.designImage ? (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  const imageUrl = getDesignImageUrl(order.designImage);
-                  onViewImage(imageUrl);
-                  if (imageUrl) {
-                    console.log(`Viewing design image: ${imageUrl}`);
-                  } else {
-                    console.error(`Failed to get URL for design image: ${order.designImage}`);
-                  }
-                }}
-                className="flex items-center gap-1"
-              >
-                <ImageIcon className="h-4 w-4" /> Xem
-              </Button>
-            ) : (
-              <span className="text-muted-foreground text-sm">Không có</span>
-            )}
-            {imageLoadErrors[order.id!] && (
-              <p className="text-xs text-red-500 mt-1">Không thể tải hình ảnh</p>
-            )}
-          </td>
-          <td className="p-3">
-            <div className="flex justify-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => onViewDetails(order)}
-              >
-                <Eye className="h-4 w-4 mr-1" /> Chi tiết
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <ChevronDown className="h-4 w-4" />
+      {filteredOrders.map((order) => {
+        // Check if order has design image and if it's available
+        const hasDesignImage = !!order.designImage;
+        const isDesignImageAvailable = order.id ? imageAvailability[order.id] : false;
+        const hasDesignImageError = order.id ? imageLoadErrors[order.id!] : false;
+        
+        return (
+          <tr key={order.id} className="border-t border-muted">
+            <td className="p-3">{order.id}</td>
+            <td className="p-3 font-medium">{order.teamName}</td>
+            <td className="p-3">{order.players.length}</td>
+            <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
+            <td className="p-3">{getStatusBadge(order.status)}</td>
+            <td className="p-3">{formatDate(order.createdAt)}</td>
+            <td className="p-3">
+              {hasDesignImage ? (
+                <div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      console.log(`Order design image path:`, order.designImage);
+                      const imageUrl = getDesignImageUrl(order.designImage);
+                      console.log(`Generated design image URL:`, imageUrl);
+                      
+                      if (imageUrl) {
+                        onViewImage(imageUrl);
+                        console.log(`Viewing design image: ${imageUrl}`);
+                      } else {
+                        console.error(`Failed to get URL for design image: ${order.designImage}`);
+                        toast.error("Không thể tải hình ảnh thiết kế");
+                        // Use fallback image
+                        onViewImage(getFallbackImageUrl('design'));
+                      }
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <ImageIcon className="h-4 w-4" /> Xem
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {order.status === 'new' && (
-                    <DropdownMenuItem onClick={() => onStatusChange(order.id!, 'processing')}>
-                      Chuyển sang "Đang xử lý"
-                    </DropdownMenuItem>
+                  
+                  {(!isDesignImageAvailable || hasDesignImageError) && (
+                    <div className="flex items-center mt-1 text-red-500 text-xs">
+                      <AlertTriangle className="h-3 w-3 mr-1" /> 
+                      Có vấn đề với hình ảnh
+                    </div>
                   )}
-                  {order.status === 'processing' && (
-                    <DropdownMenuItem onClick={() => onStatusChange(order.id!, 'completed')}>
-                      Chuyển sang "Đã hoàn thành"
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">Không có</span>
+              )}
+            </td>
+            <td className="p-3">
+              <div className="flex justify-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => onViewDetails(order)}
+                >
+                  <Eye className="h-4 w-4 mr-1" /> Chi tiết
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {order.status === 'new' && (
+                      <DropdownMenuItem onClick={() => onStatusChange(order.id!, 'processing')}>
+                        Chuyển sang "Đang xử lý"
+                      </DropdownMenuItem>
+                    )}
+                    {order.status === 'processing' && (
+                      <DropdownMenuItem onClick={() => onStatusChange(order.id!, 'completed')}>
+                        Chuyển sang "Đã hoàn thành"
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => handleSendEmail(order)}>
+                      <Mail className="h-4 w-4 mr-2" /> Gửi email
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => handleSendEmail(order)}>
-                    <Mail className="h-4 w-4 mr-2" /> Gửi email
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </td>
-        </tr>
-      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </td>
+          </tr>
+        );
+      })}
     </>
   );
 };

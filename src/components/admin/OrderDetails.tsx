@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,8 +7,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Order } from "@/types";
 import { toast } from "sonner";
-import { ImageIcon } from "lucide-react";
-import { getDesignImageUrl, getReferenceImageUrls } from "@/utils/image-utils";
+import { ImageIcon, AlertTriangle } from "lucide-react";
+import { 
+  getDesignImageUrl, 
+  getReferenceImageUrls, 
+  checkDesignImageExists,
+  checkReferenceImageExists,
+  getFallbackImageUrl 
+} from "@/utils/image-utils";
 
 interface OrderDetailsProps {
   order: Order;
@@ -26,6 +32,35 @@ export const OrderDetails = ({
     design: false,
     references: Array.isArray(order.referenceImages) ? Array(order.referenceImages.length).fill(false) : []
   });
+  const [designImageUrl, setDesignImageUrl] = useState<string | null>(null);
+  const [designImageExists, setDesignImageExists] = useState<boolean>(false);
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  
+  // Check image existences and generate URLs when component mounts
+  useEffect(() => {
+    const initializeImages = async () => {
+      // Check if design image exists
+      if (order.designImage) {
+        const exists = await checkDesignImageExists(order.designImage);
+        setDesignImageExists(exists);
+        console.log(`Design image exists check for ${order.designImage}: ${exists}`);
+        
+        // Generate URL regardless, we'll handle fallback in UI
+        const url = getDesignImageUrl(order.designImage);
+        setDesignImageUrl(url);
+        console.log(`Design image URL for ${order.designImage}: ${url}`);
+      }
+      
+      // Generate reference image URLs
+      if (Array.isArray(order.referenceImages) && order.referenceImages.length > 0) {
+        const urls = getReferenceImageUrls(order.referenceImages);
+        setReferenceImageUrls(urls);
+        console.log(`Generated ${urls.length} reference image URLs`);
+      }
+    };
+    
+    initializeImages();
+  }, [order.designImage, order.referenceImages]);
   
   const formatDate = (date?: Date) => {
     if (!date) return "";
@@ -83,10 +118,11 @@ export const OrderDetails = ({
     }
   };
   
-  // Prepare reference image URLs
-  const referenceImageUrls = Array.isArray(order.referenceImages) 
-    ? getReferenceImageUrls(order.referenceImages) 
-    : [];
+  // Get design image URL with fallback handling
+  const getDisplayDesignImageUrl = (): string => {
+    if (!order.designImage) return getFallbackImageUrl('design');
+    return designImageUrl || getFallbackImageUrl('design');
+  };
   
   return (
     <>
@@ -104,6 +140,10 @@ export const OrderDetails = ({
             <p><span className="text-muted-foreground">Tổng chi phí:</span> {order.totalCost.toLocaleString()} VNĐ</p>
             <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(order.status)}</p>
             <p><span className="text-muted-foreground">Ngày tạo:</span> {formatDate(order.createdAt)}</p>
+            <p>
+              <span className="text-muted-foreground">Design Image Path:</span> 
+              <span className="text-xs ml-1 font-mono">{order.designImage || "N/A"}</span>
+            </p>
           </div>
           
           <div>
@@ -120,27 +160,39 @@ export const OrderDetails = ({
           <div>
             <h3 className="font-semibold mb-2">Hình ảnh thiết kế</h3>
             <div className="border rounded p-2 flex justify-center">
-              <img 
-                src={getDesignImageUrl(order.designImage) || 'https://via.placeholder.com/400x300?text=Không+thể+tải+hình+ảnh'}
-                alt="Design Preview" 
-                className="max-h-64 object-contain cursor-pointer"
-                onClick={() => {
-                  const imageUrl = getDesignImageUrl(order.designImage);
-                  if (imageUrl) onViewImage(imageUrl);
-                }}
-                onLoad={() => handleImageLoad('design')}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://via.placeholder.com/400x300?text=Không+thể+tải+hình+ảnh';
-                  handleImageError('design', order.designImage);
-                }}
-              />
+              <div className="relative">
+                <img 
+                  src={getDisplayDesignImageUrl()} 
+                  alt="Design Preview" 
+                  className="max-h-64 object-contain cursor-pointer"
+                  onClick={() => {
+                    onViewImage(getDisplayDesignImageUrl());
+                  }}
+                  onLoad={() => handleImageLoad('design')}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = getFallbackImageUrl('design');
+                    handleImageError('design', order.designImage);
+                  }}
+                />
+                
+                {(!designImageExists || !imagesLoaded.design) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-red-500/70 text-white p-1 text-sm flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 mr-1" />
+                    Có vấn đề với hình ảnh thiết kế
+                  </div>
+                )}
+              </div>
             </div>
-            {!imagesLoaded.design && (
-              <p className="text-center text-sm text-red-500 mt-2">
-                Không thể tải hình ảnh thiết kế. Vui lòng kiểm tra quyền truy cập.
+            
+            <div className="mt-2 bg-yellow-50 p-2 rounded text-sm">
+              <p>
+                <strong>Tình trạng:</strong> {designImageExists ? 'Hình ảnh tồn tại' : 'Hình ảnh không tồn tại trong storage'}
               </p>
-            )}
+              <p>
+                <strong>URL:</strong> <span className="text-xs font-mono break-all">{designImageUrl || 'Không có URL'}</span>
+              </p>
+            </div>
           </div>
         )}
         
@@ -224,7 +276,7 @@ export const OrderDetails = ({
 
         {referenceImageUrls.length > 0 && (
           <div>
-            <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
+            <h3 className="font-semibold mb-2">Hình ảnh tham khảo ({referenceImageUrls.length})</h3>
             <div className="flex flex-wrap gap-2">
               {referenceImageUrls.map((imageUrl, index) => (
                 <div 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,13 +5,14 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
 import { Order, Player, DesignData } from "@/types";
-import { LogOut } from "lucide-react";
+import { LogOut, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { OrdersList } from "@/components/admin/OrdersList";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
+import { checkDesignImageExists } from "@/utils/image-utils";
 
 const mockOrders: Order[] = [
   {
@@ -60,7 +60,7 @@ const mockOrders: Order[] = [
     status: "new",
     designImage: "order-1/design.png",
     createdAt: new Date(2023, 3, 15),
-    referenceImages: [] // Added required property
+    referenceImages: []
   },
   {
     id: "order-2",
@@ -107,7 +107,7 @@ const mockOrders: Order[] = [
     status: "processing",
     designImage: "order-2/design.png",
     createdAt: new Date(2023, 3, 20),
-    referenceImages: [] // Added required property
+    referenceImages: []
   },
   {
     id: "order-3",
@@ -154,7 +154,7 @@ const mockOrders: Order[] = [
     status: "completed",
     designImage: "order-3/design.png",
     createdAt: new Date(2023, 2, 10),
-    referenceImages: [] // Added required property
+    referenceImages: []
   }
 ];
 
@@ -165,115 +165,182 @@ const AdminOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchingData, setFetchingData] = useState(true);
+  const [storageBucketsStatus, setStorageBucketsStatus] = useState<{
+    designImages: boolean;
+    referenceImages: boolean;
+  }>({
+    designImages: false,
+    referenceImages: false,
+  });
+
+  useEffect(() => {
+    const checkStorageBuckets = async () => {
+      try {
+        const { data: designBuckets, error: designError } = await supabase
+          .storage
+          .listBuckets();
+        
+        if (designError) {
+          console.error("Error checking storage buckets:", designError);
+          return;
+        }
+        
+        const designBucketExists = designBuckets.some(bucket => bucket.name === 'design_images');
+        const refBucketExists = designBuckets.some(bucket => bucket.name === 'reference_images');
+        
+        setStorageBucketsStatus({
+          designImages: designBucketExists,
+          referenceImages: refBucketExists
+        });
+        
+        console.log("Storage buckets check:", {
+          designImages: designBucketExists,
+          referenceImages: refBucketExists
+        });
+        
+        if (!designBucketExists) {
+          toast.error("Bucket design_images không tồn tại trong storage");
+        }
+        
+        if (!refBucketExists) {
+          toast.error("Bucket reference_images không tồn tại trong storage");
+        }
+      } catch (err) {
+        console.error("Error checking storage buckets:", err);
+      }
+    };
+    
+    if (user) {
+      checkStorageBuckets();
+    }
+  }, [user]);
   
   useEffect(() => {
     if (user) {
       const fetchOrders = async () => {
+        setFetchingData(true);
+        setFetchError(null);
         console.log("Fetching orders data...");
         
         try {
           const { data, error } = await supabase
             .from('orders')
-            .select('*, players(*), product_lines(*), print_configs(*)');
+            .select('*, players(*), product_lines(*), print_configs(*)')
+            .order('created_at', { ascending: false });
           
           if (error) {
             console.error("Error fetching orders:", error);
-            toast.error("Không thể tải dữ liệu đơn hàng");
-            setOrders(mockOrders);
-          } else if (data && data.length > 0) {
-            console.log("Raw orders data:", data);
+            setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+            toast.error(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+            setOrders([]); // Don't use mock data in production
+            setFetchingData(false);
+            return;
+          }
+          
+          if (!data || data.length === 0) {
+            console.log("No orders found");
+            setOrders([]);
+            setFetchingData(false);
+            return;
+          }
+          
+          console.log("Raw orders data:", data);
+          
+          const transformedOrders: Order[] = await Promise.all(data.map(async (order) => {
+            let processedReferenceImages: string[] = [];
             
-            const transformedOrders: Order[] = data.map(order => {
-              // Process reference_images to ensure it's a string array
-              let processedReferenceImages: string[] = [];
-              
-              // Handle potential reference_images in the database
-              if (order.reference_images && Array.isArray(order.reference_images)) {
-                processedReferenceImages = order.reference_images
+            if (order.reference_images && Array.isArray(order.reference_images)) {
+              processedReferenceImages = order.reference_images
+                .filter(item => typeof item === 'string')
+                .map(item => String(item));
+            }
+            
+            if (order.design_data) {
+              const designData = order.design_data as { reference_images?: any[] };
+              if (designData && 
+                  typeof designData === 'object' && 
+                  designData.reference_images && 
+                  Array.isArray(designData.reference_images)) {
+                
+                const refImagesFromDesignData = designData.reference_images
                   .filter(item => typeof item === 'string')
                   .map(item => String(item));
+                
+                processedReferenceImages = [
+                  ...processedReferenceImages,
+                  ...refImagesFromDesignData
+                ];
               }
-              
-              // Check design_data for reference_images as fallback
-              if (order.design_data) {
-                // Safely check if design_data is an object and has reference_images property
-                const designData = order.design_data as { reference_images?: any[] };
-                if (designData && 
-                    typeof designData === 'object' && 
-                    designData.reference_images && 
-                    Array.isArray(designData.reference_images)) {
-                  
-                  const refImagesFromDesignData = designData.reference_images
-                    .filter(item => typeof item === 'string')
-                    .map(item => String(item));
-                  
-                  processedReferenceImages = [
-                    ...processedReferenceImages,
-                    ...refImagesFromDesignData
-                  ];
-                }
-              }
-              
-              return {
-                id: order.id,
-                teamName: order.team_name || '',
-                status: order.status as 'new' | 'processing' | 'completed',
-                totalCost: order.total_cost,
-                createdAt: new Date(order.created_at || ''),
-                notes: order.notes || '',
-                designImage: order.design_image || '',
-                referenceImages: processedReferenceImages,
-                players: order.players ? order.players.map((player: any) => ({
-                  id: player.id,
-                  name: player.name || '',
-                  number: player.number,
-                  size: player.size as 'S' | 'M' | 'L' | 'XL',
-                  printImage: player.print_image || false
-                })) : [],
-                productLines: order.product_lines ? order.product_lines.map((line: any) => ({
-                  id: line.id,
-                  product: line.product,
-                  position: line.position,
-                  material: line.material,
-                  size: line.size,
-                  points: line.points || 0,
-                  content: line.content || ''
-                })) : [],
-                printConfig: order.print_configs && order.print_configs.length > 0 ? {
-                  id: order.print_configs[0].id,
-                  font: order.print_configs[0].font || 'Arial',
-                  backMaterial: order.print_configs[0].back_material || '',
-                  backColor: order.print_configs[0].back_color || '',
-                  frontMaterial: order.print_configs[0].front_material || '',
-                  frontColor: order.print_configs[0].front_color || '',
-                  sleeveMaterial: order.print_configs[0].sleeve_material || '',
-                  sleeveColor: order.print_configs[0].sleeve_color || '',
-                  legMaterial: order.print_configs[0].leg_material || '',
-                  legColor: order.print_configs[0].leg_color || ''
-                } : {
-                  font: 'Arial',
-                  backMaterial: 'In chuyển nhiệt',
-                  backColor: 'Đen',
-                  frontMaterial: 'In chuyển nhiệt',
-                  frontColor: 'Đen',
-                  sleeveMaterial: 'In chuyển nhiệt',
-                  sleeveColor: 'Đen',
-                  legMaterial: 'In chuyển nhiệt',
-                  legColor: 'Đen'
-                }
-              };
-            });
+            }
             
-            console.log("Transformed orders:", transformedOrders);
-            setOrders(transformedOrders);
-          } else {
-            console.log("No orders found, using mock data");
-            setOrders(mockOrders);
-          }
+            const designImageExists = order.design_image ? 
+              await checkDesignImageExists(order.design_image) : false;
+              
+            if (order.design_image && !designImageExists) {
+              console.warn(`Design image does not exist for order ${order.id}: ${order.design_image}`);
+            }
+            
+            return {
+              id: order.id,
+              teamName: order.team_name || '',
+              status: order.status as 'new' | 'processing' | 'completed',
+              totalCost: order.total_cost,
+              createdAt: new Date(order.created_at || ''),
+              notes: order.notes || '',
+              designImage: order.design_image || '',
+              referenceImages: processedReferenceImages,
+              players: order.players ? order.players.map((player: any) => ({
+                id: player.id,
+                name: player.name || '',
+                number: player.number,
+                size: player.size as 'S' | 'M' | 'L' | 'XL',
+                printImage: player.print_image || false
+              })) : [],
+              productLines: order.product_lines ? order.product_lines.map((line: any) => ({
+                id: line.id,
+                product: line.product,
+                position: line.position,
+                material: line.material,
+                size: line.size,
+                points: line.points || 0,
+                content: line.content || ''
+              })) : [],
+              printConfig: order.print_configs && order.print_configs.length > 0 ? {
+                id: order.print_configs[0].id,
+                font: order.print_configs[0].font || 'Arial',
+                backMaterial: order.print_configs[0].back_material || '',
+                backColor: order.print_configs[0].back_color || '',
+                frontMaterial: order.print_configs[0].front_material || '',
+                frontColor: order.print_configs[0].front_color || '',
+                sleeveMaterial: order.print_configs[0].sleeve_material || '',
+                sleeveColor: order.print_configs[0].sleeve_color || '',
+                legMaterial: order.print_configs[0].leg_material || '',
+                legColor: order.print_configs[0].leg_color || ''
+              } : {
+                font: 'Arial',
+                backMaterial: 'In chuyển nhiệt',
+                backColor: 'Đen',
+                frontMaterial: 'In chuyển nhiệt',
+                frontColor: 'Đen',
+                sleeveMaterial: 'In chuyển nhiệt',
+                sleeveColor: 'Đen',
+                legMaterial: 'In chuyển nhiệt',
+                legColor: 'Đen'
+              }
+            };
+          }));
+          
+          console.log("Transformed orders:", transformedOrders);
+          setOrders(transformedOrders);
         } catch (e) {
           console.error("Exception in fetchOrders:", e);
+          setFetchError(`Có lỗi xảy ra khi tải dữ liệu: ${e instanceof Error ? e.message : 'Unknown error'}`);
           toast.error("Có lỗi xảy ra khi tải dữ liệu");
-          setOrders(mockOrders);
+          setOrders([]); // Don't use mock data in production
+        } finally {
+          setFetchingData(false);
         }
       };
       
@@ -281,7 +348,7 @@ const AdminOrders = () => {
     }
   }, [user]);
 
-  if (isLoading) {
+  if (isLoading || fetchingData) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
@@ -369,6 +436,40 @@ const AdminOrders = () => {
           </div>
         </div>
         
+        {(!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages) && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-yellow-800">Lỗi cấu hình Storage</h3>
+                <ul className="list-disc list-inside text-sm text-yellow-700 mt-1">
+                  {!storageBucketsStatus.designImages && (
+                    <li>Bucket 'design_images' không tồn tại trong Supabase Storage</li>
+                  )}
+                  {!storageBucketsStatus.referenceImages && (
+                    <li>Bucket 'reference_images' không tồn tại trong Supabase Storage</li>
+                  )}
+                </ul>
+                <p className="text-sm mt-1 text-yellow-800">
+                  Hình ảnh sẽ không hiển thị cho đến khi các bucket được tạo đúng.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-medium text-red-800">Lỗi tải dữ liệu</h3>
+                <p className="text-sm text-red-700 mt-1">{fetchError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="bg-card rounded-md shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -385,13 +486,21 @@ const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                <OrdersList 
-                  orders={orders}
-                  statusFilter={statusFilter}
-                  onViewDetails={handleViewDetails}
-                  onViewImage={handleViewImage} 
-                  onStatusChange={handleStatusChange}
-                />
+                {orders.length > 0 ? (
+                  <OrdersList 
+                    orders={orders}
+                    statusFilter={statusFilter}
+                    onViewDetails={handleViewDetails}
+                    onViewImage={handleViewImage} 
+                    onStatusChange={handleStatusChange}
+                  />
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center text-muted-foreground">
+                      {fetchError ? "Không thể tải dữ liệu đơn hàng" : "Không có đơn hàng nào"}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
