@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -39,12 +40,16 @@ export function CanvasJersey({
   const canvasWidth = 300;
   const canvasHeight = 300;
 
-  // Custom hook for logo selection, movement and resizing functionality
+  // Custom hook for Canva-style logo editing functionality
   const { 
+    selectedLogo,
+    isDragging,
     startDrag, 
-    handleResize,
-    handleMove,
-    selectedLogo 
+    continueDrag,
+    endDrag,
+    handleLogoMove,
+    handleLogoResize,
+    handleLogoDelete
   } = useDragLogos({
     logos,
     logoPositions,
@@ -284,8 +289,9 @@ export function CanvasJersey({
         fontFamily: fontToUse,
         highQuality: true,
         selectedLogo,
-        onLogoResize: handleResize,
-        onLogoMove: handleMove
+        onLogoMove: handleLogoMove,
+        onLogoResize: handleLogoResize,
+        onLogoDelete: handleLogoDelete
       });
     } else {
       console.log('Rendering back jersey view');
@@ -299,13 +305,13 @@ export function CanvasJersey({
       });
     }
     
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo, isDragging]);
 
   // Instructions for logo selection and control
   useEffect(() => {
     if (logos && logos.length > 0 && view === 'front') {
       toast.info(
-        "Nhấn vào logo để chọn, sử dụng các nút +/- để thay đổi kích thước và ←/→/↑/↓ để di chuyển logo.",
+        "Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước.",
         { 
           id: "logo-instructions",
           duration: 5000
@@ -313,6 +319,12 @@ export function CanvasJersey({
       );
     }
   }, [logos, view]);
+
+  // Update cursor style based on dragging state
+  const getCursorStyle = () => {
+    if (!selectedLogo) return 'pointer';
+    return isDragging ? 'grabbing' : 'grab';
+  };
 
   return (
     <div className="relative">
@@ -322,16 +334,19 @@ export function CanvasJersey({
         height={canvasHeight * pixelRatio} 
         className="jersey-canvas mx-auto"
         onMouseDown={startDrag}
+        onMouseMove={continueDrag}
+        onMouseUp={endDrag}
+        onMouseLeave={endDrag}
         style={{
           width: `${canvasWidth}px`,
           height: `${canvasHeight}px`,
-          cursor: 'pointer'
+          cursor: getCursorStyle()
         }}
       />
       {logos && logos.length > 0 && view === 'front' && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
-            Nhấp vào logo để chọn và hiển thị các nút điều khiển (+/-, ←/→/↑/↓)
+            Nhấp vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
           </p>
         </div>
       )}

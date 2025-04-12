@@ -2,7 +2,7 @@
 import React from 'react';
 import { Logo } from '@/types';
 import { getFont } from '@/utils/jersey-utils';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Plus, Minus } from 'lucide-react';
+import { Trash2, RotateCw } from 'lucide-react';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
@@ -13,8 +13,9 @@ interface JerseyFrontProps {
   fontFamily: string;
   highQuality?: boolean;
   selectedLogo?: string | null;
-  onLogoMove?: (logoId: string, direction: 'up' | 'down' | 'left' | 'right') => void;
-  onLogoResize?: (logoId: string, scaleChange: number) => void;
+  onLogoMove?: (logoId: string, newX: number, newY: number) => void;
+  onLogoResize?: (logoId: string, newScale: number) => void;
+  onLogoDelete?: (logoId: string) => void;
 }
 
 export const JerseyFront = ({ 
@@ -27,7 +28,8 @@ export const JerseyFront = ({
   highQuality = false,
   selectedLogo = null,
   onLogoMove,
-  onLogoResize
+  onLogoResize,
+  onLogoDelete
 }: JerseyFrontProps) => {
   // Draw front jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
@@ -73,7 +75,7 @@ export const JerseyFront = ({
     ctx.fillText(playerNumber.toString(), 150, 150);
   }
   
-  // Enhanced logo drawing function with better selection and control buttons
+  // Enhanced Canva-style logo drawing function 
   const drawLogo = (
     img: HTMLImageElement, 
     posX: number, 
@@ -130,78 +132,111 @@ export const JerseyFront = ({
         height
       );
       
-      // If this logo is selected, draw a highlight around it and control buttons
+      // If this logo is selected, draw a Canva-style selection frame and control points
       if (selectedLogo === logoId) {
-        console.log(`Rendering selected logo: ${logoId} with resize and movement buttons`);
+        console.log(`Rendering selected logo: ${logoId} with Canva-style editor`);
         
-        // Draw selection outline with more visibility
+        // Draw selection highlight with Canva-style
         ctx.strokeStyle = '#3B82F6'; // Blue highlight
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]); // Dashed line
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
         ctx.strokeRect(
-          posX - width/2 - 5, 
-          posY - height/2 - 5, 
-          width + 10, 
-          height + 10
+          posX - width/2 - 1, 
+          posY - height/2 - 1, 
+          width + 2, 
+          height + 2
         );
         
-        // Reset line dash
-        ctx.setLineDash([]);
+        // Draw control handles at corners and edges
+        const handleSize = 8;
+        const controlPoints = [
+          // Corners (for resize)
+          { x: posX - width/2, y: posY - height/2, cursor: 'nwse-resize', type: 'corner' },
+          { x: posX + width/2, y: posY - height/2, cursor: 'nesw-resize', type: 'corner' },
+          { x: posX - width/2, y: posY + height/2, cursor: 'nesw-resize', type: 'corner' },
+          { x: posX + width/2, y: posY + height/2, cursor: 'nwse-resize', type: 'corner' },
+          // Edges (optional for future resize without maintaining aspect ratio)
+          { x: posX, y: posY - height/2, cursor: 'ns-resize', type: 'edge' },
+          { x: posX + width/2, y: posY, cursor: 'ew-resize', type: 'edge' },
+          { x: posX, y: posY + height/2, cursor: 'ns-resize', type: 'edge' },
+          { x: posX - width/2, y: posY, cursor: 'ew-resize', type: 'edge' }
+        ];
         
-        // Button styling config
-        const buttonSize = 32; // Increased button size
-        const buttonPadding = 20; // Increased padding
+        // Draw the control points
+        controlPoints.forEach(point => {
+          if (point.type === 'corner') {
+            // Draw corner handles (filled white squares with blue border)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(point.x - handleSize/2, point.y - handleSize/2, handleSize, handleSize);
+            ctx.strokeStyle = '#3B82F6';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(point.x - handleSize/2, point.y - handleSize/2, handleSize, handleSize);
+          }
+        });
         
-        // Helper function for drawing circular buttons
-        const drawButton = (x: number, y: number, icon: string) => {
-          // Button background
-          ctx.fillStyle = 'rgba(0,0,0,0.8)';
-          ctx.beginPath();
-          ctx.arc(x, y, buttonSize/2, 0, Math.PI * 2);
-          ctx.fill();
-          
-          // White border around button
-          ctx.strokeStyle = '#FFFFFF';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(x, y, buttonSize/2, 0, Math.PI * 2);
-          ctx.stroke();
-          
-          // Button icon/text
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 24px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(icon, x, y);
-        };
+        // Draw Canva-style toolbar above the selection
+        const toolbarHeight = 36;
+        const toolbarWidth = 80;
+        const toolbarY = posY - height/2 - toolbarHeight - 10;
+        const toolbarX = posX - toolbarWidth/2;
         
-        // Draw movement buttons
-        // Up button
-        drawButton(posX, posY - height/2 - buttonPadding, "↑");
+        // Toolbar background
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.beginPath();
+        ctx.roundRect(toolbarX, toolbarY, toolbarWidth, toolbarHeight, 4);
+        ctx.fill();
         
-        // Down button
-        drawButton(posX, posY + height/2 + buttonPadding, "↓");
+        // Delete button
+        const deleteButtonX = toolbarX + 20;
+        const deleteButtonY = toolbarY + toolbarHeight/2;
         
-        // Left button
-        drawButton(posX - width/2 - buttonPadding*2, posY, "←");
+        // Draw delete icon
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(deleteButtonX, deleteButtonY, 12, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Right button
-        drawButton(posX + width/2 + buttonPadding*2, posY, "→");
+        // Draw X for delete using simple lines
+        ctx.strokeStyle = '#FF4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(deleteButtonX - 5, deleteButtonY - 5);
+        ctx.lineTo(deleteButtonX + 5, deleteButtonY + 5);
+        ctx.moveTo(deleteButtonX + 5, deleteButtonY - 5);
+        ctx.lineTo(deleteButtonX - 5, deleteButtonY + 5);
+        ctx.stroke();
         
-        // Draw resize buttons
-        // "+" button (increase size)
-        drawButton(posX + width/2 + buttonPadding, posY, "+");
+        // Rotate button
+        const rotateButtonX = toolbarX + 60;
+        const rotateButtonY = toolbarY + toolbarHeight/2;
         
-        // "-" button (decrease size)
-        drawButton(posX - width/2 - buttonPadding, posY, "-");
+        // Draw rotate icon
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(rotateButtonX, rotateButtonY, 12, 0, Math.PI * 2);
+        ctx.fill();
         
-        // Add more visible hint text on a semi-transparent background
+        // Draw circular arrow for rotate
+        ctx.strokeStyle = '#3B82F6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(rotateButtonX, rotateButtonY, 6, 0.5 * Math.PI, 2 * Math.PI);
+        ctx.stroke();
+        
+        // Draw arrow tip
+        ctx.beginPath();
+        ctx.moveTo(rotateButtonX, rotateButtonY - 8);
+        ctx.lineTo(rotateButtonX + 4, rotateButtonY - 4);
+        ctx.lineTo(rotateButtonX, rotateButtonY - 2);
+        ctx.fill();
+        
+        // Add Canva-style hint text below the selection
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(posX - 120, posY + height/2 + 15, 240, 30);
+        ctx.fillRect(posX - 120, posY + height/2 + 10, 240, 24);
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Nhấn nút +/- để thay đổi kích thước và ←/→/↑/↓ để di chuyển', posX, posY + height/2 + 30);
+        ctx.fillText('Kéo để di chuyển, kéo các góc để chỉnh kích thước', posX, posY + height/2 + 25);
       }
     } catch (e) {
       console.error('Error drawing logo:', e);
