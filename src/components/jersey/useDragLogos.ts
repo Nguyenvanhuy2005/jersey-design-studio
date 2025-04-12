@@ -52,28 +52,30 @@ export const useDragLogos = ({
           const width = baseWidth * position.scale;
           const height = baseHeight * position.scale;
           
-          const buttonSize = 22;
-          const buttonPadding = 12;
+          const buttonSize = 24;
+          const buttonPadding = 14;
           
-          // Check if clicked on "+" button
-          if (
-            x >= position.x + width/2 + buttonPadding - buttonSize/2 &&
-            x <= position.x + width/2 + buttonPadding + buttonSize/2 &&
-            y >= position.y - buttonSize/2 &&
-            y <= position.y + buttonSize/2
-          ) {
+          // Calculate distance from click to "+" button center
+          const distToPlus = Math.sqrt(
+            Math.pow(x - (position.x + width/2 + buttonPadding), 2) +
+            Math.pow(y - position.y, 2)
+          );
+          
+          // Calculate distance from click to "-" button center
+          const distToMinus = Math.sqrt(
+            Math.pow(x - (position.x - width/2 - buttonPadding), 2) +
+            Math.pow(y - position.y, 2)
+          );
+          
+          // Check if clicked on "+" button (using distance for circular buttons)
+          if (distToPlus <= buttonSize/2) {
             console.log("+ button clicked");
             handleResize(selectedLogo, 0.1); // Increase size by 10%
             return; // Exit early as we handled the button click
           }
           
-          // Check if clicked on "-" button
-          if (
-            x >= position.x - width/2 - buttonPadding - buttonSize/2 &&
-            x <= position.x - width/2 - buttonPadding + buttonSize/2 &&
-            y >= position.y - buttonSize/2 &&
-            y <= position.y + buttonSize/2
-          ) {
+          // Check if clicked on "-" button (using distance for circular buttons)
+          if (distToMinus <= buttonSize/2) {
             console.log("- button clicked");
             handleResize(selectedLogo, -0.1); // Decrease size by 10%
             return; // Exit early as we handled the button click
@@ -83,8 +85,9 @@ export const useDragLogos = ({
     }
     
     // If not clicking on buttons, check if clicking on logos
-    logos.forEach(logo => {
-      if (!logo.id) return;
+    for (let i = 0; i < logos.length; i++) {
+      const logo = logos[i];
+      if (!logo.id) continue;
       
       const position = logoPositions.get(logo.id) || { 
         x: 0, 
@@ -108,8 +111,9 @@ export const useDragLogos = ({
         y <= position.y + height/2
       ) {
         draggedId = logo.id;
+        break; // Exit the loop once we've found a match
       }
-    });
+    }
     
     if (draggedId) {
       setDraggedLogo(draggedId);

@@ -132,6 +132,7 @@ export const JerseyFront = ({
       
       // If this logo is selected, draw a highlight around it
       if (selectedLogo === logoId) {
+        // Draw selection outline
         ctx.strokeStyle = '#3B82F6'; // Blue highlight
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]); // Dashed line
@@ -145,22 +146,25 @@ export const JerseyFront = ({
         // Reset line dash
         ctx.setLineDash([]);
         
-        // Draw resize buttons
-        const buttonSize = 22;
-        const buttonPadding = 12;
+        // Draw resize buttons with better visibility
+        const buttonSize = 24;
+        const buttonPadding = 14;
         
-        // "+" button (increase size)
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(
-          posX + width/2 + buttonPadding - buttonSize/2,
-          posY - buttonSize/2,
-          buttonSize,
-          buttonSize
+        // "+" button (increase size) - top right of logo
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.beginPath();
+        ctx.arc(
+          posX + width/2 + buttonPadding, 
+          posY, 
+          buttonSize/2, 
+          0, 
+          Math.PI * 2
         );
+        ctx.fill();
         
         // Draw "+" symbol
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '18px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -169,18 +173,21 @@ export const JerseyFront = ({
           posY
         );
         
-        // "-" button (decrease size)
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(
-          posX - width/2 - buttonPadding - buttonSize/2, 
-          posY - buttonSize/2, 
-          buttonSize, 
-          buttonSize
+        // "-" button (decrease size) - top left of logo
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.beginPath();
+        ctx.arc(
+          posX - width/2 - buttonPadding, 
+          posY, 
+          buttonSize/2, 
+          0, 
+          Math.PI * 2
         );
+        ctx.fill();
         
         // Draw "-" symbol
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '18px Arial';
+        ctx.font = 'bold 18px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -189,13 +196,13 @@ export const JerseyFront = ({
           posY
         );
         
-        // Add hint text
+        // Add more visible hint text
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(posX - 75, posY + height/2 + 10, 150, 30);
-        ctx.fillStyle = '#FFF';
-        ctx.font = '10px Arial';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Use + and - buttons to resize', posX, posY + height/2 + 30);
+        ctx.fillText('Use + and - buttons to resize', posX, posY + height/2 + 25);
       }
       
     } catch (e) {
