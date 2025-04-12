@@ -55,6 +55,8 @@ export type Database = {
           created_at: string | null
           design_data: Json | null
           design_image: string | null
+          design_image_back: string | null
+          design_image_front: string | null
           id: string
           logo_url: string | null
           notes: string | null
@@ -68,6 +70,8 @@ export type Database = {
           created_at?: string | null
           design_data?: Json | null
           design_image?: string | null
+          design_image_back?: string | null
+          design_image_front?: string | null
           id?: string
           logo_url?: string | null
           notes?: string | null
@@ -81,6 +85,8 @@ export type Database = {
           created_at?: string | null
           design_data?: Json | null
           design_image?: string | null
+          design_image_back?: string | null
+          design_image_front?: string | null
           id?: string
           logo_url?: string | null
           notes?: string | null

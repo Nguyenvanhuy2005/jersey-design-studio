@@ -28,27 +28,48 @@ export const OrderDetails = ({
   onStatusChange
 }: OrderDetailsProps) => {
   const [branch, setBranch] = useState<string>("");
-  const [imagesLoaded, setImagesLoaded] = useState({
-    design: false,
-    references: Array.isArray(order.referenceImages) ? Array(order.referenceImages.length).fill(false) : []
+  const [designImagesLoaded, setDesignImagesLoaded] = useState({
+    front: false,
+    back: false
   });
-  const [designImageUrl, setDesignImageUrl] = useState<string | null>(null);
-  const [designImageExists, setDesignImageExists] = useState<boolean>(false);
+  const [referenceImagesLoaded, setReferenceImagesLoaded] = useState(
+    Array.isArray(order.referenceImages) ? Array(order.referenceImages.length).fill(false) : []
+  );
+  
+  const [frontDesignImageUrl, setFrontDesignImageUrl] = useState<string | null>(null);
+  const [backDesignImageUrl, setBackDesignImageUrl] = useState<string | null>(null);
+  const [designImagesExist, setDesignImagesExist] = useState({
+    front: false,
+    back: false
+  });
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   
   // Check image existences and generate URLs when component mounts
   useEffect(() => {
     const initializeImages = async () => {
-      // Check if design image exists
-      if (order.designImage) {
-        const exists = await checkDesignImageExists(order.designImage);
-        setDesignImageExists(exists);
-        console.log(`Design image exists check for ${order.designImage}: ${exists}`);
+      // Check if front design image exists
+      const frontImagePath = order.designImageFront || order.designImage;
+      if (frontImagePath) {
+        const exists = await checkDesignImageExists(frontImagePath);
+        setDesignImagesExist(prev => ({ ...prev, front: exists }));
+        console.log(`Front design image exists check for ${frontImagePath}: ${exists}`);
         
         // Generate URL regardless, we'll handle fallback in UI
-        const url = getDesignImageUrl(order.designImage);
-        setDesignImageUrl(url);
-        console.log(`Design image URL for ${order.designImage}: ${url}`);
+        const url = getDesignImageUrl(frontImagePath);
+        setFrontDesignImageUrl(url);
+        console.log(`Front design image URL for ${frontImagePath}: ${url}`);
+      }
+      
+      // Check if back design image exists
+      if (order.designImageBack) {
+        const exists = await checkDesignImageExists(order.designImageBack);
+        setDesignImagesExist(prev => ({ ...prev, back: exists }));
+        console.log(`Back design image exists check for ${order.designImageBack}: ${exists}`);
+        
+        // Generate URL regardless, we'll handle fallback in UI
+        const url = getDesignImageUrl(order.designImageBack);
+        setBackDesignImageUrl(url);
+        console.log(`Back design image URL for ${order.designImageBack}: ${url}`);
       }
       
       // Generate reference image URLs
@@ -60,7 +81,7 @@ export const OrderDetails = ({
     };
     
     initializeImages();
-  }, [order.designImage, order.referenceImages]);
+  }, [order.designImageFront, order.designImage, order.designImageBack, order.referenceImages]);
   
   const formatDate = (date?: Date) => {
     if (!date) return "";
@@ -80,27 +101,31 @@ export const OrderDetails = ({
     toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${order.teamName}`);
   };
 
-  const handleImageLoad = (type: 'design' | 'reference', index?: number) => {
-    if (type === 'design') {
-      setImagesLoaded(prev => ({ ...prev, design: true }));
+  const handleImageLoad = (type: 'front' | 'back' | 'reference', index?: number) => {
+    if (type === 'front') {
+      setDesignImagesLoaded(prev => ({ ...prev, front: true }));
+    } else if (type === 'back') {
+      setDesignImagesLoaded(prev => ({ ...prev, back: true }));
     } else if (type === 'reference' && typeof index === 'number') {
-      setImagesLoaded(prev => {
-        const newReferences = [...prev.references];
-        newReferences[index] = true;
-        return { ...prev, references: newReferences };
+      setReferenceImagesLoaded(prev => {
+        const newLoaded = [...prev];
+        newLoaded[index] = true;
+        return newLoaded;
       });
     }
   };
 
-  const handleImageError = (type: 'design' | 'reference', imagePath?: string, index?: number) => {
+  const handleImageError = (type: 'front' | 'back' | 'reference', imagePath?: string, index?: number) => {
     console.error(`Failed to load ${type} image:`, imagePath);
-    if (type === 'design') {
-      setImagesLoaded(prev => ({ ...prev, design: false }));
+    if (type === 'front') {
+      setDesignImagesLoaded(prev => ({ ...prev, front: false }));
+    } else if (type === 'back') {
+      setDesignImagesLoaded(prev => ({ ...prev, back: false }));
     } else if (type === 'reference' && typeof index === 'number') {
-      setImagesLoaded(prev => {
-        const newReferences = [...prev.references];
-        newReferences[index] = false;
-        return { ...prev, references: newReferences };
+      setReferenceImagesLoaded(prev => {
+        const newLoaded = [...prev];
+        newLoaded[index] = false;
+        return newLoaded;
       });
     }
   };
@@ -119,10 +144,19 @@ export const OrderDetails = ({
   };
   
   // Get design image URL with fallback handling
-  const getDisplayDesignImageUrl = (): string => {
-    if (!order.designImage) return getFallbackImageUrl('design');
-    return designImageUrl || getFallbackImageUrl('design');
+  const getFrontDesignImageUrl = (): string => {
+    const imagePath = order.designImageFront || order.designImage;
+    if (!imagePath) return getFallbackImageUrl('design');
+    return frontDesignImageUrl || getFallbackImageUrl('design');
   };
+  
+  const getBackDesignImageUrl = (): string => {
+    if (!order.designImageBack) return getFallbackImageUrl('design');
+    return backDesignImageUrl || getFallbackImageUrl('design');
+  };
+  
+  const hasFrontDesign = !!(order.designImageFront || order.designImage);
+  const hasBackDesign = !!order.designImageBack;
   
   return (
     <>
@@ -140,10 +174,6 @@ export const OrderDetails = ({
             <p><span className="text-muted-foreground">Tổng chi phí:</span> {order.totalCost.toLocaleString()} VNĐ</p>
             <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(order.status)}</p>
             <p><span className="text-muted-foreground">Ngày tạo:</span> {formatDate(order.createdAt)}</p>
-            <p>
-              <span className="text-muted-foreground">Design Image Path:</span> 
-              <span className="text-xs ml-1 font-mono">{order.designImage || "N/A"}</span>
-            </p>
           </div>
           
           <div>
@@ -156,42 +186,73 @@ export const OrderDetails = ({
           </div>
         </div>
         
-        {order.designImage && (
+        {(hasFrontDesign || hasBackDesign) && (
           <div>
             <h3 className="font-semibold mb-2">Hình ảnh thiết kế</h3>
-            <div className="border rounded p-2 flex justify-center">
-              <div className="relative">
-                <img 
-                  src={getDisplayDesignImageUrl()} 
-                  alt="Design Preview" 
-                  className="max-h-64 object-contain cursor-pointer"
-                  onClick={() => {
-                    onViewImage(getDisplayDesignImageUrl());
-                  }}
-                  onLoad={() => handleImageLoad('design')}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = getFallbackImageUrl('design');
-                    handleImageError('design', order.designImage);
-                  }}
-                />
-                
-                {(!designImageExists || !imagesLoaded.design) && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-red-500/70 text-white p-1 text-sm flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 mr-1" />
-                    Có vấn đề với hình ảnh thiết kế
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {hasFrontDesign && (
+                <div className="border rounded p-3">
+                  <h4 className="font-medium text-sm mb-2">Mặt trước</h4>
+                  <div className="relative">
+                    <img 
+                      src={getFrontDesignImageUrl()} 
+                      alt="Front Design Preview" 
+                      className="max-h-64 object-contain cursor-pointer w-full"
+                      onClick={() => {
+                        onViewImage(getFrontDesignImageUrl());
+                      }}
+                      onLoad={() => handleImageLoad('front')}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getFallbackImageUrl('design');
+                        handleImageError('front', order.designImageFront || order.designImage);
+                      }}
+                    />
+                    
+                    {(!designImagesExist.front || !designImagesLoaded.front) && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-red-500/70 text-white p-1 text-sm flex items-center justify-center">
+                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        Có vấn đề với hình ảnh thiết kế
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="mt-2 bg-yellow-50 p-2 rounded text-sm">
-              <p>
-                <strong>Tình trạng:</strong> {designImageExists ? 'Hình ảnh tồn tại' : 'Hình ảnh không tồn tại trong storage'}
-              </p>
-              <p>
-                <strong>URL:</strong> <span className="text-xs font-mono break-all">{designImageUrl || 'Không có URL'}</span>
-              </p>
+                  <p className="text-xs mt-1 text-muted-foreground break-all">
+                    {order.designImageFront || order.designImage || "N/A"}
+                  </p>
+                </div>
+              )}
+              
+              {hasBackDesign && (
+                <div className="border rounded p-3">
+                  <h4 className="font-medium text-sm mb-2">Mặt sau</h4>
+                  <div className="relative">
+                    <img 
+                      src={getBackDesignImageUrl()} 
+                      alt="Back Design Preview" 
+                      className="max-h-64 object-contain cursor-pointer w-full"
+                      onClick={() => {
+                        onViewImage(getBackDesignImageUrl());
+                      }}
+                      onLoad={() => handleImageLoad('back')}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getFallbackImageUrl('design');
+                        handleImageError('back', order.designImageBack);
+                      }}
+                    />
+                    
+                    {(!designImagesExist.back || !designImagesLoaded.back) && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-red-500/70 text-white p-1 text-sm flex items-center justify-center">
+                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        Có vấn đề với hình ảnh thiết kế
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs mt-1 text-muted-foreground break-all">
+                    {order.designImageBack || "N/A"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -301,7 +362,7 @@ export const OrderDetails = ({
                 </div>
               ))}
             </div>
-            {imagesLoaded.references.some(loaded => !loaded) && (
+            {referenceImagesLoaded.some(loaded => !loaded) && (
               <p className="text-center text-sm text-red-500 mt-2">
                 Một số hình ảnh không thể tải. Vui lòng kiểm tra quyền truy cập.
               </p>
