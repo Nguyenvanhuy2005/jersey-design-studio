@@ -18,7 +18,11 @@ export const JerseyBack = ({
   fontFamily
 }: JerseyBackProps) => {
   // Clear the canvas before drawing
-  ctx.clearRect(0, 0, ctx.canvas.width / window.devicePixelRatio, ctx.canvas.height / window.devicePixelRatio);
+  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
+  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  
+  console.log(`Rendering JerseyBack on canvas ${canvasWidth}x${canvasHeight}`);
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
   // Draw back jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
@@ -60,12 +64,15 @@ export const JerseyBack = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
+  console.log(`Rendering back jersey with text: player=${playerName}, number=${playerNumber}, team=${teamName}`);
+  
   // Draw player name (upper back - above number)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '24px'); // Adjust size for player name
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 50, 180);
+    console.log(`Drew player name: ${playerNameDisplayed}`);
   }
   
   // Draw player number (center back)
@@ -73,6 +80,7 @@ export const JerseyBack = ({
     ctx.fillStyle = '#1A1A1A';
     ctx.font = fontFamily.replace('20px', '100px'); // Adjust size for player number
     ctx.fillText(playerNumber.toString(), 150, 150);
+    console.log(`Drew player number: ${playerNumber}`);
   }
   
   // Draw team name (lower back - below number)
@@ -81,7 +89,11 @@ export const JerseyBack = ({
     ctx.font = fontFamily.replace('20px', '18px'); // Adjust size for team name
     const teamNameDisplayed = teamName.length > 20 ? teamName.substring(0, 20) + '...' : teamName;
     ctx.fillText(teamNameDisplayed, 150, 230, 180);
+    console.log(`Drew team name: ${teamNameDisplayed}`);
   }
+  
+  console.log("JerseyBack rendering complete");
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };
+

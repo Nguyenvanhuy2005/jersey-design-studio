@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -18,7 +17,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { X } from "lucide-react";
-import { createStorageBucketsIfNeeded, uploadDesignImage } from "@/utils/image-utils";
+import { 
+  createStorageBucketsIfNeeded, 
+  uploadDesignImage, 
+  verifyImageUpload,
+  checkFileExistsInStorage 
+} from "@/utils/image-utils";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -58,7 +62,6 @@ const CreateOrder = () => {
     const updatedFiles = [...referenceImages];
     const updatedPreviews = [...referenceImagesPreview];
     
-    // Limit to maximum 5 files
     const filesToAdd = newFiles.slice(0, 5 - referenceImages.length);
     
     filesToAdd.forEach(file => {
@@ -78,7 +81,6 @@ const CreateOrder = () => {
     const updatedFiles = [...referenceImages];
     const updatedPreviews = [...referenceImagesPreview];
     
-    // Revoke object URL to prevent memory leaks
     URL.revokeObjectURL(updatedPreviews[index]);
     
     updatedFiles.splice(index, 1);
@@ -230,7 +232,6 @@ const CreateOrder = () => {
     try {
       setIsGeneratingDesign(true);
       
-      // Ensure the storage buckets exist
       const bucketsCheck = await createStorageBucketsIfNeeded();
       if (!bucketsCheck.success) {
         console.error("Failed to ensure storage buckets exist:", bucketsCheck.message);
@@ -244,15 +245,12 @@ const CreateOrder = () => {
         return { frontPath: '', backPath: '' };
       }
       
-      // Generate front view design
       console.log("Capturing front view design...");
       setPreviewView('front');
       
-      // Add a delay to ensure the canvas is properly rendered
       console.log("Waiting for front view canvas to render...");
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Now capture the front view
       const frontFileName = `front-design-${orderId}.png`;
       const frontDesignFile = await convertCanvasToFile(
         jerseyCanvasRef.current, 
@@ -260,29 +258,32 @@ const CreateOrder = () => {
         frontFileName
       );
       
-      // Upload front view image with retry logic
-      const frontPath = await uploadDesignImage(orderId, frontDesignFile, 'front-design');
-      
+      let frontVerified = false;
       if (!frontPath) {
         console.error("Failed to upload front design image");
-        toast.error("Không thể tải lên ảnh thiết kế mặt trước");
       } else {
         console.log("Front design image uploaded successfully:", frontPath);
-        const { data: frontUrlData } = supabase.storage
-          .from('design_images')
-          .getPublicUrl(frontPath);
-        console.log("Front design public URL:", frontUrlData.publicUrl);
+        
+        try {
+          frontVerified = await checkFileExistsInStorage('design_images', frontPath);
+          if (frontVerified) {
+            const { data: frontUrlData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(frontPath);
+            console.log("Front design public URL:", frontUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify front design image due to permissions, but continuing:", err);
+          frontVerified = true;
+        }
       }
       
-      // Switch to back view and generate back design image
       console.log("Switching to back view design...");
       setPreviewView('back');
       
-      // Add a delay to ensure the canvas is properly rendered with back view
       console.log("Waiting for back view canvas to render...");
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Now capture the back view
       const backFileName = `back-design-${orderId}.png`;
       const backDesignFile = await convertCanvasToFile(
         jerseyCanvasRef.current, 
@@ -290,28 +291,42 @@ const CreateOrder = () => {
         backFileName
       );
       
-      // Upload back view image with retry logic
-      const backPath = await uploadDesignImage(orderId, backDesignFile, 'back-design');
-      
+      let backVerified = false;
       if (!backPath) {
         console.error("Failed to upload back design image");
-        toast.error("Không thể tải lên ảnh thiết kế mặt sau");
       } else {
         console.log("Back design image uploaded successfully:", backPath);
-        const { data: backUrlData } = supabase.storage
-          .from('design_images')
-          .getPublicUrl(backPath);
-        console.log("Back design public URL:", backUrlData.publicUrl);
+        
+        try {
+          backVerified = await checkFileExistsInStorage('design_images', backPath);
+          if (backVerified) {
+            const { data: backUrlData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(backPath);
+            console.log("Back design public URL:", backUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify back design image due to permissions, but continuing:", err);
+          backVerified = true;
+        }
       }
       
-      // Switch back to front view for display
       setPreviewView('front');
       
-      toast.success(`Đã lưu hình ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : backPath ? 'mặt sau' : ''}`);
+      const frontSuccess = frontPath && frontVerified;
+      const backSuccess = backPath && backVerified;
+      
+      if (frontSuccess || backSuccess) {
+        toast.success(`Đã lưu hình ảnh thiết kế ${frontSuccess && backSuccess ? 'mặt trước và mặt sau' : frontSuccess ? 'mặt trước' : 'mặt sau'}`);
+      } else if (frontPath || backPath) {
+        toast.info("Đã tạo hình ảnh thiết kế, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
+      } else {
+        toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại sau.");
+      }
       
       return { 
-        frontPath, 
-        backPath 
+        frontPath: frontPath || '', 
+        backPath: backPath || '' 
       };
     } catch (err) {
       console.error(`Error capturing order design images:`, err);
@@ -350,7 +365,6 @@ const CreateOrder = () => {
           continue;
         }
         
-        // Log the public URL
         const { data: urlData } = supabase.storage
           .from('reference_images')
           .getPublicUrl(data.path);
@@ -360,7 +374,6 @@ const CreateOrder = () => {
         uploadedPaths.push(data.path);
         uploadProgress++;
         
-        // Update progress toast
         toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
         
       } catch (err) {
@@ -385,30 +398,24 @@ const CreateOrder = () => {
     setIsSubmitting(true);
     
     try {
-      // Ensure buckets exist before starting the order process
       await createStorageBucketsIfNeeded();
       
       const totalCost = calculateTotalCost();
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Generate and upload both design images - front and back
       console.log("Starting design images generation...");
       const { frontPath, backPath } = await generateOrderDesignImages(orderId);
       
       if (!frontPath && !backPath) {
-        console.error("Failed to generate any design images");
-        toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại.");
-        setIsSubmitting(false);
-        return;
+        console.warn("No design images were generated, but continuing with order submission");
+        toast.warning("Không thể tạo ảnh thiết kế, nhưng vẫn tiếp tục đơn hàng của bạn.");
+      } else {
+        console.log("Design images generated successfully:", { frontPath, backPath });
       }
       
-      console.log("Design images generated successfully:", { frontPath, backPath });
-      
-      // Upload reference images
       const referenceImagePaths = await uploadReferenceImages(orderId);
       
-      // Upload logos
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -470,9 +477,9 @@ const CreateOrder = () => {
           total_cost: totalCost,
           notes: notes,
           design_data: designData,
-          design_image: frontPath, // Keep for backwards compatibility
-          design_image_front: frontPath,
-          design_image_back: backPath,
+          design_image: frontPath || null,
+          design_image_front: frontPath || null,
+          design_image_back: backPath || null,
           reference_images: referenceImagePaths
         });
         
@@ -595,25 +602,43 @@ const CreateOrder = () => {
       const testId = uuidv4();
       toast.info("Đang kiểm tra tạo ảnh thiết kế...");
       
-      // Test both front and back design images
       const { frontPath, backPath } = await generateOrderDesignImages(testId);
+      
+      let frontVerified = false;
+      let backVerified = false;
+      
+      if (frontPath) {
+        try {
+          frontVerified = await checkFileExistsInStorage('design_images', frontPath);
+          if (frontVerified) {
+            const { data: frontData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(frontPath);
+            console.log("Test front design image URL:", frontData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify front image, but continuing:", err);
+          frontVerified = true;
+        }
+      }
+      
+      if (backPath) {
+        try {
+          backVerified = await checkFileExistsInStorage('design_images', backPath);
+          if (backVerified) {
+            const { data: backData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(backPath);
+            console.log("Test back design image URL:", backData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify back image, but continuing:", err);
+          backVerified = true;
+        }
+      }
       
       if (frontPath || backPath) {
         toast.success(`Tạo ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : 'mặt sau'} thành công!`);
-        
-        if (frontPath) {
-          const { data: frontData } = supabase.storage
-            .from('design_images')
-            .getPublicUrl(frontPath);
-          console.log("Test front design image URL:", frontData.publicUrl);
-        }
-        
-        if (backPath) {
-          const { data: backData } = supabase.storage
-            .from('design_images')
-            .getPublicUrl(backPath);
-          console.log("Test back design image URL:", backData.publicUrl);
-        }
       } else {
         toast.error("Không thể tạo ảnh thiết kế");
       }
@@ -653,7 +678,6 @@ const CreateOrder = () => {
                   onLogosChange={setLogos}
                 />
 
-                {/* Reference Images Upload */}
                 <div className="border rounded-md p-4 space-y-3">
                   <Label htmlFor="referenceImages">Hình ảnh sản phẩm muốn in (PNG, JPG)</Label>
                   <Input

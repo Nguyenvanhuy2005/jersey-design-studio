@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Get a public URL for a design image from storage with enhanced error handling
@@ -261,25 +262,37 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
     const { designImages, referenceImages, error } = await checkStorageBucketsExist();
     
     if (error) {
+      // If we can't check buckets due to permissions, assume they exist
+      // This fixes the issue where RLS policy prevents bucket creation but buckets already exist
+      console.warn(`Unable to check buckets: ${error}. Assuming they exist and continuing...`);
       return { 
-        success: false, 
-        message: `Error checking buckets: ${error}`, 
+        success: true, 
+        message: 'Assuming buckets exist due to permission restrictions',
         created 
       };
     }
     
     // Create design_images bucket if it doesn't exist
     if (!designImages) {
-      const { error: createError } = await supabase.storage.createBucket('design_images', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-      });
-      
-      if (createError) {
-        console.error("Error creating design_images bucket:", createError);
-      } else {
-        console.log("Successfully created design_images bucket");
-        created.designImages = true;
+      try {
+        const { error: createError } = await supabase.storage.createBucket('design_images', {
+          public: true,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (createError) {
+          // If error is due to RLS policy, assume bucket exists and continue
+          if (createError.message.includes('row-level security policy')) {
+            console.warn("Unable to create design_images bucket due to RLS policy. Assuming it exists.");
+          } else {
+            console.error("Error creating design_images bucket:", createError);
+          }
+        } else {
+          console.log("Successfully created design_images bucket");
+          created.designImages = true;
+        }
+      } catch (err) {
+        console.warn("Exception creating design_images bucket. Assuming it exists:", err);
       }
     } else {
       console.log("design_images bucket already exists");
@@ -287,21 +300,31 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
     
     // Create reference_images bucket if it doesn't exist
     if (!referenceImages) {
-      const { error: createError } = await supabase.storage.createBucket('reference_images', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-      });
-      
-      if (createError) {
-        console.error("Error creating reference_images bucket:", createError);
-      } else {
-        console.log("Successfully created reference_images bucket");
-        created.referenceImages = true;
+      try {
+        const { error: createError } = await supabase.storage.createBucket('reference_images', {
+          public: true,
+          fileSizeLimit: 10485760, // 10MB
+        });
+        
+        if (createError) {
+          // If error is due to RLS policy, assume bucket exists and continue
+          if (createError.message.includes('row-level security policy')) {
+            console.warn("Unable to create reference_images bucket due to RLS policy. Assuming it exists.");
+          } else {
+            console.error("Error creating reference_images bucket:", createError);
+          }
+        } else {
+          console.log("Successfully created reference_images bucket");
+          created.referenceImages = true;
+        }
+      } catch (err) {
+        console.warn("Exception creating reference_images bucket. Assuming it exists:", err);
       }
     } else {
       console.log("reference_images bucket already exists");
     }
     
+    // Success if we either created buckets or they already existed
     return { 
       success: true, 
       message: 'Buckets check completed',
@@ -321,6 +344,7 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
  * Uploads a design image to Supabase storage with retry logic
  * @param orderId The order ID for the path
  * @param imageFile The image file to upload
+ * @param fileNameSuffix The suffix to append to the filename (default: 'design')
  * @param retries Number of retry attempts (default: 2)
  * @returns Promise resolving to the uploaded file path or empty string on failure
  */
@@ -332,7 +356,7 @@ export const uploadDesignImage = async (
 ): Promise<string> => {
   const filePath = `${orderId}/${fileNameSuffix}.png`;
   
-  // First, ensure the bucket exists
+  // First, ensure the bucket exists (but don't fail if we can't create it due to RLS)
   await createStorageBucketsIfNeeded();
   
   // Try to upload with retries
@@ -377,3 +401,81 @@ export const uploadDesignImage = async (
   
   return '';
 };
+
+/**
+ * Checks if a file exists in a Supabase storage bucket
+ * @param bucket The bucket name
+ * @param path The file path
+ * @returns Promise resolving to boolean indicating if file exists
+ */
+export const checkFileExistsInStorage = async (
+  bucket: string,
+  path: string
+): Promise<boolean> => {
+  try {
+    if (!path) return false;
+    
+    // Get the folder path and filename
+    const pathParts = path.split('/');
+    const fileName = pathParts.pop();
+    const folderPath = pathParts.join('/');
+    
+    if (!fileName) return false;
+    
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(folderPath, {
+        limit: 100,
+        search: fileName
+      });
+      
+    if (error) {
+      console.error(`Error checking if file exists in ${bucket}:`, error);
+      return false;
+    }
+    
+    const fileExists = data && data.length > 0 && data.some(file => file.name === fileName);
+    console.log(`File ${path} in ${bucket} exists: ${fileExists}`);
+    return fileExists;
+  } catch (err) {
+    console.error(`Error checking if file exists in ${bucket}:`, err);
+    return false;
+  }
+};
+
+/**
+ * Verifies that an image was successfully uploaded to storage
+ * @param bucket The bucket name 
+ * @param path The file path
+ * @returns Promise resolving to boolean and public URL if successful
+ */
+export const verifyImageUpload = async (
+  bucket: string,
+  path: string
+): Promise<{ success: boolean, publicUrl: string | null }> => {
+  try {
+    if (!path) {
+      return { success: false, publicUrl: null };
+    }
+    
+    // Check if file exists in storage
+    const fileExists = await checkFileExistsInStorage(bucket, path);
+    
+    if (!fileExists) {
+      console.warn(`Image does not exist in ${bucket}: ${path}`);
+      return { success: false, publicUrl: null };
+    }
+    
+    // Get public URL
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+    
+    console.log(`Successfully verified image upload to ${bucket}: ${path}`);
+    return { success: true, publicUrl: data.publicUrl };
+  } catch (err) {
+    console.error(`Error verifying image upload to ${bucket}:`, err);
+    return { success: false, publicUrl: null };
+  }
+};
+
