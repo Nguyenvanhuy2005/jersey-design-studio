@@ -5,7 +5,7 @@ export interface Player {
   number: number;
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
-  design_image?: string; // Added for player jersey designs
+  // Removed design_image field as per requirements
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';

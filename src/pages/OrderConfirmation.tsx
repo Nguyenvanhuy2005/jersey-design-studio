@@ -2,18 +2,41 @@
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, ImageIcon } from "lucide-react";
 import { Order } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger 
+} from "@/components/ui/dialog";
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const order = location.state?.order as Order | undefined;
+  const [designImageUrl, setDesignImageUrl] = useState<string | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   
   // Redirect if no order data (e.g. if user accessed this page directly)
   if (!order) {
     return <Navigate to="/" replace />;
   }
+
+  // Get the public URL for the design image
+  useEffect(() => {
+    if (order.designImage) {
+      const { data } = supabase.storage
+        .from('design_images')
+        .getPublicUrl(order.designImage);
+      
+      setDesignImageUrl(data.publicUrl);
+    }
+  }, [order.designImage]);
 
   return (
     <Layout>
@@ -58,6 +81,42 @@ const OrderConfirmation = () => {
                 </p>
               </div>
             </div>
+
+            {/* Design image section */}
+            {designImageUrl && (
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="font-semibold mb-3">Hình ảnh thiết kế</h3>
+                <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+                  <DialogTrigger asChild>
+                    <div className="cursor-pointer mx-auto max-w-[200px]" onClick={() => setIsImageDialogOpen(true)}>
+                      <img 
+                        src={designImageUrl} 
+                        alt="Thiết kế áo" 
+                        className="w-full h-auto rounded-md border shadow-sm" 
+                      />
+                      <p className="text-center text-xs text-muted-foreground mt-1">
+                        (Nhấp để xem kích thước đầy đủ)
+                      </p>
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Hình ảnh thiết kế</DialogTitle>
+                      <DialogDescription>
+                        Thiết kế áo cho đơn hàng của bạn
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src={designImageUrl} 
+                        alt="Thiết kế áo" 
+                        className="max-w-full max-h-[70vh] rounded-md" 
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
           </div>
           
           <div className="bg-muted p-4 rounded-md mb-8">

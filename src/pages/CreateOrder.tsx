@@ -175,75 +175,45 @@ const CreateOrder = () => {
     return file;
   };
 
-  const generatePlayerDesignImage = async (player: Player, orderId: string): Promise<string> => {
-    setPreviewPlayer(players.indexOf(player));
-    
-    setPreviewView('back');
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+  const generateOrderDesignImage = async (orderId: string): Promise<string> => {
     try {
+      setPreviewView('front');
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       if (jerseyCanvasRef.current) {
-        console.log(`Generating back design image for player: ${player.name} (${player.number})`);
+        console.log(`Generating order design image...`);
         
-        const backFileName = `jersey-back-${orderId}-player-${player.number}.png`;
+        const frontFileName = `design-${orderId}.png`;
         
-        const backDesignImageFile = await convertCanvasToFile(
-          jerseyCanvasRef.current, 
-          orderId,
-          backFileName
-        );
-        
-        const backFilePath = `${orderId}/players/${backFileName}`;
-        
-        const { data: backUploadData, error: backUploadError } = await supabase.storage
-          .from('design_images')
-          .upload(backFilePath, backDesignImageFile, {
-            cacheControl: '3600',
-            upsert: true
-          });
-          
-        if (backUploadError) {
-          console.error(`Error uploading back design image for player ${player.name}:`, backUploadError);
-          toast.error(`Không thể tải lên ảnh mặt sau cho cầu thủ ${player.name || player.number}`);
-        } else {
-          console.log(`Successfully uploaded back design image: ${backUploadData.path}`);
-        }
-        
-        setPreviewView('front');
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const frontFileName = `jersey-front-${orderId}-player-${player.number}.png`;
-        
-        const frontDesignImageFile = await convertCanvasToFile(
+        const designImageFile = await convertCanvasToFile(
           jerseyCanvasRef.current, 
           orderId,
           frontFileName
         );
         
-        const frontFilePath = `${orderId}/players/${frontFileName}`;
+        const filePath = `${orderId}/design.png`;
         
-        const { data: frontUploadData, error: frontUploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('design_images')
-          .upload(frontFilePath, frontDesignImageFile, {
+          .upload(filePath, designImageFile, {
             cacheControl: '3600',
             upsert: true
           });
-        
-        if (frontUploadError) {
-          console.error(`Error uploading front design image for player ${player.name}:`, frontUploadError);
-          toast.error(`Không thể tải lên ảnh mặt trước cho cầu thủ ${player.name || player.number}`);
-          return backUploadData?.path || '';
+          
+        if (uploadError) {
+          console.error(`Error uploading order design image:`, uploadError);
+          toast.error(`Không thể tải lên ảnh thiết kế`);
+          return '';
+        } else {
+          console.log(`Successfully uploaded order design image: ${uploadData.path}`);
+          toast.success(`Đã lưu hình ảnh thiết kế`);
+          return uploadData.path;
         }
-        
-        console.log(`Successfully uploaded front design image: ${frontUploadData.path}`);
-        
-        return frontUploadData.path;
       }
     } catch (err) {
-      console.error(`Error capturing canvas image for player ${player.name}:`, err);
-      toast.error(`Có lỗi khi tạo ảnh demo cho cầu thủ ${player.name || player.number}`);
+      console.error(`Error capturing order design image:`, err);
+      toast.error(`Có lỗi khi tạo ảnh thiết kế`);
     }
     
     return '';
@@ -262,38 +232,7 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      setPreviewView('front');
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let designImagePath = '';
-      if (jerseyCanvasRef.current) {
-        try {
-          const designImageFile = await convertCanvasToFile(
-            jerseyCanvasRef.current, 
-            orderId,
-            `design-${orderId}.png`
-          );
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('design_images')
-            .upload(`${orderId}/design.png`, designImageFile, {
-              cacheControl: '3600',
-              upsert: true
-            });
-            
-          if (uploadError) {
-            console.error('Error uploading design image:', uploadError);
-            toast.error("Không thể tải lên hình ảnh thiết kế");
-          } else {
-            designImagePath = uploadData.path;
-            toast.success("Đã lưu hình ảnh thiết kế");
-          }
-        } catch (err) {
-          console.error("Error capturing canvas image:", err);
-          toast.error("Không thể tạo hình ảnh thiết kế");
-        }
-      }
+      const designImagePath = await generateOrderDesignImage(orderId);
       
       if (logos.length > 0) {
         for (const logo of logos) {
@@ -359,39 +298,23 @@ const CreateOrder = () => {
         throw orderError;
       }
 
-      const playersWithDesigns = [];
-      
-      console.log(`Generating design images for ${players.length} players...`);
-      
-      for (const player of players) {
-        toast.info(`Đang tạo ảnh demo cho ${player.name || `cầu thủ số ${player.number}`}...`, {
-          duration: 3000,
-          id: `player-design-${player.number}`
-        });
-        
-        const playerDesignImage = await generatePlayerDesignImage(player, orderId);
-        
-        console.log(`Design image path for player ${player.name}: ${playerDesignImage}`);
-        
-        playersWithDesigns.push({
-          name: player.name,
-          number: player.number,
-          size: player.size,
-          print_image: player.printImage,
-          order_id: orderId,
-          design_image: playerDesignImage
-        });
-      }
+      const playersToInsert = players.map(player => ({
+        name: player.name,
+        number: player.number,
+        size: player.size,
+        print_image: player.printImage,
+        order_id: orderId
+      }));
       
       const { error: playersError } = await supabase
         .from('players')
-        .insert(playersWithDesigns);
+        .insert(playersToInsert);
         
       if (playersError) {
         console.error("Error adding players:", playersError);
         throw playersError;
       } else {
-        console.log("Successfully added players with design images");
+        console.log("Successfully added players");
       }
       
       let fontFileUrl = null;
@@ -588,6 +511,12 @@ const CreateOrder = () => {
                       canvasRef={jerseyCanvasRef}
                     />
                   </div>
+                </div>
+                
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-sm text-green-700">
+                    Hình ảnh thiết kế này sẽ được lưu làm hình ảnh đại diện cho toàn bộ đơn hàng khi bạn đặt đơn hàng.
+                  </p>
                 </div>
               </div>
               
