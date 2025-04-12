@@ -43,8 +43,13 @@ export const checkDesignImageExists = async (imagePath?: string): Promise<boolea
   try {
     // If already a URL, try to fetch it to check existence
     if (imagePath.startsWith('http')) {
-      const response = await fetch(imagePath, { method: 'HEAD' });
-      return response.ok;
+      try {
+        const response = await fetch(imagePath, { method: 'HEAD' });
+        return response.ok;
+      } catch (err) {
+        console.error("Error checking URL existence:", err);
+        return false;
+      }
     }
     
     // Check if bucket exists first
@@ -54,37 +59,55 @@ export const checkDesignImageExists = async (imagePath?: string): Promise<boolea
       return false;
     }
     
+    // If bucket doesn't exist, design image can't exist
     const designBucketExists = buckets.some(bucket => bucket.name === 'design_images');
     if (!designBucketExists) {
       console.error("Bucket 'design_images' does not exist");
       return false;
     }
     
-    // Otherwise, check in Supabase storage
-    const folderPath = imagePath.split('/').slice(0, -1).join('/');
-    const fileName = imagePath.split('/').pop();
-    
-    if (!fileName) {
-      console.error("Invalid image path:", imagePath);
-      return false;
-    }
-    
+    // First try to download the URL to see if it exists
     const { data, error } = await supabase.storage
       .from('design_images')
-      .list(folderPath, {
-        limit: 100,
-        offset: 0,
-        search: fileName
-      });
+      .download(imagePath);
     
     if (error) {
-      console.error("Error checking if design image exists:", error);
-      return false;
+      console.error("Error checking design image exists (download):", error);
+      
+      // If that failed, try listing the directory to see if the file is there
+      try {
+        const folderPath = imagePath.split('/').slice(0, -1).join('/');
+        const fileName = imagePath.split('/').pop();
+        
+        if (!fileName) {
+          console.error("Invalid image path:", imagePath);
+          return false;
+        }
+        
+        const { data: fileList, error: listError } = await supabase.storage
+          .from('design_images')
+          .list(folderPath, {
+            limit: 100,
+            search: fileName
+          });
+        
+        if (listError) {
+          console.error("Error listing design images:", listError);
+          return false;
+        }
+        
+        const fileExists = fileList && fileList.length > 0 && fileList.some(file => file.name === fileName);
+        console.log(`Design image ${imagePath} exists (listing): ${fileExists}`);
+        return fileExists;
+      } catch (listErr) {
+        console.error("Error checking image existence by listing:", listErr);
+        return false;
+      }
     }
     
-    const fileExists = data && data.length > 0 && data.some(file => file.name === fileName);
-    console.log(`Design image ${imagePath} exists: ${fileExists}`);
-    return fileExists;
+    // If we successfully downloaded the file, it exists
+    console.log(`Design image ${imagePath} exists (download): true`);
+    return !!data;
   } catch (error) {
     console.error("Error checking if design image exists:", error);
     return false;
@@ -229,8 +252,19 @@ export const checkStorageBucketsExist = async (): Promise<{
       };
     }
     
-    const designBucketExists = buckets.some(bucket => bucket.name === 'design_images');
-    const refBucketExists = buckets.some(bucket => bucket.name === 'reference_images');
+    // The bucket name in Supabase might be different from what we expect
+    // Check both 'design_images' and 'Design Images'
+    const designBucketExists = buckets.some(bucket => 
+      bucket.name === 'design_images' || 
+      bucket.name === 'Design Images' ||
+      bucket.name.toLowerCase() === 'design_images'
+    );
+    
+    const refBucketExists = buckets.some(bucket => 
+      bucket.name === 'reference_images' || 
+      bucket.name === 'Reference Images' ||
+      bucket.name.toLowerCase() === 'reference_images'
+    );
     
     console.log("Storage buckets check:", {
       designImages: designBucketExists,

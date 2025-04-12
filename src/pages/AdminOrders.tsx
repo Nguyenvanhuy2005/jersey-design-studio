@@ -13,6 +13,7 @@ import { OrdersList } from "@/components/admin/OrdersList";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
 import { checkDesignImageExists, checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/image-utils";
+
 const mockOrders: Order[] = [{
   id: "order-1",
   teamName: "FC Barcelona",
@@ -143,6 +144,7 @@ const mockOrders: Order[] = [{
   createdAt: new Date(2023, 2, 10),
   referenceImages: []
 }];
+
 const AdminOrders = () => {
   const navigate = useNavigate();
   const {
@@ -167,6 +169,7 @@ const AdminOrders = () => {
     checking: true
   });
   const [creatingBuckets, setCreatingBuckets] = useState<boolean>(false);
+
   useEffect(() => {
     const checkStorageBuckets = async () => {
       if (!user) return;
@@ -184,7 +187,9 @@ const AdminOrders = () => {
         });
         console.log("Storage buckets check:", result);
         if (!result.designImages || !result.referenceImages) {
-          toast.error("Bucket không tồn tại trong storage. Hãy tạo bucket để hiển thị hình ảnh.");
+          toast.error("Bucket không tồn tại trong storage. Hãy tạo bucket để hiển thị hình ảnh.", {
+            duration: 5000,
+          });
         }
       } catch (err) {
         console.error("Error checking storage buckets:", err);
@@ -200,6 +205,7 @@ const AdminOrders = () => {
       checkStorageBuckets();
     }
   }, [user]);
+
   const handleCreateBuckets = async () => {
     setCreatingBuckets(true);
     try {
@@ -229,6 +235,7 @@ const AdminOrders = () => {
       setCreatingBuckets(false);
     }
   };
+
   useEffect(() => {
     if (user) {
       const fetchOrders = async () => {
@@ -236,12 +243,8 @@ const AdminOrders = () => {
         setFetchError(null);
         console.log("Fetching orders data...");
         try {
-          const {
-            data,
-            error
-          } = await supabase.from('orders').select('*, players(*), product_lines(*), print_configs(*)').order('created_at', {
-            ascending: false
-          });
+          const { data, error } = await supabase.from('orders').select('*, players(*), product_lines(*), print_configs(*)').order('created_at', { ascending: false });
+          
           if (error) {
             console.error("Error fetching orders:", error);
             setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
@@ -250,18 +253,24 @@ const AdminOrders = () => {
             setFetchingData(false);
             return;
           }
+          
           if (!data || data.length === 0) {
             console.log("No orders found");
             setOrders([]);
             setFetchingData(false);
             return;
           }
+          
           console.log("Raw orders data:", data);
+          
           const transformedOrders: Order[] = await Promise.all(data.map(async order => {
+            // Process reference images
             let processedReferenceImages: string[] = [];
             if (order.reference_images && Array.isArray(order.reference_images)) {
               processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
             }
+            
+            // Process design data
             if (order.design_data) {
               const designData = order.design_data as {
                 reference_images?: any[];
@@ -271,10 +280,16 @@ const AdminOrders = () => {
                 processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
               }
             }
-            const designImageExists = order.design_image ? await checkDesignImageExists(order.design_image) : false;
-            if (order.design_image && !designImageExists) {
-              console.warn(`Design image does not exist for order ${order.id}: ${order.design_image}`);
-            }
+            
+            // Check design images existence
+            let designImageFront = order.design_image_front || order.design_image || '';
+            let designImageBack = order.design_image_back || '';
+            
+            console.log(`Order ${order.id} design images:`, {
+              front: designImageFront,
+              back: designImageBack
+            });
+            
             return {
               id: order.id,
               teamName: order.team_name || '',
@@ -283,6 +298,8 @@ const AdminOrders = () => {
               createdAt: new Date(order.created_at || ''),
               notes: order.notes || '',
               designImage: order.design_image || '',
+              designImageFront: order.design_image_front || '',
+              designImageBack: order.design_image_back || '',
               referenceImages: processedReferenceImages,
               players: order.players ? order.players.map((player: any) => ({
                 id: player.id,
@@ -324,6 +341,7 @@ const AdminOrders = () => {
               }
             };
           }));
+          
           console.log("Transformed orders:", transformedOrders);
           setOrders(transformedOrders);
         } catch (e) {
@@ -338,6 +356,7 @@ const AdminOrders = () => {
       fetchOrders();
     }
   }, [user]);
+
   if (isLoading || fetchingData) {
     return <Layout>
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
@@ -345,6 +364,7 @@ const AdminOrders = () => {
         </div>
       </Layout>;
   }
+
   const handleStatusChange = (orderId: string, newStatus: 'new' | 'processing' | 'completed') => {
     const updatedOrders = orders.map(order => order.id === orderId ? {
       ...order,
@@ -364,21 +384,26 @@ const AdminOrders = () => {
       }
     });
   };
+
   const handleSignOut = async () => {
     await signOut();
     toast.success("Đã đăng xuất khỏi hệ thống");
     navigate("/admin");
   };
+
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
   };
+
   const handleViewImage = (imageUrl: string | null) => {
     console.log("Opening image viewer with URL:", imageUrl);
     setSelectedImage(imageUrl);
   };
+
   const handleCloseImageViewer = () => {
     setSelectedImage(null);
   };
+
   return <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
@@ -406,7 +431,32 @@ const AdminOrders = () => {
           </div>
         </div>
         
-        {!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages}
+        {(!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages) && !storageBucketsStatus.checking && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <div>
+                <h3 className="font-medium">Cần tạo bucket lưu trữ</h3>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Để hiển thị hình ảnh thiết kế và tham khảo, hãy tạo các bucket lưu trữ.
+                </p>
+                <Button 
+                  className="mt-2" 
+                  size="sm" 
+                  onClick={handleCreateBuckets} 
+                  disabled={creatingBuckets}
+                >
+                  {creatingBuckets ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Đang tạo...
+                    </>
+                  ) : "Tạo buckets"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {fetchError && <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
             <div className="flex gap-2">
@@ -461,4 +511,5 @@ const AdminOrders = () => {
       <ImageViewer isOpen={!!selectedImage} onClose={handleCloseImageViewer} imageUrl={selectedImage} />
     </Layout>;
 };
+
 export default AdminOrders;

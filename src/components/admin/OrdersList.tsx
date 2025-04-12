@@ -33,13 +33,21 @@ export const OrdersList = ({
       
       for (const order of orders) {
         if (order.id) {
-          const frontAvailable = await checkDesignImageExists(order.designImageFront || order.designImage);
-          const backAvailable = await checkDesignImageExists(order.designImageBack);
+          // Check front design image
+          const frontImagePath = order.designImageFront || order.designImage;
+          const frontAvailable = frontImagePath ? await checkDesignImageExists(frontImagePath) : false;
+          
+          // Check back design image
+          const backAvailable = order.designImageBack ? await checkDesignImageExists(order.designImageBack) : false;
           
           availability[order.id] = {
             front: frontAvailable,
             back: backAvailable
           };
+          
+          console.log(`Order ${order.id} image availability - front: ${frontAvailable}, back: ${backAvailable}`);
+          console.log(`  Front image path: ${frontImagePath}`);
+          console.log(`  Back image path: ${order.designImageBack}`);
         }
       }
       
@@ -59,9 +67,9 @@ export const OrdersList = ({
     return new Date(date).toLocaleDateString('vi-VN');
   };
 
-  const handleImageError = (orderId: string) => {
-    console.error(`Failed to load design image for order ${orderId}`);
-    setImageLoadErrors(prev => ({ ...prev, [orderId]: true }));
+  const handleImageError = (orderId: string, side: 'front' | 'back') => {
+    console.error(`Failed to load ${side} design image for order ${orderId}`);
+    setImageLoadErrors(prev => ({ ...prev, [`${orderId}-${side}`]: true }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -97,7 +105,18 @@ export const OrdersList = ({
         // Check if order has front/back design images and if they're available
         const hasFrontDesignImage = !!(order.designImageFront || order.designImage);
         const hasBackDesignImage = !!order.designImageBack;
-        const designImageAvailability = order.id ? imageAvailability[order.id] : { front: false, back: false };
+        
+        const orderAvailability = order.id ? imageAvailability[order.id] : { front: false, back: false };
+        
+        // Log image paths and availability for debugging
+        console.log(`Rendering order ${order.id || 'unknown'} images:`, {
+          frontPath: order.designImageFront || order.designImage,
+          backPath: order.designImageBack,
+          hasFront: hasFrontDesignImage,
+          hasBack: hasBackDesignImage,
+          availability: orderAvailability
+        });
+        
         const hasFrontDesignImageError = order.id ? imageLoadErrors[`${order.id}-front`] : false;
         const hasBackDesignImageError = order.id ? imageLoadErrors[`${order.id}-back`] : false;
         
@@ -117,17 +136,20 @@ export const OrdersList = ({
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        console.log(`Order front design image path:`, order.designImageFront || order.designImage);
-                        const imageUrl = getDesignImageUrl(order.designImageFront || order.designImage);
-                        console.log(`Generated front design image URL:`, imageUrl);
+                        const imagePath = order.designImageFront || order.designImage;
+                        console.log(`View front design - path: ${imagePath}`);
                         
-                        if (imageUrl) {
-                          onViewImage(imageUrl);
-                          console.log(`Viewing front design image: ${imageUrl}`);
-                        } else {
-                          console.error(`Failed to get URL for front design image: ${order.designImageFront || order.designImage}`);
-                          toast.error("Không thể tải hình ảnh thiết kế mặt trước");
-                          onViewImage(getFallbackImageUrl('design'));
+                        if (imagePath) {
+                          const imageUrl = getDesignImageUrl(imagePath);
+                          console.log(`Generated front design image URL:`, imageUrl);
+                          
+                          if (imageUrl) {
+                            onViewImage(imageUrl);
+                          } else {
+                            console.error(`Failed to get URL for front design image: ${imagePath}`);
+                            toast.error("Không thể tải hình ảnh thiết kế mặt trước");
+                            onViewImage(getFallbackImageUrl('design'));
+                          }
                         }
                       }}
                       className="flex items-center gap-1 w-full"
@@ -141,17 +163,20 @@ export const OrdersList = ({
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        console.log(`Order back design image path:`, order.designImageBack);
-                        const imageUrl = getDesignImageUrl(order.designImageBack);
-                        console.log(`Generated back design image URL:`, imageUrl);
+                        const imagePath = order.designImageBack;
+                        console.log(`View back design - path: ${imagePath}`);
                         
-                        if (imageUrl) {
-                          onViewImage(imageUrl);
-                          console.log(`Viewing back design image: ${imageUrl}`);
-                        } else {
-                          console.error(`Failed to get URL for back design image: ${order.designImageBack}`);
-                          toast.error("Không thể tải hình ảnh thiết kế mặt sau");
-                          onViewImage(getFallbackImageUrl('design'));
+                        if (imagePath) {
+                          const imageUrl = getDesignImageUrl(imagePath);
+                          console.log(`Generated back design image URL:`, imageUrl);
+                          
+                          if (imageUrl) {
+                            onViewImage(imageUrl);
+                          } else {
+                            console.error(`Failed to get URL for back design image: ${imagePath}`);
+                            toast.error("Không thể tải hình ảnh thiết kế mặt sau");
+                            onViewImage(getFallbackImageUrl('design'));
+                          }
                         }
                       }}
                       className="flex items-center gap-1 w-full"
@@ -160,10 +185,11 @@ export const OrdersList = ({
                     </Button>
                   )}
                   
-                  {((!designImageAvailability?.front && hasFrontDesignImage) || 
-                    (!designImageAvailability?.back && hasBackDesignImage) ||
-                    hasFrontDesignImageError || 
-                    hasBackDesignImageError) && (
+                  {(orderAvailability && 
+                    ((hasFrontDesignImage && !orderAvailability.front) || 
+                     (hasBackDesignImage && !orderAvailability.back) ||
+                     hasFrontDesignImageError || 
+                     hasBackDesignImageError)) && (
                     <div className="flex items-center mt-1 text-red-500 text-xs">
                       <AlertTriangle className="h-3 w-3 mr-1" /> 
                       Có vấn đề với hình ảnh thiết kế
