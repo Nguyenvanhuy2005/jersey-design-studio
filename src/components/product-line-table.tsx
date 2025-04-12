@@ -3,15 +3,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProductLine } from "@/types";
+import { Logo, ProductLine } from "@/types";
 import { Plus, X } from "lucide-react";
 
 interface ProductLineTableProps {
   productLines: ProductLine[];
   onProductLinesChange: (productLines: ProductLine[]) => void;
+  logos?: Logo[]; // Add logos prop
 }
 
-export function ProductLineTable({ productLines, onProductLinesChange }: ProductLineTableProps) {
+export function ProductLineTable({ productLines, onProductLinesChange, logos = [] }: ProductLineTableProps) {
   const [newProductLine, setNewProductLine] = useState<Omit<ProductLine, 'id'>>({
     product: "",
     position: "",
@@ -47,6 +48,19 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
     onProductLinesChange(updatedProductLines);
   };
 
+  const updateProductLine = (index: number, field: string, value: string | number) => {
+    const updatedProductLines = [...productLines];
+    updatedProductLines[index] = { 
+      ...updatedProductLines[index], 
+      [field]: value 
+    };
+    onProductLinesChange(updatedProductLines);
+  };
+
+  const isLogoPosition = (position: string) => {
+    return position.toLowerCase().includes('logo');
+  };
+
   const printPositions = [
     { value: "In số quần", label: "In số quần" },
     { value: "In số lưng", label: "In số lưng" },
@@ -66,6 +80,31 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
     { value: "In chuyển nhiệt", label: "In chuyển nhiệt" },
     { value: "In decal", label: "In decal" }
   ];
+  
+  // New helper function to get content options based on position
+  const getContentOptions = (position: string) => {
+    if (isLogoPosition(position)) {
+      return logos.map(logo => {
+        // Use the file name as the display name for the logo
+        const fileName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${logo.id}`;
+        return {
+          value: fileName,
+          label: fileName
+        };
+      });
+    }
+    
+    // Default content options for non-logo positions
+    if (position.includes('số')) {
+      return [{ value: "Số áo", label: "Số áo" }];
+    } else if (position.includes('tên') || position.includes('trên số lưng')) {
+      return [{ value: "Tên cầu thủ", label: "Tên cầu thủ" }];
+    }
+    
+    return [];
+  };
+
+  const isNewPositionLogoRelated = isLogoPosition(newProductLine.position);
 
   return (
     <div className="space-y-4">
@@ -86,21 +125,44 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
             </tr>
           </thead>
           <tbody>
-            {productLines.map((productLine, index) => (
-              <tr key={productLine.id} className="border-b border-muted">
-                <td className="p-2">{productLine.product}</td>
-                <td className="p-2">{productLine.position}</td>
-                <td className="p-2">{productLine.material}</td>
-                <td className="p-2">{productLine.size}</td>
-                <td className="p-2">{productLine.points}</td>
-                <td className="p-2">{productLine.content}</td>
-                <td className="p-2">
-                  <Button variant="ghost" size="icon" onClick={() => removeProductLine(index)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {productLines.map((productLine, index) => {
+              const isLogoRelated = isLogoPosition(productLine.position);
+              const contentOptions = getContentOptions(productLine.position);
+              
+              return (
+                <tr key={productLine.id} className="border-b border-muted">
+                  <td className="p-2">{productLine.product}</td>
+                  <td className="p-2">{productLine.position}</td>
+                  <td className="p-2">{productLine.material}</td>
+                  <td className="p-2">{productLine.size}</td>
+                  <td className="p-2">{productLine.points}</td>
+                  <td className="p-2">
+                    {isLogoRelated && contentOptions.length > 0 ? (
+                      <Select
+                        value={productLine.content}
+                        onValueChange={(value) => updateProductLine(index, 'content', value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Chọn logo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {contentOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      productLine.content
+                    )}
+                  </td>
+                  <td className="p-2">
+                    <Button variant="ghost" size="icon" onClick={() => removeProductLine(index)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -169,11 +231,27 @@ export function ProductLineTable({ productLines, onProductLinesChange }: Product
           placeholder="Điểm tích"
         />
         
-        <Input 
-          value={newProductLine.content}
-          onChange={(e) => setNewProductLine(prev => ({ ...prev, content: e.target.value }))}
-          placeholder="Nội dung in"
-        />
+        {isNewPositionLogoRelated && logos.length > 0 ? (
+          <Select
+            value={newProductLine.content}
+            onValueChange={(value) => setNewProductLine(prev => ({ ...prev, content: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn logo" />
+            </SelectTrigger>
+            <SelectContent>
+              {getContentOptions(newProductLine.position).map(option => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input 
+            value={newProductLine.content}
+            onChange={(e) => setNewProductLine(prev => ({ ...prev, content: e.target.value }))}
+            placeholder="Nội dung in"
+          />
+        )}
         
         <Button onClick={addProductLine} className="flex items-center gap-1">
           <Plus className="h-4 w-4" /> Thêm

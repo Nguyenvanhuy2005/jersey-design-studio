@@ -98,6 +98,8 @@ const CreateOrder = () => {
     
     logos.forEach((logo, index) => {
       let position = '';
+      let logoPosition = '';
+      
       switch (logo.position) {
         case 'chest_left':
           position = 'In logo ngực trái';
@@ -118,6 +120,8 @@ const CreateOrder = () => {
           position = 'In logo ngực trái';
       }
       
+      const logoName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${index + 1}`;
+      
       newProductLines.push({
         id: `product-logo-${Date.now() + 4 + index}`,
         product: "Áo thi đấu",
@@ -125,7 +129,7 @@ const CreateOrder = () => {
         material: printConfig.frontMaterial,
         size: "Trung bình",
         points: 1,
-        content: `Logo ${index + 1}`
+        content: logoName
       });
     });
     
@@ -372,6 +376,7 @@ const CreateOrder = () => {
               <ProductLineTable 
                 productLines={productLines}
                 onProductLinesChange={setProductLines}
+                logos={logos}
               />
             </div>
             

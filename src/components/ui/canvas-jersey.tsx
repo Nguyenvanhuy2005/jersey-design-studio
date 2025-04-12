@@ -57,9 +57,9 @@ export function CanvasJersey({
     
     // Default positions for each logo location
     const defaultPositions: Record<string, { x: number, y: number }> = {
-      'chest_left': { x: 80, y: 40 },
-      'chest_right': { x: 220, y: 40 },
-      'chest_center': { x: 150, y: 80 },
+      'chest_left': { x: 80, y: 60 },
+      'chest_right': { x: 220, y: 60 },
+      'chest_center': { x: 150, y: 100 },
       'sleeve_left': { x: 30, y: 40 },
       'sleeve_right': { x: 270, y: 40 }
     };
@@ -166,21 +166,27 @@ export function CanvasJersey({
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
       
-      // Draw logos based on position
+      // Draw logos based on position - now handles multiple logos at different positions
       if (loadedLogos.size > 0) {
+        // First, draw regular front logos (chest positions)
         logos.forEach(logo => {
           const img = loadedLogos.get(logo.id!);
           if (!img || logo.position === 'sleeve_left' || logo.position === 'sleeve_right') return;
           
-          const position = logoPositions.get(logo.id!) || { x: 150, y: 150 };
+          const position = logoPositions.get(logo.id!) || { 
+            x: logo.position === 'chest_left' ? 80 : 
+               logo.position === 'chest_right' ? 220 : 150,
+            y: logo.position === 'chest_center' ? 100 : 60
+          };
+          
           const logoWidth = 60;
           const logoHeight = 60;
           
-          ctx.drawImage(img, position.x, position.y, logoWidth, logoHeight);
+          ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
         });
       }
       
-      // Draw logos on sleeves
+      // Draw logos on sleeves - separately handle sleeve logos
       if (loadedLogos.size > 0) {
         logos.forEach(logo => {
           if (logo.position !== 'sleeve_left' && logo.position !== 'sleeve_right') return;
@@ -190,24 +196,13 @@ export function CanvasJersey({
           
           const position = logoPositions.get(logo.id!) || 
             (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
+          
           const logoWidth = 40;
           const logoHeight = 40;
           
-          ctx.drawImage(img, position.x, position.y, logoWidth, logoHeight);
+          ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
         });
       }
-      
-      // Position indicators (for guidance)
-      ctx.fillStyle = '#1A1A1A';
-      ctx.font = getFont(16);
-      ctx.textAlign = 'center';
-      
-      // Chest center position
-      ctx.fillText("C", 150, 100); 
-      
-      // Sleeve positions
-      ctx.fillText("SL", 30, 60); // Sleeve left indicator
-      ctx.fillText("SR", 270, 60); // Sleeve right indicator
       
     } else {
       // Draw back jersey
@@ -295,11 +290,12 @@ export function CanvasJersey({
       const width = logo.position.includes('sleeve') ? 40 : 60;
       const height = logo.position.includes('sleeve') ? 40 : 60;
       
+      // Check if click is within the logo (accounting for centered drawing)
       if (
-        x >= position.x && 
-        x <= position.x + width && 
-        y >= position.y && 
-        y <= position.y + height
+        x >= position.x - width/2 && 
+        x <= position.x + width/2 && 
+        y >= position.y - height/2 && 
+        y <= position.y + height/2
       ) {
         draggedId = logo.id!;
       }
