@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -258,6 +259,14 @@ const CreateOrder = () => {
         frontFileName
       );
       
+      // Upload the front design image
+      const frontPath = await uploadDesignImage(
+        orderId,
+        frontDesignFile,
+        'front-design',
+        2
+      );
+      
       let frontVerified = false;
       if (!frontPath) {
         console.error("Failed to upload front design image");
@@ -289,6 +298,14 @@ const CreateOrder = () => {
         jerseyCanvasRef.current, 
         orderId,
         backFileName
+      );
+      
+      // Upload the back design image
+      const backPath = await uploadDesignImage(
+        orderId,
+        backDesignFile,
+        'back-design',
+        2
       );
       
       let backVerified = false;

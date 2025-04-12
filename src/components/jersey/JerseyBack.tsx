@@ -69,31 +69,33 @@ export const JerseyBack = ({
   // Draw player name (upper back - above number)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    ctx.font = fontFamily.replace('20px', '24px'); // Adjust size for player name
+    const fontSize = 24;
+    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for player name
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 50, 180);
-    console.log(`Drew player name: ${playerNameDisplayed}`);
+    console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
   // Draw player number (center back)
   if (playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
-    ctx.font = fontFamily.replace('20px', '100px'); // Adjust size for player number
+    const fontSize = 100;
+    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for player number
     ctx.fillText(playerNumber.toString(), 150, 150);
-    console.log(`Drew player number: ${playerNumber}`);
+    console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
   // Draw team name (lower back - below number)
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    ctx.font = fontFamily.replace('20px', '18px'); // Adjust size for team name
+    const fontSize = 18;
+    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for team name
     const teamNameDisplayed = teamName.length > 20 ? teamName.substring(0, 20) + '...' : teamName;
     ctx.fillText(teamNameDisplayed, 150, 230, 180);
-    console.log(`Drew team name: ${teamNameDisplayed}`);
+    console.log(`Drew team name: ${teamNameDisplayed} with font: ${ctx.font}`);
   }
   
   console.log("JerseyBack rendering complete");
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };
-
