@@ -7,8 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Order } from "@/types";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { ImageIcon } from "lucide-react";
+import { getDesignImageUrl, getReferenceImageUrls } from "@/utils/image-utils";
 
 interface OrderDetailsProps {
   order: Order;
@@ -22,29 +22,51 @@ export const OrderDetails = ({
   onStatusChange
 }: OrderDetailsProps) => {
   const [branch, setBranch] = useState<string>("");
+  const [imagesLoaded, setImagesLoaded] = useState({
+    design: false,
+    references: Array.isArray(order.referenceImages) ? Array(order.referenceImages.length).fill(false) : []
+  });
   
   const formatDate = (date?: Date) => {
     if (!date) return "";
     return new Date(date).toLocaleDateString('vi-VN');
   };
   
-  const getDesignImageUrl = (designImage?: string) => {
-    if (!designImage) return null;
-    
-    try {
-      if (designImage.startsWith('http')) {
-        return designImage;
-      }
-      
-      const { data } = supabase.storage
-        .from('design_images')
-        .getPublicUrl(designImage);
-      
-      console.log("Design image URL in OrderDetails:", data.publicUrl);
-      return data.publicUrl;
-    } catch (error) {
-      console.error("Error getting design image URL:", error);
-      return null;
+  const handleConfirmSale = () => {
+    onStatusChange(order.id!, 'completed');
+    toast.success(`Đơn hàng ${order.teamName} đã được xác nhận bán`);
+  };
+
+  const handleConfirmPrint = () => {
+    toast.success(`Đã xác nhận in tất cả các sản phẩm cho đơn hàng: ${order.teamName}`);
+  };
+
+  const handleExportCSV = () => {
+    toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${order.teamName}`);
+  };
+
+  const handleImageLoad = (type: 'design' | 'reference', index?: number) => {
+    if (type === 'design') {
+      setImagesLoaded(prev => ({ ...prev, design: true }));
+    } else if (type === 'reference' && typeof index === 'number') {
+      setImagesLoaded(prev => {
+        const newReferences = [...prev.references];
+        newReferences[index] = true;
+        return { ...prev, references: newReferences };
+      });
+    }
+  };
+
+  const handleImageError = (type: 'design' | 'reference', imagePath?: string, index?: number) => {
+    console.error(`Failed to load ${type} image:`, imagePath);
+    if (type === 'design') {
+      setImagesLoaded(prev => ({ ...prev, design: false }));
+    } else if (type === 'reference' && typeof index === 'number') {
+      setImagesLoaded(prev => {
+        const newReferences = [...prev.references];
+        newReferences[index] = false;
+        return { ...prev, references: newReferences };
+      });
     }
   };
   
@@ -61,18 +83,10 @@ export const OrderDetails = ({
     }
   };
   
-  const handleConfirmSale = () => {
-    onStatusChange(order.id!, 'completed');
-    toast.success(`Đơn hàng ${order.teamName} đã được xác nhận bán`);
-  };
-
-  const handleConfirmPrint = () => {
-    toast.success(`Đã xác nhận in tất cả các sản phẩm cho đơn hàng: ${order.teamName}`);
-  };
-
-  const handleExportCSV = () => {
-    toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${order.teamName}`);
-  };
+  // Prepare reference image URLs
+  const referenceImageUrls = Array.isArray(order.referenceImages) 
+    ? getReferenceImageUrls(order.referenceImages) 
+    : [];
   
   return (
     <>
@@ -107,20 +121,26 @@ export const OrderDetails = ({
             <h3 className="font-semibold mb-2">Hình ảnh thiết kế</h3>
             <div className="border rounded p-2 flex justify-center">
               <img 
-                src={getDesignImageUrl(order.designImage)} 
+                src={getDesignImageUrl(order.designImage) || 'https://via.placeholder.com/400x300?text=Không+thể+tải+hình+ảnh'}
                 alt="Design Preview" 
                 className="max-h-64 object-contain cursor-pointer"
                 onClick={() => {
                   const imageUrl = getDesignImageUrl(order.designImage);
                   if (imageUrl) onViewImage(imageUrl);
                 }}
+                onLoad={() => handleImageLoad('design')}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = 'https://via.placeholder.com/400x300?text=Không+thể+tải+hình+ảnh';
-                  console.error("Failed to load design image:", order.designImage);
+                  handleImageError('design', order.designImage);
                 }}
               />
             </div>
+            {!imagesLoaded.design && (
+              <p className="text-center text-sm text-red-500 mt-2">
+                Không thể tải hình ảnh thiết kế. Vui lòng kiểm tra quyền truy cập.
+              </p>
+            )}
           </div>
         )}
         
@@ -137,16 +157,14 @@ export const OrderDetails = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {order.players.map((player, index) => {
-                  return (
-                    <TableRow key={player.id || index}>
-                      <TableCell>{player.name}</TableCell>
-                      <TableCell>{player.number}</TableCell>
-                      <TableCell>{player.size}</TableCell>
-                      <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
-                    </TableRow>
-                  );
-                })}
+                {order.players.map((player, index) => (
+                  <TableRow key={player.id || index}>
+                    <TableCell>{player.name}</TableCell>
+                    <TableCell>{player.number}</TableCell>
+                    <TableCell>{player.size}</TableCell>
+                    <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -204,43 +222,38 @@ export const OrderDetails = ({
           </Button>
         </div>
 
-        {order.referenceImages && order.referenceImages.length > 0 && (
+        {referenceImageUrls.length > 0 && (
           <div>
             <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
             <div className="flex flex-wrap gap-2">
-              {order.referenceImages.map((imagePath, index) => {
-                try {
-                  const imageUrl = supabase.storage
-                    .from('reference_images')
-                    .getPublicUrl(imagePath).data.publicUrl;
-                  
-                  return (
-                    <div 
-                      key={index}
-                      className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
-                    >
-                      <img
-                        src={imageUrl}
-                        alt={`Reference ${index + 1}`}
-                        className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
-                        onClick={() => onViewImage(imageUrl)}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/150?text=Error';
-                          console.error("Failed to load reference image:", imagePath);
-                        }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                        <ImageIcon className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  );
-                } catch (error) {
-                  console.error("Error rendering reference image:", error);
-                  return null;
-                }
-              })}
+              {referenceImageUrls.map((imageUrl, index) => (
+                <div 
+                  key={index}
+                  className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`Reference ${index + 1}`}
+                    className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
+                    onClick={() => onViewImage(imageUrl)}
+                    onLoad={() => handleImageLoad('reference', index)}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://via.placeholder.com/150?text=Error';
+                      handleImageError('reference', order.referenceImages?.[index], index);
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <ImageIcon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              ))}
             </div>
+            {imagesLoaded.references.some(loaded => !loaded) && (
+              <p className="text-center text-sm text-red-500 mt-2">
+                Một số hình ảnh không thể tải. Vui lòng kiểm tra quyền truy cập.
+              </p>
+            )}
           </div>
         )}
       </div>

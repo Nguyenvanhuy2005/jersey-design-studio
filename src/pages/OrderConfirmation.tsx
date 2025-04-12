@@ -4,7 +4,6 @@ import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ImageIcon } from "lucide-react";
 import { Order } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { 
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
+import { getDesignImageUrl, getReferenceImageUrls } from "@/utils/image-utils";
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -23,37 +23,64 @@ const OrderConfirmation = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState({
+    design: false,
+    references: [] as boolean[]
+  });
   
   // Redirect if no order data (e.g. if user accessed this page directly)
   if (!order) {
     return <Navigate to="/" replace />;
   }
 
-  // Get the public URL for the design image
+  // Get the public URLs for design and reference images
   useEffect(() => {
     if (order.designImage) {
-      const { data } = supabase.storage
-        .from('design_images')
-        .getPublicUrl(order.designImage);
-      
-      setDesignImageUrl(data.publicUrl);
+      const url = getDesignImageUrl(order.designImage);
+      setDesignImageUrl(url);
+      console.log("Design image URL in OrderConfirmation:", url);
     }
 
     // Get the public URLs for reference images if they exist
-    if (order.referenceImages && order.referenceImages.length > 0) {
-      const urls = order.referenceImages.map(path => {
-        const { data } = supabase.storage
-          .from('reference_images')
-          .getPublicUrl(path);
-        return data.publicUrl;
-      });
+    if (Array.isArray(order.referenceImages) && order.referenceImages.length > 0) {
+      const urls = getReferenceImageUrls(order.referenceImages);
       setReferenceImageUrls(urls);
+      setImagesLoaded(prev => ({
+        ...prev,
+        references: Array(urls.length).fill(false)
+      }));
+      console.log("Reference image URLs in OrderConfirmation:", urls);
     }
   }, [order.designImage, order.referenceImages]);
 
   const openImageDialog = (imageUrl: string) => {
     setSelectedImageUrl(imageUrl);
     setIsImageDialogOpen(true);
+  };
+
+  const handleImageLoad = (type: 'design' | 'reference', index?: number) => {
+    if (type === 'design') {
+      setImagesLoaded(prev => ({ ...prev, design: true }));
+    } else if (type === 'reference' && typeof index === 'number') {
+      setImagesLoaded(prev => {
+        const newReferences = [...prev.references];
+        newReferences[index] = true;
+        return { ...prev, references: newReferences };
+      });
+    }
+  };
+
+  const handleImageError = (type: 'design' | 'reference', imagePath?: string, index?: number) => {
+    console.error(`Failed to load ${type} image in OrderConfirmation:`, imagePath);
+    if (type === 'design') {
+      setImagesLoaded(prev => ({ ...prev, design: false }));
+    } else if (type === 'reference' && typeof index === 'number') {
+      setImagesLoaded(prev => {
+        const newReferences = [...prev.references];
+        newReferences[index] = false;
+        return { ...prev, references: newReferences };
+      });
+    }
   };
 
   return (
@@ -109,11 +136,18 @@ const OrderConfirmation = () => {
                     src={designImageUrl} 
                     alt="Thiết kế áo" 
                     className="w-full h-auto rounded-md border shadow-sm" 
+                    onLoad={() => handleImageLoad('design')}
+                    onError={() => handleImageError('design', order.designImage)}
                   />
                   <p className="text-center text-xs text-muted-foreground mt-1">
                     (Nhấp để xem kích thước đầy đủ)
                   </p>
                 </div>
+                {!imagesLoaded.design && (
+                  <p className="text-center text-sm text-red-500 mt-2">
+                    Không thể tải hình ảnh thiết kế. Vui lòng kiểm tra quyền truy cập.
+                  </p>
+                )}
               </div>
             )}
 
@@ -132,6 +166,8 @@ const OrderConfirmation = () => {
                         src={url} 
                         alt={`Hình tham khảo ${index + 1}`} 
                         className="w-24 h-24 object-cover rounded-md border shadow-sm" 
+                        onLoad={() => handleImageLoad('reference', index)}
+                        onError={() => handleImageError('reference', Array.isArray(order.referenceImages) ? order.referenceImages[index] : undefined, index)}
                       />
                     </div>
                   ))}
@@ -139,6 +175,11 @@ const OrderConfirmation = () => {
                 <p className="text-center text-xs text-muted-foreground mt-1">
                   (Nhấp để xem kích thước đầy đủ)
                 </p>
+                {imagesLoaded.references.some(loaded => !loaded) && (
+                  <p className="text-center text-sm text-red-500 mt-2">
+                    Một số hình ảnh không thể tải. Vui lòng kiểm tra quyền truy cập.
+                  </p>
+                )}
               </div>
             )}
           </div>

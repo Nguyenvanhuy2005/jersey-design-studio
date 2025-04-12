@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown, Mail, Eye, Image as ImageIcon } from "lucide-react";
 import { Order } from "@/types";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getDesignImageUrl } from "@/utils/image-utils";
 
 interface OrdersListProps {
   orders: Order[];
@@ -23,6 +23,7 @@ export const OrdersList = ({
   onViewImage,
   onStatusChange
 }: OrdersListProps) => {
+  const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
   
   const handleSendEmail = (order: Order) => {
     toast.success(`Email đã được gửi đến khách hàng về đơn hàng: ${order.teamName}`);
@@ -33,24 +34,9 @@ export const OrdersList = ({
     return new Date(date).toLocaleDateString('vi-VN');
   };
 
-  const getDesignImageUrl = (designImage?: string) => {
-    if (!designImage) return null;
-    
-    try {
-      if (designImage.startsWith('http')) {
-        return designImage;
-      }
-      
-      const { data } = supabase.storage
-        .from('design_images')
-        .getPublicUrl(designImage);
-        
-      console.log("Design image URL:", data.publicUrl);
-      return data.publicUrl;
-    } catch (error) {
-      console.error("Error getting design image URL:", error);
-      return null;
-    }
+  const handleImageError = (orderId: string) => {
+    console.error(`Failed to load design image for order ${orderId}`);
+    setImageLoadErrors(prev => ({ ...prev, [orderId]: true }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -95,13 +81,24 @@ export const OrdersList = ({
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => onViewImage(getDesignImageUrl(order.designImage))}
+                onClick={() => {
+                  const imageUrl = getDesignImageUrl(order.designImage);
+                  onViewImage(imageUrl);
+                  if (imageUrl) {
+                    console.log(`Viewing design image: ${imageUrl}`);
+                  } else {
+                    console.error(`Failed to get URL for design image: ${order.designImage}`);
+                  }
+                }}
                 className="flex items-center gap-1"
               >
                 <ImageIcon className="h-4 w-4" /> Xem
               </Button>
             ) : (
               <span className="text-muted-foreground text-sm">Không có</span>
+            )}
+            {imageLoadErrors[order.id!] && (
+              <p className="text-xs text-red-500 mt-1">Không thể tải hình ảnh</p>
             )}
           </td>
           <td className="p-3">

@@ -226,7 +226,8 @@ const CreateOrder = () => {
     try {
       setPreviewView('front');
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Increase delay to ensure canvas is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (jerseyCanvasRef.current) {
         console.log(`Generating order design image...`);
@@ -241,6 +242,9 @@ const CreateOrder = () => {
         
         const filePath = `${orderId}/design.png`;
         
+        // Add more logging
+        console.log(`Uploading design image to ${filePath}...`);
+        
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('design_images')
           .upload(filePath, designImageFile, {
@@ -250,17 +254,22 @@ const CreateOrder = () => {
           
         if (uploadError) {
           console.error(`Error uploading order design image:`, uploadError);
-          toast.error(`Không thể tải lên ảnh thiết kế`);
+          toast.error(`Không thể tải lên ảnh thiết kế: ${uploadError.message}`);
           return '';
         } else {
+          const { data } = supabase.storage
+            .from('design_images')
+            .getPublicUrl(uploadData.path);
+            
           console.log(`Successfully uploaded order design image: ${uploadData.path}`);
+          console.log(`Public URL: ${data.publicUrl}`);
           toast.success(`Đã lưu hình ảnh thiết kế`);
           return uploadData.path;
         }
       }
     } catch (err) {
       console.error(`Error capturing order design image:`, err);
-      toast.error(`Có lỗi khi tạo ảnh thiết kế`);
+      toast.error(`Có lỗi khi tạo ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
     
     return '';
@@ -279,6 +288,8 @@ const CreateOrder = () => {
         const fileExt = file.name.split('.').pop();
         const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
         
+        console.log(`Uploading reference image ${index} to ${filePath}...`);
+        
         const { data, error } = await supabase.storage
           .from('reference_images')
           .upload(filePath, file, {
@@ -288,8 +299,16 @@ const CreateOrder = () => {
         
         if (error) {
           console.error(`Error uploading reference image ${index}:`, error);
+          toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}: ${error.message}`);
           continue;
         }
+        
+        // Log the public URL
+        const { data: urlData } = supabase.storage
+          .from('reference_images')
+          .getPublicUrl(data.path);
+          
+        console.log(`Reference image ${index} public URL: ${urlData.publicUrl}`);
         
         uploadedPaths.push(data.path);
         uploadProgress++;
@@ -299,6 +318,7 @@ const CreateOrder = () => {
         
       } catch (err) {
         console.error(`Error uploading reference image ${index}:`, err);
+        toast.error(`Có lỗi khi tải lên hình ảnh tham khảo ${index + 1}`);
       }
     }
     
