@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { Logo, Player, PrintConfig, ProductLine } from "@/types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
+import { X } from "lucide-react";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ const CreateOrder = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [notes, setNotes] = useState<string>("");
+  const [referenceImages, setReferenceImages] = useState<File[]>([]);
+  const [referenceImagesPreview, setReferenceImagesPreview] = useState<string[]>([]);
   
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -44,6 +47,50 @@ const CreateOrder = () => {
   });
   
   const [productLines, setProductLines] = useState<ProductLine[]>([]);
+  
+  const handleReferenceImagesUpload = (fileList: FileList | null) => {
+    if (!fileList) return;
+    
+    const newFiles = Array.from(fileList);
+    const updatedFiles = [...referenceImages];
+    const updatedPreviews = [...referenceImagesPreview];
+    
+    // Limit to maximum 5 files
+    const filesToAdd = newFiles.slice(0, 5 - referenceImages.length);
+    
+    filesToAdd.forEach(file => {
+      updatedFiles.push(file);
+      updatedPreviews.push(URL.createObjectURL(file));
+    });
+    
+    setReferenceImages(updatedFiles);
+    setReferenceImagesPreview(updatedPreviews);
+    
+    if (filesToAdd.length < newFiles.length) {
+      toast.warning("Chỉ có thể tải lên tối đa 5 hình ảnh tham khảo.");
+    }
+  };
+  
+  const removeReferenceImage = (index: number) => {
+    const updatedFiles = [...referenceImages];
+    const updatedPreviews = [...referenceImagesPreview];
+    
+    // Revoke object URL to prevent memory leaks
+    URL.revokeObjectURL(updatedPreviews[index]);
+    
+    updatedFiles.splice(index, 1);
+    updatedPreviews.splice(index, 1);
+    
+    setReferenceImages(updatedFiles);
+    setReferenceImagesPreview(updatedPreviews);
+  };
+  
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      referenceImagesPreview.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
   
   const generateProductLines = useCallback(() => {
     if (players.length === 0) return;
@@ -219,6 +266,49 @@ const CreateOrder = () => {
     return '';
   };
 
+  const uploadReferenceImages = async (orderId: string): Promise<string[]> => {
+    if (referenceImages.length === 0) return [];
+    
+    const uploadedPaths: string[] = [];
+    let uploadProgress = 0;
+    
+    toast.info(`Đang tải lên hình ảnh tham khảo (0/${referenceImages.length})...`);
+    
+    for (const [index, file] of referenceImages.entries()) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('reference_images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) {
+          console.error(`Error uploading reference image ${index}:`, error);
+          continue;
+        }
+        
+        uploadedPaths.push(data.path);
+        uploadProgress++;
+        
+        // Update progress toast
+        toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
+        
+      } catch (err) {
+        console.error(`Error uploading reference image ${index}:`, err);
+      }
+    }
+    
+    if (uploadedPaths.length > 0) {
+      toast.success(`Đã tải lên ${uploadedPaths.length}/${referenceImages.length} hình ảnh tham khảo`);
+    }
+    
+    return uploadedPaths;
+  };
+
   const submitOrder = async () => {
     if (players.length === 0) {
       toast.error("Vui lòng thêm ít nhất một cầu thủ");
@@ -232,7 +322,11 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
+      // Generate and upload the design image
       const designImagePath = await generateOrderDesignImage(orderId);
+      
+      // Upload reference images
+      const referenceImagePaths = await uploadReferenceImages(orderId);
       
       if (logos.length > 0) {
         for (const logo of logos) {
@@ -278,7 +372,8 @@ const CreateOrder = () => {
           position: 'Trên số lưng',
           font: printConfig.font,
           color: printConfig.backColor
-        }))
+        })),
+        reference_images: referenceImagePaths // Add reference image paths to design data
       };
 
       const { error: orderError } = await supabase
@@ -291,7 +386,8 @@ const CreateOrder = () => {
           total_cost: totalCost,
           notes: notes,
           design_data: designData,
-          design_image: designImagePath
+          design_image: designImagePath,
+          reference_images: referenceImagePaths
         });
         
       if (orderError) {
@@ -393,6 +489,7 @@ const CreateOrder = () => {
         status: "new",
         notes,
         designImage: designImagePath,
+        referenceImages: referenceImagePaths,
         createdAt: new Date()
       };
       
@@ -434,6 +531,47 @@ const CreateOrder = () => {
                   logos={logos}
                   onLogosChange={setLogos}
                 />
+
+                {/* Reference Images Upload */}
+                <div className="border rounded-md p-4 space-y-3">
+                  <Label htmlFor="referenceImages">Hình ảnh sản phẩm muốn in (PNG, JPG)</Label>
+                  <Input
+                    id="referenceImages"
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg"
+                    multiple
+                    onChange={(e) => handleReferenceImagesUpload(e.target.files)}
+                    className="mb-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tối đa 5 hình ảnh. Nhấp vào hình ảnh để xóa.
+                  </p>
+                  
+                  {referenceImagesPreview.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {referenceImagesPreview.map((preview, index) => (
+                        <div 
+                          key={index} 
+                          className="relative group w-20 h-20 border rounded-md overflow-hidden"
+                        >
+                          <img 
+                            src={preview} 
+                            alt={`Reference ${index+1}`} 
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeReferenceImage(index)}
+                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
                 <div>
                   <Label htmlFor="notes">Ghi chú</Label>

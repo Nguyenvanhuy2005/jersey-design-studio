@@ -68,4 +68,5 @@ export interface Order {
   createdAt?: Date;
   notes?: string;
   designImage?: string;
+  referenceImages?: string[]; // Added for reference images
 }

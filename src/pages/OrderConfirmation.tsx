@@ -21,6 +21,8 @@ const OrderConfirmation = () => {
   const order = location.state?.order as Order | undefined;
   const [designImageUrl, setDesignImageUrl] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   
   // Redirect if no order data (e.g. if user accessed this page directly)
   if (!order) {
@@ -36,7 +38,23 @@ const OrderConfirmation = () => {
       
       setDesignImageUrl(data.publicUrl);
     }
-  }, [order.designImage]);
+
+    // Get the public URLs for reference images if they exist
+    if (order.referenceImages && order.referenceImages.length > 0) {
+      const urls = order.referenceImages.map(path => {
+        const { data } = supabase.storage
+          .from('reference_images')
+          .getPublicUrl(path);
+        return data.publicUrl;
+      });
+      setReferenceImageUrls(urls);
+    }
+  }, [order.designImage, order.referenceImages]);
+
+  const openImageDialog = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+    setIsImageDialogOpen(true);
+  };
 
   return (
     <Layout>
@@ -86,35 +104,41 @@ const OrderConfirmation = () => {
             {designImageUrl && (
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">Hình ảnh thiết kế</h3>
-                <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-                  <DialogTrigger asChild>
-                    <div className="cursor-pointer mx-auto max-w-[200px]" onClick={() => setIsImageDialogOpen(true)}>
+                <div className="cursor-pointer mx-auto max-w-[200px]" onClick={() => openImageDialog(designImageUrl)}>
+                  <img 
+                    src={designImageUrl} 
+                    alt="Thiết kế áo" 
+                    className="w-full h-auto rounded-md border shadow-sm" 
+                  />
+                  <p className="text-center text-xs text-muted-foreground mt-1">
+                    (Nhấp để xem kích thước đầy đủ)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Reference images section */}
+            {referenceImageUrls.length > 0 && (
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="font-semibold mb-3">Hình ảnh tham khảo</h3>
+                <div className="flex flex-wrap gap-2">
+                  {referenceImageUrls.map((url, index) => (
+                    <div 
+                      key={index}
+                      className="cursor-pointer" 
+                      onClick={() => openImageDialog(url)}
+                    >
                       <img 
-                        src={designImageUrl} 
-                        alt="Thiết kế áo" 
-                        className="w-full h-auto rounded-md border shadow-sm" 
-                      />
-                      <p className="text-center text-xs text-muted-foreground mt-1">
-                        (Nhấp để xem kích thước đầy đủ)
-                      </p>
-                    </div>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle>Hình ảnh thiết kế</DialogTitle>
-                      <DialogDescription>
-                        Thiết kế áo cho đơn hàng của bạn
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex items-center justify-center">
-                      <img 
-                        src={designImageUrl} 
-                        alt="Thiết kế áo" 
-                        className="max-w-full max-h-[70vh] rounded-md" 
+                        src={url} 
+                        alt={`Hình tham khảo ${index + 1}`} 
+                        className="w-24 h-24 object-cover rounded-md border shadow-sm" 
                       />
                     </div>
-                  </DialogContent>
-                </Dialog>
+                  ))}
+                </div>
+                <p className="text-center text-xs text-muted-foreground mt-1">
+                  (Nhấp để xem kích thước đầy đủ)
+                </p>
               </div>
             )}
           </div>
@@ -139,6 +163,24 @@ const OrderConfirmation = () => {
           </div>
         </div>
       </div>
+
+      {/* Image preview dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Xem hình ảnh</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center">
+            {selectedImageUrl && (
+              <img 
+                src={selectedImageUrl} 
+                alt="Hình ảnh" 
+                className="max-w-full max-h-[70vh] rounded-md" 
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

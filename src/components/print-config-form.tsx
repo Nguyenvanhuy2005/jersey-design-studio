@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrintConfig } from "@/types";
+import { toast } from "sonner";
+import { loadCustomFont } from "@/utils/font-utils";
 
 interface PrintConfigFormProps {
   printConfig: PrintConfig;
@@ -19,8 +22,22 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
   useEffect(() => {
     if (tempConfig.customFontFile && !customFonts.includes(tempConfig.customFontFile.name.split('.')[0])) {
       setCustomFonts(prev => [...prev, tempConfig.customFontFile!.name.split('.')[0]]);
+
+      // Load the custom font for immediate preview
+      if (tempConfig.customFontUrl) {
+        loadCustomFont(tempConfig.customFontUrl, tempConfig.customFontFile.name.split('.')[0])
+          .then(font => {
+            if (font) {
+              toast.success(`Đã tải phông chữ: ${font.family}`);
+            }
+          })
+          .catch(err => {
+            console.error("Error loading font:", err);
+            toast.error("Không thể tải phông chữ tùy chỉnh");
+          });
+      }
     }
-  }, [tempConfig.customFontFile]);
+  }, [tempConfig.customFontFile, tempConfig.customFontUrl]);
 
   useEffect(() => {
     if (printConfig.customFontFile && printConfig.customFontFile.name) {
@@ -45,6 +62,15 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['.ttf', '.otf'];
+    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    if (!validTypes.includes(fileExtension)) {
+      toast.error("Chỉ hỗ trợ định dạng phông chữ .ttf hoặc .otf");
+      return;
+    }
+
+    // Create an object URL for the font file
     const fontUrl = URL.createObjectURL(file);
     const fontName = file.name.split('.')[0];
     
@@ -58,6 +84,8 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     if (!customFonts.includes(fontName)) {
       setCustomFonts(prev => [...prev, fontName]);
     }
+
+    toast.info(`Đã tải lên phông chữ: ${fontName}`);
   };
 
   const materialOptions = [
@@ -71,14 +99,6 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     { value: "Đỏ", label: "Đỏ" },
     { value: "Vàng", label: "Vàng" },
     { value: "Xanh", label: "Xanh" }
-  ];
-
-  const defaultFonts = [
-    { value: "Arial", label: "Arial" },
-    { value: "Times New Roman", label: "Times New Roman" },
-    { value: "Helvetica", label: "Helvetica" },
-    { value: "Roboto", label: "Roboto" },
-    { value: "Open Sans", label: "Open Sans" }
   ];
 
   return (
@@ -139,9 +159,17 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
             </div>
             
             {tempConfig.customFontUrl && (
-              <p className="text-sm text-muted-foreground">
-                Đã tải font tùy chỉnh: {tempConfig.customFontFile?.name}
-              </p>
+              <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded text-sm">
+                <p className="text-green-700">
+                  Đã tải font tùy chỉnh: {tempConfig.customFontFile?.name}
+                </p>
+                <div className="mt-2">
+                  <p className="font-medium mb-1">Xem trước:</p>
+                  <p style={{fontFamily: tempConfig.customFontFile?.name.split('.')[0]}} className="text-xl">
+                    AaBbCcDd 123456789
+                  </p>
+                </div>
+              </div>
             )}
           </div>
           
