@@ -32,8 +32,13 @@ export const useDragLogos = ({
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    // Improve coordinate calculation with correct scaling for high-DPI displays
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX / window.devicePixelRatio;
+    const y = (e.clientY - rect.top) * scaleY / window.devicePixelRatio;
+    
+    console.log(`Mouse down at coordinates: (${x}, ${y})`);
     
     // Check if click is within any logo
     let draggedId: string | null = null;
@@ -53,8 +58,8 @@ export const useDragLogos = ({
           const height = baseHeight * position.scale;
           
           // Adjust button size and padding for better touchability
-          const buttonSize = 28; // Increased from 24
-          const buttonPadding = 18; // Increased from 14
+          const buttonSize = 28; // Size for easier clicking
+          const buttonPadding = 18; // Distance from logo edge
           
           // Calculate distance from click to "+" button center
           const distToPlus = Math.sqrt(
@@ -67,6 +72,8 @@ export const useDragLogos = ({
             Math.pow(x - (position.x - width/2 - buttonPadding), 2) +
             Math.pow(y - position.y, 2)
           );
+          
+          console.log(`Distance to + button: ${distToPlus}, Distance to - button: ${distToMinus}`);
           
           // Check if clicked on "+" button (using distance for circular buttons)
           // Increased detection radius for easier clicking
@@ -107,6 +114,10 @@ export const useDragLogos = ({
       const width = baseWidth * position.scale;
       const height = baseHeight * position.scale;
       
+      // Debug info
+      console.log(`Checking logo ${logo.id} at (${position.x}, ${position.y}), size: ${width}x${height}`);
+      console.log(`Click bounds check: x=${x} >= ${position.x - width/2} && x=${x} <= ${position.x + width/2} && y=${y} >= ${position.y - height/2} && y=${y} <= ${position.y + height/2}`);
+      
       // Check if click is within the logo (accounting for centered drawing)
       if (
         x >= position.x - width/2 && 
@@ -124,6 +135,7 @@ export const useDragLogos = ({
       setDraggedLogo(draggedId);
       setSelectedLogo(draggedId);
       setStartPosition({ x, y });
+      console.log(`Selected and started dragging logo: ${draggedId}`);
     } else {
       // If clicked outside any logo, deselect
       console.log("No logo selected, deselecting");
@@ -138,8 +150,11 @@ export const useDragLogos = ({
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    // Improve coordinate calculation with correct scaling for high-DPI displays
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX / window.devicePixelRatio;
+    const y = (e.clientY - rect.top) * scaleY / window.devicePixelRatio;
     
     const dx = x - startPosition.x;
     const dy = y - startPosition.y;

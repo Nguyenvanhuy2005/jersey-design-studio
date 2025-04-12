@@ -263,6 +263,7 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
+    console.log('Selected logo for resize controls:', selectedLogo);
     
     // Clear canvas with proper scaling
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -303,30 +304,12 @@ export function CanvasJersey({
   useEffect(() => {
     if (logos && logos.length > 0 && view === 'front') {
       toast.info(
-        "You can drag logos to reposition them and use the + and - buttons to resize selected logos. Positions will be saved automatically.",
+        "Bạn có thể kéo logo để thay đổi vị trí và nhấn vào logo để hiển thị nút điều chỉnh kích thước (+/-).",
         { 
           id: "logo-drag-instructions",
           duration: 5000
         }
       );
-    }
-  }, [logos, view]);
-
-  // Add a more descriptive label for clearer instructions in Vietnamese
-  useEffect(() => {
-    if (logos && logos.length > 0 && view === 'front') {
-      const instructionDiv = document.createElement('div');
-      instructionDiv.className = 'mt-2 text-sm text-center text-gray-700';
-      instructionDiv.textContent = 'Nhấp vào logo để chọn và hiển thị nút điều chỉnh kích thước.';
-      
-      const canvas = canvasRef.current;
-      if (canvas && canvas.parentNode) {
-        // Check if instruction already exists
-        const existingInstruction = canvas.parentNode.querySelector('.mt-2.text-sm.text-center');
-        if (!existingInstruction) {
-          canvas.parentNode.appendChild(instructionDiv);
-        }
-      }
     }
   }, [logos, view]);
 

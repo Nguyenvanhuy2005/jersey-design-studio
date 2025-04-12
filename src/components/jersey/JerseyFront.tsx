@@ -71,7 +71,7 @@ export const JerseyFront = ({
     ctx.fillText(playerNumber.toString(), 150, 150);
   }
   
-  // Enhanced logo drawing function to maintain aspect ratio and quality
+  // Enhanced logo drawing function with better selection and resizing UX
   const drawLogo = (
     img: HTMLImageElement, 
     posX: number, 
@@ -107,8 +107,6 @@ export const JerseyFront = ({
       width = height * aspectRatio;
     }
     
-    console.log(`Drawing logo ${logoId} at (${posX}, ${posY}), size: ${width}x${height}, scale: ${scale}`);
-    
     // Save context state
     ctx.save();
     
@@ -132,6 +130,9 @@ export const JerseyFront = ({
       
       // If this logo is selected, draw a highlight around it
       if (selectedLogo === logoId) {
+        // Clear console log for production
+        console.log(`Rendering selected logo: ${logoId} with resize buttons`);
+        
         // Draw selection outline with more visibility
         ctx.strokeStyle = '#3B82F6'; // Blue highlight
         ctx.lineWidth = 2;
@@ -146,9 +147,9 @@ export const JerseyFront = ({
         // Reset line dash
         ctx.setLineDash([]);
         
-        // Draw resize buttons with better visibility and improved clickability
-        const buttonSize = 28;
-        const buttonPadding = 18;
+        // Draw resize buttons with better visibility, larger size for easier clicking
+        const buttonSize = 32; // Increased button size
+        const buttonPadding = 20; // Increased padding
         
         // "+" button (increase size) - right of logo
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
@@ -161,6 +162,8 @@ export const JerseyFront = ({
           Math.PI * 2
         );
         ctx.fill();
+        
+        // Add white border around button for contrast
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -175,7 +178,7 @@ export const JerseyFront = ({
         
         // Draw "+" symbol with improved visibility
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 22px Arial';
+        ctx.font = 'bold 24px Arial'; // Larger font
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -195,6 +198,8 @@ export const JerseyFront = ({
           Math.PI * 2
         );
         ctx.fill();
+        
+        // Add white border around button for contrast
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -209,7 +214,7 @@ export const JerseyFront = ({
         
         // Draw "-" symbol with improved visibility
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 22px Arial';
+        ctx.font = 'bold 24px Arial'; // Larger font
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -235,10 +240,11 @@ export const JerseyFront = ({
     ctx.restore();
   };
   
-  // Debug loadedLogos
+  // Debug logs to help diagnose issues
   console.log('Available logos in JerseyFront:', loadedLogos.size);
   console.log('Logo positions in JerseyFront:', Array.from(logoPositions.entries()));
   console.log('Logo array in JerseyFront:', logos);
+  console.log('Currently selected logo:', selectedLogo);
   
   // Draw logos based on position - first draw chest positions
   logos.forEach(logo => {
