@@ -74,6 +74,8 @@ export const JerseyFront = ({
     maxWidth: number, 
     maxHeight: number
   ) => {
+    console.log(`Drawing logo at (${posX}, ${posY}), max size: ${maxWidth}x${maxHeight}`);
+    
     // Calculate aspect ratio
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     let width = maxWidth;
@@ -100,51 +102,79 @@ export const JerseyFront = ({
     }
     
     // Draw with preserved transparency
-    ctx.drawImage(
-      img, 
-      posX - width/2, 
-      posY - height/2, 
-      width, 
-      height
-    );
+    try {
+      ctx.drawImage(
+        img, 
+        posX - width/2, 
+        posY - height/2, 
+        width, 
+        height
+      );
+      console.log(`Successfully drew logo at (${posX}, ${posY})`);
+    } catch (e) {
+      console.error('Error drawing logo:', e);
+    }
     
     // Restore context state
     ctx.restore();
   };
   
-  // Draw logos based on position
-  if (loadedLogos.size > 0) {
-    // First, draw regular front logos (chest positions)
-    logos.forEach(logo => {
-      const img = loadedLogos.get(logo.id!);
-      if (!img || logo.position === 'sleeve_left' || logo.position === 'sleeve_right') return;
-      
-      const position = logoPositions.get(logo.id!) || { 
-        x: logo.position === 'chest_left' ? 80 : 
-           logo.position === 'chest_right' ? 220 : 150,
-        y: logo.position === 'chest_center' ? 100 : 60
-      };
-      
-      // Use enhanced drawing function with proper dimensions
-      drawLogo(img, position.x, position.y, 60, 60);
-    });
-  }
+  // Debug loadedLogos
+  console.log('Available logos in JerseyFront:', loadedLogos.size);
+  console.log('Logo positions in JerseyFront:', Array.from(logoPositions.entries()));
+  console.log('Logo array in JerseyFront:', logos);
   
-  // Draw logos on sleeves - separately handle sleeve logos
-  if (loadedLogos.size > 0) {
-    logos.forEach(logo => {
-      if (logo.position !== 'sleeve_left' && logo.position !== 'sleeve_right') return;
-      
-      const img = loadedLogos.get(logo.id!);
-      if (!img) return;
-      
-      const position = logoPositions.get(logo.id!) || 
-        (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
-      
-      // Use enhanced drawing function with smaller dimensions for sleeves
-      drawLogo(img, position.x, position.y, 40, 40);
-    });
-  }
+  // Draw logos based on position - first draw chest positions
+  logos.forEach(logo => {
+    console.log(`Processing logo: ${logo.id}, position: ${logo.position}`);
+    
+    if (!logo.id) {
+      console.log('Logo missing id, skipping');
+      return;
+    }
+    
+    const img = loadedLogos.get(logo.id);
+    if (!img) {
+      console.log(`No loaded image found for logo ${logo.id}`);
+      return;
+    }
+    
+    if (logo.position === 'sleeve_left' || logo.position === 'sleeve_right') {
+      return; // Skip sleeve logos for now, will handle separately
+    }
+    
+    const position = logoPositions.get(logo.id) || { 
+      x: logo.position === 'chest_left' ? 80 : 
+         logo.position === 'chest_right' ? 220 : 150,
+      y: logo.position === 'chest_center' ? 100 : 60
+    };
+    
+    console.log(`Drawing chest logo: ${logo.id} at position:`, position);
+    
+    // Use enhanced drawing function with proper dimensions
+    drawLogo(img, position.x, position.y, 60, 60);
+  });
+  
+  // Draw logos on sleeves (separately to control layering)
+  logos.forEach(logo => {
+    if (!logo.id || logo.position !== 'sleeve_left' && logo.position !== 'sleeve_right') {
+      return;
+    }
+    
+    const img = loadedLogos.get(logo.id);
+    if (!img) {
+      console.log(`No loaded image found for sleeve logo ${logo.id}`);
+      return;
+    }
+    
+    const position = logoPositions.get(logo.id) || 
+      (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
+    
+    console.log(`Drawing sleeve logo: ${logo.id} at position:`, position);
+    
+    // Use enhanced drawing function with smaller dimensions for sleeves
+    drawLogo(img, position.x, position.y, 40, 40);
+  });
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };

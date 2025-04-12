@@ -44,6 +44,11 @@ export function CanvasJersey({
     setLogoPositions
   });
 
+  // Debug loaded logos
+  useEffect(() => {
+    console.log('Current logos prop:', logos);
+  }, [logos]);
+
   // Load custom font if provided
   useEffect(() => {
     if (printConfig?.customFontUrl && printConfig.customFontFile) {
@@ -61,17 +66,40 @@ export function CanvasJersey({
 
   // Load logos when available - with high-quality settings
   useEffect(() => {
-    loadLogoImages(logos, logoPositions, true) // passing true for high quality option
-      .then(logoMap => {
-        setLoadedLogos(logoMap);
+    if (logos && logos.length > 0) {
+      console.log("Attempting to load logos:", logos.length);
+      
+      logos.forEach(logo => {
+        console.log(`Logo: ${logo.id}, position: ${logo.position}, has file: ${!!logo.file}, preview URL: ${logo.previewUrl?.substring(0, 30)}...`);
       });
+      
+      loadLogoImages(logos, logoPositions, true)
+        .then(logoMap => {
+          console.log(`Successfully loaded ${logoMap.size} logos`);
+          if (logoMap.size !== logos.length) {
+            console.warn(`Warning: Only ${logoMap.size} out of ${logos.length} logos were loaded`);
+          }
+          setLoadedLogos(logoMap);
+        })
+        .catch(err => {
+          console.error("Error loading logos:", err);
+        });
+    } else {
+      console.log("No logos to load");
+      setLoadedLogos(new Map());
+    }
   }, [logos]);
 
-  // Configure high-DPI canvas
+  // Configure and render the canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('Canvas ref not available');
+      return;
+    }
 
+    console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
+    
     // Set the canvas dimensions based on device pixel ratio
     canvas.width = canvasWidth * pixelRatio;
     canvas.height = canvasHeight * pixelRatio;
@@ -81,7 +109,10 @@ export function CanvasJersey({
     canvas.style.height = `${canvasHeight}px`;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('Could not get canvas context');
+      return;
+    }
 
     // Scale the context to match the device pixel ratio
     ctx.scale(pixelRatio, pixelRatio);
@@ -95,6 +126,7 @@ export function CanvasJersey({
     // Only proceed if the custom font is loaded or if no custom font is needed
     if ((printConfig?.customFontUrl && !loadedFont) && 
         !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
+      console.log('Waiting for custom font to load...');
       // Wait for font to load
       setTimeout(() => {
         // Force a re-render
@@ -103,6 +135,8 @@ export function CanvasJersey({
       return;
     }
 
+    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
+    
     // Clear canvas with proper scaling
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -111,17 +145,19 @@ export function CanvasJersey({
 
     // Draw the appropriate jersey view with proper scaling
     if (view === 'front') {
+      console.log('Rendering front jersey view');
       // Render front jersey
       JerseyFront({
         ctx,
         playerNumber,
         loadedLogos,
         logoPositions,
-        logos,
+        logos: logos || [],
         fontFamily: fontToUse,
         highQuality: true
       });
     } else {
+      console.log('Rendering back jersey view');
       // Render back jersey
       JerseyBack({
         ctx,

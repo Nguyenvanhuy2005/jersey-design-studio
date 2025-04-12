@@ -41,6 +41,7 @@ export const loadLogoImages = (
     
     logos.forEach(logo => {
       if (!logo.previewUrl) {
+        console.log('Logo missing previewUrl:', logo);
         loadedCount++;
         if (loadedCount === logos.length) {
           resolve(logoMap);
@@ -50,18 +51,12 @@ export const loadLogoImages = (
       
       const img = new Image();
       
-      // Set image attributes for high quality
-      if (highQuality) {
-        // Prevent browser caching which might lead to low quality
-        img.src = `${logo.previewUrl}?quality=high&t=${Date.now()}`;
-        
-        // Use crossOrigin for CORS if needed (for Supabase storage)
-        img.crossOrigin = 'anonymous';
-      } else {
-        img.src = logo.previewUrl;
-      }
+      // Debug logo URL
+      console.log('Loading logo from URL:', logo.previewUrl);
       
+      // Set image attributes for high quality
       img.onload = () => {
+        console.log('Logo loaded successfully:', logo.position, img.width, 'x', img.height);
         logoMap.set(logo.id!, img);
         
         // Set initial position if not already set
@@ -72,16 +67,65 @@ export const loadLogoImages = (
         
         loadedCount++;
         if (loadedCount === logos.length) {
+          console.log('All logos loaded, total:', logoMap.size);
           resolve(logoMap);
         }
       };
-      img.onerror = () => {
-        console.error(`Failed to load logo image: ${logo.previewUrl}`);
-        loadedCount++;
-        if (loadedCount === logos.length) {
-          resolve(logoMap);
+      
+      img.onerror = (e) => {
+        console.error(`Failed to load logo image: ${logo.previewUrl}`, e);
+        
+        // Try an alternative approach for blob URLs that may be causing issues
+        if (logo.previewUrl.startsWith('blob:') && logo.file) {
+          console.log('Trying alternative method with FileReader for blob URL');
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            if (e.target?.result) {
+              const newImg = new Image();
+              newImg.src = e.target.result as string;
+              newImg.onload = () => {
+                console.log('Logo loaded via FileReader:', logo.position);
+                logoMap.set(logo.id!, newImg);
+                loadedCount++;
+                if (loadedCount === logos.length) {
+                  console.log('All logos loaded, total:', logoMap.size);
+                  resolve(logoMap);
+                }
+              };
+              newImg.onerror = () => {
+                console.error('Even FileReader approach failed for logo');
+                loadedCount++;
+                if (loadedCount === logos.length) {
+                  resolve(logoMap);
+                }
+              };
+            } else {
+              loadedCount++;
+              if (loadedCount === logos.length) {
+                resolve(logoMap);
+              }
+            }
+          };
+          reader.readAsDataURL(logo.file);
+        } else {
+          loadedCount++;
+          if (loadedCount === logos.length) {
+            resolve(logoMap);
+          }
         }
       };
+      
+      // Use cached version parameter to avoid browser caching
+      if (highQuality && !logo.previewUrl.startsWith('blob:')) {
+        img.src = `${logo.previewUrl}?quality=high&t=${Date.now()}`;
+      } else {
+        img.src = logo.previewUrl;
+      }
+      
+      // Use crossOrigin for CORS if needed (for Supabase storage)
+      if (!logo.previewUrl.startsWith('blob:') && !logo.previewUrl.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
     });
     
     // In case there are no images to load (edge case)
