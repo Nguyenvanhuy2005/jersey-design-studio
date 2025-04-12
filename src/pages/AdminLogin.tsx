@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Chuyển hướng người dùng nếu đã đăng nhập
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate("/admin/orders");
+    }
+  }, [user, isLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +38,12 @@ const AdminLogin = () => {
       }
 
       toast.success("Đăng nhập quản trị thành công");
-      navigate("/admin/orders");
+      
+      // Chuyển hướng sẽ được xử lý bởi useEffect khi user được cập nhật
+      // Thêm một setTimeout để đảm bảo chuyển hướng nếu useEffect không hoạt động
+      setTimeout(() => {
+        navigate("/admin/orders");
+      }, 500);
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Email hoặc mật khẩu không đúng");
@@ -37,6 +51,22 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
+
+  // Nếu đang kiểm tra trạng thái đăng nhập, hiển thị trạng thái loading
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Nếu đã đăng nhập, redirect tới trang admin (không hiển thị form đăng nhập)
+  if (user) {
+    return null; // Không hiển thị gì cả vì useEffect sẽ chuyển hướng người dùng
+  }
 
   return (
     <Layout>
