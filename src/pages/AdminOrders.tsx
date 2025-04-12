@@ -12,159 +12,144 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrdersList } from "@/components/admin/OrdersList";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
-import { 
-  checkDesignImageExists, 
-  checkStorageBucketsExist, 
-  createStorageBucketsIfNeeded 
-} from "@/utils/image-utils";
-
-const mockOrders: Order[] = [
-  {
-    id: "order-1",
-    teamName: "FC Barcelona",
-    players: Array(11).fill(null).map((_, i) => ({
-      id: `player-${i + 1}-1`,
-      name: `Player ${i + 1}`,
-      number: i + 1,
-      size: i % 2 === 0 ? "M" : "L",
-      printImage: i % 3 === 0
-    })),
-    printConfig: {
-      font: "Arial",
-      backMaterial: "In chuyển nhiệt",
-      backColor: "Trắng",
-      frontMaterial: "In chuyển nhiệt",
-      frontColor: "Đen",
-      sleeveMaterial: "In chuyển nhiệt",
-      sleeveColor: "Đen",
-      legMaterial: "In chuyển nhiệt",
-      legColor: "Đen"
-    },
-    productLines: [
-      {
-        id: "product-1-1",
-        product: "Áo thi đấu",
-        position: "Lưng trên",
-        material: "In chuyển nhiệt",
-        size: "Trung bình",
-        points: 1,
-        content: "Tên cầu thủ"
-      },
-      {
-        id: "product-1-2",
-        product: "Áo thi đấu",
-        position: "Lưng giữa",
-        material: "In chuyển nhiệt",
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      }
-    ],
-    totalCost: 3500000,
-    status: "new",
-    designImage: "order-1/design.png",
-    createdAt: new Date(2023, 3, 15),
-    referenceImages: []
+import { checkDesignImageExists, checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/image-utils";
+const mockOrders: Order[] = [{
+  id: "order-1",
+  teamName: "FC Barcelona",
+  players: Array(11).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-1`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 2 === 0 ? "M" : "L",
+    printImage: i % 3 === 0
+  })),
+  printConfig: {
+    font: "Arial",
+    backMaterial: "In chuyển nhiệt",
+    backColor: "Trắng",
+    frontMaterial: "In chuyển nhiệt",
+    frontColor: "Đen",
+    sleeveMaterial: "In chuyển nhiệt",
+    sleeveColor: "Đen",
+    legMaterial: "In chuyển nhiệt",
+    legColor: "Đen"
   },
-  {
-    id: "order-2",
-    teamName: "Manchester United",
-    players: Array(15).fill(null).map((_, i) => ({
-      id: `player-${i + 1}-2`,
-      name: `Player ${i + 1}`,
-      number: i + 1,
-      size: i % 2 === 0 ? "L" : "XL",
-      printImage: i % 2 === 0
-    })),
-    printConfig: {
-      font: "Helvetica",
-      backMaterial: "In trực tiếp",
-      backColor: "Đen",
-      frontMaterial: "In trực tiếp",
-      frontColor: "Đen",
-      sleeveMaterial: "In trực tiếp",
-      sleeveColor: "Đen",
-      legMaterial: "In trực tiếp",
-      legColor: "Đen"
-    },
-    productLines: [
-      {
-        id: "product-2-1",
-        product: "Áo thi đấu",
-        position: "Lưng trên",
-        material: "In trực tiếp",
-        size: "Trung bình",
-        points: 1,
-        content: "Tên cầu thủ"
-      },
-      {
-        id: "product-2-2",
-        product: "Áo thi đấu",
-        position: "Lưng giữa",
-        material: "In trực tiếp",
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      }
-    ],
-    totalCost: 4200000,
-    status: "processing",
-    designImage: "order-2/design.png",
-    createdAt: new Date(2023, 3, 20),
-    referenceImages: []
+  productLines: [{
+    id: "product-1-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In chuyển nhiệt",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-1-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In chuyển nhiệt",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 3500000,
+  status: "new",
+  designImage: "order-1/design.png",
+  createdAt: new Date(2023, 3, 15),
+  referenceImages: []
+}, {
+  id: "order-2",
+  teamName: "Manchester United",
+  players: Array(15).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-2`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 2 === 0 ? "L" : "XL",
+    printImage: i % 2 === 0
+  })),
+  printConfig: {
+    font: "Helvetica",
+    backMaterial: "In trực tiếp",
+    backColor: "Đen",
+    frontMaterial: "In trực tiếp",
+    frontColor: "Đen",
+    sleeveMaterial: "In trực tiếp",
+    sleeveColor: "Đen",
+    legMaterial: "In trực tiếp",
+    legColor: "Đen"
   },
-  {
-    id: "order-3",
-    teamName: "Real Madrid",
-    players: Array(18).fill(null).map((_, i) => ({
-      id: `player-${i + 1}-3`,
-      name: `Player ${i + 1}`,
-      number: i + 1,
-      size: i % 3 === 0 ? "S" : i % 3 === 1 ? "M" : "L",
-      printImage: true
-    })),
-    printConfig: {
-      font: "Roboto",
-      backMaterial: "In chuyển nhi���t",
-      backColor: "Đen",
-      frontMaterial: "In chuyển nhiệt",
-      frontColor: "Trắng",
-      sleeveMaterial: "In chuyển nhiệt",
-      sleeveColor: "Trắng",
-      legMaterial: "In chuyển nhiệt",
-      legColor: "Trắng"
-    },
-    productLines: [
-      {
-        id: "product-3-1",
-        product: "Áo thi đấu",
-        position: "Lưng trên",
-        material: "In chuyển nhiệt",
-        size: "Trung bình",
-        points: 1,
-        content: "Tên cầu thủ"
-      },
-      {
-        id: "product-3-2",
-        product: "Áo thi đấu",
-        position: "Lưng giữa",
-        material: "In chuyển nhiệt",
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      }
-    ],
-    totalCost: 5400000,
-    status: "completed",
-    designImage: "order-3/design.png",
-    createdAt: new Date(2023, 2, 10),
-    referenceImages: []
-  }
-];
-
+  productLines: [{
+    id: "product-2-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In trực tiếp",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-2-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In trực tiếp",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 4200000,
+  status: "processing",
+  designImage: "order-2/design.png",
+  createdAt: new Date(2023, 3, 20),
+  referenceImages: []
+}, {
+  id: "order-3",
+  teamName: "Real Madrid",
+  players: Array(18).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-3`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 3 === 0 ? "S" : i % 3 === 1 ? "M" : "L",
+    printImage: true
+  })),
+  printConfig: {
+    font: "Roboto",
+    backMaterial: "In chuyển nhi���t",
+    backColor: "Đen",
+    frontMaterial: "In chuyển nhiệt",
+    frontColor: "Trắng",
+    sleeveMaterial: "In chuyển nhiệt",
+    sleeveColor: "Trắng",
+    legMaterial: "In chuyển nhiệt",
+    legColor: "Trắng"
+  },
+  productLines: [{
+    id: "product-3-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In chuyển nhiệt",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-3-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In chuyển nhiệt",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 5400000,
+  status: "completed",
+  designImage: "order-3/design.png",
+  createdAt: new Date(2023, 2, 10),
+  referenceImages: []
+}];
 const AdminOrders = () => {
   const navigate = useNavigate();
-  const { user, isLoading, signOut } = useAuth();
+  const {
+    user,
+    isLoading,
+    signOut
+  } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -182,25 +167,22 @@ const AdminOrders = () => {
     checking: true
   });
   const [creatingBuckets, setCreatingBuckets] = useState<boolean>(false);
-
   useEffect(() => {
     const checkStorageBuckets = async () => {
       if (!user) return;
-      
-      setStorageBucketsStatus(prev => ({ ...prev, checking: true }));
-      
+      setStorageBucketsStatus(prev => ({
+        ...prev,
+        checking: true
+      }));
       try {
         const result = await checkStorageBucketsExist();
-        
         setStorageBucketsStatus({
           designImages: result.designImages,
           referenceImages: result.referenceImages,
           checking: false,
           error: result.error
         });
-        
         console.log("Storage buckets check:", result);
-        
         if (!result.designImages || !result.referenceImages) {
           toast.error("Bucket không tồn tại trong storage. Hãy tạo bucket để hiển thị hình ảnh.");
         }
@@ -214,22 +196,18 @@ const AdminOrders = () => {
         });
       }
     };
-    
     if (user) {
       checkStorageBuckets();
     }
   }, [user]);
-  
   const handleCreateBuckets = async () => {
     setCreatingBuckets(true);
-    
     try {
       const result = await createStorageBucketsIfNeeded();
-      
       if (result.success) {
         if (result.created.designImages || result.created.referenceImages) {
           toast.success("Đã tạo bucket thành công!");
-          
+
           // Re-check bucket status
           const updatedStatus = await checkStorageBucketsExist();
           setStorageBucketsStatus({
@@ -251,20 +229,19 @@ const AdminOrders = () => {
       setCreatingBuckets(false);
     }
   };
-  
   useEffect(() => {
     if (user) {
       const fetchOrders = async () => {
         setFetchingData(true);
         setFetchError(null);
         console.log("Fetching orders data...");
-        
         try {
-          const { data, error } = await supabase
-            .from('orders')
-            .select('*, players(*), product_lines(*), print_configs(*)')
-            .order('created_at', { ascending: false });
-          
+          const {
+            data,
+            error
+          } = await supabase.from('orders').select('*, players(*), product_lines(*), print_configs(*)').order('created_at', {
+            ascending: false
+          });
           if (error) {
             console.error("Error fetching orders:", error);
             setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
@@ -273,50 +250,31 @@ const AdminOrders = () => {
             setFetchingData(false);
             return;
           }
-          
           if (!data || data.length === 0) {
             console.log("No orders found");
             setOrders([]);
             setFetchingData(false);
             return;
           }
-          
           console.log("Raw orders data:", data);
-          
-          const transformedOrders: Order[] = await Promise.all(data.map(async (order) => {
+          const transformedOrders: Order[] = await Promise.all(data.map(async order => {
             let processedReferenceImages: string[] = [];
-            
             if (order.reference_images && Array.isArray(order.reference_images)) {
-              processedReferenceImages = order.reference_images
-                .filter(item => typeof item === 'string')
-                .map(item => String(item));
+              processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
             }
-            
             if (order.design_data) {
-              const designData = order.design_data as { reference_images?: any[] };
-              if (designData && 
-                  typeof designData === 'object' && 
-                  designData.reference_images && 
-                  Array.isArray(designData.reference_images)) {
-                
-                const refImagesFromDesignData = designData.reference_images
-                  .filter(item => typeof item === 'string')
-                  .map(item => String(item));
-                
-                processedReferenceImages = [
-                  ...processedReferenceImages,
-                  ...refImagesFromDesignData
-                ];
+              const designData = order.design_data as {
+                reference_images?: any[];
+              };
+              if (designData && typeof designData === 'object' && designData.reference_images && Array.isArray(designData.reference_images)) {
+                const refImagesFromDesignData = designData.reference_images.filter(item => typeof item === 'string').map(item => String(item));
+                processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
               }
             }
-            
-            const designImageExists = order.design_image ? 
-              await checkDesignImageExists(order.design_image) : false;
-              
+            const designImageExists = order.design_image ? await checkDesignImageExists(order.design_image) : false;
             if (order.design_image && !designImageExists) {
               console.warn(`Design image does not exist for order ${order.id}: ${order.design_image}`);
             }
-            
             return {
               id: order.id,
               teamName: order.team_name || '',
@@ -366,7 +324,6 @@ const AdminOrders = () => {
               }
             };
           }));
-          
           console.log("Transformed orders:", transformedOrders);
           setOrders(transformedOrders);
         } catch (e) {
@@ -378,84 +335,62 @@ const AdminOrders = () => {
           setFetchingData(false);
         }
       };
-      
       fetchOrders();
     }
   }, [user]);
-
   if (isLoading || fetchingData) {
-    return (
-      <Layout>
+    return <Layout>
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
-      </Layout>
-    );
+      </Layout>;
   }
-  
   const handleStatusChange = (orderId: string, newStatus: 'new' | 'processing' | 'completed') => {
-    const updatedOrders = orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
+    const updatedOrders = orders.map(order => order.id === orderId ? {
+      ...order,
+      status: newStatus
+    } : order);
     setOrders(updatedOrders);
-    
-    supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId)
-      .then(({ error }) => {
-        if (error) {
-          console.error("Error updating order status:", error);
-          toast.error("Không thể cập nhật trạng thái đơn hàng");
-        } else {
-          toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${
-            newStatus === 'new' ? 'Mới' : 
-            newStatus === 'processing' ? 'Đang xử lý' : 
-            'Đã hoàn thành'
-          }`);
-        }
-      });
+    supabase.from('orders').update({
+      status: newStatus
+    }).eq('id', orderId).then(({
+      error
+    }) => {
+      if (error) {
+        console.error("Error updating order status:", error);
+        toast.error("Không thể cập nhật trạng thái đơn hàng");
+      } else {
+        toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${newStatus === 'new' ? 'Mới' : newStatus === 'processing' ? 'Đang xử lý' : 'Đã hoàn thành'}`);
+      }
+    });
   };
-
   const handleSignOut = async () => {
     await signOut();
     toast.success("Đã đăng xuất khỏi hệ thống");
     navigate("/admin");
   };
-
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
   };
-
   const handleViewImage = (imageUrl: string | null) => {
     console.log("Opening image viewer with URL:", imageUrl);
     setSelectedImage(imageUrl);
   };
-
   const handleCloseImageViewer = () => {
     setSelectedImage(null);
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
           
           <div className="flex gap-2 items-center">
-            {user && (
-              <div className="flex items-center mr-4">
+            {user && <div className="flex items-center mr-4">
                 <span className="text-sm mr-2">{user.email}</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleSignOut}
-                  className="flex items-center gap-1"
-                >
+                <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-1">
                   <LogOut className="h-4 w-4" /> Đăng xuất
                 </Button>
-              </div>
-            )}
+              </div>}
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
@@ -471,59 +406,9 @@ const AdminOrders = () => {
           </div>
         </div>
         
-        {(!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages) && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-medium text-yellow-800">Lỗi cấu hình Storage</h3>
-                <ul className="list-disc list-inside text-sm text-yellow-700 mt-1">
-                  {!storageBucketsStatus.designImages && (
-                    <li>Bucket 'design_images' không tồn tại trong Supabase Storage</li>
-                  )}
-                  {!storageBucketsStatus.referenceImages && (
-                    <li>Bucket 'reference_images' không tồn tại trong Supabase Storage</li>
-                  )}
-                </ul>
-                <p className="text-sm mt-1 text-yellow-800">
-                  Hình ảnh sẽ không hiển thị cho đến khi các bucket được tạo đúng.
-                </p>
-                
-                <div className="mt-3">
-                  <Button
-                    onClick={handleCreateBuckets}
-                    disabled={creatingBuckets || storageBucketsStatus.checking}
-                    size="sm"
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                  >
-                    {creatingBuckets ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang tạo bucket...
-                      </>
-                    ) : storageBucketsStatus.checking ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang kiểm tra...
-                      </>
-                    ) : (
-                      'Tạo bucket'
-                    )}
-                  </Button>
-                </div>
-                
-                {storageBucketsStatus.error && (
-                  <p className="text-sm mt-2 text-red-600">
-                    Lỗi: {storageBucketsStatus.error}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages}
         
-        {fetchError && (
-          <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
+        {fetchError && <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
             <div className="flex gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
               <div>
@@ -531,8 +416,7 @@ const AdminOrders = () => {
                 <p className="text-sm text-red-700 mt-1">{fetchError}</p>
               </div>
             </div>
-          </div>
-        )}
+          </div>}
         
         <div className="bg-card rounded-md shadow overflow-hidden">
           <div className="overflow-x-auto">
@@ -550,30 +434,18 @@ const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {isLoading || fetchingData ? (
-                  <tr>
+                {isLoading || fetchingData ? <tr>
                     <td colSpan={8} className="p-4 text-center">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
                         <span>Đang tải dữ liệu...</span>
                       </div>
                     </td>
-                  </tr>
-                ) : orders.length > 0 ? (
-                  <OrdersList 
-                    orders={orders}
-                    statusFilter={statusFilter}
-                    onViewDetails={handleViewDetails}
-                    onViewImage={handleViewImage} 
-                    onStatusChange={handleStatusChange}
-                  />
-                ) : (
-                  <tr>
+                  </tr> : orders.length > 0 ? <OrdersList orders={orders} statusFilter={statusFilter} onViewDetails={handleViewDetails} onViewImage={handleViewImage} onStatusChange={handleStatusChange} /> : <tr>
                     <td colSpan={8} className="p-4 text-center text-muted-foreground">
                       {fetchError ? "Không thể tải dữ liệu đơn hàng" : "Không có đơn hàng nào"}
                     </td>
-                  </tr>
-                )}
+                  </tr>}
               </tbody>
             </table>
           </div>
@@ -582,23 +454,11 @@ const AdminOrders = () => {
       
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          {selectedOrder && (
-            <OrderDetails 
-              order={selectedOrder} 
-              onViewImage={handleViewImage}
-              onStatusChange={handleStatusChange}
-            />
-          )}
+          {selectedOrder && <OrderDetails order={selectedOrder} onViewImage={handleViewImage} onStatusChange={handleStatusChange} />}
         </DialogContent>
       </Dialog>
       
-      <ImageViewer 
-        isOpen={!!selectedImage} 
-        onClose={handleCloseImageViewer} 
-        imageUrl={selectedImage} 
-      />
-    </Layout>
-  );
+      <ImageViewer isOpen={!!selectedImage} onClose={handleCloseImageViewer} imageUrl={selectedImage} />
+    </Layout>;
 };
-
 export default AdminOrders;
