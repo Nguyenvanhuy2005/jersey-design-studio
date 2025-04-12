@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -94,7 +95,11 @@ export const getReferenceImageUrls = (referenceImages?: string[]): string[] => {
     return [];
   }
   
-  const urls = referenceImages
+  // Remove any duplicate entries
+  const uniqueReferenceImages = [...new Set(referenceImages)];
+  console.log(`Deduplicating ${referenceImages.length} images to ${uniqueReferenceImages.length} unique images`);
+  
+  const urls = uniqueReferenceImages
     .map(path => {
       const url = getReferenceImageUrl(path);
       if (!url) {
@@ -104,6 +109,6 @@ export const getReferenceImageUrls = (referenceImages?: string[]): string[] => {
     })
     .filter((url): url is string => url !== null);
   
-  console.log(`Generated ${urls.length} reference image URLs out of ${referenceImages.length} paths`);
+  console.log(`Generated ${urls.length} reference image URLs out of ${uniqueReferenceImages.length} unique paths`);
   return urls;
 };

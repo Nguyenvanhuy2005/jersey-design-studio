@@ -26,13 +26,14 @@ export const ImageViewer = ({
   const handleImageError = () => {
     setIsLoading(false);
     setHasError(true);
+    console.error("Failed to load image:", imageUrl);
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Xem thiết kế</DialogTitle>
+          <DialogTitle>Xem hình ảnh</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center justify-center p-4">
           {isLoading && (
@@ -50,7 +51,7 @@ export const ImageViewer = ({
           
           <img 
             src={imageUrl} 
-            alt="Jersey Design" 
+            alt="Hình ảnh xem trước" 
             className={`max-w-full max-h-[70vh] object-contain ${isLoading ? 'hidden' : ''}`}
             onLoad={handleImageLoad}
             onError={handleImageError}

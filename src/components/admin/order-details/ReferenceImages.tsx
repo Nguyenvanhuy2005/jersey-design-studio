@@ -15,10 +15,12 @@ export const ReferenceImages = ({ referenceImages, onViewImage }: ReferenceImage
   
   useEffect(() => {
     if (Array.isArray(referenceImages) && referenceImages.length > 0) {
-      const urls = getReferenceImageUrls(referenceImages);
+      // Remove duplicates by creating a Set and then converting back to array
+      const uniqueReferenceImages = [...new Set(referenceImages)];
+      const urls = getReferenceImageUrls(uniqueReferenceImages);
       setReferenceImageUrls(urls);
       setReferenceImagesLoaded(Array(urls.length).fill(false));
-      console.log(`Generated ${urls.length} reference image URLs`);
+      console.log(`Generated ${urls.length} unique reference image URLs from ${referenceImages.length} paths`);
     }
   }, [referenceImages]);
   
