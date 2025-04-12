@@ -188,7 +188,8 @@ const AdminOrders = () => {
               createdAt: new Date(order.created_at || ''),
               notes: order.notes || '',
               designImage: order.design_image || '',
-              referenceImages: order.design_data?.reference_images || [],
+              referenceImages: order.design_data && typeof order.design_data === 'object' ? 
+                (order.design_data as DesignData).reference_images || [] : [],
               players: order.players ? order.players.map((player: any) => ({
                 id: player.id,
                 name: player.name || '',
@@ -772,28 +773,28 @@ const AdminOrders = () => {
                 </div>
               </div>
 
-                {selectedOrder.referenceImages && selectedOrder.referenceImages.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedOrder.referenceImages.map((imagePath, index) => {
-                        const imageUrl = supabase.storage
-                          .from('reference_images')
-                          .getPublicUrl(imagePath).data.publicUrl;
-                        
-                        return (
-                          <img
-                            key={index}
-                            src={imageUrl}
-                            alt={`Reference Image ${index + 1}`}
-                            className="h-16 w-16 object-cover cursor-pointer rounded border hover:opacity-80"
-                            onClick={() => setSelectedImage(imageUrl)}
-                          />
-                        );
-                      })}
-                    </div>
+              {selectedOrder.referenceImages && selectedOrder.referenceImages.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Hình ảnh tham khảo</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedOrder.referenceImages.map((imagePath, index) => {
+                      const imageUrl = supabase.storage
+                        .from('reference_images')
+                        .getPublicUrl(imagePath).data.publicUrl;
+                      
+                      return (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt={`Reference Image ${index + 1}`}
+                          className="h-16 w-16 object-cover cursor-pointer rounded border hover:opacity-80"
+                          onClick={() => setSelectedImage(imageUrl)}
+                        />
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              )}
             </>
           )}
         </DialogContent>
