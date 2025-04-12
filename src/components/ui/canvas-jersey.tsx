@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -8,6 +7,7 @@ import { JerseyFront } from '@/components/jersey/JerseyFront';
 import { JerseyBack } from '@/components/jersey/JerseyBack';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CanvasJerseyProps {
   teamName: string;
@@ -89,22 +89,72 @@ export function CanvasJersey({
         for (const logo of logos) {
           if (logo.id) {
             try {
-              const { data, error } = await supabase
+              // Extract UUID from logo.id if it's not already a UUID
+              let logoId = logo.id;
+              
+              // If the logo ID contains non-UUID format (like logo-timestamp-random)
+              // Generate a new UUID for it and map it to this logo
+              if (logoId.startsWith('logo-') || !isValidUUID(logoId)) {
+                // Check if we already have this logo mapped to a UUID
+                const { data, error } = await supabase
+                  .from('logos')
+                  .select('id, file_path')
+                  .eq('file_path', logo.file.name)
+                  .single();
+                
+                if (error || !data) {
+                  // If no mapping exists, create a new one
+                  const newUUID = uuidv4();
+                  console.log(`Generated new UUID ${newUUID} for logo ${logoId}`);
+                  
+                  // Store the mapping in Supabase
+                  const { error: insertError } = await supabase
+                    .from('logos')
+                    .insert({
+                      id: newUUID,
+                      file_path: logo.file.name,
+                      position: logo.position,
+                      x_position: logo.position === 'chest_left' ? 80 : 
+                                  logo.position === 'chest_right' ? 220 : 
+                                  logo.position === 'chest_center' ? 150 :
+                                  logo.position === 'sleeve_left' ? 30 : 270,
+                      y_position: logo.position === 'chest_center' ? 100 : 60,
+                      scale: 1.0
+                    });
+                  
+                  if (insertError) {
+                    console.error("Error creating logo mapping:", insertError);
+                  } else {
+                    logoId = newUUID;
+                    // Update the logo.id with the UUID for this session
+                    logo.id = newUUID;
+                    console.log(`Created and stored new UUID ${newUUID} for logo ${logo.file.name}`);
+                  }
+                } else {
+                  // Use the existing UUID mapping
+                  logoId = data.id;
+                  logo.id = data.id; // Update the logo.id with the UUID
+                  console.log(`Found existing UUID ${logoId} for logo ${logo.file.name}`);
+                }
+              }
+              
+              // Now fetch position data using the UUID
+              const { data: posData, error: posError } = await supabase
                 .from('logos')
                 .select('x_position, y_position, scale')
-                .eq('id', logo.id)
+                .eq('id', logoId)
                 .single();
               
-              if (error) {
-                console.error("Error fetching logo position:", error);
-                // For non-UUID IDs, we'll just use default positions
+              if (posError) {
+                console.error(`Error fetching position for logo ${logoId}:`, posError);
+                // Set default position if error occurs
                 const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                                logo.position === 'chest_right' ? { x: 220, y: 60 } :
-                                logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                                logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
-                                { x: 270, y: 40 };
+                                  logo.position === 'chest_right' ? { x: 220, y: 60 } :
+                                  logo.position === 'chest_center' ? { x: 150, y: 100 } :
+                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
+                                  { x: 270, y: 40 };
                 
-                initialPositions.set(logo.id, {
+                initialPositions.set(logoId, {
                   x: defaultPos.x,
                   y: defaultPos.y,
                   scale: 1.0
@@ -112,21 +162,18 @@ export function CanvasJersey({
                 continue;
               }
               
-              if (data) {
-                // Use saved position if available, otherwise use defaults
-                const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                                  logo.position === 'chest_right' ? { x: 220, y: 60 } :
-                                  logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
-                                  { x: 270, y: 40 };
-                
-                initialPositions.set(logo.id, {
-                  x: data.x_position ?? defaultPos.x,
-                  y: data.y_position ?? defaultPos.y,
-                  scale: data.scale ?? 1.0
+              if (posData) {
+                // Use saved position if available
+                initialPositions.set(logoId, {
+                  x: posData.x_position ?? (logo.position === 'chest_left' ? 80 : 
+                                          logo.position === 'chest_right' ? 220 : 
+                                          logo.position === 'chest_center' ? 150 :
+                                          logo.position === 'sleeve_left' ? 30 : 270),
+                  y: posData.y_position ?? (logo.position === 'chest_center' ? 100 : 60),
+                  scale: posData.scale ?? 1.0
                 });
                 
-                console.log(`Loaded position for logo ${logo.id}:`, initialPositions.get(logo.id));
+                console.log(`Loaded position for logo ${logoId}:`, initialPositions.get(logoId));
               }
             } catch (err) {
               console.error("Error in fetchLogoPositions:", err);
@@ -193,6 +240,12 @@ export function CanvasJersey({
       
       for (const [logoId, position] of logoPositions.entries()) {
         try {
+          // Skip any non-UUID format IDs
+          if (!isValidUUID(logoId)) {
+            console.warn(`Skipping save for non-UUID logo ID: ${logoId}`);
+            continue;
+          }
+          
           const { error } = await supabase
             .from('logos')
             .update({
@@ -204,13 +257,13 @@ export function CanvasJersey({
           
           if (error) {
             console.error(`Error updating position for logo ${logoId}:`, error);
-            toast.error(`Không thể lưu vị trí logo: ${error.message}`);
+            toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
           } else {
             console.log(`Updated position for logo ${logoId}:`, position);
           }
         } catch (err) {
           console.error("Error saving logo position:", err);
-          toast.error(`Không thể lưu vị trí logo: ${err}`);
+          toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
         }
       }
     }, 500); // 500ms debounce
@@ -304,8 +357,13 @@ export function CanvasJersey({
         fontFamily: fontToUse
       });
     }
-    
   }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo, isDragging]);
+
+  // Helper function to check if a string is a valid UUID
+  function isValidUUID(id: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  }
 
   // Instructions for logo selection and control
   useEffect(() => {
@@ -346,7 +404,7 @@ export function CanvasJersey({
       {logos && logos.length > 0 && view === 'front' && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
-            Nhấp vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
+            Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
           </p>
         </div>
       )}

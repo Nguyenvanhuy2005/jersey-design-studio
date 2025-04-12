@@ -230,13 +230,140 @@ export const JerseyFront = ({
         ctx.lineTo(rotateButtonX, rotateButtonY - 2);
         ctx.fill();
         
-        // Add Canva-style hint text below the selection
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(posX - 120, posY + height/2 + 10, 240, 24);
+        // Add movement controls
+        const movementPanel = {
+          x: posX - 75,
+          y: posY + height/2 + 15,
+          width: 150,
+          height: 30,
+          radius: 4
+        };
+        
+        // Panel background
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.beginPath();
+        ctx.roundRect(movementPanel.x, movementPanel.y, movementPanel.width, movementPanel.height, movementPanel.radius);
+        ctx.fill();
+        
+        // Movement buttons - left, right, up, down
+        const buttonSize = 20;
+        const buttonY = movementPanel.y + movementPanel.height/2;
+        
+        // Left button
+        const leftX = movementPanel.x + 25;
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Kéo để di chuyển, kéo các góc để chỉnh kích thước', posX, posY + height/2 + 25);
+        ctx.beginPath();
+        ctx.arc(leftX, buttonY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Left arrow
+        ctx.fillStyle = '#0066CC';
+        ctx.beginPath();
+        ctx.moveTo(leftX + 4, buttonY);
+        ctx.lineTo(leftX - 4, buttonY);
+        ctx.lineTo(leftX - 2, buttonY - 3);
+        ctx.lineTo(leftX - 2, buttonY + 3);
+        ctx.lineTo(leftX - 4, buttonY);
+        ctx.fill();
+        
+        // Right button
+        const rightX = movementPanel.x + 125;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(rightX, buttonY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Right arrow
+        ctx.fillStyle = '#0066CC';
+        ctx.beginPath();
+        ctx.moveTo(rightX - 4, buttonY);
+        ctx.lineTo(rightX + 4, buttonY);
+        ctx.lineTo(rightX + 2, buttonY - 3);
+        ctx.lineTo(rightX + 2, buttonY + 3);
+        ctx.lineTo(rightX + 4, buttonY);
+        ctx.fill();
+        
+        // Up button
+        const upX = movementPanel.x + 75 - 15;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(upX, buttonY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Up arrow
+        ctx.fillStyle = '#0066CC';
+        ctx.beginPath();
+        ctx.moveTo(upX, buttonY - 4);
+        ctx.lineTo(upX, buttonY + 4);
+        ctx.lineTo(upX - 3, buttonY + 2);
+        ctx.lineTo(upX + 3, buttonY + 2);
+        ctx.lineTo(upX, buttonY + 4);
+        ctx.fill();
+        
+        // Down button
+        const downX = movementPanel.x + 75 + 15;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(downX, buttonY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Down arrow
+        ctx.fillStyle = '#0066CC';
+        ctx.beginPath();
+        ctx.moveTo(downX, buttonY + 4);
+        ctx.lineTo(downX, buttonY - 4);
+        ctx.lineTo(downX - 3, buttonY - 2);
+        ctx.lineTo(downX + 3, buttonY - 2);
+        ctx.lineTo(downX, buttonY - 4);
+        ctx.fill();
+        
+        // Zoom controls
+        const zoomPanel = {
+          x: posX + 20,
+          y: posY - height/2 - 10,
+          width: 70,
+          height: 30,
+          radius: 4
+        };
+        
+        // Zoom panel background
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.beginPath();
+        ctx.roundRect(zoomPanel.x, zoomPanel.y, zoomPanel.width, zoomPanel.height, zoomPanel.radius);
+        ctx.fill();
+        
+        // Zoom in button
+        const zoomInX = zoomPanel.x + 20;
+        const zoomY = zoomPanel.y + zoomPanel.height/2;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(zoomInX, zoomY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // + symbol
+        ctx.strokeStyle = '#0066CC';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(zoomInX - 5, zoomY);
+        ctx.lineTo(zoomInX + 5, zoomY);
+        ctx.moveTo(zoomInX, zoomY - 5);
+        ctx.lineTo(zoomInX, zoomY + 5);
+        ctx.stroke();
+        
+        // Zoom out button
+        const zoomOutX = zoomPanel.x + 50;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(zoomOutX, zoomY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // - symbol
+        ctx.strokeStyle = '#0066CC';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(zoomOutX - 5, zoomY);
+        ctx.lineTo(zoomOutX + 5, zoomY);
+        ctx.stroke();
       }
     } catch (e) {
       console.error('Error drawing logo:', e);

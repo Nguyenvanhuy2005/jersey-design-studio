@@ -1,6 +1,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { Logo } from '@/types';
+import { toast } from 'sonner';
 
 interface UseDragLogosProps {
   logos: Logo[];
@@ -43,8 +44,8 @@ export const useDragLogos = ({
     // Improve coordinate calculation with correct scaling for high-DPI displays
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX / window.devicePixelRatio;
-    const y = (e.clientY - rect.top) * scaleY / window.devicePixelRatio;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width / window.devicePixelRatio);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height / window.devicePixelRatio);
     
     return { x, y };
   };
@@ -57,20 +58,20 @@ export const useDragLogos = ({
     // Store initial mouse position
     dragStartPos.current = { x, y };
     
-    // Check if click is on toolbar of selected logo first
+    // Check if click is on UI controls of selected logo first
     if (selectedLogo) {
       const position = logoPositions.get(selectedLogo);
       if (position) {
         const logo = logos.find(l => l.id === selectedLogo);
         if (logo) {
-          // Base size for logo
+          // Base sizes for logo
           let baseWidth = logo.position.includes('sleeve') ? 40 : 60;
           let baseHeight = logo.position.includes('sleeve') ? 40 : 60;
           
           // Apply scale
           const width = baseWidth * position.scale;
           const height = baseHeight * position.scale;
-          
+
           // Check if clicked on delete button in toolbar
           const toolbarHeight = 36;
           const toolbarWidth = 80;
@@ -97,6 +98,49 @@ export const useDragLogos = ({
             Math.pow(y - rotateButtonY, 2)
           );
           
+          // Movement panel
+          const movementPanel = {
+            x: position.x - 75,
+            y: position.y + height/2 + 15,
+            width: 150,
+            height: 30
+          };
+          
+          const buttonRadius = 10;
+          const buttonY = movementPanel.y + movementPanel.height/2;
+          
+          // Check button clicks
+          // Left button
+          const leftX = movementPanel.x + 25;
+          const distToLeftBtn = Math.sqrt(Math.pow(x - leftX, 2) + Math.pow(y - buttonY, 2));
+          
+          // Right button
+          const rightX = movementPanel.x + 125;
+          const distToRightBtn = Math.sqrt(Math.pow(x - rightX, 2) + Math.pow(y - buttonY, 2));
+          
+          // Up button
+          const upX = movementPanel.x + 75 - 15;
+          const distToUpBtn = Math.sqrt(Math.pow(x - upX, 2) + Math.pow(y - buttonY, 2));
+          
+          // Down button
+          const downX = movementPanel.x + 75 + 15;
+          const distToDownBtn = Math.sqrt(Math.pow(x - downX, 2) + Math.pow(y - buttonY, 2));
+          
+          // Zoom panel
+          const zoomPanel = {
+            x: position.x + 20,
+            y: position.y - height/2 - 10
+          };
+          
+          const zoomY = zoomPanel.y + 15;
+          
+          // Zoom in/out buttons
+          const zoomInX = zoomPanel.x + 20;
+          const distToZoomIn = Math.sqrt(Math.pow(x - zoomInX, 2) + Math.pow(y - zoomY, 2));
+          
+          const zoomOutX = zoomPanel.x + 50;
+          const distToZoomOut = Math.sqrt(Math.pow(x - zoomOutX, 2) + Math.pow(y - zoomY, 2));
+          
           // Check if delete button clicked (using 12px radius)
           if (distToDelete <= 12) {
             console.log("Delete button clicked");
@@ -108,6 +152,50 @@ export const useDragLogos = ({
           if (distToRotate <= 12) {
             console.log("Rotate button clicked");
             // Rotation will be implemented in future
+            return;
+          }
+          
+          // Check if left button clicked
+          if (distToLeftBtn <= buttonRadius) {
+            console.log("Left button clicked");
+            handleLogoMove(selectedLogo, position.x - 5, position.y);
+            return;
+          }
+          
+          // Check if right button clicked
+          if (distToRightBtn <= buttonRadius) {
+            console.log("Right button clicked");
+            handleLogoMove(selectedLogo, position.x + 5, position.y);
+            return;
+          }
+          
+          // Check if up button clicked
+          if (distToUpBtn <= buttonRadius) {
+            console.log("Up button clicked");
+            handleLogoMove(selectedLogo, position.x, position.y - 5);
+            return;
+          }
+          
+          // Check if down button clicked
+          if (distToDownBtn <= buttonRadius) {
+            console.log("Down button clicked");
+            handleLogoMove(selectedLogo, position.x, position.y + 5);
+            return;
+          }
+          
+          // Check if zoom in button clicked
+          if (distToZoomIn <= buttonRadius) {
+            console.log("Zoom in button clicked");
+            const newScale = Math.min(2.0, position.scale + 0.1);
+            handleLogoResize(selectedLogo, newScale);
+            return;
+          }
+          
+          // Check if zoom out button clicked
+          if (distToZoomOut <= buttonRadius) {
+            console.log("Zoom out button clicked");
+            const newScale = Math.max(0.5, position.scale - 0.1);
+            handleLogoResize(selectedLogo, newScale);
             return;
           }
           
@@ -321,11 +409,11 @@ export const useDragLogos = ({
     });
   }, [setLogoPositions]);
   
-  // Delete logo handler - for future implementation
+  // Delete logo handler 
   const handleLogoDelete = useCallback((logoId: string) => {
     console.log(`Delete request for logo ${logoId}`);
-    // This would need to be implemented at the parent component level
-    // For now we just deselect the logo
+    toast.info("Chức năng xóa logo đang được phát triển");
+    // Currently we just deselect the logo as deletion is handled in the parent component
     setSelectedLogo(null);
   }, []);
   
