@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,7 +7,9 @@ import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
 import { Order } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronDown, Mail, Eye } from "lucide-react";
+import { ChevronDown, Mail, Eye, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Mock data for demo
 const mockOrders: Order[] = [
@@ -150,36 +151,33 @@ const mockOrders: Order[] = [
 ];
 
 const AdminOrders = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+  const { user, isLoading, signOut } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [branch, setBranch] = useState<string>("");
   
   useEffect(() => {
-    // Check authentication
-    const auth = localStorage.getItem("admin_authenticated");
-    setIsAuthenticated(auth === "true");
-    
-    // Load orders
-    // In a real app, this would fetch from Supabase
-    setOrders(mockOrders);
-  }, []);
+    // Load orders only if user is authenticated
+    if (user) {
+      // In a real app, this would fetch from Supabase with the user's credentials
+      setOrders(mockOrders);
+    }
+  }, [user]);
 
-  if (isAuthenticated === null) {
-    // Still checking authentication
-    return <div className="p-8 text-center">Loading...</div>;
+  // If still checking authentication
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
   }
   
-  if (isAuthenticated === false) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/admin" replace />;
-  }
-
-  // Filter orders by status
-  const filteredOrders = statusFilter === "all" 
-    ? orders 
-    : orders.filter(order => order.status === statusFilter);
+  // If not authenticated, this will be handled by ProtectedRoute component
 
   const handleStatusChange = (orderId: string, newStatus: 'new' | 'processing' | 'completed') => {
     // Update order status
@@ -193,6 +191,12 @@ const AdminOrders = () => {
       newStatus === 'processing' ? 'Đang xử lý' : 
       'Đã hoàn thành'
     }`);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Đã đăng xuất khỏi hệ thống");
+    navigate("/admin");
   };
 
   const handleSendEmail = (order: Order) => {
@@ -237,7 +241,21 @@ const AdminOrders = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {user && (
+              <div className="flex items-center mr-4">
+                <span className="text-sm mr-2">{user.email}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="flex items-center gap-1"
+                >
+                  <LogOut className="h-4 w-4" /> Đăng xuất
+                </Button>
+              </div>
+            )}
+            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Lọc theo trạng thái" />
@@ -267,8 +285,9 @@ const AdminOrders = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
+                {
+                  statusFilter === "all"
+                  ? orders.map((order) => (
                     <tr key={order.id} className="border-t border-muted">
                       <td className="p-3">{order.id}</td>
                       <td className="p-3 font-medium">{order.teamName}</td>
@@ -422,7 +441,67 @@ const AdminOrders = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
+                  : orders.filter(order => order.status === statusFilter).map((order) => (
+                    <tr key={order.id} className="border-t border-muted">
+                      <td className="p-3">{order.id}</td>
+                      <td className="p-3 font-medium">{order.teamName}</td>
+                      <td className="p-3">{order.players.length}</td>
+                      <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
+                      <td className="p-3">{getStatusBadge(order.status)}</td>
+                      <td className="p-3">{formatDate(order.createdAt)}</td>
+                      <td className="p-3">
+                        <div className="flex justify-center gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setSelectedOrder(order)}
+                              >
+                                <Eye className="h-4 w-4 mr-1" /> Chi tiết
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl">
+                              
+                              <DialogHeader>
+                                <DialogTitle>Chi tiết đơn hàng: {order.teamName}</DialogTitle>
+                              </DialogHeader>
+                              
+                              <div className="space-y-4 my-4">
+                                
+                                
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {order.status === 'new' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(order.id!, 'processing')}>
+                                  Chuyển sang "Đang xử lý"
+                                </DropdownMenuItem>
+                              )}
+                              {order.status === 'processing' && (
+                                <DropdownMenuItem onClick={() => handleStatusChange(order.id!, 'completed')}>
+                                  Chuyển sang "Đã hoàn thành"
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleSendEmail(order)}>
+                                <Mail className="h-4 w-4 mr-2" /> Gửi email
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                }
+                {(statusFilter === "all" ? orders.length === 0 : orders.filter(order => order.status === statusFilter).length === 0) && (
                   <tr>
                     <td colSpan={7} className="p-4 text-center text-muted-foreground">
                       Không có đơn hàng nào

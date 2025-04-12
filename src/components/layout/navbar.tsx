@@ -1,8 +1,16 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut } from "lucide-react";
 
 export function Navbar() {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -19,14 +27,28 @@ export function Navbar() {
           <Link to="/create-order" className="hover:text-primary transition-colors">
             Tạo đơn hàng
           </Link>
+          {user && (
+            <Link to="/admin/orders" className="hover:text-primary transition-colors">
+              Quản lý đơn hàng
+            </Link>
+          )}
         </nav>
         
         <div className="flex items-center gap-2">
-          <Link to="/admin">
-            <Button variant="outline" className="text-secondary-foreground">
-              Đăng nhập Admin
-            </Button>
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm hidden md:inline">{user.email}</span>
+              <Button variant="outline" onClick={handleSignOut} className="text-secondary-foreground flex items-center gap-1">
+                <LogOut className="h-4 w-4" /> Đăng xuất
+              </Button>
+            </div>
+          ) : (
+            <Link to="/admin">
+              <Button variant="outline" className="text-secondary-foreground">
+                Đăng nhập Admin
+              </Button>
+            </Link>
+          )}
           
           <Link to="/create-order">
             <Button>
