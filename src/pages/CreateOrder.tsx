@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Input } from "@/components/ui/input";
@@ -13,12 +14,15 @@ import { OrderSummary } from "@/components/order-summary";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Order, Player, PrintConfig, ProductLine } from "@/types";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("info");
   const [previewPlayer, setPreviewPlayer] = useState<number>(0);
   const [previewView, setPreviewView] = useState<'front' | 'back'>('front');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form state
   const [teamName, setTeamName] = useState<string>("");
@@ -106,14 +110,8 @@ const CreateOrder = () => {
     setProductLines(newProductLines);
   }, [players, teamName, printConfig]);
 
-  // Submit order
-  const submitOrder = () => {
-    if (!teamName || players.length === 0) {
-      toast.error("Vui lòng nhập đầy đủ thông tin đơn hàng");
-      return;
-    }
-
-    // Calculate the total cost
+  // Calculate total cost
+  const calculateTotalCost = useCallback(() => {
     let totalCost = 0;
     productLines.forEach(line => {
       const unitCost = line.position.includes("Lưng") || line.position.includes("Tay") || line.position.includes("Ống") ? 10000 : 0;
@@ -124,27 +122,143 @@ const CreateOrder = () => {
     if (logoFile) {
       totalCost += 20000;
     }
+    
+    return totalCost;
+  }, [productLines, players.length, logoFile]);
 
-    const order: Order = {
-      teamName,
-      players,
-      logoUrl: logoPreviewUrl,
-      printConfig,
-      productLines,
-      totalCost,
-      status: "new",
-      notes
-    };
-
-    console.log("Order submitted:", order);
+  // Submit order
+  const submitOrder = async () => {
+    if (!teamName || players.length === 0) {
+      toast.error("Vui lòng nhập đầy đủ thông tin đơn hàng");
+      return;
+    }
     
-    // In a real-world scenario, we'd save this to Supabase here
-    // After Supabase integration, replace this with actual API call
+    setIsSubmitting(true);
     
-    toast.success("Đơn hàng đã được gửi thành công!");
-    
-    // Navigate to confirmation page
-    navigate("/order-confirmation", { state: { order } });
+    try {
+      const totalCost = calculateTotalCost();
+      const orderId = uuidv4();
+      let logoUrl = null;
+      
+      // Upload logo if present
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const filePath = `${orderId}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('logos')
+          .upload(filePath, logoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('logos')
+          .getPublicUrl(filePath);
+          
+        logoUrl = publicUrl;
+      }
+      
+      // Insert order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          id: orderId,
+          team_name: teamName,
+          logo_url: logoUrl,
+          status: 'new',
+          total_cost: totalCost,
+          notes: notes
+        });
+        
+      if (orderError) {
+        throw orderError;
+      }
+      
+      // Insert players
+      const playersToInsert = players.map(player => ({
+        name: player.name,
+        number: player.number,
+        size: player.size,
+        print_image: player.printImage,
+        order_id: orderId
+      }));
+      
+      const { error: playersError } = await supabase
+        .from('players')
+        .insert(playersToInsert);
+        
+      if (playersError) {
+        throw playersError;
+      }
+      
+      // Insert print config
+      const { error: printConfigError } = await supabase
+        .from('print_configs')
+        .insert({
+          order_id: orderId,
+          font: printConfig.font,
+          back_material: printConfig.backMaterial,
+          back_color: printConfig.backColor,
+          front_material: printConfig.frontMaterial,
+          front_color: printConfig.frontColor,
+          sleeve_material: printConfig.sleeveMaterial,
+          sleeve_color: printConfig.sleeveColor,
+          leg_material: printConfig.legMaterial,
+          leg_color: printConfig.legColor
+        });
+        
+      if (printConfigError) {
+        throw printConfigError;
+      }
+      
+      // Insert product lines
+      const linesToInsert = productLines.map(line => ({
+        product: line.product,
+        position: line.position,
+        material: line.material,
+        size: line.size,
+        points: line.points,
+        content: line.content,
+        order_id: orderId
+      }));
+      
+      const { error: linesError } = await supabase
+        .from('product_lines')
+        .insert(linesToInsert);
+        
+      if (linesError) {
+        throw linesError;
+      }
+      
+      toast.success("Đơn hàng đã được gửi thành công!");
+      
+      // Create the order object for confirmation page
+      const order: Order = {
+        id: orderId,
+        teamName,
+        players,
+        logoUrl,
+        printConfig,
+        productLines,
+        totalCost,
+        status: "new",
+        notes,
+        createdAt: new Date()
+      };
+      
+      // Navigate to confirmation page
+      navigate("/order-confirmation", { state: { order } });
+    } catch (error) {
+      console.error("Error submitting order:", error);
+      toast.error("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại sau.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -322,7 +436,12 @@ const CreateOrder = () => {
             
             <div className="flex justify-between gap-2">
               <Button variant="outline" onClick={() => setActiveTab("preview")}>Quay lại</Button>
-              <Button onClick={submitOrder}>Đặt đơn hàng</Button>
+              <Button 
+                onClick={submitOrder}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
+              </Button>
             </div>
           </TabsContent>
         </Tabs>

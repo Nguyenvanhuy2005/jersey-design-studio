@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -12,24 +14,28 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // In a real-world scenario, this would authenticate with Supabase
-    // For now, let's just simulate login for demonstration
-    
-    setTimeout(() => {
-      if (email === "admin@example.com" && password === "password") {
-        toast.success("Đăng nhập thành công");
-        // Set some fake auth in localStorage for demo purposes
-        localStorage.setItem("admin_authenticated", "true");
-        navigate("/admin/orders");
-      } else {
-        toast.error("Email hoặc mật khẩu không đúng");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
       }
+
+      toast.success("Đăng nhập thành công");
+      navigate("/admin/orders");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.message || "Email hoặc mật khẩu không đúng");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -70,9 +76,7 @@ const AdminLogin = () => {
             </form>
             
             <p className="text-sm text-center mt-4 text-muted-foreground">
-              Để demo, hãy đăng nhập với:<br />
-              email: admin@example.com<br />
-              mật khẩu: password
+              Để demo, hãy đăng ký tài khoản mới tại Supabase Auth
             </p>
           </div>
         </div>

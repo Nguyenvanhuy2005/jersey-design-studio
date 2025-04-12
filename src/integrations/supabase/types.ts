@@ -9,7 +9,212 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      logos: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          id: string
+          order_id: string | null
+          position: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          id?: string
+          order_id?: string | null
+          position?: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          order_id?: string | null
+          position?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logos_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          notes: string | null
+          status: string
+          team_name: string | null
+          total_cost: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          notes?: string | null
+          status?: string
+          team_name?: string | null
+          total_cost?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          notes?: string | null
+          status?: string
+          team_name?: string | null
+          total_cost?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string | null
+          number: number
+          order_id: string | null
+          print_image: boolean | null
+          size: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          number: number
+          order_id?: string | null
+          print_image?: boolean | null
+          size: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          number?: number
+          order_id?: string | null
+          print_image?: boolean | null
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_configs: {
+        Row: {
+          back_color: string | null
+          back_material: string | null
+          created_at: string | null
+          font: string | null
+          font_file: string | null
+          front_color: string | null
+          front_material: string | null
+          id: string
+          leg_color: string | null
+          leg_material: string | null
+          logo_positions: Json | null
+          order_id: string | null
+          sleeve_color: string | null
+          sleeve_material: string | null
+        }
+        Insert: {
+          back_color?: string | null
+          back_material?: string | null
+          created_at?: string | null
+          font?: string | null
+          font_file?: string | null
+          front_color?: string | null
+          front_material?: string | null
+          id?: string
+          leg_color?: string | null
+          leg_material?: string | null
+          logo_positions?: Json | null
+          order_id?: string | null
+          sleeve_color?: string | null
+          sleeve_material?: string | null
+        }
+        Update: {
+          back_color?: string | null
+          back_material?: string | null
+          created_at?: string | null
+          font?: string | null
+          font_file?: string | null
+          front_color?: string | null
+          front_material?: string | null
+          id?: string
+          leg_color?: string | null
+          leg_material?: string | null
+          logo_positions?: Json | null
+          order_id?: string | null
+          sleeve_color?: string | null
+          sleeve_material?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_configs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_lines: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          material: string
+          order_id: string | null
+          points: number | null
+          position: string
+          product: string
+          size: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          material: string
+          order_id?: string | null
+          points?: number | null
+          position: string
+          product: string
+          size: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          material?: string
+          order_id?: string | null
+          points?: number | null
+          position?: string
+          product?: string
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import CreateOrder from "./pages/CreateOrder";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -15,20 +16,22 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/create-order" element={<CreateOrder />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin/orders" element={<AdminOrders />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/create-order" element={<CreateOrder />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
