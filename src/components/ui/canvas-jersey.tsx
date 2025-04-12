@@ -1,31 +1,55 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import { Logo } from '@/types';
 
 interface CanvasJerseyProps {
   teamName: string;
   playerName?: string;
   playerNumber?: number;
-  logoUrl?: string;
+  logos?: Logo[];
   view: 'front' | 'back';
 }
 
-export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view }: CanvasJerseyProps) {
+export function CanvasJersey({ teamName, playerName, playerNumber, logos = [], view }: CanvasJerseyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [logo, setLogo] = useState<HTMLImageElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [logoPosition, setLogoPosition] = useState({ x: 80, y: 40 });
+  const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
+  const [draggedLogo, setDraggedLogo] = useState<string | null>(null);
+  const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number }>>(new Map());
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
 
-  // Load logo if available
+  // Load logos when available
   useEffect(() => {
-    if (logoUrl) {
+    const logoMap = new Map<string, HTMLImageElement>();
+    const positionMap = new Map<string, { x: number, y: number }>(logoPositions);
+    
+    // Default positions for each logo location
+    const defaultPositions: Record<string, { x: number, y: number }> = {
+      'chest_left': { x: 80, y: 40 },
+      'chest_right': { x: 220, y: 40 },
+      'chest_center': { x: 150, y: 80 },
+      'sleeve_left': { x: 30, y: 40 },
+      'sleeve_right': { x: 270, y: 40 }
+    };
+    
+    logos.forEach(logo => {
+      if (!logo.previewUrl) return;
+      
       const img = new Image();
-      img.src = logoUrl;
+      img.src = logo.previewUrl;
       img.onload = () => {
-        setLogo(img);
+        logoMap.set(logo.id!, img);
+        
+        // Set initial position if not already set
+        if (!positionMap.has(logo.id!)) {
+          const defaultPos = defaultPositions[logo.position] || { x: 150, y: 150 };
+          positionMap.set(logo.id!, { ...defaultPos });
+        }
+        
+        setLoadedLogos(new Map(logoMap));
+        setLogoPositions(new Map(positionMap));
       };
-    }
-  }, [logoUrl]);
+    });
+  }, [logos]);
 
   // Draw jersey on canvas
   useEffect(() => {
@@ -85,28 +109,47 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
         ctx.fillText(playerNumber.toString(), 150, 150);
       }
       
-      // Draw logo on chest if available
-      if (logo) {
-        const logoWidth = 60;
-        const logoHeight = 60;
-        ctx.drawImage(logo, logoPosition.x, logoPosition.y, logoWidth, logoHeight);
+      // Draw logos based on position
+      if (loadedLogos.size > 0) {
+        logos.forEach(logo => {
+          const img = loadedLogos.get(logo.id!);
+          if (!img || logo.position === 'sleeve_left' || logo.position === 'sleeve_right') return;
+          
+          const position = logoPositions.get(logo.id!) || { x: 150, y: 150 };
+          const logoWidth = 60;
+          const logoHeight = 60;
+          
+          ctx.drawImage(img, position.x, position.y, logoWidth, logoHeight);
+        });
       }
       
-      // Additional positions for front
-      // Draw chest left number/text (placeholder)
+      // Draw logos on sleeves
+      if (loadedLogos.size > 0) {
+        logos.forEach(logo => {
+          if (logo.position !== 'sleeve_left' && logo.position !== 'sleeve_right') return;
+          
+          const img = loadedLogos.get(logo.id!);
+          if (!img) return;
+          
+          const position = logoPositions.get(logo.id!) || 
+            (logo.position === 'sleeve_left' ? { x: 30, y: 40 } : { x: 270, y: 40 });
+          const logoWidth = 40;
+          const logoHeight = 40;
+          
+          ctx.drawImage(img, position.x, position.y, logoWidth, logoHeight);
+        });
+      }
+      
+      // Position indicators (for guidance)
       ctx.fillStyle = '#1A1A1A';
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText("L", 80, 100); // Left chest indicator
-      
-      // Draw chest right number/text (placeholder)
-      ctx.fillText("R", 220, 100); // Right chest indicator
-      
-      // Draw sleeve left number (placeholder)
       ctx.font = 'bold 16px Arial';
-      ctx.fillText("SL", 30, 60); // Sleeve left indicator
+      ctx.textAlign = 'center';
       
-      // Draw sleeve right number (placeholder)
+      // Chest center position
+      ctx.fillText("C", 150, 100); 
+      
+      // Sleeve positions
+      ctx.fillText("SL", 30, 60); // Sleeve left indicator
       ctx.fillText("SR", 270, 60); // Sleeve right indicator
       
     } else {
@@ -174,11 +217,11 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
       ctx.fillText("PANTS", 150, 280);
     }
     
-  }, [teamName, playerName, playerNumber, logo, view, logoPosition]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos]);
 
   // Handle logo dragging
   const startDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (view !== 'front' || !logo) return;
+    if (view !== 'front' || loadedLogos.size === 0) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -187,20 +230,32 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Check if click is within logo
-    if (
-      x >= logoPosition.x && 
-      x <= logoPosition.x + 60 && 
-      y >= logoPosition.y && 
-      y <= logoPosition.y + 60
-    ) {
-      setIsDragging(true);
+    // Check if click is within any logo
+    let draggedId: string | null = null;
+    
+    logos.forEach(logo => {
+      const position = logoPositions.get(logo.id!) || { x: 0, y: 0 };
+      const width = logo.position.includes('sleeve') ? 40 : 60;
+      const height = logo.position.includes('sleeve') ? 40 : 60;
+      
+      if (
+        x >= position.x && 
+        x <= position.x + width && 
+        y >= position.y && 
+        y <= position.y + height
+      ) {
+        draggedId = logo.id!;
+      }
+    });
+    
+    if (draggedId) {
+      setDraggedLogo(draggedId);
       setStartPosition({ x, y });
     }
   };
 
   const drag = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging) return;
+    if (!draggedLogo) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -212,16 +267,23 @@ export function CanvasJersey({ teamName, playerName, playerNumber, logoUrl, view
     const dx = x - startPosition.x;
     const dy = y - startPosition.y;
     
-    setLogoPosition(prev => ({
-      x: prev.x + dx,
-      y: prev.y + dy
-    }));
+    setLogoPositions(prev => {
+      const updatedPositions = new Map(prev);
+      const currentPosition = updatedPositions.get(draggedLogo) || { x: 0, y: 0 };
+      
+      updatedPositions.set(draggedLogo, {
+        x: currentPosition.x + dx,
+        y: currentPosition.y + dy
+      });
+      
+      return updatedPositions;
+    });
     
     setStartPosition({ x, y });
   };
 
   const endDrag = () => {
-    setIsDragging(false);
+    setDraggedLogo(null);
   };
 
   return (

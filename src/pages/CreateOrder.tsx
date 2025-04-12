@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -25,7 +24,6 @@ const CreateOrder = () => {
   const [previewView, setPreviewView] = useState<'front' | 'back'>('front');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form state
   const [teamName, setTeamName] = useState<string>("");
   const [players, setPlayers] = useState<Player[]>([]);
   const [logos, setLogos] = useState<Logo[]>([]);
@@ -45,13 +43,11 @@ const CreateOrder = () => {
   
   const [productLines, setProductLines] = useState<ProductLine[]>([]);
   
-  // Generate product lines based on players
   const generateProductLines = useCallback(() => {
     if (players.length === 0) return;
 
     const hasPlayersWithImages = players.some(p => p.printImage);
     
-    // Start with basic product lines that everyone gets (back printing)
     let newProductLines: ProductLine[] = [
       {
         id: `product-back-number-${Date.now()}`,
@@ -64,7 +60,6 @@ const CreateOrder = () => {
       }
     ];
     
-    // Add player name if they have names
     if (players.some(p => p.name && p.name.trim() !== "")) {
       newProductLines.push({
         id: `product-above-back-${Date.now() + 1}`,
@@ -77,7 +72,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Add team name if it exists
     if (teamName.trim() !== "") {
       newProductLines.push({
         id: `product-below-back-${Date.now() + 2}`,
@@ -90,7 +84,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Add front printing if any player has printImage = true
     if (hasPlayersWithImages) {
       newProductLines.push({
         id: `product-front-number-${Date.now() + 3}`,
@@ -103,7 +96,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Add logo positions based on uploaded logos
     logos.forEach((logo, index) => {
       let position = '';
       switch (logo.position) {
@@ -140,29 +132,24 @@ const CreateOrder = () => {
     setProductLines(newProductLines);
   }, [players, teamName, printConfig, logos]);
 
-  // Calculate total cost
   const calculateTotalCost = useCallback(() => {
     let totalCost = 0;
     
-    // Calculate product line costs
     productLines.forEach(line => {
-      let unitCost = 10000; // Default cost
+      let unitCost = 10000;
       
-      // Adjust cost based on position
       if (line.position.includes("logo")) {
-        unitCost = 20000; // Logo positions cost more
+        unitCost = 20000;
       }
       
       totalCost += unitCost * players.length;
     });
 
-    // Add logo cost
-    totalCost += logos.length * 20000; // 20,000 VND per logo
+    totalCost += logos.length * 20000;
     
     return totalCost;
   }, [productLines, players.length, logos.length]);
 
-  // Submit order
   const submitOrder = async () => {
     if (players.length === 0) {
       toast.error("Vui lòng thêm ít nhất một cầu thủ");
@@ -176,7 +163,6 @@ const CreateOrder = () => {
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      // Upload logos if present
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -199,7 +185,6 @@ const CreateOrder = () => {
             
           logoUrls.push(publicUrl);
           
-          // Insert logo entry to associate it with this order
           await supabase.from('logos').insert({
             file_path: filePath,
             order_id: orderId,
@@ -208,13 +193,12 @@ const CreateOrder = () => {
         }
       }
       
-      // Insert order
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           team_name: teamName,
-          logo_url: logoUrls.length > 0 ? logoUrls[0] : null, // Keep the first logo as the main one for backwards compatibility
+          logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
           status: 'new',
           total_cost: totalCost,
           notes: notes
@@ -224,7 +208,6 @@ const CreateOrder = () => {
         throw orderError;
       }
       
-      // Insert players
       const playersToInsert = players.map(player => ({
         name: player.name,
         number: player.number,
@@ -241,13 +224,12 @@ const CreateOrder = () => {
         throw playersError;
       }
       
-      // Upload custom font if present
       let fontFileUrl = null;
       if (printConfig.customFontFile) {
         const fontPath = `${orderId}/fonts/${printConfig.customFontFile.name}`;
         
         const { error: fontUploadError } = await supabase.storage
-          .from('logos') // Reusing the logos bucket
+          .from('logos')
           .upload(fontPath, printConfig.customFontFile, {
             cacheControl: '3600',
             upsert: false
@@ -264,7 +246,6 @@ const CreateOrder = () => {
         fontFileUrl = publicUrl;
       }
       
-      // Insert print config
       const { error: printConfigError } = await supabase
         .from('print_configs')
         .insert({
@@ -288,7 +269,6 @@ const CreateOrder = () => {
         throw printConfigError;
       }
       
-      // Insert product lines
       const linesToInsert = productLines.map(line => ({
         product: line.product,
         position: line.position,
@@ -309,7 +289,6 @@ const CreateOrder = () => {
       
       toast.success("Đơn hàng đã được gửi thành công!");
       
-      // Create the order object for confirmation page
       const order = {
         id: orderId,
         teamName,
@@ -323,7 +302,6 @@ const CreateOrder = () => {
         createdAt: new Date()
       };
       
-      // Navigate to confirmation page
       navigate("/order-confirmation", { state: { order } });
     } catch (error) {
       console.error("Error submitting order:", error);
@@ -345,7 +323,6 @@ const CreateOrder = () => {
             <TabsTrigger value="summary">Tổng kết & Đặt hàng</TabsTrigger>
           </TabsList>
           
-          {/* Step 1: Order Info */}
           <TabsContent value="info" className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
@@ -404,7 +381,6 @@ const CreateOrder = () => {
             </div>
           </TabsContent>
           
-          {/* Step 2: Preview */}
           <TabsContent value="preview" className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
@@ -434,7 +410,7 @@ const CreateOrder = () => {
                       teamName={teamName || "TEAM NAME"}
                       playerName={players[previewPlayer]?.name || ""}
                       playerNumber={players[previewPlayer]?.number || 0}
-                      logoUrl={logos.length > 0 ? logos[0].previewUrl : ""}
+                      logos={logos}
                       view={previewView}
                     />
                   </div>
@@ -494,7 +470,6 @@ const CreateOrder = () => {
             </div>
           </TabsContent>
           
-          {/* Step 3: Summary & Order */}
           <TabsContent value="summary" className="space-y-8">
             <OrderSummary 
               teamName={teamName}
@@ -527,7 +502,6 @@ const CreateOrder = () => {
   );
 };
 
-// Helper function to get position label
 const getPositionLabel = (position: string): string => {
   switch (position) {
     case 'chest_left': return 'Ngực trái';

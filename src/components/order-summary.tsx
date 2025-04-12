@@ -40,6 +40,19 @@ export function OrderSummary({ teamName, players, logos = [], productLines }: Or
     return lineTotal + logosCost;
   }, [productLineCosts, logosCost]);
 
+  // Get positions for display
+  const getLogoPositions = useMemo(() => {
+    const positions: Record<string, string> = {
+      'chest_left': 'Ngực trái',
+      'chest_right': 'Ngực phải',
+      'chest_center': 'Giữa ngực',
+      'sleeve_left': 'Tay trái',
+      'sleeve_right': 'Tay phải'
+    };
+    
+    return logos.map(logo => positions[logo.position] || logo.position);
+  }, [logos]);
+
   return (
     <div className="bg-secondary/10 rounded-md p-4 space-y-4">
       <h2 className="text-xl font-semibold">Tổng kết đơn hàng</h2>
@@ -54,6 +67,13 @@ export function OrderSummary({ teamName, players, logos = [], productLines }: Or
         <p>
           <span className="font-semibold">Số lượng logo:</span> {logos.length}
         </p>
+        {logos.length > 0 && (
+          <div className="pl-4 text-sm text-muted-foreground">
+            {getLogoPositions.map((pos, idx) => (
+              <p key={idx}>- Logo {idx + 1}: {pos}</p>
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="space-y-2">
