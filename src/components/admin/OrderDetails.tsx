@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,35 +43,29 @@ export const OrderDetails = ({
   });
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   
-  // Check image existences and generate URLs when component mounts
   useEffect(() => {
     const initializeImages = async () => {
-      // Check if front design image exists
       const frontImagePath = order.designImageFront || order.designImage;
       if (frontImagePath) {
         const exists = await checkDesignImageExists(frontImagePath);
         setDesignImagesExist(prev => ({ ...prev, front: exists }));
         console.log(`Front design image exists check for ${frontImagePath}: ${exists}`);
         
-        // Generate URL regardless, we'll handle fallback in UI
         const url = getDesignImageUrl(frontImagePath);
         setFrontDesignImageUrl(url);
         console.log(`Front design image URL for ${frontImagePath}: ${url}`);
       }
       
-      // Check if back design image exists
       if (order.designImageBack) {
         const exists = await checkDesignImageExists(order.designImageBack);
         setDesignImagesExist(prev => ({ ...prev, back: exists }));
         console.log(`Back design image exists check for ${order.designImageBack}: ${exists}`);
         
-        // Generate URL regardless, we'll handle fallback in UI
         const url = getDesignImageUrl(order.designImageBack);
         setBackDesignImageUrl(url);
         console.log(`Back design image URL for ${order.designImageBack}: ${url}`);
       }
       
-      // Generate reference image URLs
       if (Array.isArray(order.referenceImages) && order.referenceImages.length > 0) {
         const urls = getReferenceImageUrls(order.referenceImages);
         setReferenceImageUrls(urls);
@@ -143,7 +136,6 @@ export const OrderDetails = ({
     }
   };
   
-  // Get design image URL with fallback handling
   const getFrontDesignImageUrl = (): string => {
     const imagePath = order.designImageFront || order.designImage;
     if (!imagePath) return getFallbackImageUrl('design');

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,18 +25,15 @@ export const OrdersList = ({
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<string, boolean>>({});
   const [imageAvailability, setImageAvailability] = useState<Record<string, {front: boolean, back: boolean}>>({});
   
-  // Check image availability when orders change
   useEffect(() => {
     const checkImagesExistence = async () => {
       const availability: Record<string, {front: boolean, back: boolean}> = {};
       
       for (const order of orders) {
         if (order.id) {
-          // Check front design image
           const frontImagePath = order.designImageFront || order.designImage;
           const frontAvailable = frontImagePath ? await checkDesignImageExists(frontImagePath) : false;
           
-          // Check back design image
           const backAvailable = order.designImageBack ? await checkDesignImageExists(order.designImageBack) : false;
           
           availability[order.id] = {
@@ -102,13 +98,11 @@ export const OrdersList = ({
   return (
     <>
       {filteredOrders.map((order) => {
-        // Check if order has front/back design images and if they're available
         const hasFrontDesignImage = !!(order.designImageFront || order.designImage);
         const hasBackDesignImage = !!order.designImageBack;
         
         const orderAvailability = order.id ? imageAvailability[order.id] : { front: false, back: false };
         
-        // Log image paths and availability for debugging
         console.log(`Rendering order ${order.id || 'unknown'} images:`, {
           frontPath: order.designImageFront || order.designImage,
           backPath: order.designImageBack,

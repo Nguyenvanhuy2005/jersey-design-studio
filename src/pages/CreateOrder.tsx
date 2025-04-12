@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -336,7 +335,7 @@ const CreateOrder = () => {
       if (frontSuccess || backSuccess) {
         toast.success(`Đã lưu hình ảnh thiết kế ${frontSuccess && backSuccess ? 'mặt trước và mặt sau' : frontSuccess ? 'mặt trước' : 'mặt sau'}`);
       } else if (frontPath || backPath) {
-        toast.info("Đã tạo hình ảnh thiết kế, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
+        toast.info("Đã tạo hình ảnh thiết k��, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
       } else {
         toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại sau.");
       }
