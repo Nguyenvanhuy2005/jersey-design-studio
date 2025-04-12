@@ -28,7 +28,7 @@ const AdminLogin = () => {
         throw error;
       }
 
-      toast.success("Đăng nhập thành công");
+      toast.success("Đăng nhập quản trị thành công");
       navigate("/admin/orders");
     } catch (error: any) {
       console.error("Login error:", error);
@@ -53,7 +53,7 @@ const AdminLogin = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="Nhập email quản trị"
                   required
                 />
               </div>
@@ -65,7 +65,7 @@ const AdminLogin = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu"
                   required
                 />
               </div>
@@ -76,7 +76,7 @@ const AdminLogin = () => {
             </form>
             
             <p className="text-sm text-center mt-4 text-muted-foreground">
-              Để demo, hãy đăng ký tài khoản mới tại Supabase Auth
+              Sử dụng tài khoản quản trị đã được tạo
             </p>
           </div>
         </div>
