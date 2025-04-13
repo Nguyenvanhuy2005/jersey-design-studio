@@ -3,11 +3,11 @@ export interface Player {
   id?: string;
   name: string;
   number: number;
-  size: 'S' | 'M' | 'L' | 'XL';
+  size: 'S' | 'M' | 'L' | 'XL' | '1' | '2' | '3' | '4' | '5'; // Updated to allow numeric sizes
   printImage: boolean;
 }
 
-export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';
+export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
 
 export interface Logo {
   id?: string;
@@ -16,11 +16,16 @@ export interface Logo {
   previewUrl: string;
 }
 
-export interface PrintConfig {
-  id?: string;
+export interface FontConfig {
   font: string;
   customFontFile?: File;
   customFontUrl?: string;
+}
+
+export interface PrintConfig {
+  id?: string;
+  fontText: FontConfig; // Changed to separate font for text
+  fontNumber: FontConfig; // Changed to separate font for numbers
   backMaterial: string;
   backColor: string;
   frontMaterial: string;
@@ -29,6 +34,68 @@ export interface PrintConfig {
   sleeveColor: string;
   legMaterial: string;
   legColor: string;
+}
+
+export interface PrintPositionConfig {
+  content?: string;
+  material?: string;
+  color?: string;
+  enabled?: boolean;
+}
+
+export interface DesignData {
+  font_text: {
+    font: string;
+    font_file?: string;
+  };
+  font_number: {
+    font: string;
+    font_file?: string;
+  };
+  line_1?: PrintPositionConfig;
+  line_2?: PrintPositionConfig;
+  line_3?: PrintPositionConfig;
+  chest_text?: PrintPositionConfig;
+  chest_number?: PrintPositionConfig;
+  pants_number?: PrintPositionConfig;
+  pet_chest?: PrintPositionConfig;
+  logo_chest_left?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_chest_right?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_chest_center?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_sleeve_left?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_sleeve_right?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_pants?: {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  reference_images?: string[];
 }
 
 export type PrintPosition = 
@@ -41,9 +108,12 @@ export type PrintPosition =
   | 'logo_chest_left'
   | 'logo_chest_right'
   | 'logo_chest_center'
+  | 'logo_pants'
   | 'number_sleeve_left'
   | 'number_sleeve_right'
-  | 'number_chest_center';
+  | 'number_chest_center'
+  | 'chest_text'
+  | 'pet_chest';
 
 export interface ProductLine {
   id: string;
@@ -53,33 +123,6 @@ export interface ProductLine {
   size: string;
   points: number;
   content: string;
-}
-
-export interface DesignData {
-  logos?: Array<{
-    logo_id: string;
-    position: string;
-    x_position: number;
-    y_position: number;
-    scale: number;
-  }>;
-  player_name?: {
-    position: string;
-    content: string;
-    font: string;
-    font_file?: string;
-    color: string;
-    material: string;
-  };
-  player_number?: {
-    position: string;
-    content: string;
-    font: string;
-    font_file?: string;
-    color: string;
-    material: string;
-  };
-  reference_images?: string[];
 }
 
 export interface Order {
@@ -97,4 +140,5 @@ export interface Order {
   designImageFront?: string;   // Front design image path
   designImageBack?: string;    // Back design image path
   referenceImages: string[];   // Using string[] to match what we're transforming data to
+  designData?: DesignData;     // Added to match the Supabase structure
 }

@@ -17,33 +17,60 @@ interface PrintConfigFormProps {
 export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfigFormProps) {
   const [tempConfig, setTempConfig] = useState<PrintConfig>(printConfig);
   const [open, setOpen] = useState(false);
-  const [customFonts, setCustomFonts] = useState<string[]>([]);
+  const [customTextFonts, setCustomTextFonts] = useState<string[]>([]);
+  const [customNumberFonts, setCustomNumberFonts] = useState<string[]>([]);
 
   useEffect(() => {
-    if (tempConfig.customFontFile && !customFonts.includes(tempConfig.customFontFile.name.split('.')[0])) {
-      setCustomFonts(prev => [...prev, tempConfig.customFontFile!.name.split('.')[0]]);
+    if (tempConfig.fontText.customFontFile && !customTextFonts.includes(tempConfig.fontText.customFontFile.name.split('.')[0])) {
+      setCustomTextFonts(prev => [...prev, tempConfig.fontText.customFontFile!.name.split('.')[0]]);
 
       // Load the custom font for immediate preview
-      if (tempConfig.customFontUrl) {
-        loadCustomFont(tempConfig.customFontUrl, tempConfig.customFontFile.name.split('.')[0])
+      if (tempConfig.fontText.customFontUrl) {
+        loadCustomFont(tempConfig.fontText.customFontUrl, tempConfig.fontText.customFontFile.name.split('.')[0])
           .then(font => {
             if (font) {
-              toast.success(`Đã tải phông chữ: ${font.family}`);
+              toast.success(`Đã tải phông chữ văn bản: ${font.family}`);
             }
           })
           .catch(err => {
-            console.error("Error loading font:", err);
-            toast.error("Không thể tải phông chữ tùy chỉnh");
+            console.error("Error loading text font:", err);
+            toast.error("Không thể tải phông chữ văn bản tùy chỉnh");
           });
       }
     }
-  }, [tempConfig.customFontFile, tempConfig.customFontUrl]);
+    
+    if (tempConfig.fontNumber.customFontFile && !customNumberFonts.includes(tempConfig.fontNumber.customFontFile.name.split('.')[0])) {
+      setCustomNumberFonts(prev => [...prev, tempConfig.fontNumber.customFontFile!.name.split('.')[0]]);
+
+      // Load the custom font for immediate preview
+      if (tempConfig.fontNumber.customFontUrl) {
+        loadCustomFont(tempConfig.fontNumber.customFontUrl, tempConfig.fontNumber.customFontFile.name.split('.')[0])
+          .then(font => {
+            if (font) {
+              toast.success(`Đã tải phông chữ số: ${font.family}`);
+            }
+          })
+          .catch(err => {
+            console.error("Error loading number font:", err);
+            toast.error("Không thể tải phông chữ số tùy chỉnh");
+          });
+      }
+    }
+  }, [tempConfig.fontText.customFontFile, tempConfig.fontText.customFontUrl,
+      tempConfig.fontNumber.customFontFile, tempConfig.fontNumber.customFontUrl]);
 
   useEffect(() => {
-    if (printConfig.customFontFile && printConfig.customFontFile.name) {
-      const fontName = printConfig.customFontFile.name.split('.')[0];
-      if (!customFonts.includes(fontName)) {
-        setCustomFonts(prev => [...prev, fontName]);
+    if (printConfig.fontText.customFontFile && printConfig.fontText.customFontFile.name) {
+      const fontName = printConfig.fontText.customFontFile.name.split('.')[0];
+      if (!customTextFonts.includes(fontName)) {
+        setCustomTextFonts(prev => [...prev, fontName]);
+      }
+    }
+    
+    if (printConfig.fontNumber.customFontFile && printConfig.fontNumber.customFontFile.name) {
+      const fontName = printConfig.fontNumber.customFontFile.name.split('.')[0];
+      if (!customNumberFonts.includes(fontName)) {
+        setCustomNumberFonts(prev => [...prev, fontName]);
       }
     }
   }, []);
@@ -58,7 +85,7 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     setOpen(false);
   };
 
-  const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomTextFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -76,16 +103,52 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
     
     setTempConfig(prev => ({
       ...prev,
-      customFontFile: file,
-      customFontUrl: fontUrl,
-      font: fontName
+      fontText: {
+        ...prev.fontText,
+        customFontFile: file,
+        customFontUrl: fontUrl,
+        font: fontName
+      }
     }));
     
-    if (!customFonts.includes(fontName)) {
-      setCustomFonts(prev => [...prev, fontName]);
+    if (!customTextFonts.includes(fontName)) {
+      setCustomTextFonts(prev => [...prev, fontName]);
     }
 
-    toast.info(`Đã tải lên phông chữ: ${fontName}`);
+    toast.info(`Đã tải lên phông chữ văn bản: ${fontName}`);
+  };
+
+  const handleCustomNumberFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['.ttf', '.otf'];
+    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    if (!validTypes.includes(fileExtension)) {
+      toast.error("Chỉ hỗ trợ định dạng phông chữ .ttf hoặc .otf");
+      return;
+    }
+
+    // Create an object URL for the font file
+    const fontUrl = URL.createObjectURL(file);
+    const fontName = file.name.split('.')[0];
+    
+    setTempConfig(prev => ({
+      ...prev,
+      fontNumber: {
+        ...prev.fontNumber,
+        customFontFile: file,
+        customFontUrl: fontUrl,
+        font: fontName
+      }
+    }));
+    
+    if (!customNumberFonts.includes(fontName)) {
+      setCustomNumberFonts(prev => [...prev, fontName]);
+    }
+
+    toast.info(`Đã tải lên phông chữ số: ${fontName}`);
   };
 
   const materialOptions = [
@@ -104,71 +167,140 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Cấu hình thông tin in tên số</Button>
+        <Button variant="outline">Cấu hình màu sắc & chất liệu in mặc định</Button>
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Cấu hình thông tin in tên số</DialogTitle>
+          <DialogTitle>Cấu hình màu sắc và chất liệu in mặc định</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="font">Font chữ/số mặc định</Label>
-            <div className="flex flex-col md:flex-row md:items-end space-y-2 md:space-y-0 md:space-x-2">
-              <div className="flex-1">
-                <Select
-                  value={tempConfig.font}
-                  onValueChange={(value) => setTempConfig(prev => ({ ...prev, font: value }))}
-                >
-                  <SelectTrigger id="font">
-                    <SelectValue placeholder="Chọn font" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Arial">Arial</SelectItem>
-                    <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                    <SelectItem value="Helvetica">Helvetica</SelectItem>
-                    <SelectItem value="Roboto">Roboto</SelectItem>
-                    <SelectItem value="Open Sans">Open Sans</SelectItem>
-                    
-                    {customFonts.length > 0 && (
-                      <>
-                        <SelectItem disabled value="divider">
-                          --- Font tùy chỉnh ---
-                        </SelectItem>
-                        {customFonts.map(fontName => (
-                          <SelectItem key={fontName} value={fontName}>
-                            {fontName}
+            <h3 className="font-medium mb-2">Font chữ và số</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fontText">Font chữ mặc định</Label>
+                <div className="flex flex-col space-y-2">
+                  <Select
+                    value={tempConfig.fontText.font}
+                    onValueChange={(value) => setTempConfig(prev => ({ 
+                      ...prev, 
+                      fontText: {
+                        ...prev.fontText,
+                        font: value
+                      }
+                    }))}
+                  >
+                    <SelectTrigger id="fontText">
+                      <SelectValue placeholder="Chọn font" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Arial">Arial</SelectItem>
+                      <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                      <SelectItem value="Helvetica">Helvetica</SelectItem>
+                      <SelectItem value="Roboto">Roboto</SelectItem>
+                      <SelectItem value="Open Sans">Open Sans</SelectItem>
+                      
+                      {customTextFonts.length > 0 && (
+                        <>
+                          <SelectItem disabled value="divider">
+                            --- Font tùy chỉnh ---
                           </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
+                          {customTextFonts.map(fontName => (
+                            <SelectItem key={fontName} value={fontName}>
+                              {fontName}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  
+                  <div>
+                    <Label htmlFor="customFontText" className="mb-2 block">Tải lên font chữ tùy chỉnh (.ttf/.otf)</Label>
+                    <Input 
+                      id="customFontText" 
+                      type="file" 
+                      accept=".ttf,.otf" 
+                      onChange={handleCustomTextFontUpload}
+                    />
+                  </div>
+                </div>
               </div>
               
-              <div className="flex-1">
-                <Label htmlFor="customFont" className="mb-2 block">Tải lên font tùy chỉnh (.ttf/.otf)</Label>
-                <Input 
-                  id="customFont" 
-                  type="file" 
-                  accept=".ttf,.otf" 
-                  onChange={handleCustomFontUpload}
-                />
+              <div className="space-y-2">
+                <Label htmlFor="fontNumber">Font số mặc định</Label>
+                <div className="flex flex-col space-y-2">
+                  <Select
+                    value={tempConfig.fontNumber.font}
+                    onValueChange={(value) => setTempConfig(prev => ({ 
+                      ...prev, 
+                      fontNumber: {
+                        ...prev.fontNumber,
+                        font: value
+                      }
+                    }))}
+                  >
+                    <SelectTrigger id="fontNumber">
+                      <SelectValue placeholder="Chọn font" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Arial">Arial</SelectItem>
+                      <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                      <SelectItem value="Helvetica">Helvetica</SelectItem>
+                      <SelectItem value="Roboto">Roboto</SelectItem>
+                      <SelectItem value="Open Sans">Open Sans</SelectItem>
+                      
+                      {customNumberFonts.length > 0 && (
+                        <>
+                          <SelectItem disabled value="divider">
+                            --- Font tùy chỉnh ---
+                          </SelectItem>
+                          {customNumberFonts.map(fontName => (
+                            <SelectItem key={fontName} value={fontName}>
+                              {fontName}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  
+                  <div>
+                    <Label htmlFor="customFontNumber" className="mb-2 block">Tải lên font số tùy chỉnh (.ttf/.otf)</Label>
+                    <Input 
+                      id="customFontNumber" 
+                      type="file" 
+                      accept=".ttf,.otf" 
+                      onChange={handleCustomNumberFontUpload}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             
-            {tempConfig.customFontUrl && (
-              <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded text-sm">
-                <p className="text-green-700">
-                  Đã tải font tùy chỉnh: {tempConfig.customFontFile?.name}
-                </p>
-                <div className="mt-2">
-                  <p className="font-medium mb-1">Xem trước:</p>
-                  <p style={{fontFamily: tempConfig.customFontFile?.name.split('.')[0]}} className="text-xl">
-                    AaBbCcDd 123456789
-                  </p>
-                </div>
+            {(tempConfig.fontText.customFontUrl || tempConfig.fontNumber.customFontUrl) && (
+              <div className="mt-4 p-2 bg-green-50 border border-green-100 rounded text-sm">
+                <p className="text-green-700 font-medium">Xem trước font tùy chỉnh:</p>
+                
+                {tempConfig.fontText.customFontUrl && (
+                  <div className="mt-1">
+                    <p className="text-xs text-green-600">Font chữ: {tempConfig.fontText.customFontFile?.name}</p>
+                    <p style={{fontFamily: tempConfig.fontText.customFontFile?.name.split('.')[0]}} className="text-lg mt-1">
+                      AaBbCcDd 123456789
+                    </p>
+                  </div>
+                )}
+                
+                {tempConfig.fontNumber.customFontUrl && (
+                  <div className="mt-2">
+                    <p className="text-xs text-green-600">Font số: {tempConfig.fontNumber.customFontFile?.name}</p>
+                    <p style={{fontFamily: tempConfig.fontNumber.customFontFile?.name.split('.')[0]}} className="text-lg mt-1">
+                      0123456789
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
