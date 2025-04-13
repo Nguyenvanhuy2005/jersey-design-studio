@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,8 +63,6 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
 
   const printPositions = [
     { value: "In số quần", label: "In số quần" },
-    { value: "In logo quần trái", label: "In logo quần trái" },
-    { value: "In logo quần phải", label: "In logo quần phải" },
     { value: "In số lưng", label: "In số lưng" },
     { value: "In trên số lưng", label: "In trên số lưng" },
     { value: "In dưới số lưng", label: "In dưới số lưng" },

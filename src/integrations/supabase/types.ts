@@ -106,7 +106,6 @@ export type Database = {
           name: string | null
           number: number
           order_id: string | null
-          pants_size: string | null
           print_image: boolean | null
           size: string
         }
@@ -117,7 +116,6 @@ export type Database = {
           name?: string | null
           number: number
           order_id?: string | null
-          pants_size?: string | null
           print_image?: boolean | null
           size: string
         }
@@ -128,7 +126,6 @@ export type Database = {
           name?: string | null
           number?: number
           order_id?: string | null
-          pants_size?: string | null
           print_image?: boolean | null
           size?: string
         }
@@ -244,24 +241,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      sizes: {
-        Row: {
-          category: string
-          size_id: string
-          size_value: string
-        }
-        Insert: {
-          category: string
-          size_id?: string
-          size_value: string
-        }
-        Update: {
-          category?: string
-          size_id?: string
-          size_value?: string
-        }
-        Relationships: []
       }
     }
     Views: {

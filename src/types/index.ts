@@ -1,13 +1,13 @@
+
 export interface Player {
   id?: string;
   name: string;
   number: number;
-  size: 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15';
-  pantsSize?: 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15';
+  size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
 }
 
-export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants_left' | 'pants_right';
+export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';
 
 export interface Logo {
   id?: string;
@@ -41,13 +41,9 @@ export type PrintPosition =
   | 'logo_chest_left'
   | 'logo_chest_right'
   | 'logo_chest_center'
-  | 'logo_pants_left'
-  | 'logo_pants_right'
   | 'number_sleeve_left'
   | 'number_sleeve_right'
-  | 'number_chest_center'
-  | 'number_pants_left'
-  | 'number_pants_right';
+  | 'number_chest_center';
 
 export interface ProductLine {
   id: string;
@@ -82,21 +78,6 @@ export interface DesignData {
     font_file?: string;
     color: string;
     material: string;
-  };
-  pants_number?: {
-    position: string;
-    content: string;
-    font: string;
-    font_file?: string;
-    color: string;
-    material: string;
-  };
-  pants_logo?: {
-    logo_id: string;
-    position: string;
-    x_position: number;
-    y_position: number;
-    scale: number;
   };
   reference_images?: string[];
 }
