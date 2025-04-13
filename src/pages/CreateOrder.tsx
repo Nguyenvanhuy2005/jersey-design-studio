@@ -891,3 +891,229 @@ const CreateOrder = () => {
             <TabsTrigger value="info">Thông tin</TabsTrigger>
             <TabsTrigger value="players">Cầu thủ</TabsTrigger>
             <TabsTrigger value="logos">Logo</TabsTrigger>
+            <TabsTrigger value="preview">Xem trước</TabsTrigger>
+            <TabsTrigger value="summary">Tổng kết</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="info">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="team-name">Tên đội</Label>
+                  <Input
+                    id="team-name"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Nhập tên đội"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Ghi chú</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Thêm ghi chú hoặc yêu cầu đặc biệt"
+                    className="h-32"
+                  />
+                </div>
+                
+                <PrintInfoForm
+                  designData={designData}
+                  setDesignData={setDesignData}
+                  onExcelUpload={handleExcelUpload}
+                />
+                
+                <div className="space-y-2">
+                  <Label>Hình ảnh tham khảo (tối đa 5 hình)</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-2">
+                    {referenceImagesPreview.map((preview, index) => (
+                      <div key={index} className="relative border rounded overflow-hidden h-40">
+                        <img 
+                          src={preview} 
+                          alt={`Tham khảo ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full hover:bg-black/80"
+                          onClick={() => removeReferenceImage(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {referenceImagesPreview.length < 5 && (
+                      <label className="border border-dashed rounded flex flex-col items-center justify-center h-40 cursor-pointer hover:bg-muted/30">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          multiple
+                          onChange={(e) => handleReferenceImagesUpload(e.target.files)}
+                        />
+                        <div className="text-center p-4">
+                          <p className="text-sm text-muted-foreground">Thêm ảnh</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+                
+                <PrintConfigForm
+                  printConfig={printConfig}
+                  setPrintConfig={setPrintConfig}
+                />
+                
+                <div className="flex justify-end">
+                  <Button onClick={() => setActiveTab("players")}>
+                    Tiếp theo: Cầu thủ
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="players">
+            <PlayerForm
+              players={players}
+              setPlayers={setPlayers}
+              onNext={() => setActiveTab("logos")}
+              onPrev={() => setActiveTab("info")}
+            />
+          </TabsContent>
+          
+          <TabsContent value="logos">
+            <LogoUpload 
+              logos={logos}
+              setLogos={setLogos}
+              onNext={() => {
+                generateProductLines();
+                setActiveTab("preview");
+              }}
+              onPrev={() => setActiveTab("players")}
+            />
+          </TabsContent>
+          
+          <TabsContent value="preview">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-2">
+                <div className="bg-muted/30 p-4 rounded-md">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="text-lg font-medium">
+                      Xem trước thiết kế áo
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant={previewView === 'front' ? 'default' : 'outline'}
+                        onClick={() => setPreviewView('front')}
+                      >
+                        Mặt trước
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant={previewView === 'back' ? 'default' : 'outline'}
+                        onClick={() => setPreviewView('back')}
+                      >
+                        Mặt sau
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="aspect-[3/4] relative bg-white rounded-md overflow-hidden">
+                    <CanvasJersey
+                      ref={jerseyCanvasRef}
+                      player={players[previewPlayer] || { name: 'Tên cầu thủ', number: 10, size: 'M', printImage: true }}
+                      printConfig={printConfig}
+                      logos={logos}
+                      viewMode={previewView}
+                      teamName={teamName || "Tên đội"}
+                      designData={designData}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="bg-muted/30 p-4 rounded-md space-y-4">
+                  <div className="text-lg font-medium">
+                    Chọn cầu thủ để xem
+                  </div>
+                  
+                  <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                    {players.length > 0 ? (
+                      players.map((player, index) => (
+                        <button
+                          key={index}
+                          className={`w-full text-left p-3 rounded-md border ${
+                            previewPlayer === index ? 'border-primary bg-primary/10' : 'border-muted-foreground/20'
+                          }`}
+                          onClick={() => setPreviewPlayer(index)}
+                        >
+                          <div className="font-medium">{player.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            #{player.number} - Size: {player.size}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Chưa có cầu thủ nào được thêm
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex justify-between">
+                  <Button variant="outline" onClick={() => setActiveTab("logos")}>
+                    Trở lại: Logo
+                  </Button>
+                  <Button onClick={() => setActiveTab("summary")}>
+                    Tiếp theo: Tổng kết
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="summary">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-2">
+                <ProductLineTable 
+                  productLines={productLines} 
+                  setProductLines={setProductLines}
+                />
+              </div>
+              
+              <div>
+                <OrderSummary 
+                  teamName={teamName}
+                  players={players}
+                  logos={logos}
+                  printConfig={printConfig}
+                  productLines={productLines}
+                  totalCost={calculateTotalCost()}
+                  designData={designData}
+                  onSubmit={submitOrder}
+                  isSubmitting={isSubmitting}
+                  isGeneratingDesign={isGeneratingDesign}
+                />
+                
+                <div className="mt-4">
+                  <Button variant="outline" onClick={() => setActiveTab("preview")} className="w-full">
+                    Trở lại: Xem trước
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
+  );
+};
+
+export default CreateOrder;
