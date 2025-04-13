@@ -45,7 +45,12 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
         if (error) {
           console.error("Error fetching sizes:", error);
         } else {
-          setSizes(data || []);
+          // Cast the data to ensure the category is the correct type
+          const typedData = data?.map(item => ({
+            ...item,
+            category: item.category as 'adult' | 'children'
+          })) || [];
+          setSizes(typedData);
         }
       } catch (err) {
         console.error("Unexpected error fetching sizes:", err);
