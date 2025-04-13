@@ -903,7 +903,283 @@ const CreateOrder = () => {
 
   return (
     <Layout>
-      {/* Add your JSX content here */}
+      <AuthCheck>
+        <div className="container mx-auto py-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Tạo đơn hàng mới</h1>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(-1)}
+              >
+                Hủy
+              </Button>
+              
+              {activeTab !== "preview" ? (
+                <Button onClick={handleViewDemo}>
+                  Xem thiết kế demo
+                </Button>
+              ) : (
+                <Button 
+                  onClick={approveDemo}
+                  disabled={isGeneratingDesign}
+                >
+                  {isGeneratingDesign ? "Đang xử lý..." : "Duyệt thiết kế demo"}
+                </Button>
+              )}
+              
+              {isDemoApproved && (
+                <Button 
+                  onClick={submitOrder}
+                  disabled={isSubmitting || isGeneratingDesign}
+                >
+                  {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="info">Thông tin</TabsTrigger>
+              <TabsTrigger value="preview">Thiết kế</TabsTrigger>
+              <TabsTrigger value="summary">Tổng kết</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="info" className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <CustomerForm 
+                  customer={customerInfo} 
+                  setCustomer={setCustomerInfo} 
+                />
+                
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Hình ảnh tham khảo</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        {referenceImagesPreview.map((preview, index) => (
+                          <div key={index} className="relative rounded-md overflow-hidden border aspect-square">
+                            <img 
+                              src={preview} 
+                              alt={`Reference ${index}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-1 right-1 w-6 h-6"
+                              onClick={() => removeReferenceImage(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        {referenceImages.length < 5 && (
+                          <div className="border border-dashed rounded-md flex items-center justify-center aspect-square">
+                            <Label htmlFor="reference-images" className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                              <span className="text-2xl">+</span>
+                              <span className="text-xs text-center">Tải lên hình ảnh</span>
+                              <Input
+                                id="reference-images"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => handleReferenceImagesUpload(e.target.files)}
+                              />
+                            </Label>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong muốn.
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <PrintGlobalSettings 
+                    fontText={fontText}
+                    setFontText={setFontText}
+                    fontNumber={fontNumber}
+                    setFontNumber={setFontNumber}
+                    printStyle={printStyle}
+                    setPrintStyle={setPrintStyle}
+                    printColor={printColor}
+                    setPrintColor={setPrintColor}
+                  />
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tải lên logo</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <LogoUpload 
+                        logos={logos} 
+                        setLogos={setLogos} 
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Danh sách cầu thủ</CardTitle>
+                  {players.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={generateProductLines}
+                    >
+                      Tạo danh sách sản phẩm in
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <PlayerForm
+                    players={players}
+                    setPlayers={setPlayers}
+                    logos={logos}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ghi chú đơn hàng</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Ghi chú</Label>
+                    <Input
+                      id="notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Nhập ghi chú cho đơn hàng (không bắt buộc)"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="preview">
+              {players.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Chưa có cầu thủ</AlertTitle>
+                  <AlertDescription>
+                    Vui lòng thêm ít nhất một cầu thủ vào danh sách để xem trước thiết kế.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="space-y-6">
+                  <UniformPreview
+                    teamName={players[0]?.name?.split(' ')[0] || "TEAM"}
+                    players={players}
+                    logos={logos}
+                    printConfig={printConfig}
+                    designData={designData}
+                    canvasRef={jerseyCanvasRef}
+                    canvasPantsRef={pantCanvasRef}
+                  />
+                  
+                  {productLines.length > 0 && (
+                    <div className="space-y-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Chi phí ước tính</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-xl font-bold">
+                            {formatCurrency(calculateTotalCost())}
+                          </div>
+                          
+                          <div className="mt-4">
+                            <p className="text-sm text-muted-foreground">
+                              * Đây chỉ là giá ước tính. Chi phí có thể thay đổi tùy thuộc vào yêu cầu cụ thể.
+                            </p>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button 
+                            onClick={approveDemo}
+                            disabled={isGeneratingDesign}
+                            className="w-full"
+                          >
+                            {isGeneratingDesign ? "Đang xử lý..." : isDemoApproved ? "Đã duyệt thiết kế" : "Duyệt thiết kế demo"}
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="summary">
+              {isDemoApproved ? (
+                <div className="space-y-6">
+                  <OrderSummary 
+                    players={players} 
+                    customerInfo={customerInfo}
+                    designData={designData}
+                  />
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Danh sách sản phẩm in</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {productLines.length > 0 ? (
+                        <ProductLineTable 
+                          productLines={productLines} 
+                          setProductLines={setProductLines}
+                        />
+                      ) : (
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Chưa có sản phẩm in</AlertTitle>
+                          <AlertDescription>
+                            Vui lòng tạo danh sách sản phẩm in từ thông tin cầu thủ.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  <OrderCostSummary 
+                    productLines={productLines}
+                    players={players}
+                    totalCost={calculateTotalCost()}
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={submitOrder}
+                      disabled={isSubmitting || isGeneratingDesign}
+                      size="lg"
+                    >
+                      {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Chưa duyệt thiết kế demo</AlertTitle>
+                  <AlertDescription>
+                    Vui lòng xem và duyệt thiết kế demo trước khi đến bước này.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </AuthCheck>
     </Layout>
   );
 };
