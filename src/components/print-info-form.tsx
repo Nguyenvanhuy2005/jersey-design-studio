@@ -15,16 +15,15 @@ export function PrintInfoForm({ designData, onDesignDataChange, onExcelUpload }:
   const handleCheckboxChange = (field: keyof DesignData, checked: boolean) => {
     const updatedDesignData = { ...designData };
     
-    if (!updatedDesignData[field]) {
+    // Special handling for fields that need different structure
+    if (field === 'line_1' || field === 'line_2' || field === 'line_3' || 
+        field === 'chest_text' || field === 'chest_number' || field === 'pants_number' || field === 'pet_chest') {
+      // Ensure we maintain the proper structure or create it if it doesn't exist
       updatedDesignData[field] = {
+        ...(updatedDesignData[field] as object || {}),
         enabled: checked,
         material: "In chuyển nhiệt",
         color: "Đen"
-      };
-    } else {
-      updatedDesignData[field] = {
-        ...updatedDesignData[field],
-        enabled: checked
       };
     }
     
@@ -34,17 +33,16 @@ export function PrintInfoForm({ designData, onDesignDataChange, onExcelUpload }:
   const handleContentChange = (field: keyof DesignData, content: string) => {
     const updatedDesignData = { ...designData };
     
-    if (!updatedDesignData[field]) {
+    // Special handling for fields that need different structure
+    if (field === 'line_1' || field === 'line_2' || field === 'line_3' || 
+        field === 'chest_text' || field === 'chest_number' || field === 'pants_number' || field === 'pet_chest') {
+      // Ensure we maintain the proper structure or create it if it doesn't exist
       updatedDesignData[field] = {
+        ...(updatedDesignData[field] as object || {}),
         content,
         enabled: true,
         material: "In chuyển nhiệt",
         color: "Đen"
-      };
-    } else {
-      updatedDesignData[field] = {
-        ...updatedDesignData[field],
-        content
       };
     }
     
