@@ -258,6 +258,29 @@ const AdminOrders = () => {
               back: designImageBack
             });
             
+            // Handle fonts properly by checking the print_configs
+            const fontText: FontConfig = { font: 'Arial' };
+            const fontNumber: FontConfig = { font: 'Arial' };
+            
+            if (order.print_configs && order.print_configs.length > 0) {
+              // For backward compatibility with existing data
+              fontText.font = order.print_configs[0].font || 'Arial';
+              fontNumber.font = order.print_configs[0].font || 'Arial';
+              
+              if (order.design_data && typeof order.design_data === 'object') {
+                // If design_data has font information, use it
+                const designData = order.design_data as any;
+                if (designData.font_text && typeof designData.font_text === 'object') {
+                  fontText.font = designData.font_text.font || fontText.font;
+                  fontText.customFontUrl = designData.font_text.font_file;
+                }
+                if (designData.font_number && typeof designData.font_number === 'object') {
+                  fontNumber.font = designData.font_number.font || fontNumber.font;
+                  fontNumber.customFontUrl = designData.font_number.font_file;
+                }
+              }
+            }
+            
             return {
               id: order.id,
               teamName: order.team_name || '',
@@ -287,8 +310,8 @@ const AdminOrders = () => {
               })) : [],
               printConfig: order.print_configs && order.print_configs.length > 0 ? {
                 id: order.print_configs[0].id,
-                fontText: order.print_configs[0].font_text || { font: 'Arial' },
-                fontNumber: order.print_configs[0].font_number || { font: 'Arial' },
+                fontText: fontText,
+                fontNumber: fontNumber,
                 backMaterial: order.print_configs[0].back_material || '',
                 backColor: order.print_configs[0].back_color || '',
                 frontMaterial: order.print_configs[0].front_material || '',

@@ -1,375 +1,81 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Logo, PrintConfig } from '@/types';
-import { loadLogoImages, getFont } from '@/utils/jersey-utils';
-import { loadCustomFont } from '@/utils/font-utils';
-import { useDragLogos } from '@/components/jersey/useDragLogos';
-import { JerseyFront } from '@/components/jersey/JerseyFront';
-import { JerseyBack } from '@/components/jersey/JerseyBack';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 
-interface CanvasJerseyProps {
-  teamName: string;
-  playerName?: string;
-  playerNumber?: number;
+import React, { forwardRef, useEffect, useRef } from 'react';
+import { Logo, Player, PrintConfig, DesignData } from '@/types';
+import { JerseyFront } from '../jersey/JerseyFront';
+import { JerseyBack } from '../jersey/JerseyBack';
+import { getTextFont } from '@/utils/jersey-utils';
+
+export interface CanvasJerseyProps {
+  player: Player;
+  printConfig: PrintConfig;
   logos?: Logo[];
-  view: 'front' | 'back';
-  printConfig?: PrintConfig;
-  canvasRef?: React.RefObject<HTMLCanvasElement>;
+  viewMode?: 'front' | 'back';
+  teamName?: string;
+  designData?: DesignData;
 }
 
-export function CanvasJersey({ 
-  teamName, 
-  playerName, 
-  playerNumber, 
-  logos = [], 
-  view,
+export const CanvasJersey = forwardRef<HTMLCanvasElement, CanvasJerseyProps>(({
+  player,
   printConfig,
-  canvasRef: externalCanvasRef
-}: CanvasJerseyProps) {
-  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
-  const canvasRef = externalCanvasRef || internalCanvasRef;
-  
-  const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
-  const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number, scale: number }>>(new Map());
-  const [loadedFont, setLoadedFont] = useState<boolean>(false);
-  const [fontFace, setFontFace] = useState<FontFace | null>(null);
-  const [saveTimer, setSaveTimer] = useState<NodeJS.Timeout | null>(null);
-  
-  const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  
-  const canvasWidth = 300;
-  const canvasHeight = 300;
-
-  const { 
-    selectedLogo,
-    isDragging,
-    startDrag, 
-    continueDrag,
-    endDrag,
-    handleLogoMove,
-    handleLogoResize,
-    handleLogoDelete
-  } = useDragLogos({
-    logos,
-    logoPositions,
-    setLogoPositions
-  });
+  logos = [],
+  viewMode = 'front',
+  teamName,
+  designData
+}, ref) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const actualRef = ref || canvasRef;
 
   useEffect(() => {
-    console.log('Current logos prop:', logos);
-  }, [logos]);
+    const canvas = actualRef.current;
+    if (!canvas) return;
 
-  useEffect(() => {
-    if (printConfig?.fontText?.customFontUrl && printConfig.fontText.customFontFile) {
-      const fontName = printConfig.fontText.customFontFile.name.split('.')[0];
-      
-      loadCustomFont(printConfig.fontText.customFontUrl, fontName)
-        .then(loadedFont => {
-          if (loadedFont) {
-            setFontFace(loadedFont);
-            setLoadedFont(true);
-          }
-        });
-    }
-  }, [printConfig?.fontText?.customFontUrl, printConfig?.fontText?.customFontFile]);
-
-  useEffect(() => {
-    if (logos && logos.length > 0) {
-      console.log("Attempting to load logos:", logos.length);
-      
-      const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
-      
-      const fetchLogoPositions = async () => {
-        for (const logo of logos) {
-          if (logo.id) {
-            try {
-              let logoId = logo.id;
-              
-              if (logoId.startsWith('logo-') || !isValidUUID(logoId)) {
-                const { data, error } = await supabase
-                  .from('logos')
-                  .select('id, file_path')
-                  .eq('file_path', logo.file.name)
-                  .single();
-                
-                if (error || !data) {
-                  const newUUID = uuidv4();
-                  console.log(`Generated new UUID ${newUUID} for logo ${logoId}`);
-                  
-                  const { error: insertError } = await supabase
-                    .from('logos')
-                    .insert({
-                      id: newUUID,
-                      file_path: logo.file.name,
-                      position: logo.position,
-                      x_position: logo.position === 'chest_left' ? 80 : 
-                                  logo.position === 'chest_right' ? 220 : 
-                                  logo.position === 'chest_center' ? 150 :
-                                  logo.position === 'sleeve_left' ? 30 : 270,
-                      y_position: logo.position === 'chest_center' ? 100 : 60,
-                      scale: 1.0
-                    });
-                  
-                  if (insertError) {
-                    console.error("Error creating logo mapping:", insertError);
-                  } else {
-                    logoId = newUUID;
-                    logo.id = newUUID;
-                    console.log(`Created and stored new UUID ${newUUID} for logo ${logo.file.name}`);
-                  }
-                } else {
-                  logoId = data.id;
-                  logo.id = data.id;
-                  console.log(`Found existing UUID ${logoId} for logo ${logo.file.name}`);
-                }
-              }
-              
-              const { data: posData, error: posError } = await supabase
-                .from('logos')
-                .select('x_position, y_position, scale')
-                .eq('id', logoId)
-                .single();
-              
-              if (posError) {
-                console.error(`Error fetching position for logo ${logoId}:`, posError);
-                const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                                  logo.position === 'chest_right' ? { x: 220, y: 60 } :
-                                  logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
-                                  { x: 270, y: 40 };
-                
-                initialPositions.set(logoId, {
-                  x: defaultPos.x,
-                  y: defaultPos.y,
-                  scale: 1.0
-                });
-                continue;
-              }
-              
-              if (posData) {
-                initialPositions.set(logoId, {
-                  x: posData.x_position ?? (logo.position === 'chest_left' ? 80 : 
-                                          logo.position === 'chest_right' ? 220 : 
-                                          logo.position === 'chest_center' ? 150 :
-                                          logo.position === 'sleeve_left' ? 30 : 270),
-                  y: posData.y_position ?? (logo.position === 'chest_center' ? 100 : 60),
-                  scale: posData.scale ?? 1.0
-                });
-                
-                console.log(`Loaded position for logo ${logoId}:`, initialPositions.get(logoId));
-              }
-            } catch (err) {
-              console.error("Error in fetchLogoPositions:", err);
-              const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                              logo.position === 'chest_right' ? { x: 220, y: 60 } :
-                              logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                              logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
-                              { x: 270, y: 40 };
-              
-              initialPositions.set(logo.id, {
-                x: defaultPos.x,
-                y: defaultPos.y,
-                scale: 1.0
-              });
-            }
-          }
-        }
-        
-        setLogoPositions(initialPositions);
-        
-        loadLogoImages(logos, initialPositions, true)
-          .then(logoMap => {
-            console.log(`Successfully loaded ${logoMap.size} logos`);
-            if (logoMap.size !== logos.length) {
-              console.warn(`Warning: Only ${logoMap.size} out of ${logos.length} logos were loaded`);
-            }
-            setLoadedLogos(logoMap);
-            
-            if (logos.length === 1 && logos[0].id) {
-              setTimeout(() => {
-                console.log("Auto-selecting the only logo:", logos[0].id);
-              }, 500);
-            }
-          })
-          .catch(err => {
-            console.error("Error loading logos:", err);
-          });
-      };
-      
-      fetchLogoPositions();
-    } else {
-      console.log("No logos to load");
-      setLoadedLogos(new Map());
-      setLogoPositions(new Map());
-    }
-  }, [logos]);
-  
-  useEffect(() => {
-    if (logos.length === 0 || logoPositions.size === 0) return;
-    
-    if (saveTimer) {
-      clearTimeout(saveTimer);
-    }
-    
-    const timer = setTimeout(async () => {
-      console.log("Saving logo positions to database...");
-      
-      for (const [logoId, position] of logoPositions.entries()) {
-        try {
-          if (!isValidUUID(logoId)) {
-            console.warn(`Skipping save for non-UUID logo ID: ${logoId}`);
-            continue;
-          }
-          
-          const { error } = await supabase
-            .from('logos')
-            .update({
-              x_position: position.x,
-              y_position: position.y,
-              scale: position.scale
-            })
-            .eq('id', logoId);
-          
-          if (error) {
-            console.error(`Error updating position for logo ${logoId}:`, error);
-            toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
-          } else {
-            console.log(`Updated position for logo ${logoId}:`, position);
-          }
-        } catch (err) {
-          console.error("Error saving logo position:", err);
-          toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
-        }
-      }
-    }, 500);
-    
-    setSaveTimer(timer);
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [logoPositions, logos.length]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      console.log('Canvas ref not available');
-      return;
-    }
-
-    console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
-    
-    canvas.width = canvasWidth * pixelRatio;
-    canvas.height = canvasHeight * pixelRatio;
-    
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
+    // Set canvas DPI for better rendering
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get canvas context');
-      return;
-    }
+    if (!ctx) return;
 
-    ctx.scale(pixelRatio, pixelRatio);
+    ctx.scale(dpr, dpr);
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    const fontFamily = getTextFont(
+      viewMode === 'front' 
+        ? designData?.font_text?.font || printConfig.fontText.font
+        : designData?.font_number?.font || printConfig.fontNumber.font
+    );
     
-    ctx.imageSmoothingEnabled = true;
-    if ('imageSmoothingQuality' in ctx) {
-      (ctx as any).imageSmoothingQuality = 'high';
-    }
-
-    if ((printConfig?.fontText?.customFontUrl && !loadedFont) && 
-        !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.fontText?.font || 'Arial')) {
-      console.log('Waiting for custom font to load...');
-      setTimeout(() => {
-        setLoadedFont(prev => !prev);
-      }, 100);
-      return;
-    }
-
-    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
-    console.log('Selected logo for control buttons:', selectedLogo);
-    
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    const fontToUse = getFont(printConfig);
-
-    if (view === 'front') {
-      console.log('Rendering front jersey view');
+    // Render the appropriate view
+    if (viewMode === 'front') {
       JerseyFront({
         ctx,
-        playerNumber,
-        loadedLogos,
-        logoPositions,
-        logos: logos || [],
-        fontFamily: fontToUse,
-        highQuality: true,
-        selectedLogo,
-        onLogoMove: handleLogoMove,
-        onLogoResize: handleLogoResize,
-        onLogoDelete: handleLogoDelete
+        playerName: player.name,
+        playerNumber: player.number,
+        fontFamily,
+        logos
       });
     } else {
-      console.log('Rendering back jersey view');
       JerseyBack({
         ctx,
         teamName,
-        playerName,
-        playerNumber,
-        fontFamily: fontToUse
+        playerName: player.name,
+        playerNumber: player.number,
+        fontFamily
       });
     }
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo, isDragging]);
-
-  function isValidUUID(id: string) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id);
-  }
-
-  useEffect(() => {
-    if (logos && logos.length > 0 && view === 'front') {
-      toast.info(
-        "Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước.",
-        { 
-          id: "logo-instructions",
-          duration: 5000
-        }
-      );
-    }
-  }, [logos, view]);
-
-  const getCursorStyle = () => {
-    if (!selectedLogo) return 'pointer';
-    return isDragging ? 'grabbing' : 'grab';
-  };
+  }, [player, printConfig, logos, viewMode, teamName, designData, actualRef]);
 
   return (
-    <div className="relative">
-      <canvas 
-        ref={canvasRef} 
-        width={canvasWidth * pixelRatio} 
-        height={canvasHeight * pixelRatio} 
-        className="jersey-canvas mx-auto"
-        id="jersey-design-canvas"
-        onMouseDown={startDrag}
-        onMouseMove={continueDrag}
-        onMouseUp={endDrag}
-        onMouseLeave={endDrag}
-        style={{
-          width: `${canvasWidth}px`,
-          height: `${canvasHeight}px`,
-          cursor: getCursorStyle()
-        }}
-      />
-      {logos && logos.length > 0 && view === 'front' && (
-        <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
-          <p className="text-sm text-gray-700">
-            Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
-          </p>
-        </div>
-      )}
-    </div>
+    <canvas
+      ref={actualRef}
+      className="w-full h-full" 
+      style={{ width: '100%', height: '100%' }}
+    />
   );
-}
+});
+
+CanvasJersey.displayName = 'CanvasJersey';

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -42,7 +41,6 @@ const CreateOrder = () => {
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referenceImagesPreview, setReferenceImagesPreview] = useState<string[]>([]);
   
-  // Initialize default values for design data
   const [designData, setDesignData] = useState<DesignData>({
     font_text: {
       font: "Arial"
@@ -121,7 +119,6 @@ const CreateOrder = () => {
         const worksheet = workbook.Sheets[firstSheetName];
         const data = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
-        // Find header row
         const headerRow = data.find(row => 
           Array.isArray(row) && row.some(cell => 
             typeof cell === 'string' && 
@@ -134,7 +131,6 @@ const CreateOrder = () => {
           return;
         }
 
-        // Find column indices for all possible fields
         const line1Idx = headerRow.findIndex((col: any) => 
           typeof col === 'string' && (col.includes('DÒNG 1') || col.includes('TRÊN SỐ LƯNG'))
         );
@@ -163,15 +159,12 @@ const CreateOrder = () => {
           typeof col === 'string' && col.includes('FONT SỐ')
         );
 
-        // Create new design data based on Excel
         const newDesignData: DesignData = {
           ...designData
         };
 
-        // Start from the row after header
         const dataRow = data[headerRow.length > 0 ? headerRow.length : 0];
         if (dataRow) {
-          // Extract font information
           if (fontTextIdx !== -1 && dataRow[fontTextIdx]) {
             newDesignData.font_text = {
               font: String(dataRow[fontTextIdx])
@@ -184,7 +177,6 @@ const CreateOrder = () => {
             };
           }
 
-          // Extract printing positions
           if (line1Idx !== -1 && dataRow[line1Idx]) {
             newDesignData.line_1 = {
               content: String(dataRow[line1Idx]),
@@ -212,7 +204,6 @@ const CreateOrder = () => {
             };
           }
 
-          // Set flags for number positions
           if (line2Idx !== -1 && dataRow[line2Idx] === "1" || dataRow[line2Idx] === "true" || dataRow[line2Idx] === "có") {
             newDesignData.line_2 = {
               material: "In chuyển nhiệt",
@@ -238,10 +229,8 @@ const CreateOrder = () => {
           }
         }
 
-        // Update design data
         setDesignData(newDesignData);
         
-        // Update print config with font info
         if (newDesignData.font_text?.font || newDesignData.font_number?.font) {
           const updatedConfig: PrintConfig = { ...printConfig };
           
@@ -284,7 +273,6 @@ const CreateOrder = () => {
     
     let newProductLines: ProductLine[] = [];
     
-    // Line 2 - Back number
     if (designData.line_2?.enabled) {
       newProductLines.push({
         id: `product-back-number-${Date.now()}`,
@@ -297,7 +285,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Line 1 - Above back number
     if (designData.line_1?.enabled && designData.line_1.content) {
       newProductLines.push({
         id: `product-above-back-${Date.now() + 1}`,
@@ -310,7 +297,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Line 3 - Below back number
     if (designData.line_3?.enabled && designData.line_3.content) {
       newProductLines.push({
         id: `product-below-back-${Date.now() + 2}`,
@@ -323,7 +309,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Chest number
     if (designData.chest_number?.enabled && hasPlayersWithImages) {
       newProductLines.push({
         id: `product-chest-number-${Date.now() + 3}`,
@@ -336,7 +321,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Chest text
     if (designData.chest_text?.enabled && designData.chest_text.content) {
       newProductLines.push({
         id: `product-chest-text-${Date.now() + 4}`,
@@ -349,7 +333,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Pants number
     if (designData.pants_number?.enabled) {
       newProductLines.push({
         id: `product-pants-number-${Date.now() + 5}`,
@@ -362,7 +345,6 @@ const CreateOrder = () => {
       });
     }
     
-    // PET chest
     if (designData.pet_chest?.enabled && designData.pet_chest.content) {
       newProductLines.push({
         id: `product-pet-chest-${Date.now() + 6}`,
@@ -375,7 +357,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Add logos to product lines
     logos.forEach((logo, index) => {
       let position = '';
       let logoPosition = '';
@@ -488,7 +469,6 @@ const CreateOrder = () => {
         frontFileName
       );
       
-      // Upload the front design image
       const frontPath = await uploadDesignImage(
         orderId,
         frontDesignFile,
@@ -529,7 +509,6 @@ const CreateOrder = () => {
         backFileName
       );
       
-      // Upload the back design image
       const backPath = await uploadDesignImage(
         orderId,
         backDesignFile,
@@ -635,11 +614,9 @@ const CreateOrder = () => {
     return uploadedPaths;
   };
 
-  // Upload font files if they are custom
   const uploadFontFiles = async (orderId: string): Promise<{ textFontPath?: string, numberFontPath?: string }> => {
     const result: { textFontPath?: string, numberFontPath?: string } = {};
     
-    // Upload text font if custom
     if (printConfig.fontText.customFontFile) {
       try {
         const file = printConfig.fontText.customFontFile;
@@ -664,7 +641,6 @@ const CreateOrder = () => {
           console.log(`Text font public URL: ${urlData.publicUrl}`);
           result.textFontPath = data.path;
           
-          // Update designData with font path
           setDesignData(prev => ({
             ...prev,
             font_text: {
@@ -679,7 +655,6 @@ const CreateOrder = () => {
       }
     }
     
-    // Upload number font if custom
     if (printConfig.fontNumber.customFontFile) {
       try {
         const file = printConfig.fontNumber.customFontFile;
@@ -704,7 +679,6 @@ const CreateOrder = () => {
           console.log(`Number font public URL: ${urlData.publicUrl}`);
           result.numberFontPath = data.path;
           
-          // Update designData with font path
           setDesignData(prev => ({
             ...prev,
             font_number: {
@@ -749,11 +723,9 @@ const CreateOrder = () => {
       
       const referenceImagePaths = await uploadReferenceImages(orderId);
       
-      // Upload font files if needed
       const fontPaths = await uploadFontFiles(orderId);
       
-      // Update design data with font info
-      const finalDesignData = {
+      let finalDesignData = {
         ...designData,
         font_text: {
           font: printConfig.fontText.font,
@@ -764,8 +736,6 @@ const CreateOrder = () => {
           font_file: fontPaths.numberFontPath || designData.font_number.font_file
         }
       };
-      
-      let updatedDesignData = { ...finalDesignData };
       
       if (logos.length > 0) {
         for (const logo of logos) {
@@ -795,30 +765,25 @@ const CreateOrder = () => {
             position: logo.position
           });
           
-          // Add logo positions to designData
-          const position = { x: 0, y: 0, scale: 1.0 }; // Replace with actual position data if available
-
-          // When adding logo positions to designData, make sure to use the correct structure
+          const position = { x: 0, y: 0, scale: 1.0 };
+          
           const logoPositionData = {
             logo_id: logo.id,
             x_position: position.x,
             y_position: position.y,
             scale: position.scale
           };
-
-          // Update the designData with logo position - fixed the bug here
-          updatedDesignData = {
-            ...updatedDesignData,
+          
+          finalDesignData = {
+            ...finalDesignData,
             [`logo_${logo.position}`]: logoPositionData
           };
         }
       }
       
-      // Add reference images to design data
-      updatedDesignData.reference_images = referenceImagePaths;
+      finalDesignData.reference_images = referenceImagePaths;
       
-      console.log("Inserting order with design_data:", updatedDesignData);
-      // When inserting into Supabase, we need to properly serialize the designData
+      console.log("Inserting order with design_data:", finalDesignData);
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -830,7 +795,7 @@ const CreateOrder = () => {
           design_image_back: backPath,
           reference_images: referenceImagePaths,
           notes: notes,
-          design_data: JSON.stringify(updatedDesignData) // Convert to JSON string for storage
+          design_data: JSON.stringify(finalDesignData)
         });
         
       if (orderError) {
@@ -861,8 +826,8 @@ const CreateOrder = () => {
         .from('print_configs')
         .insert({
           order_id: orderId,
-          font: updatedDesignData.font_text.font,
-          font_file: updatedDesignData.font_text.font_file,
+          font: finalDesignData.font_text.font,
+          font_file: finalDesignData.font_text.font_file,
           back_material: printConfig.backMaterial,
           back_color: printConfig.backColor,
           front_material: printConfig.frontMaterial,
@@ -893,13 +858,12 @@ const CreateOrder = () => {
       const { error: linesError } = await supabase
         .from('product_lines')
         .insert(linesToInsert);
-        
+      
       if (linesError) {
         console.error("Error adding product lines:", linesError);
         throw linesError;
       }
       
-      // Reset isSubmitting state and navigate to order confirmation
       setIsSubmitting(false);
       toast.success("Đơn hàng đã được tạo thành công!");
       navigate("/order-confirmation", { 
@@ -917,7 +881,6 @@ const CreateOrder = () => {
     }
   };
 
-  // Render function below
   return (
     <Layout>
       <div className="container mx-auto py-6 space-y-6">
@@ -1141,10 +1104,8 @@ const CreateOrder = () => {
               teamName={teamName}
               players={players}
               logos={logos}
-              printConfig={printConfig}
               productLines={productLines}
               totalCost={calculateTotalCost()}
-              designData={designData}
               onSubmit={submitOrder}
               isSubmitting={isSubmitting}
               isGeneratingDesign={isGeneratingDesign}
