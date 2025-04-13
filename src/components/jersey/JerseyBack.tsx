@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { getFont } from '@/utils/jersey-utils';
+import { getTextFont } from '@/utils/jersey-utils';
 
 interface JerseyBackProps {
   ctx: CanvasRenderingContext2D;

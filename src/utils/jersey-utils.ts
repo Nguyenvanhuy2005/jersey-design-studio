@@ -11,6 +11,12 @@ export const defaultLogoPositions: Record<LogoPosition, { x: number, y: number }
   'pants': { x: 150, y: 250 }
 };
 
+export const getFont = (printConfig?: PrintConfig, size: number = 20): string => {
+  // Use fontText as the default font config if available
+  const fontConfig = printConfig?.fontText || { font: 'Arial' };
+  return getTextFont(fontConfig, size);
+};
+
 export const getTextFont = (fontConfig?: FontConfig, size: number = 20): string => {
   let fontFamily = fontConfig?.font || 'Arial';
   

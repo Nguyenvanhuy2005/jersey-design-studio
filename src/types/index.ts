@@ -34,6 +34,8 @@ export interface PrintConfig {
   sleeveColor: string;
   legMaterial: string;
   legColor: string;
+  customFontFile?: File;
+  customFontUrl?: string;
 }
 
 export interface PrintPositionConfig {

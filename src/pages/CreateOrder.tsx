@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -793,13 +792,21 @@ const CreateOrder = () => {
             position: logo.position
           });
           
-          // Update design data with logo info
-          const logoKey = `logo_${logo.position}` as keyof typeof finalDesignData;
-          finalDesignData[logoKey] = {
+          // Add logo positions to designData
+          const position = { x: 0, y: 0, scale: 1.0 }; // Replace with actual position data if available
+
+          // When adding logo positions to designData, make sure to use the correct structure
+          const logoPositionData = {
             logo_id: logo.id,
-            x_position: 0,
-            y_position: 0,
-            scale: 1.0
+            x_position: position.x,
+            y_position: position.y,
+            scale: position.scale
+          };
+
+          // Update the designData with logo position
+          designData = {
+            ...designData,
+            [`logo_${logo.position}`]: logoPositionData
           };
         }
       }
@@ -808,20 +815,19 @@ const CreateOrder = () => {
       finalDesignData.reference_images = referenceImagePaths;
       
       console.log("Inserting order with design_data:", finalDesignData);
+      // When inserting into Supabase, we need to properly serialize the designData
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           team_name: teamName,
-          logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
           status: 'new',
           total_cost: totalCost,
+          design_image_front: frontPath,
+          design_image_back: backPath,
+          reference_images: referenceImagePaths,
           notes: notes,
-          design_data: finalDesignData,
-          design_image: frontPath || null,
-          design_image_front: frontPath || null,
-          design_image_back: backPath || null,
-          reference_images: referenceImagePaths
+          design_data: JSON.stringify(designData) // Convert to JSON string for storage
         });
         
       if (orderError) {
@@ -884,424 +890,3 @@ const CreateOrder = () => {
       const { error: linesError } = await supabase
         .from('product_lines')
         .insert(linesToInsert);
-        
-      if (linesError) {
-        throw linesError;
-      }
-      
-      toast.success("Đơn hàng đã được gửi thành công!");
-      
-      const order = {
-        id: orderId,
-        teamName,
-        players,
-        logoUrls,
-        printConfig,
-        productLines,
-        totalCost,
-        status: "new",
-        notes,
-        designImageFront: frontPath,
-        designImageBack: backPath,
-        referenceImages: referenceImagePaths,
-        designData: finalDesignData,
-        createdAt: new Date()
-      };
-      
-      navigate("/order-confirmation", { state: { order } });
-    } catch (error) {
-      console.error("Error submitting order:", error);
-      toast.error("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại sau.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const testDesignImage = async () => {
-    try {
-      const testId = uuidv4();
-      toast.info("Đang kiểm tra tạo ảnh thiết kế...");
-      
-      const { frontPath, backPath } = await generateOrderDesignImages(testId);
-      
-      let frontVerified = false;
-      let backVerified = false;
-      
-      if (frontPath) {
-        try {
-          frontVerified = await checkFileExistsInStorage('design_images', frontPath);
-          if (frontVerified) {
-            const { data: frontData } = supabase.storage
-              .from('design_images')
-              .getPublicUrl(frontPath);
-            console.log("Test front design image URL:", frontData.publicUrl);
-          }
-        } catch (err) {
-          console.warn("Unable to verify front image, but continuing:", err);
-          frontVerified = true;
-        }
-      }
-      
-      if (backPath) {
-        try {
-          backVerified = await checkFileExistsInStorage('design_images', backPath);
-          if (backVerified) {
-            const { data: backData } = supabase.storage
-              .from('design_images')
-              .getPublicUrl(backPath);
-            console.log("Test back design image URL:", backData.publicUrl);
-          }
-        } catch (err) {
-          console.warn("Unable to verify back image, but continuing:", err);
-          backVerified = true;
-        }
-      }
-      
-      if (frontPath || backPath) {
-        toast.success(`Tạo ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : 'mặt sau'} thành công!`);
-      } else {
-        toast.error("Không thể tạo ảnh thiết kế");
-      }
-    } catch (err) {
-      console.error("Test design image error:", err);
-      toast.error("Lỗi khi kiểm tra tạo ảnh thiết kế");
-    }
-  };
-
-  return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Tạo đơn hàng mới</h1>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="info">Thông tin đơn hàng</TabsTrigger>
-            <TabsTrigger value="preview">Xem trước</TabsTrigger>
-            <TabsTrigger value="summary">Tổng kết & Đặt hàng</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="info" className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left column */}
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="teamName">Tên đội bóng</Label>
-                  <Input 
-                    id="teamName"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    placeholder="Nhập tên đội bóng (không bắt buộc)"
-                  />
-                </div>
-                
-                <LogoUpload 
-                  logos={logos}
-                  onLogosChange={setLogos}
-                />
-
-                <div className="border rounded-md p-4 space-y-3">
-                  <Label htmlFor="referenceImages">Hình ảnh sản phẩm muốn in (PNG, JPG)</Label>
-                  <Input
-                    id="referenceImages"
-                    type="file"
-                    accept="image/png, image/jpeg, image/jpg"
-                    multiple
-                    onChange={(e) => handleReferenceImagesUpload(e.target.files)}
-                    className="mb-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tối đa 5 hình ảnh. Nhấp vào hình ảnh để xóa.
-                  </p>
-                  
-                  {referenceImagesPreview.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {referenceImagesPreview.map((preview, index) => (
-                        <div 
-                          key={index} 
-                          className="relative group w-20 h-20 border rounded-md overflow-hidden"
-                        >
-                          <img 
-                            src={preview} 
-                            alt={`Reference ${index+1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeReferenceImage(index)}
-                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label="Remove image"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="border rounded-md p-4 space-y-3">
-                  <Label htmlFor="orderExcel">Tải lên file cấu hình in (Excel)</Label>
-                  <Input
-                    id="orderExcel"
-                    type="file"
-                    accept=".xlsx, .xls"
-                    onChange={handleExcelUpload}
-                    className="mb-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    File Excel với các cột: IN DÒNG 1, IN DÒNG 2, IN DÒNG 3, KÍCH THƯỚC, 
-                    IN CHỮ NGỰC, IN SỐ NGỰC, IN SỐ QUẦN, FONT CHỮ, FONT SỐ
-                  </p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="notes">Ghi chú</Label>
-                  <Textarea 
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt (nếu có)"
-                  />
-                </div>
-                
-                <PrintConfigForm
-                  printConfig={printConfig}
-                  onPrintConfigChange={setPrintConfig}
-                />
-              </div>
-              
-              {/* Right column */}
-              <div className="space-y-6">
-                <PlayerForm 
-                  players={players}
-                  onPlayersChange={setPlayers}
-                />
-                
-                <PrintInfoForm
-                  designData={designData}
-                  onDesignDataChange={setDesignData}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Cấu hình sản phẩm in</h2>
-                <Button onClick={generateProductLines}>Tạo sản phẩm in tự động</Button>
-              </div>
-              
-              <ProductLineTable 
-                productLines={productLines}
-                onProductLinesChange={setProductLines}
-                logos={logos}
-              />
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setActiveTab("preview")}>Hủy</Button>
-              <Button onClick={() => setActiveTab("preview")}>Tiếp tục</Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="preview" className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Xem trước thiết kế áo</h2>
-                <p className="text-muted-foreground">
-                  Xem trước thiết kế áo của bạn. Có thể kéo thả logo để điều chỉnh vị trí.
-                </p>
-                
-                <div className="flex gap-4 justify-center">
-                  <Button 
-                    variant={previewView === 'front' ? 'default' : 'outline'} 
-                    onClick={() => setPreviewView('front')}
-                  >
-                    Mặt trước
-                  </Button>
-                  <Button 
-                    variant={previewView === 'back' ? 'default' : 'outline'} 
-                    onClick={() => setPreviewView('back')}
-                  >
-                    Mặt sau
-                  </Button>
-                </div>
-                
-                <div className="bg-muted/30 p-4 rounded-md">
-                  <div className="flex justify-center">
-                    <CanvasJersey 
-                      teamName={teamName || "TEAM NAME"}
-                      playerName={players[previewPlayer]?.name || ""}
-                      playerNumber={players[previewPlayer]?.number || 0}
-                      logos={logos}
-                      view={previewView}
-                      printConfig={{
-                        ...printConfig,
-                        // Pass design data to canvas
-                        designData: designData
-                      }}
-                      canvasRef={jerseyCanvasRef}
-                    />
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-sm text-green-700">
-                    Hệ thống sẽ lưu thiết kế cho cả mặt trước và mặt sau khi bạn đặt đơn hàng.
-                  </p>
-                  <div className="mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={testDesignImage}
-                      disabled={isGeneratingDesign}
-                    >
-                      {isGeneratingDesign ? "Đang xử lý..." : "Kiểm tra tạo ảnh"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Chọn cầu thủ để xem trước</h2>
-                
-                {players.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {players.map((player, index) => (
-                      <Button 
-                        key={player.id || index}
-                        variant={previewPlayer === index ? 'default' : 'outline'}
-                        onClick={() => setPreviewPlayer(index)}
-                        className="h-auto py-2 justify-start"
-                      >
-                        <div className="text-left">
-                          <div className="font-semibold">{player.name || `Cầu thủ ${index + 1}`}</div>
-                          <div className="text-sm opacity-80">#{player.number} - {player.size}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    Chưa có cầu thủ nào trong danh sách. Vui lòng quay lại bước trước để thêm cầu thủ.
-                  </p>
-                )}
-
-                {logos.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-2">Logo đã tải lên</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {logos.map((logo, index) => (
-                        <div key={logo.id} className="border rounded p-2">
-                          <img 
-                            src={logo.previewUrl} 
-                            alt={`Logo ${index + 1}`} 
-                            className="h-16 w-16 object-contain mx-auto"
-                          />
-                          <p className="text-xs text-center mt-1 text-muted-foreground">
-                            {getPositionLabel(logo.position)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Print Info Summary */}
-                <div className="mt-4 border rounded-md p-3">
-                  <h3 className="text-lg font-semibold mb-2">Thông tin in ấn</h3>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="font-medium">Font chữ:</p>
-                        <p>{designData.font_text.font}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Font số:</p>
-                        <p>{designData.font_number.font}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="font-medium">Vị trí in:</p>
-                      <ul className="list-disc pl-5">
-                        {designData.line_1?.enabled && (
-                          <li>In dòng 1 (trên số lưng): {designData.line_1.content || "Trống"}</li>
-                        )}
-                        {designData.line_2?.enabled && (
-                          <li>In dòng 2 (số lưng)</li>
-                        )}
-                        {designData.line_3?.enabled && (
-                          <li>In dòng 3 (dưới số lưng): {designData.line_3.content || "Trống"}</li>
-                        )}
-                        {designData.chest_text?.enabled && (
-                          <li>In chữ ngực: {designData.chest_text.content || "Trống"}</li>
-                        )}
-                        {designData.chest_number?.enabled && (
-                          <li>In số ngực</li>
-                        )}
-                        {designData.pants_number?.enabled && (
-                          <li>In số quần</li>
-                        )}
-                        {designData.pet_chest?.enabled && (
-                          <li>In PET ngực: {designData.pet_chest.content || "Trống"}</li>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between gap-2">
-              <Button variant="outline" onClick={() => setActiveTab("info")}>Quay lại</Button>
-              <Button onClick={() => setActiveTab("summary")}>Tiếp tục</Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="summary" className="space-y-8">
-            <OrderSummary 
-              teamName={teamName}
-              players={players}
-              logos={logos}
-              productLines={productLines}
-              designData={designData}
-            />
-            
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Lưu ý:</h3>
-              <p className="text-yellow-700">
-                Bằng việc nhấn nút "Đặt đơn hàng", bạn đồng ý với các điều khoản dịch vụ của chúng tôi.
-                Đơn hàng sẽ được xử lý trong vòng 24 giờ và bạn sẽ nhận được email xác nhận.
-              </p>
-            </div>
-            
-            <div className="flex justify-between gap-2">
-              <Button variant="outline" onClick={() => setActiveTab("preview")}>Quay lại</Button>
-              <Button 
-                onClick={submitOrder}
-                disabled={isSubmitting || players.length === 0}
-              >
-                {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </Layout>
-  );
-};
-
-const getPositionLabel = (position: string): string => {
-  switch (position) {
-    case 'chest_left': return 'Ngực trái';
-    case 'chest_right': return 'Ngực phải';
-    case 'chest_center': return 'Giữa ngực';
-    case 'sleeve_left': return 'Tay trái';
-    case 'sleeve_right': return 'Tay phải';
-    case 'pants': return 'Quần';
-    default: return 'Không xác định';
-  }
-};
-
-export default CreateOrder;

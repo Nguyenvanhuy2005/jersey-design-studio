@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Logo } from '@/types';
-import { getFont } from '@/utils/jersey-utils';
+import { getTextFont } from '@/utils/jersey-utils';
 import { Trash2, RotateCw } from 'lucide-react';
 
 interface JerseyFrontProps {

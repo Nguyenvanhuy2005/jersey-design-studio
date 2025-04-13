@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { DesignData } from "@/types";
+import { DesignData, PrintPositionConfig } from "@/types";
 
 interface PrintInfoFormProps {
   designData: DesignData;
@@ -35,45 +35,51 @@ export function PrintInfoForm({ designData, onDesignDataChange }: PrintInfoFormP
     { value: "Hồng", label: "Hồng" }
   ];
 
-  const updateTextPrintPosition = (position: keyof DesignData, field: keyof PrintInfoFormProps['designData'][keyof DesignData], value: any) => {
+  const updateTextPrintPosition = (position: keyof DesignData, field: string, value: any) => {
+    const updatedPrintPosition = {
+      ...(designData[position] as PrintPositionConfig || {}),
+      [field]: value
+    };
+
     onDesignDataChange({
       ...designData,
-      [position]: {
-        ...(designData[position] || {}),
-        [field]: value
-      }
+      [position]: updatedPrintPosition
     });
   };
 
   const togglePrintPosition = (position: keyof DesignData, enabled: boolean) => {
     if (!enabled) {
       // If disabling, keep the position data but mark as disabled
+      const updatedPosition = {
+        ...(designData[position] as PrintPositionConfig || {}),
+        enabled: false
+      };
+      
       onDesignDataChange({
         ...designData,
-        [position]: {
-          ...(designData[position] || {}),
-          enabled: false
-        }
+        [position]: updatedPosition
       });
     } else {
       // If enabling, set default values
       const defaultMaterial = "In chuyển nhiệt";
       const defaultColor = "Đen";
       
+      const updatedPosition = {
+        ...(designData[position] as PrintPositionConfig || {}),
+        enabled: true,
+        material: (designData[position] as PrintPositionConfig)?.material || defaultMaterial,
+        color: (designData[position] as PrintPositionConfig)?.color || defaultColor
+      };
+      
       onDesignDataChange({
         ...designData,
-        [position]: {
-          ...(designData[position] || {}),
-          enabled: true,
-          material: (designData[position] as any)?.material || defaultMaterial,
-          color: (designData[position] as any)?.color || defaultColor
-        }
+        [position]: updatedPosition
       });
     }
   };
 
   const isPrintPositionEnabled = (position: keyof DesignData): boolean => {
-    return Boolean((designData[position] as any)?.enabled);
+    return Boolean((designData[position] as PrintPositionConfig)?.enabled);
   };
 
   const updateFont = (type: 'font_text' | 'font_number', font: string) => {
@@ -193,7 +199,7 @@ export function PrintInfoForm({ designData, onDesignDataChange }: PrintInfoFormP
         <div>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full">
-              <TabsTrigger value="back" className="flex-1">Mặt sau</TabsTrigger>
+              <TabsTrigger value="back" className="flex-1">M���t sau</TabsTrigger>
               <TabsTrigger value="front" className="flex-1">Mặt trước</TabsTrigger>
               <TabsTrigger value="pants" className="flex-1">Quần</TabsTrigger>
             </TabsList>
