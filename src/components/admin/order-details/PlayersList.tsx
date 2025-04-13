@@ -16,7 +16,8 @@ export const PlayersList = ({ players }: PlayersListProps) => {
             <TableRow>
               <TableHead>Tên</TableHead>
               <TableHead>Số áo</TableHead>
-              <TableHead>Kích thước</TableHead>
+              <TableHead>Kích thước áo</TableHead>
+              <TableHead>Kích thước quần</TableHead>
               <TableHead>In hình</TableHead>
             </TableRow>
           </TableHeader>
@@ -26,6 +27,7 @@ export const PlayersList = ({ players }: PlayersListProps) => {
                 <TableCell>{player.name}</TableCell>
                 <TableCell>{player.number}</TableCell>
                 <TableCell>{player.size}</TableCell>
+                <TableCell>{player.pantsSize || "-"}</TableCell>
                 <TableCell>{player.printImage ? "Có" : "Không"}</TableCell>
               </TableRow>
             ))}

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Player } from "@/types";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Size {
+  size_id: string;
+  size_value: string;
+  category: 'adult' | 'children';
+}
 
 interface PlayerFormProps {
   players: Player[];
@@ -20,8 +27,35 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
     name: "",
     number: 0,
     size: "M",
+    pantsSize: "M",
     printImage: true,
   });
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchSizes = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('sizes')
+          .select('*')
+          .order('size_value', { ascending: true });
+        
+        if (error) {
+          console.error("Error fetching sizes:", error);
+        } else {
+          setSizes(data || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching sizes:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSizes();
+  }, []);
 
   const addPlayer = () => {
     if (newPlayer.number <= 0) {
@@ -35,6 +69,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
       name: "",
       number: 0,
       size: "M",
+      pantsSize: "M",
       printImage: true,
     });
   };
@@ -57,6 +92,10 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
     e.target.value = "";
   };
 
+  // Separate sizes into adult and children categories
+  const adultSizes = sizes.filter(size => size.category === 'adult').map(size => size.size_value);
+  const childrenSizes = sizes.filter(size => size.category === 'children').map(size => size.size_value);
+
   return (
     <div className={cn("space-y-4", className)}>
       <h2 className="text-xl font-semibold">Danh sách cầu thủ</h2>
@@ -69,7 +108,8 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
               <tr className="bg-muted">
                 <th className="p-2 text-left">Tên cầu thủ</th>
                 <th className="p-2 text-left">Số áo</th>
-                <th className="p-2 text-left">Kích thước</th>
+                <th className="p-2 text-left">Kích thước áo</th>
+                <th className="p-2 text-left">Kích thước quần</th>
                 <th className="p-2 text-left">In hình</th>
                 <th className="p-2 text-left">Hành động</th>
               </tr>
@@ -80,6 +120,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
                   <td className="p-2">{player.name || "(Không tên)"}</td>
                   <td className="p-2">{player.number}</td>
                   <td className="p-2">{player.size}</td>
+                  <td className="p-2">{player.pantsSize || "-"}</td>
                   <td className="p-2">{player.printImage ? "Có" : "Không"}</td>
                   <td className="p-2">
                     <Button variant="ghost" size="icon" onClick={() => removePlayer(index)}>
@@ -94,7 +135,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
       )}
       
       {/* Add player form */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
         <div>
           <Label htmlFor="playerName">Tên cầu thủ</Label>
           <Input 
@@ -118,19 +159,61 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
         </div>
         
         <div>
-          <Label htmlFor="playerSize">Kích thước</Label>
+          <Label htmlFor="playerSize">Kích thước áo</Label>
           <Select 
             value={newPlayer.size}
-            onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as "S" | "M" | "L" | "XL" }))}
+            onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as Player['size'] }))}
           >
             <SelectTrigger id="playerSize">
-              <SelectValue placeholder="Chọn kích thước" />
+              <SelectValue placeholder="Chọn kích thước áo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="S">S</SelectItem>
-              <SelectItem value="M">M</SelectItem>
-              <SelectItem value="L">L</SelectItem>
-              <SelectItem value="XL">XL</SelectItem>
+              <SelectItem value="header-adult" disabled className="font-semibold">
+                Người lớn
+              </SelectItem>
+              {adultSizes.map((size) => (
+                <SelectItem key={`adult-${size}`} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+              <SelectItem value="header-children" disabled className="font-semibold mt-2">
+                Trẻ em
+              </SelectItem>
+              {childrenSizes.map((size) => (
+                <SelectItem key={`children-${size}`} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="pantSize">Kích thước quần</Label>
+          <Select 
+            value={newPlayer.pantsSize}
+            onValueChange={(value) => setNewPlayer(prev => ({ ...prev, pantsSize: value as Player['size'] }))}
+          >
+            <SelectTrigger id="pantSize">
+              <SelectValue placeholder="Chọn kích thước quần" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="header-adult" disabled className="font-semibold">
+                Người lớn
+              </SelectItem>
+              {adultSizes.map((size) => (
+                <SelectItem key={`pants-adult-${size}`} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+              <SelectItem value="header-children" disabled className="font-semibold mt-2">
+                Trẻ em
+              </SelectItem>
+              {childrenSizes.map((size) => (
+                <SelectItem key={`pants-children-${size}`} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -158,7 +241,7 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
           onChange={handleExcelUpload}
         />
         <p className="text-xs text-muted-foreground mt-2">
-          Format: Tên cầu thủ (không bắt buộc), Số áo, Kích thước, In hình (Yes/No)
+          Format: Tên cầu thủ (không bắt buộc), Số áo, Kích thước áo, Kích thước quần, In hình (Yes/No)
         </p>
       </div>
     </div>
