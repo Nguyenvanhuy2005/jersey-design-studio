@@ -1,31 +1,15 @@
 
 import { useCallback, useMemo } from "react";
-import { Logo, Player, ProductLine, PrintConfig, DesignData } from "@/types";
+import { Logo, Player, ProductLine } from "@/types";
 
 interface OrderSummaryProps {
   teamName: string;
   players: Player[];
   logos?: Logo[];
   productLines: ProductLine[];
-  printConfig: PrintConfig;  // Make printConfig required
-  totalCost?: number;
-  designData?: DesignData;
-  onSubmit?: () => Promise<void>;
-  isSubmitting?: boolean;
-  isGeneratingDesign?: boolean;
 }
 
-export function OrderSummary({ 
-  teamName, 
-  players, 
-  logos = [], 
-  productLines,
-  printConfig,  // Add printConfig to destructured props
-  totalCost: providedTotalCost,
-  onSubmit,
-  isSubmitting,
-  isGeneratingDesign
-}: OrderSummaryProps) {
+export function OrderSummary({ teamName, players, logos = [], productLines }: OrderSummaryProps) {
   // Calculate costs based on position
   const calculateCost = useCallback((position: string): number => {
     if (position.includes("logo")) {
@@ -50,15 +34,11 @@ export function OrderSummary({
     return logos.length * 20000; // 20,000 VND per logo
   }, [logos.length]);
 
-  // Total cost - use provided totalCost if available or calculate
+  // Total cost
   const totalCost = useMemo(() => {
-    if (providedTotalCost !== undefined) {
-      return providedTotalCost;
-    }
-    
     const lineTotal = productLineCosts.reduce((sum, item) => sum + item.total, 0);
     return lineTotal + logosCost;
-  }, [productLineCosts, logosCost, providedTotalCost]);
+  }, [productLineCosts, logosCost]);
 
   // Get positions for display
   const getLogoPositions = useMemo(() => {
@@ -136,22 +116,6 @@ export function OrderSummary({
           </table>
         </div>
       </div>
-
-      {onSubmit && (
-        <div className="pt-4">
-          <button
-            className="w-full bg-primary text-white py-3 rounded-md font-medium hover:bg-primary/90 transition disabled:opacity-70 disabled:cursor-not-allowed"
-            onClick={onSubmit}
-            disabled={isSubmitting || isGeneratingDesign}
-          >
-            {isSubmitting ? 
-              "Đang xử lý..." : 
-              isGeneratingDesign ? 
-                "Đang tạo ảnh thiết kế..." : 
-                "Gửi đơn hàng"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

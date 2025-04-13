@@ -242,24 +242,6 @@ export type Database = {
           },
         ]
       }
-      sizes: {
-        Row: {
-          category: string
-          size_id: string
-          size_value: string
-        }
-        Insert: {
-          category: string
-          size_id?: string
-          size_value: string
-        }
-        Update: {
-          category?: string
-          size_id?: string
-          size_value?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

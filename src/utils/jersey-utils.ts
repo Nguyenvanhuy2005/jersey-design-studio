@@ -1,5 +1,5 @@
 
-import { Logo, LogoPosition, PrintConfig, FontConfig } from '@/types';
+import { Logo, LogoPosition, PrintConfig } from '@/types';
 
 // Default positions for each logo location
 export const defaultLogoPositions: Record<LogoPosition, { x: number, y: number }> = {
@@ -7,30 +7,11 @@ export const defaultLogoPositions: Record<LogoPosition, { x: number, y: number }
   'chest_right': { x: 220, y: 60 },
   'chest_center': { x: 150, y: 100 },
   'sleeve_left': { x: 30, y: 40 },
-  'sleeve_right': { x: 270, y: 40 },
-  'pants': { x: 150, y: 250 }
+  'sleeve_right': { x: 270, y: 40 }
 };
 
 export const getFont = (printConfig?: PrintConfig, size: number = 20): string => {
-  // Use fontText as the default font config if available
-  const fontConfig = printConfig?.fontText || { font: 'Arial' };
-  return getTextFont(fontConfig, size);
-};
-
-export const getTextFont = (fontConfig?: FontConfig, size: number = 20): string => {
-  let fontFamily = fontConfig?.font || 'Arial';
-  
-  // If it's a default font, add fallbacks
-  if (['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(fontFamily)) {
-    return `bold ${size}px ${fontFamily}, sans-serif`;
-  } else {
-    // For custom fonts, use the loaded font name
-    return `bold ${size}px "${fontFamily}", sans-serif`;
-  }
-};
-
-export const getNumberFont = (fontConfig?: FontConfig, size: number = 20): string => {
-  let fontFamily = fontConfig?.font || 'Arial';
+  let fontFamily = printConfig?.font || 'Arial';
   
   // If it's a default font, add fallbacks
   if (['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(fontFamily)) {

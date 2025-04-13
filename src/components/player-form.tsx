@@ -8,18 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Player } from "@/types";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import * as XLSX from 'xlsx';
-import { toast } from "sonner";
 
-export interface PlayerFormProps {
+interface PlayerFormProps {
   players: Player[];
   onPlayersChange: (players: Player[]) => void;
-  onNext?: () => void;
-  onPrev?: () => void;
   className?: string;
 }
 
-export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className }: PlayerFormProps) {
+export function PlayerForm({ players, onPlayersChange, className }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<Player>({
     name: "",
     number: 0,
@@ -29,14 +25,7 @@ export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className
 
   const addPlayer = () => {
     if (newPlayer.number <= 0) {
-      toast.error("Vui lòng nhập số áo lớn hơn 0");
-      return;
-    }
-    
-    // Check for duplicated player number
-    const duplicateNumber = players.find(p => p.number === newPlayer.number);
-    if (duplicateNumber) {
-      toast.error(`Số áo ${newPlayer.number} đã tồn tại. Vui lòng chọn số khác.`);
+      alert("Vui lòng nhập số áo lớn hơn 0");
       return;
     }
     
@@ -60,98 +49,9 @@ export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const binaryStr = evt.target?.result;
-        const workbook = XLSX.read(binaryStr, { type: 'binary' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const data = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-
-        // Find header row and determine column indices
-        const headerRow = data.find(row => 
-          Array.isArray(row) && row.some(cell => 
-            typeof cell === 'string' && (cell.includes('TÊN') || cell.includes('SỐ') || cell.includes('KÍCH THƯỚC'))
-          )
-        );
-
-        if (!headerRow) {
-          toast.error("Không tìm thấy dòng tiêu đề trong file Excel. Vui lòng kiểm tra định dạng file.");
-          return;
-        }
-
-        // Find column indices
-        const nameIdx = headerRow.findIndex((col: any) => typeof col === 'string' && col.includes('TÊN'));
-        const numberIdx = headerRow.findIndex((col: any) => typeof col === 'string' && col.includes('SỐ'));
-        const sizeIdx = headerRow.findIndex((col: any) => typeof col === 'string' && 
-          (col.includes('KÍCH THƯỚC') || col.includes('SIZE') || col.includes('CỠ'))
-        );
-
-        if (numberIdx === -1 || sizeIdx === -1) {
-          toast.error("Thiếu cột số áo hoặc kích thước trong file Excel.");
-          return;
-        }
-
-        // Process data rows
-        const importedPlayers: Player[] = [];
-        for (let i = headerRow.length > 0 ? 1 : 0; i < data.length; i++) {
-          const row = data[i];
-          if (!row || row.length === 0) continue;
-
-          const number = parseInt(row[numberIdx], 10);
-          const size = String(row[sizeIdx] || 'M').toUpperCase();
-          
-          // Skip invalid rows
-          if (isNaN(number) || number <= 0) continue;
-
-          // Validate size
-          const validSizes = ['S', 'M', 'L', 'XL', '1', '2', '3', '4', '5'];
-          const normalizedSize = validSizes.includes(size) ? size : 'M';
-
-          const name = nameIdx !== -1 ? String(row[nameIdx] || '') : '';
-
-          // Add player
-          importedPlayers.push({
-            id: `player-excel-${Date.now()}-${i}`,
-            name,
-            number,
-            size: normalizedSize as any,
-            printImage: true
-          });
-        }
-
-        if (importedPlayers.length === 0) {
-          toast.error("Không có dữ liệu cầu thủ hợp lệ trong file Excel.");
-          return;
-        }
-
-        // Check for duplicate numbers
-        const existingNumbers = new Set(players.map(p => p.number));
-        const duplicateNumbers: number[] = [];
-        const uniqueImportedPlayers = importedPlayers.filter(p => {
-          if (existingNumbers.has(p.number)) {
-            duplicateNumbers.push(p.number);
-            return false;
-          }
-          existingNumbers.add(p.number);
-          return true;
-        });
-
-        if (duplicateNumbers.length > 0) {
-          toast.warning(`Bỏ qua ${duplicateNumbers.length} cầu thủ có số áo trùng lặp: ${duplicateNumbers.join(', ')}`);
-        }
-
-        // Update players list
-        onPlayersChange([...players, ...uniqueImportedPlayers]);
-        toast.success(`Đã nhập ${uniqueImportedPlayers.length} cầu thủ từ file Excel`);
-      } catch (error) {
-        console.error("Excel import error:", error);
-        toast.error("Lỗi khi xử lý file Excel. Vui lòng kiểm tra định dạng file.");
-      }
-    };
-
-    reader.readAsBinaryString(file);
+    // In a real implementation, we would use a library like xlsx to parse Excel files
+    // For now, we'll just show a toast message
+    alert("Excel import functionality will be implemented after Supabase integration");
     
     // Reset file input
     e.target.value = "";
@@ -221,7 +121,7 @@ export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className
           <Label htmlFor="playerSize">Kích thước</Label>
           <Select 
             value={newPlayer.size}
-            onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as "S" | "M" | "L" | "XL" | "1" | "2" | "3" | "4" | "5" }))}
+            onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as "S" | "M" | "L" | "XL" }))}
           >
             <SelectTrigger id="playerSize">
               <SelectValue placeholder="Chọn kích thước" />
@@ -231,11 +131,6 @@ export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className
               <SelectItem value="M">M</SelectItem>
               <SelectItem value="L">L</SelectItem>
               <SelectItem value="XL">XL</SelectItem>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
-              <SelectItem value="5">5</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -263,24 +158,9 @@ export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className
           onChange={handleExcelUpload}
         />
         <p className="text-xs text-muted-foreground mt-2">
-          Format: Tên cầu thủ (không bắt buộc), Số áo (bắt buộc), Kích thước (bắt buộc)
+          Format: Tên cầu thủ (không bắt buộc), Số áo, Kích thước, In hình (Yes/No)
         </p>
       </div>
-
-      {(onPrev || onNext) && (
-        <div className="flex justify-between mt-4">
-          {onPrev && (
-            <Button variant="outline" onClick={onPrev}>
-              Trở lại: Thông tin
-            </Button>
-          )}
-          {onNext && (
-            <Button onClick={onNext}>
-              Tiếp theo: Logo
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
-import { Order, FontConfig } from "@/types";
+import { Order } from "@/types";
 import { LogOut, AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -14,104 +14,136 @@ import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
 import { checkDesignImageExists, checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/image-utils";
 
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    teamName: 'Team A',
-    status: 'new',
-    totalCost: 2500000,
-    createdAt: new Date(),
-    notes: 'Please deliver by next week',
-    designImage: '/images/design1.png',
-    designImageFront: '/images/design1-front.png',
-    designImageBack: '/images/design1-back.png',
-    referenceImages: ['/images/ref1.jpg', '/images/ref2.jpg'],
-    players: [
-      { id: 'p1', name: 'Player 1', number: 10, size: 'L', printImage: true },
-      { id: 'p2', name: 'Player 2', number: 7, size: 'M', printImage: true },
-    ],
-    productLines: [
-      { id: 'pl1', product: 'Áo thi đấu', position: 'In số lưng', material: 'In chuyển nhiệt', size: 'Lớn', points: 1, content: 'Số áo' },
-      { id: 'pl2', product: 'Áo thi đấu', position: 'In logo ngực trái', material: 'In chuyển nhiệt', size: 'Nhỏ', points: 1, content: 'Logo đội' },
-    ],
-    printConfig: {
-      fontText: { font: 'Arial' },
-      fontNumber: { font: 'Arial' },
-      backMaterial: 'In chuyển nhiệt',
-      backColor: 'Đen',
-      frontMaterial: 'In chuyển nhiệt',
-      frontColor: 'Trắng',
-      sleeveMaterial: 'In chuyển nhiệt',
-      sleeveColor: 'Đen',
-      legMaterial: 'In chuyển nhiệt',
-      legColor: 'Đen',
-    },
+const mockOrders: Order[] = [{
+  id: "order-1",
+  teamName: "FC Barcelona",
+  players: Array(11).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-1`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 2 === 0 ? "M" : "L",
+    printImage: i % 3 === 0
+  })),
+  printConfig: {
+    font: "Arial",
+    backMaterial: "In chuyển nhiệt",
+    backColor: "Trắng",
+    frontMaterial: "In chuyển nhiệt",
+    frontColor: "Đen",
+    sleeveMaterial: "In chuyển nhiệt",
+    sleeveColor: "Đen",
+    legMaterial: "In chuyển nhiệt",
+    legColor: "Đen"
   },
-  {
-    id: '2',
-    teamName: 'Team B',
-    status: 'processing',
-    totalCost: 3000000,
-    createdAt: new Date(),
-    notes: 'Please deliver by next week',
-    designImage: '/images/design2.png',
-    designImageFront: '/images/design2-front.png',
-    designImageBack: '/images/design2-back.png',
-    referenceImages: ['/images/ref3.jpg', '/images/ref4.jpg'],
-    players: [
-      { id: 'p3', name: 'Player 3', number: 11, size: 'L', printImage: true },
-      { id: 'p4', name: 'Player 4', number: 8, size: 'M', printImage: true },
-    ],
-    productLines: [
-      { id: 'pl3', product: 'Áo thi đấu', position: 'In số lưng', material: 'In chuyển nhiệt', size: 'Lớn', points: 1, content: 'Số áo' },
-      { id: 'pl4', product: 'Áo thi đấu', position: 'In logo ngực trái', material: 'In chuyển nhiệt', size: 'Nhỏ', points: 1, content: 'Logo đội' },
-    ],
-    printConfig: {
-      fontText: { font: 'Arial' },
-      fontNumber: { font: 'Arial' },
-      backMaterial: 'In chuyển nhiệt',
-      backColor: 'Đen',
-      frontMaterial: 'In chuyển nhiệt',
-      frontColor: 'Trắng',
-      sleeveMaterial: 'In chuyển nhiệt',
-      sleeveColor: 'Đen',
-      legMaterial: 'In chuyển nhiệt',
-      legColor: 'Đen',
-    },
+  productLines: [{
+    id: "product-1-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In chuyển nhiệt",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-1-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In chuyển nhiệt",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 3500000,
+  status: "new",
+  designImage: "order-1/design.png",
+  createdAt: new Date(2023, 3, 15),
+  referenceImages: []
+}, {
+  id: "order-2",
+  teamName: "Manchester United",
+  players: Array(15).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-2`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 2 === 0 ? "L" : "XL",
+    printImage: i % 2 === 0
+  })),
+  printConfig: {
+    font: "Helvetica",
+    backMaterial: "In trực tiếp",
+    backColor: "Đen",
+    frontMaterial: "In trực tiếp",
+    frontColor: "Đen",
+    sleeveMaterial: "In trực tiếp",
+    sleeveColor: "Đen",
+    legMaterial: "In trực tiếp",
+    legColor: "Đen"
   },
-  {
-    id: '3',
-    teamName: 'Team C',
-    status: 'completed',
-    totalCost: 3500000,
-    createdAt: new Date(),
-    notes: 'Please deliver by next week',
-    designImage: '/images/design3.png',
-    designImageFront: '/images/design3-front.png',
-    designImageBack: '/images/design3-back.png',
-    referenceImages: ['/images/ref5.jpg', '/images/ref6.jpg'],
-    players: [
-      { id: 'p5', name: 'Player 5', number: 12, size: 'L', printImage: true },
-      { id: 'p6', name: 'Player 6', number: 9, size: 'M', printImage: true },
-    ],
-    productLines: [
-      { id: 'pl5', product: 'Áo thi đấu', position: 'In số lưng', material: 'In chuyển nhiệt', size: 'Lớn', points: 1, content: 'Số áo' },
-      { id: 'pl6', product: 'Áo thi đấu', position: 'In logo ngực trái', material: 'In chuyển nhiệt', size: 'Nhỏ', points: 1, content: 'Logo đội' },
-    ],
-    printConfig: {
-      fontText: { font: 'Arial' },
-      fontNumber: { font: 'Arial' },
-      backMaterial: 'In chuyển nhiệt',
-      backColor: 'Đen',
-      frontMaterial: 'In chuyển nhiệt',
-      frontColor: 'Trắng',
-      sleeveMaterial: 'In chuyển nhiệt',
-      sleeveColor: 'Đen',
-      legMaterial: 'In chuyển nhiệt',
-      legColor: 'Đen',
-    },
+  productLines: [{
+    id: "product-2-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In trực tiếp",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-2-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In trực tiếp",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 4200000,
+  status: "processing",
+  designImage: "order-2/design.png",
+  createdAt: new Date(2023, 3, 20),
+  referenceImages: []
+}, {
+  id: "order-3",
+  teamName: "Real Madrid",
+  players: Array(18).fill(null).map((_, i) => ({
+    id: `player-${i + 1}-3`,
+    name: `Player ${i + 1}`,
+    number: i + 1,
+    size: i % 3 === 0 ? "S" : i % 3 === 1 ? "M" : "L",
+    printImage: true
+  })),
+  printConfig: {
+    font: "Roboto",
+    backMaterial: "In chuyển nhi���t",
+    backColor: "Đen",
+    frontMaterial: "In chuyển nhiệt",
+    frontColor: "Trắng",
+    sleeveMaterial: "In chuyển nhiệt",
+    sleeveColor: "Trắng",
+    legMaterial: "In chuyển nhiệt",
+    legColor: "Trắng"
   },
-];
+  productLines: [{
+    id: "product-3-1",
+    product: "Áo thi đấu",
+    position: "Lưng trên",
+    material: "In chuyển nhiệt",
+    size: "Trung bình",
+    points: 1,
+    content: "Tên cầu thủ"
+  }, {
+    id: "product-3-2",
+    product: "Áo thi đấu",
+    position: "Lưng giữa",
+    material: "In chuyển nhiệt",
+    size: "Lớn",
+    points: 1,
+    content: "Số áo"
+  }],
+  totalCost: 5400000,
+  status: "completed",
+  designImage: "order-3/design.png",
+  createdAt: new Date(2023, 2, 10),
+  referenceImages: []
+}];
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -258,29 +290,6 @@ const AdminOrders = () => {
               back: designImageBack
             });
             
-            // Handle fonts properly by checking the print_configs
-            const fontText: FontConfig = { font: 'Arial' };
-            const fontNumber: FontConfig = { font: 'Arial' };
-            
-            if (order.print_configs && order.print_configs.length > 0) {
-              // For backward compatibility with existing data
-              fontText.font = order.print_configs[0].font || 'Arial';
-              fontNumber.font = order.print_configs[0].font || 'Arial';
-              
-              if (order.design_data && typeof order.design_data === 'object') {
-                // If design_data has font information, use it
-                const designData = order.design_data as any;
-                if (designData.font_text && typeof designData.font_text === 'object') {
-                  fontText.font = designData.font_text.font || fontText.font;
-                  fontText.customFontUrl = designData.font_text.font_file;
-                }
-                if (designData.font_number && typeof designData.font_number === 'object') {
-                  fontNumber.font = designData.font_number.font || fontNumber.font;
-                  fontNumber.customFontUrl = designData.font_number.font_file;
-                }
-              }
-            }
-            
             return {
               id: order.id,
               teamName: order.team_name || '',
@@ -310,8 +319,7 @@ const AdminOrders = () => {
               })) : [],
               printConfig: order.print_configs && order.print_configs.length > 0 ? {
                 id: order.print_configs[0].id,
-                fontText: fontText,
-                fontNumber: fontNumber,
+                font: order.print_configs[0].font || 'Arial',
                 backMaterial: order.print_configs[0].back_material || '',
                 backColor: order.print_configs[0].back_color || '',
                 frontMaterial: order.print_configs[0].front_material || '',
@@ -321,8 +329,7 @@ const AdminOrders = () => {
                 legMaterial: order.print_configs[0].leg_material || '',
                 legColor: order.print_configs[0].leg_color || ''
               } : {
-                fontText: { font: 'Arial' },
-                fontNumber: { font: 'Arial' },
+                font: 'Arial',
                 backMaterial: 'In chuyển nhiệt',
                 backColor: 'Đen',
                 frontMaterial: 'In chuyển nhiệt',

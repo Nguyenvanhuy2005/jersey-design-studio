@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { Link } from "react-router-dom";
@@ -5,29 +6,6 @@ import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { ArrowRight } from "lucide-react";
 
 const Index = () => {
-  // Create sample player data for the demo jerseys
-  const demoPlayer = {
-    id: "demo-1",
-    name: "RONALDO",
-    number: 7,
-    size: "L" as const,
-    printImage: true
-  };
-  
-  // Create sample print config
-  const demoPrintConfig = {
-    fontText: { font: "Arial" },
-    fontNumber: { font: "Arial" },
-    backMaterial: "In chuyển nhiệt",
-    backColor: "Đen",
-    frontMaterial: "In chuyển nhiệt",
-    frontColor: "Đen",
-    sleeveMaterial: "In chuyển nhiệt",
-    sleeveColor: "Đen",
-    legMaterial: "In chuyển nhiệt",
-    legColor: "Đen"
-  };
-
   return (
     <Layout>
       {/* Hero Section */}
@@ -53,17 +31,17 @@ const Index = () => {
               <div className="flex gap-4 relative">
                 <div className="transform rotate-[-15deg]">
                   <CanvasJersey 
-                    player={demoPlayer}
-                    printConfig={demoPrintConfig}
                     teamName="FOOTBALL TEAM" 
-                    viewMode="back"
+                    playerName="RONALDO" 
+                    playerNumber={7} 
+                    view="back"
                   />
                 </div>
                 <div className="transform rotate-[15deg]">
                   <CanvasJersey 
-                    player={demoPlayer}
-                    printConfig={demoPrintConfig}
-                    viewMode="front"
+                    teamName="FOOTBALL TEAM" 
+                    playerNumber={7} 
+                    view="front"
                   />
                 </div>
               </div>
