@@ -8,12 +8,14 @@ import { X } from "lucide-react";
 import { LogoPosition, Logo } from "@/types";
 import { toast } from "sonner";
 
-interface LogoUploadProps {
+export interface LogoUploadProps {
   logos: Logo[];
   onLogosChange: (logos: Logo[]) => void;
+  onNext?: () => void;
+  onPrev?: () => void;
 }
 
-export function LogoUpload({ logos, onLogosChange }: LogoUploadProps) {
+export function LogoUpload({ logos, onLogosChange, onNext, onPrev }: LogoUploadProps) {
   const [selectedPosition, setSelectedPosition] = useState<LogoPosition>("chest_left");
   
   const positionLabels: Record<LogoPosition, string> = {
@@ -151,6 +153,21 @@ export function LogoUpload({ logos, onLogosChange }: LogoUploadProps) {
           </div>
         </div>
       </div>
+
+      {(onPrev || onNext) && (
+        <div className="flex justify-between mt-4">
+          {onPrev && (
+            <Button variant="outline" onClick={onPrev}>
+              Trở lại: Cầu thủ
+            </Button>
+          )}
+          {onNext && (
+            <Button onClick={onNext}>
+              Tiếp theo: Xem trước
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

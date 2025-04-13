@@ -11,13 +11,15 @@ import { cn } from "@/lib/utils";
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 
-interface PlayerFormProps {
+export interface PlayerFormProps {
   players: Player[];
   onPlayersChange: (players: Player[]) => void;
+  onNext?: () => void;
+  onPrev?: () => void;
   className?: string;
 }
 
-export function PlayerForm({ players, onPlayersChange, className }: PlayerFormProps) {
+export function PlayerForm({ players, onPlayersChange, onNext, onPrev, className }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<Player>({
     name: "",
     number: 0,
@@ -264,6 +266,21 @@ export function PlayerForm({ players, onPlayersChange, className }: PlayerFormPr
           Format: Tên cầu thủ (không bắt buộc), Số áo (bắt buộc), Kích thước (bắt buộc)
         </p>
       </div>
+
+      {(onPrev || onNext) && (
+        <div className="flex justify-between mt-4">
+          {onPrev && (
+            <Button variant="outline" onClick={onPrev}>
+              Trở lại: Thông tin
+            </Button>
+          )}
+          {onNext && (
+            <Button onClick={onNext}>
+              Tiếp theo: Logo
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

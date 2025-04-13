@@ -9,7 +9,7 @@ import { PrintConfig } from "@/types";
 import { toast } from "sonner";
 import { loadCustomFont } from "@/utils/font-utils";
 
-interface PrintConfigFormProps {
+export interface PrintConfigFormProps {
   printConfig: PrintConfig;
   onPrintConfigChange: (config: PrintConfig) => void;
 }
