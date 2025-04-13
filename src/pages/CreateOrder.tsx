@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -764,6 +765,8 @@ const CreateOrder = () => {
         }
       };
       
+      let updatedDesignData = { ...finalDesignData };
+      
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -803,18 +806,18 @@ const CreateOrder = () => {
             scale: position.scale
           };
 
-          // Update the designData with logo position
-          designData = {
-            ...designData,
+          // Update the designData with logo position - fixed the bug here
+          updatedDesignData = {
+            ...updatedDesignData,
             [`logo_${logo.position}`]: logoPositionData
           };
         }
       }
       
       // Add reference images to design data
-      finalDesignData.reference_images = referenceImagePaths;
+      updatedDesignData.reference_images = referenceImagePaths;
       
-      console.log("Inserting order with design_data:", finalDesignData);
+      console.log("Inserting order with design_data:", updatedDesignData);
       // When inserting into Supabase, we need to properly serialize the designData
       const { error: orderError } = await supabase
         .from('orders')
@@ -827,7 +830,7 @@ const CreateOrder = () => {
           design_image_back: backPath,
           reference_images: referenceImagePaths,
           notes: notes,
-          design_data: JSON.stringify(designData) // Convert to JSON string for storage
+          design_data: JSON.stringify(updatedDesignData) // Convert to JSON string for storage
         });
         
       if (orderError) {
@@ -858,8 +861,8 @@ const CreateOrder = () => {
         .from('print_configs')
         .insert({
           order_id: orderId,
-          font: finalDesignData.font_text.font,
-          font_file: finalDesignData.font_text.font_file,
+          font: updatedDesignData.font_text.font,
+          font_file: updatedDesignData.font_text.font_file,
           back_material: printConfig.backMaterial,
           back_color: printConfig.backColor,
           front_material: printConfig.frontMaterial,
@@ -890,3 +893,273 @@ const CreateOrder = () => {
       const { error: linesError } = await supabase
         .from('product_lines')
         .insert(linesToInsert);
+        
+      if (linesError) {
+        console.error("Error adding product lines:", linesError);
+        throw linesError;
+      }
+      
+      // Reset isSubmitting state and navigate to order confirmation
+      setIsSubmitting(false);
+      toast.success("Đơn hàng đã được tạo thành công!");
+      navigate("/order-confirmation", { 
+        state: { 
+          orderId,
+          teamName,
+          totalCost
+        } 
+      });
+      
+    } catch (err) {
+      console.error("Error submitting order:", err);
+      toast.error(`Lỗi khi tạo đơn hàng: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsSubmitting(false);
+    }
+  };
+
+  // Render function below
+  return (
+    <Layout>
+      <div className="container mx-auto py-6 space-y-6">
+        <h1 className="text-2xl font-bold">Tạo đơn hàng mới</h1>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-5">
+            <TabsTrigger value="info">Thông tin</TabsTrigger>
+            <TabsTrigger value="players">Cầu thủ</TabsTrigger>
+            <TabsTrigger value="logos">Logo</TabsTrigger>
+            <TabsTrigger value="print">In ấn</TabsTrigger>
+            <TabsTrigger value="summary">Tổng kết</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="info" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="team-name">Tên đội</Label>
+                  <Input 
+                    id="team-name"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Tên đội bóng"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Ghi chú</Label>
+                  <Textarea 
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ghi chú thêm về đơn hàng"
+                    rows={4}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reference-images">Hình ảnh tham khảo (tối đa 5)</Label>
+                  <Input
+                    id="reference-images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleReferenceImagesUpload(e.target.files)}
+                  />
+                </div>
+                
+                {referenceImagesPreview.length > 0 && (
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                    {referenceImagesPreview.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={url} 
+                          alt={`Reference ${index}`} 
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeReferenceImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="excel-upload">Tải lên file Excel (tùy chọn)</Label>
+                  <Input
+                    id="excel-upload"
+                    type="file"
+                    accept=".xlsx, .xls"
+                    onChange={handleExcelUpload}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    File Excel phải có các cột: DÒNG 1, DÒNG 2, DÒNG 3, CHỮ NGỰC, SỐ NGỰC, SỐ QUẦN, FONT CHỮ, FONT SỐ
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="border rounded p-4 space-y-2">
+                  <p className="font-medium">Xem trước áo đấu</p>
+                  <div className="flex space-x-2 mb-2">
+                    <Button
+                      variant={previewView === 'front' ? 'default' : 'outline'}
+                      onClick={() => setPreviewView('front')}
+                    >
+                      Mặt trước
+                    </Button>
+                    <Button
+                      variant={previewView === 'back' ? 'default' : 'outline'}
+                      onClick={() => setPreviewView('back')}
+                    >
+                      Mặt sau
+                    </Button>
+                  </div>
+                  
+                  <div className="border rounded-lg overflow-hidden aspect-square bg-gray-50">
+                    <CanvasJersey
+                      ref={jerseyCanvasRef}
+                      player={players[previewPlayer] || { name: teamName || "Tên cầu thủ", number: 10, size: "M", printImage: true }}
+                      printConfig={printConfig}
+                      logos={logos}
+                      viewMode={previewView}
+                      teamName={teamName}
+                      designData={designData}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewPlayer(prev => (prev > 0 ? prev - 1 : (players.length > 0 ? players.length - 1 : 0)))}
+                      disabled={players.length <= 1}
+                    >
+                      Cầu thủ trước
+                    </Button>
+                    <span className="text-sm">
+                      {players.length > 0 
+                        ? `Cầu thủ ${previewPlayer + 1}/${players.length}` 
+                        : "Chưa có cầu thủ nào"}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewPlayer(prev => (prev < players.length - 1 ? prev + 1 : 0))}
+                      disabled={players.length <= 1}
+                    >
+                      Cầu thủ sau
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={() => setActiveTab("players")}>
+                Tiếp theo: Thêm cầu thủ
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="players" className="space-y-4">
+            <PlayerForm
+              players={players}
+              onPlayersChange={setPlayers}
+            />
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("info")}>
+                Quay lại
+              </Button>
+              <Button onClick={() => setActiveTab("logos")}>
+                Tiếp theo: Thêm logo
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="logos" className="space-y-4">
+            <LogoUpload 
+              logos={logos}
+              onLogosChange={setLogos}
+            />
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("players")}>
+                Quay lại
+              </Button>
+              <Button onClick={() => setActiveTab("print")}>
+                Tiếp theo: Cấu hình in
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="print" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <PrintConfigForm
+                printConfig={printConfig}
+                onPrintConfigChange={setPrintConfig}
+              />
+              
+              <PrintInfoForm
+                designData={designData}
+                onDesignDataChange={setDesignData}
+              />
+            </div>
+            
+            <ProductLineTable
+              productLines={productLines}
+              onProductLinesChange={setProductLines}
+              logos={logos}
+            />
+            
+            <div className="flex justify-center">
+              <Button 
+                variant="default" 
+                onClick={generateProductLines}
+              >
+                Tự động tạo sản phẩm in
+              </Button>
+            </div>
+            
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("logos")}>
+                Quay lại
+              </Button>
+              <Button onClick={() => setActiveTab("summary")}>
+                Tiếp theo: Hoàn thành
+              </Button>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="summary">
+            <OrderSummary
+              teamName={teamName}
+              players={players}
+              logos={logos}
+              printConfig={printConfig}
+              productLines={productLines}
+              totalCost={calculateTotalCost()}
+              designData={designData}
+              onSubmit={submitOrder}
+              isSubmitting={isSubmitting}
+              isGeneratingDesign={isGeneratingDesign}
+            />
+            
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => setActiveTab("print")}>
+                Quay lại
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
+  );
+};
+
+export default CreateOrder;
