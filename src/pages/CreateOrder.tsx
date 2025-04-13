@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -29,7 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { formatCurrency } from "@/utils/format-utils";
+import { formatCurrency, parseDateSafely } from "@/utils/format-utils";
 import { ProductLineTable } from "@/components/product-line-table";
 
 const CreateOrder = () => {
@@ -93,7 +94,12 @@ const CreateOrder = () => {
           .single();
         
         if (data && !error) {
-          setCustomerInfo(data);
+          // Fix the date handling with our new utility
+          const customerData: Customer = {
+            ...data,
+            created_at: parseDateSafely(data.created_at)
+          };
+          setCustomerInfo(customerData);
         }
       }
     };
@@ -318,14 +324,14 @@ const CreateOrder = () => {
       }
     };
     
-    const hasGoalkeeper = players.some(p => (p as any).uniform_type === 'goalkeeper');
+    const hasGoalkeeper = players.some(p => p.uniform_type === 'goalkeeper');
     if (hasGoalkeeper) {
-      newDesignData.uniform_type = 'player';
+      newDesignData.uniform_type = 'mixed';
     }
     
-    const firstPlayer = players[0] as any;
+    const firstPlayer = players[0];
     
-    if (players.some(p => (p as any).line_1)) {
+    if (players.some(p => p.line_1)) {
       newDesignData.line_1 = {
         enabled: true,
         material: printStyle,
@@ -342,7 +348,7 @@ const CreateOrder = () => {
       font: fontNumber
     };
     
-    if (players.some(p => (p as any).line_3)) {
+    if (players.some(p => p.line_3)) {
       newDesignData.line_3 = {
         enabled: true,
         material: printStyle,
@@ -352,7 +358,7 @@ const CreateOrder = () => {
       };
     }
     
-    if (players.some(p => (p as any).chest_text)) {
+    if (players.some(p => p.chest_text)) {
       newDesignData.chest_text = {
         enabled: true,
         material: printStyle,
@@ -362,7 +368,7 @@ const CreateOrder = () => {
       };
     }
     
-    if (players.some(p => (p as any).chest_number)) {
+    if (players.some(p => p.chest_number)) {
       newDesignData.chest_number = {
         enabled: true,
         material: printStyle,
@@ -370,7 +376,7 @@ const CreateOrder = () => {
       };
     }
     
-    if (players.some(p => (p as any).pants_number)) {
+    if (players.some(p => p.pants_number)) {
       newDesignData.pants_number = {
         enabled: true,
         material: printStyle,
@@ -388,22 +394,23 @@ const CreateOrder = () => {
     ];
     
     logoPositions.forEach(pos => {
-      if (players.some(p => (p as any)[pos.key])) {
+      if (players.some(p => p[pos.key as keyof Player])) {
         const logo = logos.find(l => l.position === pos.position);
         
-        const posKey = pos.key as keyof DesignData;
-        newDesignData[posKey] = {
-          enabled: true,
-          material: printStyle,
-          logo_id: logo?.id,
-          x_position: 0,
-          y_position: 0,
-          scale: pos.key === 'logo_chest_center' ? 1.3 : 1.0
-        };
+        if (newDesignData[pos.key as keyof DesignData] === undefined) {
+          (newDesignData as any)[pos.key] = {
+            enabled: true,
+            material: printStyle,
+            logo_id: logo?.id,
+            x_position: 0,
+            y_position: 0,
+            scale: pos.key === 'logo_chest_center' ? 1.3 : 1.0
+          };
+        }
       }
     });
     
-    if (players.some(p => (p as any).pet_chest)) {
+    if (players.some(p => p.pet_chest)) {
       newDesignData.pet_chest = {
         enabled: true,
         material: "In PET",
@@ -679,6 +686,10 @@ const CreateOrder = () => {
   };
 
   const prepareDesignDataForStorage = (data: Partial<DesignData>): Record<string, any> => {
+    // Make sure uniform_type is one of the allowed values
+    if (data.uniform_type && !['player', 'goalkeeper', 'mixed'].includes(data.uniform_type)) {
+      data.uniform_type = 'player';
+    }
     return JSON.parse(JSON.stringify(data));
   };
 
@@ -797,9 +808,10 @@ const CreateOrder = () => {
       
       const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
       
-      const finalDesignData = {
+      const finalDesignData: Partial<DesignData> = {
         ...designData,
-        uniform_type: 'player',
+        uniform_type: playerCount > 0 && goalkeeperCount > 0 ? 'mixed' : 
+                     goalkeeperCount > 0 ? 'goalkeeper' : 'player',
         quantity: players.length,
         reference_images: referenceImagePaths,
         font_text: {
@@ -854,27 +866,28 @@ const CreateOrder = () => {
       
       if (players.length > 0) {
         const playersToInsert = players.map(p => {
-          const extPlayer = p as any;
           return {
             name: p.name,
             number: p.number,
             size: p.size,
             print_image: p.printImage,
             order_id: orderId,
-            uniform_type: extPlayer.uniform_type || 'player',
-            line_1: extPlayer.line_1 || null,
+            uniform_type: p.uniform_type || 'player',
+            line_1: p.line_1 || null,
             line_2: String(p.number),
-            line_3: extPlayer.line_3 || null,
-            chest_text: extPlayer.chest_text || null,
-            chest_number: extPlayer.chest_number || false,
-            pants_number: extPlayer.pants_number || false,
-            logo_chest_left: extPlayer.logo_chest_left || false,
-            logo_chest_right: extPlayer.logo_chest_right || false,
-            logo_chest_center: extPlayer.logo_chest_center || false,
-            logo_sleeve_left: extPlayer.logo_sleeve_left || false,
-            logo_sleeve_right: extPlayer.logo_sleeve_right || false,
-            logo_pants: extPlayer.logo_pants || false,
-            pet_chest: extPlayer.pet_chest || null
+            line_3: p.line_3 || null,
+            chest_text: p.chest_text || null,
+            chest_number: p.chest_number || false,
+            pants_number: p.pants_number || false,
+            logo_chest_left: p.logo_chest_left || false,
+            logo_chest_right: p.logo_chest_right || false,
+            logo_chest_center: p.logo_chest_center || false,
+            logo_sleeve_left: p.logo_sleeve_left || false,
+            logo_sleeve_right: p.logo_sleeve_right || false,
+            logo_pants: p.logo_pants || false,
+            pet_chest: p.pet_chest || null,
+            jersey_color: p.jersey_color || 'yellow',
+            note: p.note || null
           };
         });
         
@@ -890,7 +903,7 @@ const CreateOrder = () => {
 
   return (
     <Layout>
-      {/* Rest of the component JSX */}
+      {/* Add your JSX content here */}
     </Layout>
   );
 };

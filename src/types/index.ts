@@ -91,7 +91,7 @@ export interface LogoPositionConfig extends PrintPositionConfig {
 
 // Updated DesignData to match new requirements
 export interface DesignData {
-  uniform_type?: 'player' | 'goalkeeper';
+  uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
   logos?: Array<{
     logo_id: string;
@@ -145,7 +145,7 @@ export interface Customer {
   address: string;
   phone: string;
   delivery_note?: string;
-  created_at?: Date;
+  created_at?: Date | string;
 }
 
 export interface Order {

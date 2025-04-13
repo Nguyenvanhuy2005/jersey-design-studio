@@ -26,3 +26,20 @@ export function formatCurrencyRounded(amount: number): string {
   const rounded = Math.round(amount / 1000) * 1000;
   return formatCurrency(rounded);
 }
+
+/**
+ * Parse a date string or Date object to a Date object
+ * @param dateInput Date string or Date object
+ * @returns Date object or undefined if invalid
+ */
+export function parseDateSafely(dateInput: string | Date | undefined): Date | undefined {
+  if (!dateInput) return undefined;
+  
+  try {
+    if (dateInput instanceof Date) return dateInput;
+    return new Date(dateInput);
+  } catch (e) {
+    console.error("Invalid date:", dateInput);
+    return undefined;
+  }
+}
