@@ -1,3 +1,4 @@
+
 import { useCallback, useMemo } from "react";
 import { Logo, Player, ProductLine, PrintConfig, DesignData } from "@/types";
 
@@ -6,7 +7,7 @@ interface OrderSummaryProps {
   players: Player[];
   logos?: Logo[];
   productLines: ProductLine[];
-  printConfig?: PrintConfig;
+  printConfig: PrintConfig;  // Make printConfig required
   totalCost?: number;
   designData?: DesignData;
   onSubmit?: () => Promise<void>;
@@ -19,6 +20,7 @@ export function OrderSummary({
   players, 
   logos = [], 
   productLines,
+  printConfig,  // Add printConfig to destructured props
   totalCost: providedTotalCost,
   onSubmit,
   isSubmitting,

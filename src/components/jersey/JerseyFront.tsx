@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Logo } from '@/types';
 import { getTextFont } from '@/utils/jersey-utils';
-import { Trash2, RotateCw } from 'lucide-react';
 
-interface JerseyFrontProps {
+export interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
   playerNumber?: number;
   loadedLogos: Map<string, HTMLImageElement>;

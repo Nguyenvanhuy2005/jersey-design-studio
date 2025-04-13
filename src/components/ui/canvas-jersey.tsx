@@ -1,6 +1,6 @@
 
 import React, { forwardRef, useEffect, useRef } from 'react';
-import { Logo, Player, PrintConfig, DesignData } from '@/types';
+import { Logo, Player, PrintConfig, DesignData, FontConfig } from '@/types';
 import { JerseyFront } from '../jersey/JerseyFront';
 import { JerseyBack } from '../jersey/JerseyBack';
 import { getTextFont } from '@/utils/jersey-utils';
@@ -23,7 +23,8 @@ export const CanvasJersey = forwardRef<HTMLCanvasElement, CanvasJerseyProps>(({
   designData
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const actualRef = ref || canvasRef;
+  // Use local ref if forwarded ref is not available
+  const actualRef = (ref || canvasRef) as React.RefObject<HTMLCanvasElement>;
 
   useEffect(() => {
     const canvas = actualRef.current;
@@ -43,20 +44,33 @@ export const CanvasJersey = forwardRef<HTMLCanvasElement, CanvasJerseyProps>(({
     // Clear the canvas
     ctx.clearRect(0, 0, rect.width, rect.height);
 
+    // Get font configuration
+    const fontConfigText: FontConfig = {
+      font: designData?.font_text?.font || printConfig.fontText.font
+    };
+
+    const fontConfigNumber: FontConfig = {
+      font: designData?.font_number?.font || printConfig.fontNumber.font
+    };
+    
     const fontFamily = getTextFont(
-      viewMode === 'front' 
-        ? designData?.font_text?.font || printConfig.fontText.font
-        : designData?.font_number?.font || printConfig.fontNumber.font
+      viewMode === 'front' ? fontConfigText : fontConfigNumber
     );
+    
+    // Setup initial logo positions and images
+    const loadedLogos = new Map<string, HTMLImageElement>();
+    const logoPositions = new Map<string, { x: number, y: number, scale: number }>();
     
     // Render the appropriate view
     if (viewMode === 'front') {
       JerseyFront({
         ctx,
-        playerName: player.name,
         playerNumber: player.number,
+        loadedLogos,
+        logoPositions,
+        logos,
         fontFamily,
-        logos
+        highQuality: false
       });
     } else {
       JerseyBack({
@@ -67,11 +81,11 @@ export const CanvasJersey = forwardRef<HTMLCanvasElement, CanvasJerseyProps>(({
         fontFamily
       });
     }
-  }, [player, printConfig, logos, viewMode, teamName, designData, actualRef]);
+  }, [player, printConfig, logos, viewMode, teamName, designData, ref]);
 
   return (
     <canvas
-      ref={actualRef}
+      ref={actualRef as React.RefObject<HTMLCanvasElement>}
       className="w-full h-full" 
       style={{ width: '100%', height: '100%' }}
     />
