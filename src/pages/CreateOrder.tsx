@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -94,7 +94,6 @@ const CreateOrder = () => {
           .single();
         
         if (data && !error) {
-          // Fix the date handling with our new utility
           const customerData: Customer = {
             ...data,
             created_at: parseDateSafely(data.created_at)
@@ -686,7 +685,6 @@ const CreateOrder = () => {
   };
 
   const prepareDesignDataForStorage = (data: Partial<DesignData>): Record<string, any> => {
-    // Make sure uniform_type is one of the allowed values
     if (data.uniform_type && !['player', 'goalkeeper', 'mixed'].includes(data.uniform_type)) {
       data.uniform_type = 'player';
     }
@@ -996,7 +994,7 @@ const CreateOrder = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong muốn.
+                        Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong mu���n.
                       </p>
                     </CardContent>
                   </Card>
