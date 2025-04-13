@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -144,17 +145,27 @@ export function PrintPositionsForm({
       }
     };
     
+    // Process logos and create logo position entries
     logos.forEach(logo => {
       const positionKey = `logo_${logo.position}` as keyof DesignData;
-      if (positionKey in defaultData || isLogoPosition(positionKey)) {
-        defaultData[positionKey] = {
+      
+      if (isLogoPosition(positionKey)) {
+        // Explicitly define the object type to match the PrintPositionConfig & logo properties
+        const logoConfig: PrintPositionConfig & {
+          logo_id?: string;
+          x_position?: number;
+          y_position?: number;
+          scale?: number;
+        } = {
           enabled: true,
           material: "In chuyển nhiệt",
           logo_id: logo.id,
           x_position: 0,
           y_position: 0,
           scale: 1.0
-        } as any;
+        };
+        
+        defaultData[positionKey] = logoConfig as any;
       }
     });
     
