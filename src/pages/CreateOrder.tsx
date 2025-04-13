@@ -7,7 +7,7 @@ import { PlayerForm } from "@/components/player-form";
 import { OrderSummary } from "@/components/order-summary";
 import { OrderCostSummary } from "@/components/order-cost-summary";
 import { LogoUpload } from "@/components/logo-upload";
-import { Logo, Player, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
+import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/utils/format-utils";
+import { ProductLineTable } from "@/components/product-line-table";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -39,7 +40,6 @@ const CreateOrder = () => {
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [isDemoApproved, setIsDemoApproved] = useState(false);
   
-  // We no longer need team name as a separate state
   const [players, setPlayers] = useState<Player[]>([]);
   const [logos, setLogos] = useState<Logo[]>([]);
   const [notes, setNotes] = useState<string>("");
@@ -51,7 +51,6 @@ const CreateOrder = () => {
     phone: ""
   });
   
-  // Global print settings
   const [fontText, setFontText] = useState<string>("Arial");
   const [fontNumber, setFontNumber] = useState<string>("Arial");
   const [printStyle, setPrintStyle] = useState<string>("In chuyển nhiệt");
@@ -84,7 +83,6 @@ const CreateOrder = () => {
   
   const [productLines, setProductLines] = useState<ProductLine[]>([]);
 
-  // Get customer info when user logs in
   useEffect(() => {
     const fetchCustomerInfo = async () => {
       if (user) {
@@ -144,7 +142,6 @@ const CreateOrder = () => {
     };
   }, []);
 
-  // Generate product lines based on player configurations
   const generateProductLines = useCallback(() => {
     if (players.length === 0) {
       toast.error("Chưa có cầu thủ nào trong danh sách. Vui lòng thêm ít nhất một cầu thủ.");
@@ -153,41 +150,33 @@ const CreateOrder = () => {
     
     const newProductLines: ProductLine[] = [];
     
-    // Get unique configurations from players
     const uniqueConfigs = new Set<string>();
     
     players.forEach(player => {
       const extPlayer = player as any;
       
-      // Line 1 (above back number)
       if (extPlayer.line_1) {
         uniqueConfigs.add("line_1");
       }
       
-      // Line 2 (back number) - always included
       uniqueConfigs.add("line_2");
       
-      // Line 3 (below back number)
       if (extPlayer.line_3) {
         uniqueConfigs.add("line_3");
       }
       
-      // Chest text
       if (extPlayer.chest_text) {
         uniqueConfigs.add("chest_text");
       }
       
-      // Chest number
       if (extPlayer.chest_number) {
         uniqueConfigs.add("chest_number");
       }
       
-      // Pants number
       if (extPlayer.pants_number) {
         uniqueConfigs.add("pants_number");
       }
       
-      // Logos
       if (extPlayer.logo_chest_left) uniqueConfigs.add("logo_chest_left");
       if (extPlayer.logo_chest_right) uniqueConfigs.add("logo_chest_right");
       if (extPlayer.logo_chest_center) uniqueConfigs.add("logo_chest_center");
@@ -195,13 +184,11 @@ const CreateOrder = () => {
       if (extPlayer.logo_sleeve_right) uniqueConfigs.add("logo_sleeve_right");
       if (extPlayer.logo_pants) uniqueConfigs.add("logo_pants");
       
-      // PET chest
       if (extPlayer.pet_chest) {
         uniqueConfigs.add("pet_chest");
       }
     });
     
-    // Create product lines for each unique configuration
     if (uniqueConfigs.has("line_1")) {
       newProductLines.push({
         id: `product-line-1-${Date.now()}`,
@@ -274,7 +261,6 @@ const CreateOrder = () => {
       });
     }
     
-    // Logo positions
     const logoPositions = [
       { key: 'logo_chest_left', label: 'Logo ngực trái' },
       { key: 'logo_chest_right', label: 'Logo ngực phải' },
@@ -315,11 +301,9 @@ const CreateOrder = () => {
     setProductLines(newProductLines);
     toast.success("Đã tạo danh sách sản phẩm in từ cấu hình cầu thủ");
     
-    // Update design data based on player configurations
     updateDesignDataFromPlayers();
   }, [players, logos, printStyle]);
 
-  // Update design data from player configurations
   const updateDesignDataFromPlayers = useCallback(() => {
     if (players.length === 0) return;
     
@@ -334,16 +318,13 @@ const CreateOrder = () => {
       }
     };
     
-    // Check if we have any goalkeeper uniforms
     const hasGoalkeeper = players.some(p => (p as any).uniform_type === 'goalkeeper');
     if (hasGoalkeeper) {
-      newDesignData.uniform_type = 'player'; // Still set as player for primary type
+      newDesignData.uniform_type = 'player';
     }
     
-    // Set up print positions based on player configs
     const firstPlayer = players[0] as any;
     
-    // Line 1 (above back number)
     if (players.some(p => (p as any).line_1)) {
       newDesignData.line_1 = {
         enabled: true,
@@ -354,7 +335,6 @@ const CreateOrder = () => {
       };
     }
     
-    // Line 2 (back number) - always included
     newDesignData.line_2 = {
       enabled: true,
       material: printStyle,
@@ -362,7 +342,6 @@ const CreateOrder = () => {
       font: fontNumber
     };
     
-    // Line 3 (below back number)
     if (players.some(p => (p as any).line_3)) {
       newDesignData.line_3 = {
         enabled: true,
@@ -373,7 +352,6 @@ const CreateOrder = () => {
       };
     }
     
-    // Chest text
     if (players.some(p => (p as any).chest_text)) {
       newDesignData.chest_text = {
         enabled: true,
@@ -384,7 +362,6 @@ const CreateOrder = () => {
       };
     }
     
-    // Chest number
     if (players.some(p => (p as any).chest_number)) {
       newDesignData.chest_number = {
         enabled: true,
@@ -393,7 +370,6 @@ const CreateOrder = () => {
       };
     }
     
-    // Pants number
     if (players.some(p => (p as any).pants_number)) {
       newDesignData.pants_number = {
         enabled: true,
@@ -402,7 +378,6 @@ const CreateOrder = () => {
       };
     }
     
-    // Logo positions
     const logoPositions = [
       { key: 'logo_chest_left', position: 'chest_left' },
       { key: 'logo_chest_right', position: 'chest_right' },
@@ -423,12 +398,11 @@ const CreateOrder = () => {
           logo_id: logo?.id,
           x_position: 0,
           y_position: 0,
-          scale: pos.key === 'logo_chest_center' ? 1.3 : 1.0 // Make center logo 30% larger
+          scale: pos.key === 'logo_chest_center' ? 1.3 : 1.0
         };
       }
     });
     
-    // PET chest
     if (players.some(p => (p as any).pet_chest)) {
       newDesignData.pet_chest = {
         enabled: true,
@@ -445,21 +419,17 @@ const CreateOrder = () => {
     if (!players.length) return 0;
     
     let totalCost = 0;
-    const basePlayerUniformPrice = 120000; // Base price per uniform
-    const baseGoalkeeperUniformPrice = 150000; // Base price for goalkeeper uniform
+    const basePlayerUniformPrice = 120000;
+    const baseGoalkeeperUniformPrice = 150000;
     
-    // Count player and goalkeeper uniforms
     const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
     const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
     
-    // Calculate uniform costs
     const uniformsCost = (playerCount * basePlayerUniformPrice) + 
                          (goalkeeperCount * baseGoalkeeperUniformPrice);
     
-    // Count unique print positions across all players
     const printPositionsCount = productLines.length;
     
-    // Calculate printing cost based on material and size
     const printingCost = productLines.reduce((total, line) => {
       let positionCost = 0;
       
@@ -472,10 +442,9 @@ const CreateOrder = () => {
       } else if (line.position.includes("PET")) {
         positionCost = 35000;
       } else {
-        positionCost = 15000; // Default for other text positions
+        positionCost = 15000;
       }
       
-      // Increase cost for premium materials
       if (line.material.includes("decal")) {
         positionCost *= 1.2;
       } else if (line.material.includes("PET")) {
@@ -540,7 +509,6 @@ const CreateOrder = () => {
         frontFileName
       );
       
-      // Upload the front design image
       const frontPath = await uploadDesignImage(
         orderId,
         frontDesignFile,
@@ -580,7 +548,6 @@ const CreateOrder = () => {
         backFileName
       );
       
-      // Upload the back design image
       const backPath = await uploadDesignImage(
         orderId,
         backDesignFile,
@@ -608,7 +575,6 @@ const CreateOrder = () => {
         }
       }
       
-      // Capture pants design if pants canvas ref is available
       let pantsPath = '';
       if (pantCanvasRef.current) {
         console.log("Capturing pants design...");
@@ -716,14 +682,12 @@ const CreateOrder = () => {
     return JSON.parse(JSON.stringify(data));
   };
 
-  // Prepare player data for display
   const getPlayerAndGoalkeeperCounts = () => {
     const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
     const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
     return { playerCount, goalkeeperCount };
   };
 
-  // Validation before proceeding to preview
   const validateForm = () => {
     if (players.length === 0) {
       toast.error("Vui lòng thêm ít nhất một cầu thủ vào danh sách");
@@ -738,18 +702,14 @@ const CreateOrder = () => {
     return true;
   };
 
-  // View demo before submitting
   const handleViewDemo = () => {
     if (!validateForm()) return;
     
-    // Generate product lines and update design data
     generateProductLines();
     
-    // Move to preview tab
     setActiveTab("preview");
   };
 
-  // Approve demo
   const approveDemo = () => {
     setIsDemoApproved(true);
     toast.success("Đã duyệt thiết kế demo. Tiếp tục để hoàn tất đơn hàng.");
@@ -839,7 +799,7 @@ const CreateOrder = () => {
       
       const finalDesignData = {
         ...designData,
-        uniform_type: 'player', // Default type
+        uniform_type: 'player',
         quantity: players.length,
         reference_images: referenceImagePaths,
         font_text: {
@@ -877,7 +837,6 @@ const CreateOrder = () => {
         throw orderError;
       }
 
-      // Save or update customer info
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -890,7 +849,6 @@ const CreateOrder = () => {
           
       if (customerError) {
         console.error("Error updating customer info:", customerError);
-        // Continue with order creation even if customer update fails
         toast.warning("Không thể cập nhật thông tin khách hàng, nhưng vẫn tiếp tục tạo đơn hàng.");
       }
       
@@ -905,4 +863,36 @@ const CreateOrder = () => {
             order_id: orderId,
             uniform_type: extPlayer.uniform_type || 'player',
             line_1: extPlayer.line_1 || null,
-            line_2: String(
+            line_2: String(p.number),
+            line_3: extPlayer.line_3 || null,
+            chest_text: extPlayer.chest_text || null,
+            chest_number: extPlayer.chest_number || false,
+            pants_number: extPlayer.pants_number || false,
+            logo_chest_left: extPlayer.logo_chest_left || false,
+            logo_chest_right: extPlayer.logo_chest_right || false,
+            logo_chest_center: extPlayer.logo_chest_center || false,
+            logo_sleeve_left: extPlayer.logo_sleeve_left || false,
+            logo_sleeve_right: extPlayer.logo_sleeve_right || false,
+            logo_pants: extPlayer.logo_pants || false,
+            pet_chest: extPlayer.pet_chest || null
+          };
+        });
+        
+        await supabase.from('players').insert(playersToInsert);
+      }
+    } catch (err) {
+      console.error(`Error submitting order:`, err);
+      toast.error(`Có lỗi khi đặt đơn hàng: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Layout>
+      {/* Rest of the component JSX */}
+    </Layout>
+  );
+};
+
+export default CreateOrder;
