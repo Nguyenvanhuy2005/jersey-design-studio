@@ -1,121 +1,188 @@
 
-import { useCallback, useMemo } from "react";
-import { Logo, Player, ProductLine } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Logo, Player, ProductLine, Customer } from "@/types";
+import { formatNumberWithCommas } from "@/utils/format-utils";
 
 interface OrderSummaryProps {
   teamName: string;
   players: Player[];
   logos?: Logo[];
   productLines: ProductLine[];
+  uniformType: 'player' | 'goalkeeper';
+  quantity: number;
+  totalCost: number;
+  customerInfo?: Customer;
 }
 
-export function OrderSummary({ teamName, players, logos = [], productLines }: OrderSummaryProps) {
-  // Calculate costs based on position
-  const calculateCost = useCallback((position: string): number => {
-    if (position.includes("logo")) {
-      return 20000; // 20,000 VND for logo positions
-    } else {
-      return 10000; // 10,000 VND for number/text positions
-    }
-  }, []);
-
-  // Calculate product line costs
-  const productLineCosts = useMemo(() => {
-    return productLines.map(line => ({
-      description: line.position,
-      quantity: players.length,
-      unitPrice: calculateCost(line.position),
-      total: players.length * calculateCost(line.position)
-    }));
-  }, [players.length, productLines, calculateCost]);
-
-  // Logo costs - now calculated based on number of logos
-  const logosCost = useMemo(() => {
-    return logos.length * 20000; // 20,000 VND per logo
-  }, [logos.length]);
-
-  // Total cost
-  const totalCost = useMemo(() => {
-    const lineTotal = productLineCosts.reduce((sum, item) => sum + item.total, 0);
-    return lineTotal + logosCost;
-  }, [productLineCosts, logosCost]);
-
-  // Get positions for display
-  const getLogoPositions = useMemo(() => {
-    const positions: Record<string, string> = {
-      'chest_left': 'Ngực trái',
-      'chest_right': 'Ngực phải',
-      'chest_center': 'Giữa ngực',
-      'sleeve_left': 'Tay trái',
-      'sleeve_right': 'Tay phải'
-    };
-    
-    return logos.map(logo => positions[logo.position] || logo.position);
-  }, [logos]);
-
+export function OrderSummary({
+  teamName,
+  players,
+  logos = [],
+  productLines,
+  uniformType,
+  quantity,
+  totalCost,
+  customerInfo
+}: OrderSummaryProps) {
   return (
-    <div className="bg-secondary/10 rounded-md p-4 space-y-4">
-      <h2 className="text-xl font-semibold">Tổng kết đơn hàng</h2>
-      
-      <div className="space-y-2">
-        <p>
-          <span className="font-semibold">Tên đội:</span> {teamName || "(Không có)"}
-        </p>
-        <p>
-          <span className="font-semibold">Số lượng áo:</span> {players.length}
-        </p>
-        <p>
-          <span className="font-semibold">Số lượng logo:</span> {logos.length}
-        </p>
-        {logos.length > 0 && (
-          <div className="pl-4 text-sm text-muted-foreground">
-            {getLogoPositions.map((pos, idx) => (
-              <p key={idx}>- Logo {idx + 1}: {pos}</p>
-            ))}
+    <Card>
+      <CardHeader>
+        <CardTitle>Tổng kết đơn hàng</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Team Info */}
+        <div>
+          <h3 className="font-semibold mb-2">Thông tin đội bóng</h3>
+          <div className="grid gap-1 text-sm">
+            <p>
+              <span className="text-muted-foreground">Tên đội:</span> {teamName || "(Không có)"}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Loại quần áo:</span> {uniformType === 'player' ? 'Cầu thủ' : 'Thủ môn'}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Số lượng quần áo:</span> {quantity} bộ
+            </p>
           </div>
-        )}
-      </div>
-      
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium">Chi phí chi tiết:</h3>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">Mô tả</th>
-                <th className="text-center p-2">Số lượng</th>
-                <th className="text-right p-2">Đơn giá</th>
-                <th className="text-right p-2">Thành tiền</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productLineCosts.map((item, index) => (
-                <tr key={index} className="border-b">
-                  <td className="p-2">{item.description}</td>
-                  <td className="text-center p-2">{item.quantity}</td>
-                  <td className="text-right p-2">{item.unitPrice.toLocaleString()} VNĐ</td>
-                  <td className="text-right p-2">{item.total.toLocaleString()} VNĐ</td>
-                </tr>
-              ))}
-              
-              {logos.length > 0 && (
-                <tr className="border-b">
-                  <td className="p-2">Logo ({logos.length})</td>
-                  <td className="text-center p-2">{logos.length}</td>
-                  <td className="text-right p-2">20,000 VNĐ</td>
-                  <td className="text-right p-2">{logosCost.toLocaleString()} VNĐ</td>
-                </tr>
-              )}
-              
-              <tr className="font-semibold">
-                <td className="p-2" colSpan={3}>Tổng cộng</td>
-                <td className="text-right p-2">{totalCost.toLocaleString()} VNĐ</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
-      </div>
-    </div>
+        
+        <Separator />
+        
+        {/* Player List */}
+        <div>
+          <h3 className="font-semibold mb-2">Danh sách cầu thủ</h3>
+          {players.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Tên cầu thủ</th>
+                    <th className="text-center py-2">Số áo</th>
+                    <th className="text-center py-2">Kích thước</th>
+                    <th className="text-center py-2">In hình</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map((player, index) => (
+                    <tr key={player.id || index} className="border-b border-muted">
+                      <td className="py-2">{player.name || "(Không tên)"}</td>
+                      <td className="text-center py-2">{player.number}</td>
+                      <td className="text-center py-2">{player.size}</td>
+                      <td className="text-center py-2">{player.printImage ? "Có" : "Không"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Không có cầu thủ nào trong danh sách</p>
+          )}
+        </div>
+        
+        <Separator />
+        
+        {/* Logos */}
+        {logos.length > 0 && (
+          <>
+            <div>
+              <h3 className="font-semibold mb-2">Logo</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {logos.map((logo, index) => (
+                  <div key={logo.id || index} className="border rounded p-2 text-center">
+                    <img src={logo.previewUrl} alt={`Logo ${index + 1}`} className="h-16 w-16 object-contain mx-auto" />
+                    <p className="text-xs mt-1">{getPositionLabel(logo.position)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Separator />
+          </>
+        )}
+        
+        {/* Printing Items */}
+        <div>
+          <h3 className="font-semibold mb-2">Danh sách in ấn</h3>
+          {productLines.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Sản phẩm</th>
+                    <th className="text-left py-2">Vị trí in</th>
+                    <th className="text-left py-2">Chất liệu</th>
+                    <th className="text-left py-2">Nội dung</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productLines.map((line, index) => (
+                    <tr key={line.id || index} className="border-b border-muted">
+                      <td className="py-2">{line.product}</td>
+                      <td className="py-2">{line.position}</td>
+                      <td className="py-2">{line.material}</td>
+                      <td className="py-2">{line.content}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Không có thông tin in ấn</p>
+          )}
+        </div>
+        
+        <Separator />
+        
+        {/* Customer Info */}
+        {customerInfo && (
+          <>
+            <div>
+              <h3 className="font-semibold mb-2">Thông tin khách hàng</h3>
+              <div className="grid gap-1 text-sm">
+                <p>
+                  <span className="text-muted-foreground">Họ tên:</span> {customerInfo.name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Địa chỉ:</span> {customerInfo.address}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Số điện thoại:</span> {customerInfo.phone}
+                </p>
+                {customerInfo.delivery_note && (
+                  <p>
+                    <span className="text-muted-foreground">Ghi chú giao hàng:</span> {customerInfo.delivery_note}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Separator />
+          </>
+        )}
+        
+        {/* Total Cost */}
+        <div className="pt-2">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Tổng chi phí:</h3>
+            <span className="text-lg font-bold">{formatNumberWithCommas(totalCost)} VNĐ</span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Đã bao gồm chi phí quần áo và in ấn
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
+}
+
+// Helper function to get position label
+function getPositionLabel(position: string): string {
+  switch (position) {
+    case 'chest_left': return 'Ngực trái';
+    case 'chest_right': return 'Ngực phải';
+    case 'chest_center': return 'Giữa ngực';
+    case 'sleeve_left': return 'Tay trái';
+    case 'sleeve_right': return 'Tay phải';
+    case 'pants': return 'Quần';
+    default: return position;
+  }
 }

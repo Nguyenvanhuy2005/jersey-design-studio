@@ -1,18 +1,13 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlayerForm } from "@/components/player-form";
-import { PrintConfigForm } from "@/components/print-config-form";
-import { ProductLineTable } from "@/components/product-line-table";
 import { OrderSummary } from "@/components/order-summary";
-import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { LogoUpload } from "@/components/logo-upload";
-import { Logo, Player, PrintConfig, ProductLine } from "@/types";
+import { Logo, Player, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
@@ -23,12 +18,18 @@ import {
   verifyImageUpload,
   checkFileExistsInStorage 
 } from "@/utils/image-utils";
+import { CustomerForm } from "@/components/customer-form";
+import { UniformInfoForm } from "@/components/uniform-info-form";
+import { PrintPositionsForm } from "@/components/print-positions-form";
+import { UniformPreview } from "@/components/ui/uniform-preview";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("info");
-  const [previewPlayer, setPreviewPlayer] = useState<number>(0);
-  const [previewView, setPreviewView] = useState<'front' | 'back'>('front');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   
@@ -38,8 +39,26 @@ const CreateOrder = () => {
   const [notes, setNotes] = useState<string>("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referenceImagesPreview, setReferenceImagesPreview] = useState<string[]>([]);
+  const [uniformType, setUniformType] = useState<'player' | 'goalkeeper'>('player');
+  const [quantity, setQuantity] = useState<number>(0);
+  const [customerInfo, setCustomerInfo] = useState<Customer>({
+    name: "",
+    address: "",
+    phone: ""
+  });
+  const [designData, setDesignData] = useState<Partial<DesignData>>({
+    uniform_type: 'player',
+    quantity: 0,
+    font_text: {
+      font: "Arial"
+    },
+    font_number: {
+      font: "Arial"
+    }
+  });
   
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pantCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const [printConfig, setPrintConfig] = useState<PrintConfig>({
     font: "Arial",
@@ -95,117 +114,170 @@ const CreateOrder = () => {
       referenceImagesPreview.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
-  
-  const generateProductLines = useCallback(() => {
-    if (players.length === 0) return;
 
-    const hasPlayersWithImages = players.some(p => p.printImage);
-    
-    let newProductLines: ProductLine[] = [
-      {
-        id: `product-back-number-${Date.now()}`,
-        product: "Áo thi đấu",
-        position: "In số lưng",
-        material: printConfig.backMaterial,
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      }
-    ];
-    
-    if (players.some(p => p.name && p.name.trim() !== "")) {
-      newProductLines.push({
-        id: `product-above-back-${Date.now() + 1}`,
-        product: "Áo thi đấu",
-        position: "In trên số lưng",
-        material: printConfig.backMaterial,
-        size: "Trung bình",
-        points: 1,
-        content: "Tên cầu thủ"
-      });
-    }
-    
-    if (teamName.trim() !== "") {
-      newProductLines.push({
-        id: `product-below-back-${Date.now() + 2}`,
-        product: "Áo thi đấu",
-        position: "In dưới số lưng",
-        material: printConfig.backMaterial,
-        size: "Nhỏ",
-        points: 1,
-        content: teamName
-      });
-    }
-    
-    if (hasPlayersWithImages) {
-      newProductLines.push({
-        id: `product-front-number-${Date.now() + 3}`,
-        product: "Áo thi đấu",
-        position: "In số giữa bụng",
-        material: printConfig.frontMaterial,
-        size: "Trung bình",
-        points: 1,
-        content: "Số áo"
-      });
-    }
-    
-    logos.forEach((logo, index) => {
-      let position = '';
-      let logoPosition = '';
-      
-      switch (logo.position) {
-        case 'chest_left':
-          position = 'In logo ngực trái';
-          break;
-        case 'chest_right':
-          position = 'In logo ngực phải';
-          break;
-        case 'chest_center':
-          position = 'In logo giữa bụng';
-          break;
-        case 'sleeve_left':
-          position = 'In logo tay trái';
-          break;
-        case 'sleeve_right':
-          position = 'In logo tay phải';
-          break;
-        default:
-          position = 'In logo ngực trái';
+  const generateProductLines = useCallback(() => {
+    if (designData) {
+      let newProductLines: ProductLine[] = [];
+
+      // Add product lines based on designData
+      if (designData.line_1?.enabled) {
+        newProductLines.push({
+          id: `product-line-1-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In trên số lưng",
+          material: designData.line_1.material || "In chuyển nhiệt",
+          size: "Trung bình",
+          points: 1,
+          content: designData.line_1.content || ""
+        });
       }
       
-      const logoName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${index + 1}`;
+      if (designData.line_2?.enabled) {
+        newProductLines.push({
+          id: `product-line-2-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In số lưng",
+          material: designData.line_2.material || "In chuyển nhiệt",
+          size: "Lớn",
+          points: 1,
+          content: "Số áo"
+        });
+      }
       
-      newProductLines.push({
-        id: `product-logo-${Date.now() + 4 + index}`,
-        product: "Áo thi đấu",
-        position,
-        material: printConfig.frontMaterial,
-        size: "Trung bình",
-        points: 1,
-        content: logoName
+      if (designData.line_3?.enabled) {
+        newProductLines.push({
+          id: `product-line-3-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In dưới số lưng",
+          material: designData.line_3.material || "In chuyển nhiệt",
+          size: "Nhỏ",
+          points: 1,
+          content: designData.line_3.content || teamName
+        });
+      }
+      
+      if (designData.chest_number?.enabled) {
+        newProductLines.push({
+          id: `product-chest-number-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In số ngực",
+          material: designData.chest_number.material || "In chuyển nhiệt",
+          size: "Trung bình",
+          points: 1,
+          content: "Số áo"
+        });
+      }
+      
+      if (designData.chest_text?.enabled) {
+        newProductLines.push({
+          id: `product-chest-text-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In chữ ngực",
+          material: designData.chest_text.material || "In chuyển nhiệt",
+          size: "Trung bình",
+          points: 1,
+          content: designData.chest_text.content || ""
+        });
+      }
+      
+      if (designData.pants_number?.enabled) {
+        newProductLines.push({
+          id: `product-pants-number-${Date.now()}`,
+          product: "Quần",
+          position: "In số quần",
+          material: designData.pants_number.material || "In chuyển nhiệt",
+          size: "Trung bình",
+          points: 1,
+          content: "Số áo"
+        });
+      }
+      
+      // Add logo positions
+      const logoPositions = [
+        { key: 'logo_chest_left', label: 'In logo ngực trái' },
+        { key: 'logo_chest_right', label: 'In logo ngực phải' },
+        { key: 'logo_chest_center', label: 'In logo ngực giữa' },
+        { key: 'logo_sleeve_left', label: 'In logo tay trái' },
+        { key: 'logo_sleeve_right', label: 'In logo tay phải' },
+        { key: 'logo_pants', label: 'In logo quần' }
+      ];
+      
+      logoPositions.forEach(position => {
+        const positionData = designData[position.key as keyof DesignData];
+        if (positionData && (positionData as any).enabled) {
+          const logo = logos.find(l => l.id === (positionData as any).logo_id);
+          const logoName = logo ? 
+            logo.file.name.split('/').pop()?.split('.')[0] || `Logo` : 
+            `Logo ${position.key.replace('logo_', '')}`;
+            
+          newProductLines.push({
+            id: `product-${position.key}-${Date.now()}`,
+            product: position.key.includes('pants') ? "Quần" : (uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn"),
+            position: position.label,
+            material: (positionData as any).material || "In chuyển nhiệt",
+            size: "Trung bình",
+            points: 1,
+            content: logoName
+          });
+        }
       });
-    });
-    
-    setProductLines(newProductLines);
-  }, [players, teamName, printConfig, logos]);
+      
+      if (designData.pet_chest?.enabled) {
+        newProductLines.push({
+          id: `product-pet-chest-${Date.now()}`,
+          product: uniformType === 'player' ? "Áo cầu thủ" : "Áo thủ môn",
+          position: "In PET ngực",
+          material: designData.pet_chest.material || "In chuyển nhiệt",
+          size: "Trung bình",
+          points: 1,
+          content: designData.pet_chest.content || ""
+        });
+      }
+      
+      setProductLines(newProductLines);
+    }
+  }, [designData, uniformType, teamName, logos]);
 
   const calculateTotalCost = useCallback(() => {
     let totalCost = 0;
+    const basePlayerUniformPrice = 120000; // Base price per uniform
+    
+    // Calculate uniform cost based on quantity
+    const uniformPrice = uniformType === 'player' ? basePlayerUniformPrice : basePlayerUniformPrice * 1.2;
+    totalCost += uniformPrice * quantity;
+    
+    // Calculate printing costs
+    let printingCost = 0;
     
     productLines.forEach(line => {
-      let unitCost = 10000;
+      let unitCost = 0;
       
+      // Define costs based on printing position and material
       if (line.position.includes("logo")) {
-        unitCost = 20000;
+        unitCost = line.material.includes("decal") ? 25000 : 20000;
+      } else if (line.position.includes("số")) {
+        unitCost = line.material.includes("decal") ? 15000 : 10000;
+      } else if (line.position.includes("chữ")) {
+        unitCost = line.material.includes("decal") ? 20000 : 15000;
+      } else if (line.position.includes("PET")) {
+        unitCost = 30000;
+      } else {
+        unitCost = 15000; // Default cost for other printing positions
       }
       
-      totalCost += unitCost * players.length;
+      // Special case for pants which affect only a subset of items
+      if (line.product === "Quần") {
+        printingCost += unitCost * players.length;
+      } else {
+        // For jersey items, use the overall quantity
+        printingCost += unitCost * quantity;
+      }
     });
-
-    totalCost += logos.length * 20000;
+    
+    totalCost += printingCost;
     
     return totalCost;
-  }, [productLines, players.length, logos.length]);
+  }, [productLines, players.length, quantity, uniformType]);
 
   const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string, fileName: string): Promise<File> => {
     console.log("Converting canvas to file...");
@@ -228,7 +300,7 @@ const CreateOrder = () => {
     return file;
   };
 
-  const generateOrderDesignImages = async (orderId: string): Promise<{ frontPath: string; backPath: string }> => {
+  const generateOrderDesignImages = async (orderId: string): Promise<{ frontPath: string; backPath: string; pantsPath: string; }> => {
     try {
       setIsGeneratingDesign(true);
       
@@ -236,17 +308,16 @@ const CreateOrder = () => {
       if (!bucketsCheck.success) {
         console.error("Failed to ensure storage buckets exist:", bucketsCheck.message);
         toast.error(`Không thể khởi tạo kho lưu trữ: ${bucketsCheck.message}`);
-        return { frontPath: '', backPath: '' };
+        return { frontPath: '', backPath: '', pantsPath: '' };
       }
       
       if (!jerseyCanvasRef.current) {
         console.error("Canvas reference is not available");
         toast.error("Không thể tạo ảnh thiết kế: Canvas không khả dụng");
-        return { frontPath: '', backPath: '' };
+        return { frontPath: '', backPath: '', pantsPath: '' };
       }
       
       console.log("Capturing front view design...");
-      setPreviewView('front');
       
       console.log("Waiting for front view canvas to render...");
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -287,7 +358,6 @@ const CreateOrder = () => {
       }
       
       console.log("Switching to back view design...");
-      setPreviewView('back');
       
       console.log("Waiting for back view canvas to render...");
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -327,7 +397,32 @@ const CreateOrder = () => {
         }
       }
       
-      setPreviewView('front');
+      // Capture pants design if pants canvas ref is available
+      let pantsPath = '';
+      if (pantCanvasRef.current) {
+        console.log("Capturing pants design...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const pantsFileName = `pants-design-${orderId}.png`;
+        const pantsDesignFile = await convertCanvasToFile(
+          pantCanvasRef.current,
+          orderId,
+          pantsFileName
+        );
+        
+        pantsPath = await uploadDesignImage(
+          orderId,
+          pantsDesignFile,
+          'pants-design',
+          2
+        );
+        
+        if (!pantsPath) {
+          console.error("Failed to upload pants design image");
+        } else {
+          console.log("Pants design image uploaded successfully:", pantsPath);
+        }
+      }
       
       const frontSuccess = frontPath && frontVerified;
       const backSuccess = backPath && backVerified;
@@ -335,19 +430,20 @@ const CreateOrder = () => {
       if (frontSuccess || backSuccess) {
         toast.success(`Đã lưu hình ảnh thiết kế ${frontSuccess && backSuccess ? 'mặt trước và mặt sau' : frontSuccess ? 'mặt trước' : 'mặt sau'}`);
       } else if (frontPath || backPath) {
-        toast.info("Đã tạo hình ảnh thiết k��, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
+        toast.info("Đã tạo hình ảnh thiết kế, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
       } else {
         toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại sau.");
       }
       
       return { 
         frontPath: frontPath || '', 
-        backPath: backPath || '' 
+        backPath: backPath || '',
+        pantsPath: pantsPath || ''
       };
     } catch (err) {
       console.error(`Error capturing order design images:`, err);
       toast.error(`Có lỗi khi tạo ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      return { frontPath: '', backPath: '' };
+      return { frontPath: '', backPath: '', pantsPath: '' };
     } finally {
       setIsGeneratingDesign(false);
     }
@@ -406,9 +502,27 @@ const CreateOrder = () => {
   };
 
   const submitOrder = async () => {
-    if (players.length === 0) {
-      toast.error("Vui lòng thêm ít nhất một cầu thủ");
+    // Check authentication
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để đặt đơn hàng");
       return;
+    }
+    
+    // Check for required fields
+    if (quantity <= 0) {
+      toast.error("Vui lòng nhập số lượng quần áo");
+      return;
+    }
+    
+    if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
+      toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
+      setActiveTab("info");
+      return;
+    }
+    
+    // Generate product lines if not already generated
+    if (productLines.length === 0) {
+      generateProductLines();
     }
     
     setIsSubmitting(true);
@@ -421,13 +535,13 @@ const CreateOrder = () => {
       const logoUrls: string[] = [];
       
       console.log("Starting design images generation...");
-      const { frontPath, backPath } = await generateOrderDesignImages(orderId);
+      const { frontPath, backPath, pantsPath } = await generateOrderDesignImages(orderId);
       
       if (!frontPath && !backPath) {
         console.warn("No design images were generated, but continuing with order submission");
         toast.warning("Không thể tạo ảnh thiết kế, nhưng vẫn tiếp tục đơn hàng của bạn.");
       } else {
-        console.log("Design images generated successfully:", { frontPath, backPath });
+        console.log("Design images generated successfully:", { frontPath, backPath, pantsPath });
       }
       
       const referenceImagePaths = await uploadReferenceImages(orderId);
@@ -462,27 +576,15 @@ const CreateOrder = () => {
         }
       }
       
-      const designData = {
-        logos: logos.map(logo => ({
-          logo_id: logo.id,
-          position: logo.position,
-          x_position: 0,
-          y_position: 0,
-          scale: 1.0
-        })),
-        players: players.map(player => ({
-          name: player.name,
-          number: player.number,
-          position: 'Trên số lưng',
-          font: printConfig.font,
-          color: printConfig.backColor
-        })),
+      // Update designData with final values
+      const finalDesignData: Partial<DesignData> = {
+        ...designData,
+        uniform_type: uniformType,
+        quantity: quantity,
         reference_images: referenceImagePaths,
-        design_image_front: frontPath,
-        design_image_back: backPath
       };
 
-      console.log("Inserting order with design_images:", { frontPath, backPath });
+      console.log("Inserting order with design_images:", { frontPath, backPath, pantsPath });
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -492,11 +594,12 @@ const CreateOrder = () => {
           status: 'new',
           total_cost: totalCost,
           notes: notes,
-          design_data: designData,
+          design_data: finalDesignData,
           design_image: frontPath || null,
           design_image_front: frontPath || null,
           design_image_back: backPath || null,
-          reference_images: referenceImagePaths
+          reference_images: referenceImagePaths,
+          customer_id: user.id
         });
         
       if (orderError) {
@@ -504,23 +607,44 @@ const CreateOrder = () => {
         throw orderError;
       }
 
-      const playersToInsert = players.map(player => ({
-        name: player.name,
-        number: player.number,
-        size: player.size,
-        print_image: player.printImage,
-        order_id: orderId
-      }));
+      // Insert/update customer information
+      if (!customerInfo.id) {
+        const { error: customerError } = await supabase
+          .from('customers')
+          .upsert({
+            id: user.id,
+            name: customerInfo.name,
+            address: customerInfo.address,
+            phone: customerInfo.phone,
+            delivery_note: customerInfo.delivery_note
+          });
+          
+        if (customerError) {
+          console.error("Error updating customer info:", customerError);
+          // Continue with order creation even if customer update fails
+        }
+      }
       
-      const { error: playersError } = await supabase
-        .from('players')
-        .insert(playersToInsert);
+      // Insert players
+      if (players.length > 0) {
+        const playersToInsert = players.map(player => ({
+          name: player.name,
+          number: player.number,
+          size: player.size,
+          print_image: player.printImage,
+          order_id: orderId
+        }));
         
-      if (playersError) {
-        console.error("Error adding players:", playersError);
-        throw playersError;
-      } else {
-        console.log("Successfully added players");
+        const { error: playersError } = await supabase
+          .from('players')
+          .insert(playersToInsert);
+          
+        if (playersError) {
+          console.error("Error adding players:", playersError);
+          throw playersError;
+        } else {
+          console.log("Successfully added players");
+        }
       }
       
       let fontFileUrl = null;
@@ -568,22 +692,25 @@ const CreateOrder = () => {
         throw printConfigError;
       }
       
-      const linesToInsert = productLines.map(line => ({
-        product: line.product,
-        position: line.position,
-        material: line.material,
-        size: line.size,
-        points: line.points,
-        content: line.content,
-        order_id: orderId
-      }));
-      
-      const { error: linesError } = await supabase
-        .from('product_lines')
-        .insert(linesToInsert);
+      // Insert product lines
+      if (productLines.length > 0) {
+        const linesToInsert = productLines.map(line => ({
+          product: line.product,
+          position: line.position,
+          material: line.material,
+          size: line.size,
+          points: line.points,
+          content: line.content,
+          order_id: orderId
+        }));
         
-      if (linesError) {
-        throw linesError;
+        const { error: linesError } = await supabase
+          .from('product_lines')
+          .insert(linesToInsert);
+          
+        if (linesError) {
+          throw linesError;
+        }
       }
       
       toast.success("Đơn hàng đã được gửi thành công!");
@@ -592,7 +719,7 @@ const CreateOrder = () => {
         id: orderId,
         teamName,
         players,
-        logoUrls,
+        logos,
         printConfig,
         productLines,
         totalCost,
@@ -601,6 +728,8 @@ const CreateOrder = () => {
         designImageFront: frontPath,
         designImageBack: backPath,
         referenceImages: referenceImagePaths,
+        customer_id: user.id,
+        designData: finalDesignData,
         createdAt: new Date()
       };
       
@@ -610,57 +739,6 @@ const CreateOrder = () => {
       toast.error("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại sau.");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const testDesignImage = async () => {
-    try {
-      const testId = uuidv4();
-      toast.info("Đang kiểm tra tạo ảnh thiết kế...");
-      
-      const { frontPath, backPath } = await generateOrderDesignImages(testId);
-      
-      let frontVerified = false;
-      let backVerified = false;
-      
-      if (frontPath) {
-        try {
-          frontVerified = await checkFileExistsInStorage('design_images', frontPath);
-          if (frontVerified) {
-            const { data: frontData } = supabase.storage
-              .from('design_images')
-              .getPublicUrl(frontPath);
-            console.log("Test front design image URL:", frontData.publicUrl);
-          }
-        } catch (err) {
-          console.warn("Unable to verify front image, but continuing:", err);
-          frontVerified = true;
-        }
-      }
-      
-      if (backPath) {
-        try {
-          backVerified = await checkFileExistsInStorage('design_images', backPath);
-          if (backVerified) {
-            const { data: backData } = supabase.storage
-              .from('design_images')
-              .getPublicUrl(backPath);
-            console.log("Test back design image URL:", backData.publicUrl);
-          }
-        } catch (err) {
-          console.warn("Unable to verify back image, but continuing:", err);
-          backVerified = true;
-        }
-      }
-      
-      if (frontPath || backPath) {
-        toast.success(`Tạo ảnh thiết kế ${frontPath && backPath ? 'mặt trước và mặt sau' : frontPath ? 'mặt trước' : 'mặt sau'} thành công!`);
-      } else {
-        toast.error("Không thể tạo ảnh thiết kế");
-      }
-    } catch (err) {
-      console.error("Test design image error:", err);
-      toast.error("Lỗi khi kiểm tra tạo ảnh thiết kế");
     }
   };
 
@@ -677,204 +755,169 @@ const CreateOrder = () => {
           </TabsList>
           
           <TabsContent value="info" className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="teamName">Tên đội bóng</Label>
-                  <Input 
-                    id="teamName"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    placeholder="Nhập tên đội bóng (không bắt buộc)"
-                  />
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                {/* Team Info */}
+                <UniformInfoForm
+                  teamName={teamName}
+                  onTeamNameChange={setTeamName}
+                  notes={notes}
+                  onNotesChange={setNotes}
+                  uniformType={uniformType}
+                  onUniformTypeChange={setUniformType}
+                  quantity={quantity}
+                  onQuantityChange={setQuantity}
+                  designData={designData}
+                  onDesignDataChange={setDesignData}
+                />
                 
+                {/* Logo Upload */}
                 <LogoUpload 
                   logos={logos}
                   onLogosChange={setLogos}
                 />
-
-                <div className="border rounded-md p-4 space-y-3">
-                  <Label htmlFor="referenceImages">Hình ảnh sản phẩm muốn in (PNG, JPG)</Label>
-                  <Input
-                    id="referenceImages"
-                    type="file"
-                    accept="image/png, image/jpeg, image/jpg"
-                    multiple
-                    onChange={(e) => handleReferenceImagesUpload(e.target.files)}
-                    className="mb-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tối đa 5 hình ảnh. Nhấp vào hình ảnh để xóa.
-                  </p>
-                  
-                  {referenceImagesPreview.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {referenceImagesPreview.map((preview, index) => (
-                        <div 
-                          key={index} 
-                          className="relative group w-20 h-20 border rounded-md overflow-hidden"
-                        >
-                          <img 
-                            src={preview} 
-                            alt={`Reference ${index+1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeReferenceImage(index)}
-                            className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                            aria-label="Remove image"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                
+                {/* Reference Images */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hình ảnh tham khảo</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border rounded-md p-4 space-y-3">
+                      <Label htmlFor="referenceImages">Hình ảnh sản phẩm muốn in (PNG, JPG)</Label>
+                      <Input
+                        id="referenceImages"
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg"
+                        multiple
+                        onChange={(e) => handleReferenceImagesUpload(e.target.files)}
+                        className="mb-2"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Tối đa 5 hình ảnh. Nhấp vào hình ảnh để xóa.
+                      </p>
+                      
+                      {referenceImagesPreview.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {referenceImagesPreview.map((preview, index) => (
+                            <div 
+                              key={index} 
+                              className="relative group w-20 h-20 border rounded-md overflow-hidden"
+                            >
+                              <img 
+                                src={preview} 
+                                alt={`Reference ${index+1}`} 
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeReferenceImage(index)}
+                                className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Remove image"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
+                  </CardContent>
+                </Card>
                 
-                <div>
-                  <Label htmlFor="notes">Ghi chú</Label>
-                  <Textarea 
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt (nếu có)"
-                  />
-                </div>
-                
-                <PrintConfigForm
-                  printConfig={printConfig}
-                  onPrintConfigChange={setPrintConfig}
+                {/* Customer Info */}
+                <CustomerForm 
+                  onCustomerInfoChange={setCustomerInfo}
+                  initialCustomer={customerInfo}
                 />
               </div>
               
-              <PlayerForm 
-                players={players}
-                onPlayersChange={setPlayers}
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Cấu hình sản phẩm in</h2>
-                <Button onClick={generateProductLines}>Tạo sản phẩm in tự động</Button>
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Print Positions */}
+                <PrintPositionsForm
+                  designData={designData}
+                  onDesignDataChange={setDesignData}
+                  logos={logos}
+                  teamName={teamName}
+                />
+                
+                {/* Player Form */}
+                <PlayerForm 
+                  players={players}
+                  onPlayersChange={setPlayers}
+                  uniformQuantity={quantity}
+                />
               </div>
-              
-              <ProductLineTable 
-                productLines={productLines}
-                onProductLinesChange={setProductLines}
-                logos={logos}
-              />
             </div>
             
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setActiveTab("preview")}>Hủy</Button>
+              <Button onClick={generateProductLines} variant="outline">
+                Tạo sản phẩm in tự động
+              </Button>
               <Button onClick={() => setActiveTab("preview")}>Tiếp tục</Button>
             </div>
           </TabsContent>
           
           <TabsContent value="preview" className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Xem trước thiết kế áo</h2>
-                <p className="text-muted-foreground">
-                  Xem trước thiết kế áo của bạn. Có thể kéo thả logo để điều chỉnh vị trí.
-                </p>
+            <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+              <div className="space-y-8">
+                {/* Uniform Preview */}
+                <UniformPreview
+                  teamName={teamName}
+                  players={players}
+                  logos={logos}
+                  printConfig={printConfig}
+                  designData={designData}
+                  canvasRef={jerseyCanvasRef}
+                  canvasPantsRef={pantCanvasRef}
+                />
                 
-                <div className="flex gap-4 justify-center">
-                  <Button 
-                    variant={previewView === 'front' ? 'default' : 'outline'} 
-                    onClick={() => setPreviewView('front')}
-                  >
-                    Mặt trước
-                  </Button>
-                  <Button 
-                    variant={previewView === 'back' ? 'default' : 'outline'} 
-                    onClick={() => setPreviewView('back')}
-                  >
-                    Mặt sau
-                  </Button>
-                </div>
-                
-                <div className="bg-muted/30 p-4 rounded-md">
-                  <div className="flex justify-center">
-                    <CanvasJersey 
-                      teamName={teamName || "TEAM NAME"}
-                      playerName={players[previewPlayer]?.name || ""}
-                      playerNumber={players[previewPlayer]?.number || 0}
-                      logos={logos}
-                      view={previewView}
-                      printConfig={printConfig}
-                      canvasRef={jerseyCanvasRef}
-                    />
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-sm text-green-700">
-                    Hệ thống sẽ lưu thiết kế cho cả mặt trước và mặt sau khi bạn đặt đơn hàng.
-                  </p>
-                  <div className="mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={testDesignImage}
-                      disabled={isGeneratingDesign}
-                    >
-                      {isGeneratingDesign ? "Đang xử lý..." : "Kiểm tra tạo ảnh"}
+                {/* Product Lines */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Danh sách sản phẩm in</CardTitle>
+                    <Button variant="outline" onClick={generateProductLines}>
+                      Tạo lại sản phẩm in
                     </Button>
-                  </div>
-                </div>
+                  </CardHeader>
+                  <CardContent>
+                    {productLines.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-muted">
+                              <th className="p-2 text-left">Sản phẩm</th>
+                              <th className="p-2 text-left">Vị trí in</th>
+                              <th className="p-2 text-left">Chất liệu</th>
+                              <th className="p-2 text-left">Kích thước</th>
+                              <th className="p-2 text-left">Nội dung</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {productLines.map((line, index) => (
+                              <tr key={line.id} className="border-b border-muted">
+                                <td className="p-2">{line.product}</td>
+                                <td className="p-2">{line.position}</td>
+                                <td className="p-2">{line.material}</td>
+                                <td className="p-2">{line.size}</td>
+                                <td className="p-2">{line.content}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center p-4 bg-muted/30 rounded-md">
+                        <p className="text-muted-foreground">
+                          Chưa có sản phẩm in nào. Nhấn "Tạo lại sản phẩm in" để tạo tự động dựa trên cấu hình.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Chọn cầu thủ để xem trước</h2>
-                
-                {players.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {players.map((player, index) => (
-                      <Button 
-                        key={player.id || index}
-                        variant={previewPlayer === index ? 'default' : 'outline'}
-                        onClick={() => setPreviewPlayer(index)}
-                        className="h-auto py-2 justify-start"
-                      >
-                        <div className="text-left">
-                          <div className="font-semibold">{player.name || `Cầu thủ ${index + 1}`}</div>
-                          <div className="text-sm opacity-80">#{player.number} - {player.size}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    Chưa có cầu thủ nào trong danh sách. Vui lòng quay lại bước trước để thêm cầu thủ.
-                  </p>
-                )}
-
-                {logos.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-2">Logo đã tải lên</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {logos.map((logo, index) => (
-                        <div key={logo.id} className="border rounded p-2">
-                          <img 
-                            src={logo.previewUrl} 
-                            alt={`Logo ${index + 1}`} 
-                            className="h-16 w-16 object-contain mx-auto"
-                          />
-                          <p className="text-xs text-center mt-1 text-muted-foreground">
-                            {getPositionLabel(logo.position)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            </ScrollArea>
             
             <div className="flex justify-between gap-2">
               <Button variant="outline" onClick={() => setActiveTab("info")}>Quay lại</Button>
@@ -888,6 +931,10 @@ const CreateOrder = () => {
               players={players}
               logos={logos}
               productLines={productLines}
+              uniformType={uniformType}
+              quantity={quantity}
+              totalCost={calculateTotalCost()}
+              customerInfo={customerInfo}
             />
             
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -902,7 +949,7 @@ const CreateOrder = () => {
               <Button variant="outline" onClick={() => setActiveTab("preview")}>Quay lại</Button>
               <Button 
                 onClick={submitOrder}
-                disabled={isSubmitting || players.length === 0}
+                disabled={isSubmitting || !user || quantity <= 0 || !customerInfo.name}
               >
                 {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
               </Button>
@@ -912,17 +959,6 @@ const CreateOrder = () => {
       </div>
     </Layout>
   );
-};
-
-const getPositionLabel = (position: string): string => {
-  switch (position) {
-    case 'chest_left': return 'Ngực trái';
-    case 'chest_right': return 'Ngực phải';
-    case 'chest_center': return 'Giữa ngực';
-    case 'sleeve_left': return 'Tay trái';
-    case 'sleeve_right': return 'Tay phải';
-    default: return 'Không xác định';
-  }
 };
 
 export default CreateOrder;

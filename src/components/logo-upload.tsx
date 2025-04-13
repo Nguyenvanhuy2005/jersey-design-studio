@@ -1,17 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from './ui/select';
-import { Logo, LogoPosition } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Logo, LogoPosition } from "@/types";
+import { X, UploadCloud } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface LogoUploadProps {
   logos: Logo[];
@@ -19,142 +15,91 @@ interface LogoUploadProps {
 }
 
 export function LogoUpload({ logos, onLogosChange }: LogoUploadProps) {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [position, setPosition] = useState<LogoPosition>('chest_left');
-  
-  useEffect(() => {
-    // Clean up any object URLs to avoid memory leaks
-    return () => {
-      if (previewUrl && previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) {
-      setUploadedFile(null);
-      setPreviewUrl('');
-      return;
-    }
+    if (!files || files.length === 0) return;
     
     const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      alert('Vui lòng tải lên tệp hình ảnh.');
+    
+    // Check if a logo already exists in this position
+    if (logos.some(logo => logo.position === position)) {
+      toast.error(`Đã có logo ở vị trí ${getPositionLabel(position)}. Vui lòng xóa logo cũ trước khi tải lên logo mới.`);
       return;
     }
     
-    setUploadedFile(file);
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Chỉ chấp nhận file hình ảnh (JPEG, PNG, GIF)");
+      return;
+    }
     
     // Create preview URL
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-  };
-  
-  const handlePositionChange = (value: string) => {
-    setPosition(value as LogoPosition);
-  };
-  
-  const handleAddLogo = () => {
-    if (!uploadedFile) {
-      alert('Vui lòng chọn tệp hình ảnh trước.');
-      return;
-    }
+    const previewUrl = URL.createObjectURL(file);
     
-    // Check if a logo with the same position already exists
-    const logoWithSamePosition = logos.find(logo => logo.position === position);
-    if (logoWithSamePosition) {
-      const confirmReplace = window.confirm(
-        `Đã có logo tại vị trí ${getPositionLabel(position)}. Bạn có muốn thay thế không?`
-      );
-      
-      if (!confirmReplace) {
-        return;
-      }
-      
-      // Remove the existing logo with the same position
-      const updatedLogos = logos.filter(logo => logo.position !== position);
-      
-      // Add the new logo
-      onLogosChange([
-        ...updatedLogos,
-        {
-          id: uuidv4(), // Generate proper UUID for the logo
-          file: uploadedFile,
-          position,
-          previewUrl
-        }
-      ]);
-    } else {
-      // Add the new logo
-      onLogosChange([
-        ...logos,
-        {
-          id: uuidv4(), // Generate proper UUID for the logo
-          file: uploadedFile,
-          position,
-          previewUrl
-        }
-      ]);
-    }
+    // Add new logo
+    const newLogo: Logo = {
+      id: `logo-${Date.now()}-${position}`,
+      file,
+      position,
+      previewUrl
+    };
     
-    // Reset the form
-    setUploadedFile(null);
-    setPreviewUrl('');
-    setPosition('chest_left');
+    onLogosChange([...logos, newLogo]);
     
-    // Reset the file input
-    const fileInput = document.getElementById('logo-file') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  };
-  
-  const handleDeleteLogo = (logoIndex: number) => {
-    const confirmDelete = window.confirm('Bạn có chắc chắn muốn xóa logo này không?');
+    // Reset file input
+    e.target.value = "";
     
-    if (confirmDelete) {
-      const updatedLogos = [...logos];
-      
-      // If the logo has a preview URL, revoke it
-      if (updatedLogos[logoIndex].previewUrl && updatedLogos[logoIndex].previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(updatedLogos[logoIndex].previewUrl);
-      }
-      
-      updatedLogos.splice(logoIndex, 1);
-      onLogosChange(updatedLogos);
-    }
-  };
-  
-  const getPositionLabel = (pos: string): string => {
-    switch (pos) {
-      case 'chest_left': return 'Ngực trái';
-      case 'chest_right': return 'Ngực phải';
-      case 'chest_center': return 'Giữa ngực';
-      case 'sleeve_left': return 'Tay trái';
-      case 'sleeve_right': return 'Tay phải';
-      default: return 'Không xác định';
-    }
+    // Show success message
+    toast.success(`Đã tải lên logo cho vị trí ${getPositionLabel(position)}`);
   };
 
+  const removeLogo = (id: string | undefined) => {
+    if (!id) return;
+    
+    // Find the logo to remove
+    const logoToRemove = logos.find(logo => logo.id === id);
+    if (logoToRemove && logoToRemove.previewUrl) {
+      // Revoke the object URL to free memory
+      URL.revokeObjectURL(logoToRemove.previewUrl);
+    }
+    
+    // Remove the logo
+    const updatedLogos = logos.filter(logo => logo.id !== id);
+    onLogosChange(updatedLogos);
+    
+    // Show success message
+    toast.success("Đã xóa logo");
+  };
+  
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      logos.forEach(logo => {
+        if (logo.previewUrl &&logo.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(logo.previewUrl);
+        }
+      });
+    };
+  }, []);
+
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="logo-file" className="block text-gray-700">Tải lên logo</Label>
-        <div className="flex items-start space-x-4 mt-2">
-          <div className="flex-grow space-y-4">
-            <Input 
-              id="logo-file" 
-              type="file" 
-              accept="image/*" 
-              onChange={handleFileChange}
-            />
-            
-            <Select value={position} onValueChange={handlePositionChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn vị trí in logo" />
+    <Card>
+      <CardHeader>
+        <CardTitle>Logo đội bóng</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Label htmlFor="logoPosition">Vị trí</Label>
+            <Select 
+              value={position} 
+              onValueChange={(value: LogoPosition) => setPosition(value)}
+            >
+              <SelectTrigger id="logoPosition">
+                <SelectValue placeholder="Chọn vị trí logo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="chest_left">Ngực trái</SelectItem>
@@ -162,57 +107,79 @@ export function LogoUpload({ logos, onLogosChange }: LogoUploadProps) {
                 <SelectItem value="chest_center">Giữa ngực</SelectItem>
                 <SelectItem value="sleeve_left">Tay trái</SelectItem>
                 <SelectItem value="sleeve_right">Tay phải</SelectItem>
+                <SelectItem value="pants">Quần</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Button 
-              onClick={handleAddLogo}
-              disabled={!uploadedFile}
-              className="w-full"
-            >
-              Thêm logo
-            </Button>
           </div>
           
-          {previewUrl && (
-            <div className="w-24 h-24 border rounded flex items-center justify-center bg-white p-2">
-              <img 
-                src={previewUrl} 
-                alt="Preview" 
-                className="max-w-full max-h-full object-contain"
+          <div className="flex-1">
+            <Label htmlFor="logoFile">Tải lên logo</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="logoFile" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleLogoUpload}
+                className="flex-1"
               />
+              <Button variant="outline" size="icon" asChild>
+                <label htmlFor="logoFile" className="cursor-pointer">
+                  <UploadCloud className="h-4 w-4" />
+                </label>
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
-      
-      {logos.length > 0 && (
-        <div>
-          <Label className="block text-gray-700 mb-2">Logo đã tải lên</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {logos.map((logo, index) => (
-              <div key={index} className="border rounded p-2 flex flex-col items-center">
-                <div className="h-16 flex items-center justify-center mb-1">
-                  <img 
-                    src={logo.previewUrl} 
-                    alt={`Logo ${index + 1}`} 
-                    className="max-h-full object-contain"
-                  />
-                </div>
-                <p className="text-sm text-center">{getPositionLabel(logo.position)}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-1 w-full"
-                  onClick={() => handleDeleteLogo(index)}
-                >
-                  Xóa
-                </Button>
-              </div>
-            ))}
           </div>
         </div>
-      )}
-    </div>
+        
+        {logos.length > 0 && (
+          <div>
+            <Label>Logo đã tải lên</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-2">
+              {logos.map((logo, index) => (
+                <div 
+                  key={logo.id || index} 
+                  className="relative group border rounded-md p-2"
+                >
+                  <div className="h-16 flex items-center justify-center">
+                    <img 
+                      src={logo.previewUrl} 
+                      alt={`Logo ${index+1}`} 
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-center mt-2 truncate">
+                    {getPositionLabel(logo.position)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => removeLogo(logo.id)}
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Remove logo"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <p className="text-xs text-muted-foreground">
+          Tải lên logo ở các vị trí khác nhau để in lên áo. Logo sẽ được tự động căn chỉnh.
+        </p>
+      </CardContent>
+    </Card>
   );
+}
+
+function getPositionLabel(position: LogoPosition): string {
+  switch (position) {
+    case 'chest_left': return 'Ngực trái';
+    case 'chest_right': return 'Ngực phải';
+    case 'chest_center': return 'Giữa ngực';
+    case 'sleeve_left': return 'Tay trái';
+    case 'sleeve_right': return 'Tay phải';
+    case 'pants': return 'Quần';
+    default: return position;
+  }
 }

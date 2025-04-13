@@ -1,4 +1,5 @@
 
+
 export interface Player {
   id?: string;
   name: string;
@@ -7,7 +8,7 @@ export interface Player {
   printImage: boolean;
 }
 
-export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right';
+export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
 
 export interface Logo {
   id?: string;
@@ -31,19 +32,21 @@ export interface PrintConfig {
   legColor: string;
 }
 
+// Added new types for print positions
 export type PrintPosition = 
   | 'pants_number' 
   | 'back_number' 
   | 'above_back_number' 
   | 'below_back_number'
+  | 'chest_text'
+  | 'chest_number'
   | 'logo_sleeve_left'
   | 'logo_sleeve_right'
   | 'logo_chest_left'
   | 'logo_chest_right'
   | 'logo_chest_center'
-  | 'number_sleeve_left'
-  | 'number_sleeve_right'
-  | 'number_chest_center';
+  | 'logo_pants'
+  | 'pet_chest';
 
 export interface ProductLine {
   id: string;
@@ -55,7 +58,18 @@ export interface ProductLine {
   content: string;
 }
 
+// New interface for fixed print positions
+export interface PrintPositionConfig {
+  enabled: boolean;
+  material?: string;
+  color?: string;
+  content?: string;
+}
+
+// Updated DesignData to match new requirements
 export interface DesignData {
+  uniform_type?: 'player' | 'goalkeeper';
+  quantity?: number;
   logos?: Array<{
     logo_id: string;
     position: string;
@@ -63,23 +77,80 @@ export interface DesignData {
     y_position: number;
     scale: number;
   }>;
-  player_name?: {
-    position: string;
-    content: string;
-    font: string;
+  line_1?: PrintPositionConfig & {
+    font?: string;
     font_file?: string;
-    color: string;
-    material: string;
   };
-  player_number?: {
-    position: string;
-    content: string;
+  line_2?: PrintPositionConfig & {
+    font?: string;
+    font_file?: string;
+  };
+  line_3?: PrintPositionConfig & {
+    font?: string;
+    font_file?: string;
+  };
+  chest_text?: PrintPositionConfig & {
+    font?: string;
+    font_file?: string;
+  };
+  chest_number?: PrintPositionConfig;
+  pants_number?: PrintPositionConfig;
+  logo_chest_left?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_chest_right?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_chest_center?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_sleeve_left?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  logo_sleeve_right?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  pet_chest?: PrintPositionConfig;
+  logo_pants?: PrintPositionConfig & {
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
+  };
+  font_text?: {
     font: string;
     font_file?: string;
-    color: string;
-    material: string;
+  };
+  font_number?: {
+    font: string;
+    font_file?: string;
   };
   reference_images?: string[];
+}
+
+// New interface for customer information
+export interface Customer {
+  id?: string;
+  name: string;
+  address: string;
+  phone: string;
+  delivery_note?: string;
+  created_at?: Date;
 }
 
 export interface Order {
@@ -97,4 +168,9 @@ export interface Order {
   designImageFront?: string;   // Front design image path
   designImageBack?: string;    // Back design image path
   referenceImages: string[];   // Using string[] to match what we're transforming data to
+  customer_id?: string;        // Reference to the customer who placed the order
+  designData?: DesignData;     // New field to store all design-related data
+  uniform_type?: 'player' | 'goalkeeper';
+  quantity?: number;
 }
+

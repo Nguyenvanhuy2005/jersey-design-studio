@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          delivery_note: string | null
+          id: string
+          name: string | null
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          delivery_note?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          delivery_note?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       logos: {
         Row: {
           created_at: string | null
@@ -53,6 +80,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
+          customer_id: string | null
           design_data: Json | null
           design_image: string | null
           design_image_back: string | null
@@ -68,6 +96,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          customer_id?: string | null
           design_data?: Json | null
           design_image?: string | null
           design_image_back?: string | null
@@ -83,6 +112,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          customer_id?: string | null
           design_data?: Json | null
           design_image?: string | null
           design_image_back?: string | null
@@ -241,6 +271,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sizes: {
+        Row: {
+          category: string
+          size_id: string
+          size_value: string
+        }
+        Insert: {
+          category: string
+          size_id?: string
+          size_value: string
+        }
+        Update: {
+          category?: string
+          size_id?: string
+          size_value?: string
+        }
+        Relationships: []
       }
     }
     Views: {

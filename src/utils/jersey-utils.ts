@@ -7,7 +7,8 @@ export const defaultLogoPositions: Record<LogoPosition, { x: number, y: number }
   'chest_right': { x: 220, y: 60 },
   'chest_center': { x: 150, y: 100 },
   'sleeve_left': { x: 30, y: 40 },
-  'sleeve_right': { x: 270, y: 40 }
+  'sleeve_right': { x: 270, y: 40 },
+  'pants': { x: 195, y: 100 }
 };
 
 export const getFont = (printConfig?: PrintConfig, size: number = 20): string => {

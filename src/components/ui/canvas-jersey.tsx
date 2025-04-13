@@ -1,11 +1,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Logo, PrintConfig } from '@/types';
+import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
 import { loadCustomFont } from '@/utils/font-utils';
 import { useDragLogos } from '@/components/jersey/useDragLogos';
 import { JerseyFront } from '@/components/jersey/JerseyFront';
 import { JerseyBack } from '@/components/jersey/JerseyBack';
+import { JerseyPants } from '@/components/jersey/JerseyPants';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,8 +16,9 @@ interface CanvasJerseyProps {
   playerName?: string;
   playerNumber?: number;
   logos?: Logo[];
-  view: 'front' | 'back';
+  view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
+  designData?: Partial<DesignData>;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
@@ -27,6 +29,7 @@ export function CanvasJersey({
   logos = [], 
   view,
   printConfig,
+  designData,
   canvasRef: externalCanvasRef
 }: CanvasJerseyProps) {
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -64,7 +67,8 @@ export function CanvasJersey({
   // Debug loaded logos
   useEffect(() => {
     console.log('Current logos prop:', logos);
-  }, [logos]);
+    console.log('Current design data:', designData);
+  }, [logos, designData]);
 
   // Load custom font if provided
   useEffect(() => {
@@ -79,20 +83,57 @@ export function CanvasJersey({
           }
         });
     }
-  }, [printConfig?.customFontUrl, printConfig?.customFontFile]);
+    
+    if (designData?.font_text?.font_file) {
+      loadCustomFont(designData.font_text.font_file, designData.font_text.font)
+        .then(loadedFont => {
+          if (loadedFont) {
+            setFontFace(loadedFont);
+            setLoadedFont(true);
+          }
+        });
+    }
+  }, [printConfig?.customFontUrl, printConfig?.customFontFile, designData?.font_text]);
 
-  // Load logos and their positions from database
+  // Load logos and their positions from database or from designData
   useEffect(() => {
     if (logos && logos.length > 0) {
       console.log("Attempting to load logos:", logos.length);
       
-      // Initialize positions map with any saved positions from database
+      // Initialize positions map with any saved positions from database or designData
       const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
       
-      // Fetch saved positions for logos from Supabase
+      const positionKeysMap: Record<string, string> = {
+        'chest_left': 'logo_chest_left',
+        'chest_right': 'logo_chest_right',
+        'chest_center': 'logo_chest_center',
+        'sleeve_left': 'logo_sleeve_left',
+        'sleeve_right': 'logo_sleeve_right',
+        'pants': 'logo_pants'
+      };
+      
+      // First check if we have positions in designData
+      if (designData) {
+        logos.forEach(logo => {
+          if (logo.id) {
+            const positionKey = positionKeysMap[logo.position];
+            const positionData = designData[positionKey as keyof DesignData] as any;
+            
+            if (positionData && positionData.x_position !== undefined && positionData.y_position !== undefined) {
+              initialPositions.set(logo.id, {
+                x: positionData.x_position,
+                y: positionData.y_position,
+                scale: positionData.scale || 1.0
+              });
+            }
+          }
+        });
+      }
+      
+      // Fetch saved positions from Supabase for any logos without positions
       const fetchLogoPositions = async () => {
         for (const logo of logos) {
-          if (logo.id) {
+          if (logo.id && !initialPositions.has(logo.id)) {
             try {
               // Extract UUID from logo.id if it's not already a UUID
               let logoId = logo.id;
@@ -122,8 +163,10 @@ export function CanvasJersey({
                       x_position: logo.position === 'chest_left' ? 80 : 
                                   logo.position === 'chest_right' ? 220 : 
                                   logo.position === 'chest_center' ? 150 :
-                                  logo.position === 'sleeve_left' ? 30 : 270,
-                      y_position: logo.position === 'chest_center' ? 100 : 60,
+                                  logo.position === 'sleeve_left' ? 30 :
+                                  logo.position === 'pants' ? 195 : 270,
+                      y_position: logo.position === 'chest_center' ? 100 : 
+                                  logo.position === 'pants' ? 100 : 60,
                       scale: 1.0
                     });
                   
@@ -156,7 +199,8 @@ export function CanvasJersey({
                 const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
                                   logo.position === 'chest_right' ? { x: 220, y: 60 } :
                                   logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
+                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } :
+                                  logo.position === 'pants' ? { x: 195, y: 100 } :
                                   { x: 270, y: 40 };
                 
                 initialPositions.set(logoId, {
@@ -173,8 +217,10 @@ export function CanvasJersey({
                   x: posData.x_position ?? (logo.position === 'chest_left' ? 80 : 
                                           logo.position === 'chest_right' ? 220 : 
                                           logo.position === 'chest_center' ? 150 :
-                                          logo.position === 'sleeve_left' ? 30 : 270),
-                  y: posData.y_position ?? (logo.position === 'chest_center' ? 100 : 60),
+                                          logo.position === 'sleeve_left' ? 30 : 
+                                          logo.position === 'pants' ? 195 : 270),
+                  y: posData.y_position ?? (logo.position === 'chest_center' ? 100 : 
+                                          logo.position === 'pants' ? 100 : 60),
                   scale: posData.scale ?? 1.0
                 });
                 
@@ -186,7 +232,8 @@ export function CanvasJersey({
               const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
                               logo.position === 'chest_right' ? { x: 220, y: 60 } :
                               logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                              logo.position === 'sleeve_left' ? { x: 30, y: 40 } : 
+                              logo.position === 'sleeve_left' ? { x: 30, y: 40 } :
+                              logo.position === 'pants' ? { x: 195, y: 100 } : 
                               { x: 270, y: 40 };
               
               initialPositions.set(logo.id, {
@@ -332,7 +379,13 @@ export function CanvasJersey({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Get the font to use
-    const fontToUse = getFont(printConfig);
+    const fontToUse = designData?.font_text?.font 
+      ? `bold 20px "${designData.font_text.font}", sans-serif` 
+      : getFont(printConfig);
+      
+    const numberFontToUse = designData?.font_number?.font 
+      ? `bold 20px "${designData.font_number.font}", sans-serif` 
+      : fontToUse;
 
     // Draw the appropriate jersey view with proper scaling
     if (view === 'front') {
@@ -345,24 +398,48 @@ export function CanvasJersey({
         logoPositions,
         logos: logos || [],
         fontFamily: fontToUse,
+        numberFontFamily: numberFontToUse,
         highQuality: true,
         selectedLogo,
         onLogoMove: handleLogoMove,
         onLogoResize: handleLogoResize,
-        onLogoDelete: handleLogoDelete
+        onLogoDelete: handleLogoDelete,
+        designData
       });
-    } else {
+    } else if (view === 'back') {
       console.log('Rendering back jersey view');
       // Render back jersey
       JerseyBack({
         ctx,
-        teamName,
-        playerName,
+        teamName: designData?.line_3?.content || teamName,
+        playerName: designData?.line_1?.content || playerName,
         playerNumber,
         fontFamily: fontToUse
       });
+    } else if (view === 'pants') {
+      console.log('Rendering pants view');
+      // Find pants logo if available
+      const pantsLogo = logos.find(logo => logo.position === 'pants');
+      let logoImage;
+      let logoPosition;
+      
+      if (pantsLogo && pantsLogo.id && loadedLogos.has(pantsLogo.id)) {
+        logoImage = loadedLogos.get(pantsLogo.id);
+        logoPosition = logoPositions.get(pantsLogo.id);
+      }
+      
+      // Render pants
+      JerseyPants({
+        ctx,
+        playerNumber,
+        fontFamily: numberFontToUse,
+        logo: logoImage && logoPosition ? {
+          image: logoImage,
+          position: logoPosition
+        } : undefined
+      });
     }
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, loadedFont, pixelRatio, selectedLogo, isDragging]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging]);
 
   // Helper function to check if a string is a valid UUID
   function isValidUUID(id: string) {
@@ -372,7 +449,7 @@ export function CanvasJersey({
 
   // Instructions for logo selection and control
   useEffect(() => {
-    if (logos && logos.length > 0 && view === 'front') {
+    if (logos && logos.length > 0 && (view === 'front' || view === 'pants')) {
       toast.info(
         "Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước.",
         { 
@@ -407,7 +484,7 @@ export function CanvasJersey({
           cursor: getCursorStyle()
         }}
       />
-      {logos && logos.length > 0 && view === 'front' && (
+      {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
             Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
