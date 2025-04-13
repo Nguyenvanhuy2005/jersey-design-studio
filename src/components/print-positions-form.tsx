@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DesignData, Logo } from "@/types";
+import { DesignData, Logo, PrintPositionConfig } from "@/types";
 
 interface PrintPositionsFormProps {
   designData: Partial<DesignData>;
@@ -76,7 +75,6 @@ export function PrintPositionsForm({
   const handleTogglePosition = (position: keyof DesignData, enabled: boolean) => {
     const currentPosition = (designData[position] || {}) as any;
     
-    // If enabling, set default values
     if (enabled && !currentPosition.material) {
       onDesignDataChange({
         ...designData,
@@ -88,7 +86,6 @@ export function PrintPositionsForm({
         }
       });
     } else {
-      // Just update enabled status
       onDesignDataChange({
         ...designData,
         [position]: {
@@ -105,7 +102,6 @@ export function PrintPositionsForm({
   };
   
   const setDefaultValues = () => {
-    // Set default values for each print position
     const defaultData: Partial<DesignData> = {
       ...designData,
       line_1: {
@@ -148,20 +144,33 @@ export function PrintPositionsForm({
       }
     };
     
-    // Set logo positions if logos are available
     logos.forEach(logo => {
       const positionKey = `logo_${logo.position}` as keyof DesignData;
-      defaultData[positionKey] = {
-        enabled: true,
-        material: "In chuyển nhiệt",
-        logo_id: logo.id,
-        x_position: 0,
-        y_position: 0,
-        scale: 1.0
-      };
+      if (positionKey in defaultData || isLogoPosition(positionKey)) {
+        defaultData[positionKey] = {
+          enabled: true,
+          material: "In chuyển nhiệt",
+          logo_id: logo.id,
+          x_position: 0,
+          y_position: 0,
+          scale: 1.0
+        } as any;
+      }
     });
     
     onDesignDataChange(defaultData);
+  };
+  
+  const isLogoPosition = (key: string): boolean => {
+    const logoPositions = [
+      'logo_chest_left', 'logo_chest_right', 'logo_chest_center',
+      'logo_sleeve_left', 'logo_sleeve_right', 'logo_pants'
+    ];
+    return logoPositions.includes(key);
+  };
+  
+  const hasEnabledProperty = (field: any): field is PrintPositionConfig => {
+    return field && typeof field === 'object' && 'enabled' in field;
   };
   
   const getTextPrefix = (position: string): string => {
@@ -198,18 +207,16 @@ export function PrintPositionsForm({
           onValueChange={setExpandedItems}
           className="w-full"
         >
-          {/* Line Printing Section */}
           <AccordionItem value="item-line-printing">
             <AccordionTrigger onClick={() => handleAccordionChange("item-line-printing")}>
               In dòng chữ/số lưng
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
-              {/* Line 1 (above back number) */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="line_1" 
-                    checked={designData.line_1?.enabled} 
+                    checked={hasEnabledProperty(designData.line_1) ? designData.line_1.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('line_1', checked === true)
                     }
@@ -219,7 +226,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.line_1?.enabled && (
+                {hasEnabledProperty(designData.line_1) && designData.line_1.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="line_1_material">Chất liệu</Label>
@@ -278,12 +285,11 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* Line 2 (back number) */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="line_2" 
-                    checked={designData.line_2?.enabled} 
+                    checked={hasEnabledProperty(designData.line_2) ? designData.line_2.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('line_2', checked === true)
                     }
@@ -293,7 +299,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.line_2?.enabled && (
+                {hasEnabledProperty(designData.line_2) && designData.line_2.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="line_2_material">Chất liệu</Label>
@@ -340,12 +346,11 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* Line 3 (below back number) */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="line_3" 
-                    checked={designData.line_3?.enabled} 
+                    checked={hasEnabledProperty(designData.line_3) ? designData.line_3.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('line_3', checked === true)
                     }
@@ -355,7 +360,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.line_3?.enabled && (
+                {hasEnabledProperty(designData.line_3) && designData.line_3.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="line_3_material">Chất liệu</Label>
@@ -416,18 +421,16 @@ export function PrintPositionsForm({
             </AccordionContent>
           </AccordionItem>
           
-          {/* Chest Printing Section */}
           <AccordionItem value="item-chest-printing">
             <AccordionTrigger onClick={() => handleAccordionChange("item-chest-printing")}>
               In mặt trước áo
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
-              {/* Chest Text */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="chest_text" 
-                    checked={designData.chest_text?.enabled} 
+                    checked={hasEnabledProperty(designData.chest_text) ? designData.chest_text.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('chest_text', checked === true)
                     }
@@ -437,7 +440,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.chest_text?.enabled && (
+                {hasEnabledProperty(designData.chest_text) && designData.chest_text.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="chest_text_material">Chất liệu</Label>
@@ -496,12 +499,11 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* Chest Number */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="chest_number" 
-                    checked={designData.chest_number?.enabled} 
+                    checked={hasEnabledProperty(designData.chest_number) ? designData.chest_number.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('chest_number', checked === true)
                     }
@@ -511,7 +513,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.chest_number?.enabled && (
+                {hasEnabledProperty(designData.chest_number) && designData.chest_number.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="chest_number_material">Chất liệu</Label>
@@ -558,12 +560,11 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* PET Chest */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="pet_chest" 
-                    checked={designData.pet_chest?.enabled} 
+                    checked={hasEnabledProperty(designData.pet_chest) ? designData.pet_chest.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('pet_chest', checked === true)
                     }
@@ -573,7 +574,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.pet_chest?.enabled && (
+                {hasEnabledProperty(designData.pet_chest) && designData.pet_chest.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="pet_chest_material">Chất liệu</Label>
@@ -632,13 +633,13 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* Logo Positions */}
               {['logo_chest_left', 'logo_chest_right', 'logo_chest_center', 'logo_sleeve_left', 'logo_sleeve_right'].map(position => (
                 <div key={position} className="border p-4 rounded-md">
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id={position} 
-                      checked={designData[position as keyof DesignData]?.enabled} 
+                      checked={hasEnabledProperty(designData[position as keyof DesignData]) ? 
+                        (designData[position as keyof DesignData] as PrintPositionConfig).enabled : false}
                       onCheckedChange={(checked) => 
                         handleTogglePosition(position as keyof DesignData, checked === true)
                       }
@@ -648,7 +649,8 @@ export function PrintPositionsForm({
                     </Label>
                   </div>
                   
-                  {designData[position as keyof DesignData]?.enabled && (
+                  {hasEnabledProperty(designData[position as keyof DesignData]) && 
+                    (designData[position as keyof DesignData] as PrintPositionConfig).enabled && (
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor={`${position}_material`}>Chất liệu</Label>
@@ -686,18 +688,16 @@ export function PrintPositionsForm({
             </AccordionContent>
           </AccordionItem>
           
-          {/* Pants Printing Section */}
           <AccordionItem value="item-pants-printing">
             <AccordionTrigger onClick={() => handleAccordionChange("item-pants-printing")}>
               In quần
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
-              {/* Pants Number */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="pants_number" 
-                    checked={designData.pants_number?.enabled} 
+                    checked={hasEnabledProperty(designData.pants_number) ? designData.pants_number.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('pants_number', checked === true)
                     }
@@ -707,7 +707,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.pants_number?.enabled && (
+                {hasEnabledProperty(designData.pants_number) && designData.pants_number.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="pants_number_material">Chất liệu</Label>
@@ -754,12 +754,11 @@ export function PrintPositionsForm({
                 )}
               </div>
               
-              {/* Pants Logo */}
               <div className="border p-4 rounded-md">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="logo_pants" 
-                    checked={designData.logo_pants?.enabled} 
+                    checked={hasEnabledProperty(designData.logo_pants) ? designData.logo_pants.enabled : false}
                     onCheckedChange={(checked) => 
                       handleTogglePosition('logo_pants', checked === true)
                     }
@@ -769,7 +768,7 @@ export function PrintPositionsForm({
                   </Label>
                 </div>
                 
-                {designData.logo_pants?.enabled && (
+                {hasEnabledProperty(designData.logo_pants) && designData.logo_pants.enabled && (
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="logo_pants_material">Chất liệu</Label>
@@ -806,7 +805,6 @@ export function PrintPositionsForm({
             </AccordionContent>
           </AccordionItem>
           
-          {/* Font Selection Section */}
           <AccordionItem value="item-font-selection">
             <AccordionTrigger onClick={() => handleAccordionChange("item-font-selection")}>
               Phông chữ & số

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -25,6 +24,8 @@ import { UniformPreview } from "@/components/ui/uniform-preview";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -501,14 +502,16 @@ const CreateOrder = () => {
     return uploadedPaths;
   };
 
+  const prepareDesignDataForStorage = (data: Partial<DesignData>): Record<string, any> => {
+    return JSON.parse(JSON.stringify(data));
+  };
+
   const submitOrder = async () => {
-    // Check authentication
     if (!user) {
       toast.error("Vui lòng đăng nhập để đặt đơn hàng");
       return;
     }
     
-    // Check for required fields
     if (quantity <= 0) {
       toast.error("Vui lòng nhập số lượng quần áo");
       return;
@@ -520,7 +523,6 @@ const CreateOrder = () => {
       return;
     }
     
-    // Generate product lines if not already generated
     if (productLines.length === 0) {
       generateProductLines();
     }
@@ -576,13 +578,14 @@ const CreateOrder = () => {
         }
       }
       
-      // Update designData with final values
-      const finalDesignData: Partial<DesignData> = {
+      const finalDesignData = {
         ...designData,
         uniform_type: uniformType,
         quantity: quantity,
         reference_images: referenceImagePaths,
       };
+
+      const designDataJson = prepareDesignDataForStorage(finalDesignData);
 
       console.log("Inserting order with design_images:", { frontPath, backPath, pantsPath });
       const { error: orderError } = await supabase
@@ -594,7 +597,7 @@ const CreateOrder = () => {
           status: 'new',
           total_cost: totalCost,
           notes: notes,
-          design_data: finalDesignData,
+          design_data: designDataJson,
           design_image: frontPath || null,
           design_image_front: frontPath || null,
           design_image_back: backPath || null,
@@ -607,7 +610,6 @@ const CreateOrder = () => {
         throw orderError;
       }
 
-      // Insert/update customer information
       if (!customerInfo.id) {
         const { error: customerError } = await supabase
           .from('customers')
@@ -625,7 +627,6 @@ const CreateOrder = () => {
         }
       }
       
-      // Insert players
       if (players.length > 0) {
         const playersToInsert = players.map(player => ({
           name: player.name,
@@ -692,7 +693,6 @@ const CreateOrder = () => {
         throw printConfigError;
       }
       
-      // Insert product lines
       if (productLines.length > 0) {
         const linesToInsert = productLines.map(line => ({
           product: line.product,
@@ -757,7 +757,6 @@ const CreateOrder = () => {
           <TabsContent value="info" className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                {/* Team Info */}
                 <UniformInfoForm
                   teamName={teamName}
                   onTeamNameChange={setTeamName}
@@ -771,13 +770,11 @@ const CreateOrder = () => {
                   onDesignDataChange={setDesignData}
                 />
                 
-                {/* Logo Upload */}
                 <LogoUpload 
                   logos={logos}
                   onLogosChange={setLogos}
                 />
                 
-                {/* Reference Images */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Hình ảnh tham khảo</CardTitle>
@@ -825,16 +822,13 @@ const CreateOrder = () => {
                   </CardContent>
                 </Card>
                 
-                {/* Customer Info */}
                 <CustomerForm 
                   onCustomerInfoChange={setCustomerInfo}
                   initialCustomer={customerInfo}
                 />
               </div>
               
-              {/* Right Column */}
               <div className="space-y-6">
-                {/* Print Positions */}
                 <PrintPositionsForm
                   designData={designData}
                   onDesignDataChange={setDesignData}
@@ -842,7 +836,6 @@ const CreateOrder = () => {
                   teamName={teamName}
                 />
                 
-                {/* Player Form */}
                 <PlayerForm 
                   players={players}
                   onPlayersChange={setPlayers}
@@ -862,7 +855,6 @@ const CreateOrder = () => {
           <TabsContent value="preview" className="space-y-8">
             <ScrollArea className="h-[calc(100vh-200px)] pr-4">
               <div className="space-y-8">
-                {/* Uniform Preview */}
                 <UniformPreview
                   teamName={teamName}
                   players={players}
@@ -873,7 +865,6 @@ const CreateOrder = () => {
                   canvasPantsRef={pantCanvasRef}
                 />
                 
-                {/* Product Lines */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Danh sách sản phẩm in</CardTitle>

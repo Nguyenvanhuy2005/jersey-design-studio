@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { getFont } from '@/utils/jersey-utils';
+import { formatNumberWithCommas } from '@/utils/format-utils';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
