@@ -1,5 +1,4 @@
 
-
 export interface Player {
   id?: string;
   name: string;
@@ -66,6 +65,14 @@ export interface PrintPositionConfig {
   content?: string;
 }
 
+// Interface for logo position configurations
+export interface LogoPositionConfig extends PrintPositionConfig {
+  logo_id?: string;
+  x_position?: number;
+  y_position?: number;
+  scale?: number;
+}
+
 // Updated DesignData to match new requirements
 export interface DesignData {
   uniform_type?: 'player' | 'goalkeeper';
@@ -95,43 +102,13 @@ export interface DesignData {
   };
   chest_number?: PrintPositionConfig;
   pants_number?: PrintPositionConfig;
-  logo_chest_left?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
-  logo_chest_right?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
-  logo_chest_center?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
-  logo_sleeve_left?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
-  logo_sleeve_right?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
+  logo_chest_left?: LogoPositionConfig;
+  logo_chest_right?: LogoPositionConfig;
+  logo_chest_center?: LogoPositionConfig;
+  logo_sleeve_left?: LogoPositionConfig;
+  logo_sleeve_right?: LogoPositionConfig;
   pet_chest?: PrintPositionConfig;
-  logo_pants?: PrintPositionConfig & {
-    logo_id?: string;
-    x_position?: number;
-    y_position?: number;
-    scale?: number;
-  };
+  logo_pants?: LogoPositionConfig;
   font_text?: {
     font: string;
     font_file?: string;
@@ -173,4 +150,3 @@ export interface Order {
   uniform_type?: 'player' | 'goalkeeper';
   quantity?: number;
 }
-

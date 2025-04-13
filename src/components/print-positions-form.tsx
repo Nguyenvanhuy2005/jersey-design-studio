@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DesignData, Logo, PrintPositionConfig } from "@/types";
+import { DesignData, Logo, PrintPositionConfig, LogoPositionConfig } from "@/types";
 
 interface PrintPositionsFormProps {
   designData: Partial<DesignData>;
@@ -150,13 +149,7 @@ export function PrintPositionsForm({
       const positionKey = `logo_${logo.position}` as keyof DesignData;
       
       if (isLogoPosition(positionKey)) {
-        // Explicitly define the object type to match the PrintPositionConfig & logo properties
-        const logoConfig: PrintPositionConfig & {
-          logo_id?: string;
-          x_position?: number;
-          y_position?: number;
-          scale?: number;
-        } = {
+        const logoConfig: LogoPositionConfig = {
           enabled: true,
           material: "In chuyển nhiệt",
           logo_id: logo.id,
@@ -165,14 +158,14 @@ export function PrintPositionsForm({
           scale: 1.0
         };
         
-        defaultData[positionKey] = logoConfig as any;
+        defaultData[positionKey] = logoConfig;
       }
     });
     
     onDesignDataChange(defaultData);
   };
   
-  const isLogoPosition = (key: string): boolean => {
+  const isLogoPosition = (key: string): key is keyof Pick<DesignData, 'logo_chest_left' | 'logo_chest_right' | 'logo_chest_center' | 'logo_sleeve_left' | 'logo_sleeve_right' | 'logo_pants'> => {
     const logoPositions = [
       'logo_chest_left', 'logo_chest_right', 'logo_chest_center',
       'logo_sleeve_left', 'logo_sleeve_right', 'logo_pants'
