@@ -5,6 +5,22 @@ export interface Player {
   number: number;
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
+  jersey_color?: string;
+  uniform_type?: 'player' | 'goalkeeper';
+  line_1?: string;
+  line_2?: string;
+  line_3?: string;
+  chest_text?: string;
+  chest_number?: boolean;
+  pants_number?: boolean;
+  logo_chest_left?: boolean;
+  logo_chest_right?: boolean;
+  logo_chest_center?: boolean;
+  logo_sleeve_left?: boolean;
+  logo_sleeve_right?: boolean;
+  pet_chest?: string;
+  logo_pants?: boolean;
+  note?: string;
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
@@ -117,6 +133,8 @@ export interface DesignData {
     font: string;
     font_file?: string;
   };
+  print_style?: string;
+  print_color?: string;
   reference_images?: string[];
 }
 
@@ -147,6 +165,6 @@ export interface Order {
   referenceImages: string[];   // Using string[] to match what we're transforming data to
   customer_id?: string;        // Reference to the customer who placed the order
   designData?: DesignData;     // New field to store all design-related data
-  uniform_type?: 'player' | 'goalkeeper';
+  uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
 }

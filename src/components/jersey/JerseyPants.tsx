@@ -25,24 +25,24 @@ export const JerseyPants = ({
   console.log(`Rendering JerseyPants on canvas ${canvasWidth}x${canvasHeight}`);
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
-  // Draw pants
+  // Draw short pants instead of long pants
   ctx.fillStyle = '#1A1A1A'; // Black pants
   
-  // Draw pants - left leg
+  // Draw short pants - left side
   ctx.beginPath();
   ctx.moveTo(100, 0);
   ctx.lineTo(150, 0);
-  ctx.lineTo(130, 200);
-  ctx.lineTo(80, 200);
+  ctx.lineTo(160, 80);  // Make them shorter
+  ctx.lineTo(90, 80);   // Make them shorter
   ctx.closePath();
   ctx.fill();
   
-  // Draw pants - right leg
+  // Draw short pants - right side
   ctx.beginPath();
   ctx.moveTo(150, 0);
   ctx.lineTo(200, 0);
-  ctx.lineTo(220, 200);
-  ctx.lineTo(170, 200);
+  ctx.lineTo(210, 80);  // Make them shorter
+  ctx.lineTo(160, 80);  // Make them shorter
   ctx.closePath();
   ctx.fill();
   
@@ -53,9 +53,9 @@ export const JerseyPants = ({
   // Draw player number (on left leg)
   if (playerNumber !== undefined) {
     ctx.fillStyle = '#FFD700'; // Yellow number
-    const fontSize = 45;
+    const fontSize = 35; // Slightly smaller for better fit on short pants
     ctx.font = fontFamily.replace('20px', `${fontSize}px`);
-    ctx.fillText(playerNumber.toString(), 105, 100);
+    ctx.fillText(playerNumber.toString(), 125, 40);
     console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font}`);
   }
   
@@ -67,8 +67,8 @@ export const JerseyPants = ({
       const logoHeight = logo.image.height * (logo.position.scale || 1);
       
       // Position the logo on the right leg
-      const x = logo.position.x || 195;
-      const y = logo.position.y || 100;
+      const x = logo.position.x || 180;
+      const y = logo.position.y || 40;
       
       // Draw the logo
       ctx.drawImage(logo.image, x - logoWidth/2, y - logoHeight/2, logoWidth, logoHeight);
