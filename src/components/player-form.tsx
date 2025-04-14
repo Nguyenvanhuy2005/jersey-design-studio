@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -514,7 +513,7 @@ export function PlayerForm({
                   {SIZES.kids.map((size) => (
                     <SelectItem key={size} value={size}>{size}</SelectItem>
                   ))}
-                </SelectContent>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
