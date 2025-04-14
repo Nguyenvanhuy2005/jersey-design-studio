@@ -7,7 +7,6 @@ import { OrderActions } from "./OrderActions";
 type OrderTableRowProps = {
   order: Order;
   imageAvailability: Record<string, {front: boolean, back: boolean}>;
-  isCheckingImages?: boolean;
   onViewDetails: (order: Order) => void;
   onViewImage: (imageUrl: string | null) => void;
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
@@ -16,7 +15,6 @@ type OrderTableRowProps = {
 export const OrderTableRow = ({
   order,
   imageAvailability,
-  isCheckingImages = false,
   onViewDetails,
   onViewImage,
   onStatusChange
@@ -28,16 +26,12 @@ export const OrderTableRow = ({
 
   const orderAvailability = order.id ? imageAvailability[order.id] : { front: false, back: false };
   
-  // Calculate player and goalkeeper counts
-  const playerCount = order.players.filter(p => !p.uniform_type || p.uniform_type === 'player').length;
-  const goalkeeperCount = order.players.filter(p => p.uniform_type === 'goalkeeper').length;
-  const totalCount = order.players.length;
-  
   return (
     <tr key={order.id} className="border-t border-muted">
       <td className="p-3">{order.id}</td>
-      <td className="p-3 font-medium">{order.customerInfo?.name || "—"}</td>
-      <td className="p-3">{totalCount} bộ (Cầu thủ: {playerCount}, Thủ môn: {goalkeeperCount})</td>
+      <td className="p-3 font-medium">{order.teamName}</td>
+      <td className="p-3">{order.players.length}</td>
+      <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
       <td className="p-3">
         <OrderStatus status={order.status} />
       </td>
@@ -49,7 +43,6 @@ export const OrderTableRow = ({
             frontDesignImage={order.designImageFront || order.designImage}
             backDesignImage={order.designImageBack}
             imageAvailability={orderAvailability}
-            isCheckingImages={isCheckingImages}
             onViewImage={onViewImage}
           />
         ) : (

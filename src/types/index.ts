@@ -1,7 +1,8 @@
+
 export interface Player {
   id?: string;
   name: string;
-  number: string; // Keep as string in the interface for UI purposes
+  number: string; // Changed from number to string
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
   jersey_color?: string;
@@ -143,7 +144,6 @@ export interface Customer {
   name: string;
   address: string;
   phone: string;
-  email?: string;
   delivery_note?: string;
   created_at?: Date | string;
 }
@@ -164,7 +164,6 @@ export interface Order {
   designImageBack?: string;    // Back design image path
   referenceImages: string[];   // Using string[] to match what we're transforming data to
   customer_id?: string;        // Reference to the customer who placed the order
-  customerInfo?: Customer;     // Customer information
   designData?: DesignData;     // New field to store all design-related data
   uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;

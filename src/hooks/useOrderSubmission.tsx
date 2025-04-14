@@ -1,19 +1,23 @@
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import { 
+  createStorageBucketsIfNeeded, 
+  uploadDesignImage,
+  checkFileExistsInStorage
+} from '@/utils/image-utils';
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Logo, Customer, Player } from "@/types";
-import { v4 as uuidv4 } from "uuid";
-
-interface UseOrderSubmissionProps {
+interface OrderSubmissionProps {
   user: any;
   players: Player[];
   logos: Logo[];
-  designData: any;
+  designData: Partial<DesignData>;
   notes: string;
   customerInfo: Customer;
-  productLines: any[];
+  productLines: ProductLine[];
   referenceImages: File[];
   totalCost: number;
   setIsSubmitting: (value: boolean) => void;
@@ -38,233 +42,409 @@ export const useOrderSubmission = ({
   fontNumber,
   printStyle,
   printColor
-}: UseOrderSubmissionProps) => {
+}: OrderSubmissionProps) => {
   const navigate = useNavigate();
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
-  
-  const submitOrder = async (jerseyCanvasRef: any, pantCanvasRef: any) => {
+  const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
+
+  const convertCanvasToFile = async (canvas: HTMLCanvasElement, orderId: string, fileName: string): Promise<File> => {
+    console.log("Converting canvas to file...");
+    const imageData = canvas.toDataURL('image/png');
+    
+    const base64String = imageData.split(',')[1];
+    const byteCharacters = atob(base64String);
+    const byteNumbers = new Array(byteCharacters.length);
+    
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    
+    const file = new File([blob], fileName, { type: 'image/png' });
+    console.log("Canvas converted to file successfully, size:", (file.size / 1024).toFixed(2), "KB");
+    
+    return file;
+  };
+
+  const generateOrderDesignImages = async (orderId: string, jerseyCanvasRef: React.RefObject<HTMLCanvasElement>, pantCanvasRef: React.RefObject<HTMLCanvasElement>): Promise<{ frontPath: string; backPath: string; pantsPath: string; }> => {
+    try {
+      setIsGeneratingDesign(true);
+      
+      const bucketsCheck = await createStorageBucketsIfNeeded();
+      if (!bucketsCheck.success) {
+        console.error("Failed to ensure storage buckets exist:", bucketsCheck.message);
+        toast.error(`Không thể khởi tạo kho lưu trữ: ${bucketsCheck.message}`);
+        return { frontPath: '', backPath: '', pantsPath: '' };
+      }
+      
+      if (!jerseyCanvasRef.current) {
+        console.error("Canvas reference is not available");
+        toast.error("Không thể tạo ảnh thiết kế: Canvas không khả dụng");
+        return { frontPath: '', backPath: '', pantsPath: '' };
+      }
+      
+      console.log("Capturing front view design...");
+      
+      console.log("Waiting for front view canvas to render...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const frontFileName = `front-design-${orderId}.png`;
+      const frontDesignFile = await convertCanvasToFile(
+        jerseyCanvasRef.current, 
+        orderId,
+        frontFileName
+      );
+      
+      const frontPath = await uploadDesignImage(
+        orderId,
+        frontDesignFile,
+        'front-design',
+        2
+      );
+      
+      let frontVerified = false;
+      if (!frontPath) {
+        console.error("Failed to upload front design image");
+      } else {
+        console.log("Front design image uploaded successfully:", frontPath);
+        
+        try {
+          frontVerified = await checkFileExistsInStorage('design_images', frontPath);
+          if (frontVerified) {
+            const { data: frontUrlData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(frontPath);
+            console.log("Front design public URL:", frontUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify front design image due to permissions, but continuing:", err);
+          frontVerified = true;
+        }
+      }
+      
+      console.log("Switching to back view design...");
+      
+      console.log("Waiting for back view canvas to render...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const backFileName = `back-design-${orderId}.png`;
+      const backDesignFile = await convertCanvasToFile(
+        jerseyCanvasRef.current, 
+        orderId,
+        backFileName
+      );
+      
+      const backPath = await uploadDesignImage(
+        orderId,
+        backDesignFile,
+        'back-design',
+        2
+      );
+      
+      let backVerified = false;
+      if (!backPath) {
+        console.error("Failed to upload back design image");
+      } else {
+        console.log("Back design image uploaded successfully:", backPath);
+        
+        try {
+          backVerified = await checkFileExistsInStorage('design_images', backPath);
+          if (backVerified) {
+            const { data: backUrlData } = supabase.storage
+              .from('design_images')
+              .getPublicUrl(backPath);
+            console.log("Back design public URL:", backUrlData.publicUrl);
+          }
+        } catch (err) {
+          console.warn("Unable to verify back design image due to permissions, but continuing:", err);
+          backVerified = true;
+        }
+      }
+      
+      let pantsPath = '';
+      if (pantCanvasRef.current) {
+        console.log("Capturing pants design...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const pantsFileName = `pants-design-${orderId}.png`;
+        const pantsDesignFile = await convertCanvasToFile(
+          pantCanvasRef.current,
+          orderId,
+          pantsFileName
+        );
+        
+        pantsPath = await uploadDesignImage(
+          orderId,
+          pantsDesignFile,
+          'pants-design',
+          2
+        );
+        
+        if (!pantsPath) {
+          console.error("Failed to upload pants design image");
+        } else {
+          console.log("Pants design image uploaded successfully:", pantsPath);
+        }
+      }
+      
+      const frontSuccess = frontPath && frontVerified;
+      const backSuccess = backPath && backVerified;
+      
+      if (frontSuccess || backSuccess) {
+        toast.success(`Đã lưu hình ảnh thiết kế ${frontSuccess && backSuccess ? 'mặt trước và mặt sau' : frontSuccess ? 'mặt trước' : 'mặt sau'}`);
+      } else if (frontPath || backPath) {
+        toast.info("Đã tạo hình ảnh thiết kế, nhưng không thể xác minh. Vẫn tiếp tục xử lý đơn hàng.");
+      } else {
+        toast.error("Không thể tạo ảnh thiết kế. Vui lòng thử lại sau.");
+      }
+      
+      return { 
+        frontPath: frontPath || '', 
+        backPath: backPath || '',
+        pantsPath: pantsPath || ''
+      };
+    } catch (err) {
+      console.error(`Error capturing order design images:`, err);
+      toast.error(`Có lỗi khi tạo ảnh thiết kế: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return { frontPath: '', backPath: '', pantsPath: '' };
+    } finally {
+      setIsGeneratingDesign(false);
+    }
+  };
+
+  const uploadReferenceImages = async (orderId: string, referenceImages: File[]): Promise<string[]> => {
+    if (referenceImages.length === 0) return [];
+    
+    const uploadedPaths: string[] = [];
+    let uploadProgress = 0;
+    
+    toast.info(`Đang tải lên hình ảnh tham khảo (0/${referenceImages.length})...`);
+    
+    for (const [index, file] of referenceImages.entries()) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
+        
+        console.log(`Uploading reference image ${index} to ${filePath}...`);
+        
+        const { data, error } = await supabase.storage
+          .from('reference_images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) {
+          console.error(`Error uploading reference image ${index}:`, error);
+          toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}: ${error.message}`);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('reference_images')
+          .getPublicUrl(data.path);
+          
+        console.log(`Reference image ${index} public URL: ${urlData.publicUrl}`);
+        
+        uploadedPaths.push(data.path);
+        uploadProgress++;
+        
+        toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
+        
+      } catch (err) {
+        console.error(`Error uploading reference image ${index}:`, err);
+        toast.error(`Có lỗi khi tải lên hình ảnh tham khảo ${index + 1}`);
+      }
+    }
+    
+    if (uploadedPaths.length > 0) {
+      toast.success(`Đã tải lên ${uploadedPaths.length}/${referenceImages.length} hình ảnh tham khảo`);
+    }
+    
+    return uploadedPaths;
+  };
+
+  const prepareDesignDataForStorage = (data: Partial<DesignData>): Record<string, any> => {
+    if (data.uniform_type && !['player', 'goalkeeper', 'mixed'].includes(data.uniform_type)) {
+      data.uniform_type = 'player';
+    }
+    return JSON.parse(JSON.stringify(data));
+  };
+
+  const submitOrder = async (jerseyCanvasRef: React.RefObject<HTMLCanvasElement>, pantCanvasRef: React.RefObject<HTMLCanvasElement>) => {
     if (!user) {
       toast.error("Vui lòng đăng nhập để đặt đơn hàng");
-      navigate('/login');
+      return;
+    }
+    
+    if (players.length === 0) {
+      toast.error("Vui lòng thêm ít nhất một cầu thủ vào danh sách");
+      return;
+    }
+    
+    if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
+      toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
       return;
     }
     
     setIsSubmitting(true);
-    setUploadProgress(0);
     
     try {
-      // Create order reference
+      await createStorageBucketsIfNeeded();
+      
       const orderId = uuidv4();
-      console.log(`Creating order with ID: ${orderId}`);
+      const logoUrls: string[] = [];
       
-      // Step 1: Upload reference images to storage
-      const referenceImagePaths = [];
-      setUploadProgress(5);
+      console.log("Starting design images generation...");
+      const { frontPath, backPath, pantsPath } = await generateOrderDesignImages(orderId, jerseyCanvasRef, pantCanvasRef);
       
-      for (let i = 0; i < referenceImages.length; i++) {
-        const file = referenceImages[i];
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${orderId}/${Date.now()}-ref-${i}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('reference_images')
-          .upload(filePath, file);
-        
-        if (uploadError) {
-          console.error(`Error uploading reference image ${i}:`, uploadError);
-          continue;
-        }
-        
-        referenceImagePaths.push(filePath);
-        setUploadProgress(5 + Math.floor((i + 1) * 15 / referenceImages.length));
+      if (!frontPath && !backPath) {
+        console.warn("No design images were generated, but continuing with order submission");
+        toast.warning("Không thể tạo ảnh thiết kế, nhưng vẫn tiếp tục đơn hàng của bạn.");
+      } else {
+        console.log("Design images generated successfully:", { frontPath, backPath, pantsPath });
       }
       
-      // Step 2: Upload jersey design previews from canvas
-      const designImages: Record<string, string> = {};
-      setUploadProgress(20);
+      const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
       
-      if (jerseyCanvasRef.current) {
-        // Front view
-        const frontImageUrl = jerseyCanvasRef.current.toDataURL('image/png');
-        const frontBlob = await fetch(frontImageUrl).then(r => r.blob());
-        const frontFilePath = `${orderId}/jersey-front.png`;
-        
-        const { error: frontUploadError } = await supabase.storage
-          .from('design_images')
-          .upload(frontFilePath, frontBlob);
+      if (logos.length > 0) {
+        for (const logo of logos) {
+          const fileExt = logo.file.name.split('.').pop();
+          const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
           
-        if (frontUploadError) {
-          console.error("Error uploading front design image:", frontUploadError);
-        } else {
-          designImages.front = frontFilePath;
-        }
-        
-        setUploadProgress(30);
-        
-        // Back view (changing canvas content and capturing again)
-        // ... (assuming you have logic to switch to back view)
-        const backImageUrl = jerseyCanvasRef.current.toDataURL('image/png');
-        const backBlob = await fetch(backImageUrl).then(r => r.blob());
-        const backFilePath = `${orderId}/jersey-back.png`;
-        
-        const { error: backUploadError } = await supabase.storage
-          .from('design_images')
-          .upload(backFilePath, backBlob);
+          const { error: uploadError } = await supabase.storage
+            .from('logos')
+            .upload(filePath, logo.file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+            
+          if (uploadError) {
+            throw uploadError;
+          }
           
-        if (backUploadError) {
-          console.error("Error uploading back design image:", backUploadError);
-        } else {
-          designImages.back = backFilePath;
-        }
-        
-        setUploadProgress(40);
-      }
-      
-      // Upload pants design if available
-      if (pantCanvasRef.current) {
-        const pantsImageUrl = pantCanvasRef.current.toDataURL('image/png');
-        const pantsBlob = await fetch(pantsImageUrl).then(r => r.blob());
-        const pantsFilePath = `${orderId}/pants.png`;
-        
-        const { error: pantsUploadError } = await supabase.storage
-          .from('design_images')
-          .upload(pantsFilePath, pantsBlob);
+          const { data: { publicUrl } } = supabase.storage
+            .from('logos')
+            .getPublicUrl(filePath);
+            
+          logoUrls.push(publicUrl);
           
-        if (pantsUploadError) {
-          console.error("Error uploading pants design image:", pantsUploadError);
-        } else {
-          designImages.pants = pantsFilePath;
+          await supabase.from('logos').insert({
+            file_path: filePath,
+            order_id: orderId,
+            position: logo.position
+          });
         }
       }
       
-      setUploadProgress(50);
+      const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
+      const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
       
-      // Step 3: Insert order data
-      const enhancedDesignData = {
+      const finalDesignData: Partial<DesignData> = {
         ...designData,
-        uniform_type: players.some(p => p.uniform_type === 'goalkeeper') ? 'mixed' : 'player',
+        uniform_type: playerCount > 0 && goalkeeperCount > 0 ? 'mixed' : 
+                     goalkeeperCount > 0 ? 'goalkeeper' : 'player',
         quantity: players.length,
-        font_text: { font: fontText },
-        font_number: { font: fontNumber },
+        reference_images: referenceImagePaths,
+        font_text: {
+          font: fontText
+        },
+        font_number: {
+          font: fontNumber
+        },
         print_style: printStyle,
-        print_color: printColor,
-        reference_images: referenceImagePaths
+        print_color: printColor
       };
-      
+
+      const designDataJson = prepareDesignDataForStorage(finalDesignData);
+
+      console.log("Inserting order with design_images:", { frontPath, backPath, pantsPath });
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
-          customer_id: user.id,
-          team_name: customerInfo.name,
-          total_cost: totalCost,
+          team_name: players[0].name || "Team",
+          logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
           status: 'new',
+          total_cost: totalCost,
           notes: notes,
-          design_image_front: designImages.front || null,
-          design_image_back: designImages.back || null,
+          design_data: designDataJson,
+          design_image: frontPath || null,
+          design_image_front: frontPath || null,
+          design_image_back: backPath || null,
           reference_images: referenceImagePaths,
-          design_data: enhancedDesignData
+          customer_id: user.id
         });
         
       if (orderError) {
-        throw new Error(`Error creating order: ${orderError.message}`);
+        console.error("Error creating order:", orderError);
+        throw orderError;
+      }
+
+      const { error: customerError } = await supabase
+        .from('customers')
+        .upsert({
+          id: user.id,
+          name: customerInfo.name,
+          address: customerInfo.address,
+          phone: customerInfo.phone,
+          delivery_note: customerInfo.delivery_note
+        });
+          
+      if (customerError) {
+        console.error("Error updating customer info:", customerError);
+        toast.warning("Không thể cập nhật thông tin khách hàng, nhưng vẫn tiếp tục tạo đơn hàng.");
       }
       
-      setUploadProgress(60);
-      
-      // Step 4: Insert print config
-      const { error: printConfigError } = await supabase
-        .from('print_configs')
-        .insert({
-          order_id: orderId,
-          font: fontText,
-          back_material: printStyle,
-          back_color: printColor,
-          front_material: printStyle,
-          front_color: printColor,
-          sleeve_material: printStyle,
-          sleeve_color: printColor,
-          leg_material: printStyle,
-          leg_color: printColor
+      if (players.length > 0) {
+        const playersToInsert = players.map(p => {
+          return {
+            name: p.name,
+            number: p.number,
+            size: p.size,
+            print_image: p.printImage,
+            order_id: orderId,
+            uniform_type: p.uniform_type || 'player',
+            line_1: p.line_1 || null,
+            line_2: String(p.number),
+            line_3: p.line_3 || null,
+            chest_text: p.chest_text || null,
+            chest_number: p.chest_number || false,
+            pants_number: p.pants_number || false,
+            logo_chest_left: p.logo_chest_left || false,
+            logo_chest_right: p.logo_chest_right || false,
+            logo_chest_center: p.logo_chest_center || false,
+            logo_sleeve_left: p.logo_sleeve_left || false,
+            logo_sleeve_right: p.logo_sleeve_right || false,
+            logo_pants: p.logo_pants || false,
+            pet_chest: p.pet_chest || null,
+            jersey_color: p.jersey_color || 'yellow',
+            note: p.note || null
+          };
         });
         
-      if (printConfigError) {
-        console.error("Error creating print config:", printConfigError);
-      }
-      
-      setUploadProgress(70);
-      
-      // Step 5: Insert players
-      // Convert string numbers to integers for database compatibility
-      const playersData = players.map(player => ({
-        order_id: orderId,
-        name: player.name,
-        number: parseInt(player.number) || 0, // Convert string to number
-        size: player.size,
-        print_image: player.printImage,
-        jersey_color: player.jersey_color,
-        uniform_type: player.uniform_type,
-        line_1: player.line_1 || player.name,
-        line_3: player.line_3,
-        chest_text: player.chest_text,
-        chest_number: player.chest_number,
-        pants_number: player.pants_number,
-        logo_chest_left: player.logo_chest_left,
-        logo_chest_right: player.logo_chest_right,
-        logo_chest_center: player.logo_chest_center,
-        logo_sleeve_left: player.logo_sleeve_left,
-        logo_sleeve_right: player.logo_sleeve_right,
-        pet_chest: player.pet_chest,
-        logo_pants: player.logo_pants,
-        note: player.note
-      }));
-      
-      const { error: playersError } = await supabase
-        .from('players')
-        .insert(playersData);
-        
-      if (playersError) {
-        console.error("Error adding players:", playersError);
-      }
-      
-      setUploadProgress(80);
-      
-      // Step 6: Insert product lines
-      if (productLines.length > 0) {
-        const productLineData = productLines.map(line => ({
-          ...line,
-          order_id: orderId
+        const dbCompatiblePlayers = playersToInsert.map(player => ({
+          ...player,
+          number: parseInt(player.number, 10) || 0
         }));
         
-        const { error: productLinesError } = await supabase
-          .from('product_lines')
-          .insert(productLineData);
-          
-        if (productLinesError) {
-          console.error("Error adding product lines:", productLinesError);
-        }
+        await supabase.from('players').insert(dbCompatiblePlayers);
       }
       
-      setUploadProgress(90);
-      
-      // If we made it this far, consider the order successful
       toast.success("Đơn hàng đã được tạo thành công!");
-      navigate('/order-confirmation', { 
-        state: { 
-          orderId, 
-          playerCount: players.length,
-          customerName: customerInfo.name
-        }
-      });
+      navigate('/orders');
       
-      setUploadProgress(100);
-    } catch (error) {
-      console.error("Error submitting order:", error);
-      toast.error("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.");
+    } catch (err) {
+      console.error(`Error submitting order:`, err);
+      toast.error(`Có lỗi khi đặt đơn hàng: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return { submitOrder, uploadProgress };
+  return {
+    isGeneratingDesign,
+    submitOrder
+  };
 };

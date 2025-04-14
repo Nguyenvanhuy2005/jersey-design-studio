@@ -11,21 +11,17 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, isLoading, isAdmin } = useAuth();
+  const { user, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect user if already logged in and is admin
+  // Chuyển hướng người dùng nếu đã đăng nhập
   useEffect(() => {
-    if (user && isAdmin && !isLoading) {
+    if (user && !isLoading) {
       navigate("/admin/orders");
-    } else if (user && !isAdmin && !isLoading) {
-      // If logged in but not admin, show message and redirect to home
-      toast.error("Bạn không có quyền truy cập vào trang quản trị");
-      navigate("/");
     }
-  }, [user, isAdmin, isLoading, navigate]);
+  }, [user, isLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +37,13 @@ const AdminLogin = () => {
         throw error;
       }
 
-      // Authentication successful, but need to check if user is admin
-      // This will be handled by the useEffect above once auth state updates
+      toast.success("Đăng nhập quản trị thành công");
+      
+      // Chuyển hướng sẽ được xử lý bởi useEffect khi user được cập nhật
+      // Thêm một setTimeout để đảm bảo chuyển hướng nếu useEffect không hoạt động
+      setTimeout(() => {
+        navigate("/admin/orders");
+      }, 500);
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Email hoặc mật khẩu không đúng");
@@ -51,7 +52,7 @@ const AdminLogin = () => {
     }
   };
 
-  // If still checking auth status
+  // Nếu đang kiểm tra trạng thái đăng nhập, hiển thị trạng thái loading
   if (isLoading) {
     return (
       <Layout>
@@ -62,9 +63,9 @@ const AdminLogin = () => {
     );
   }
 
-  // If already logged in, don't show the form (useEffect will handle redirect)
+  // Nếu đã đăng nhập, redirect tới trang admin (không hiển thị form đăng nhập)
   if (user) {
-    return null;
+    return null; // Không hiển thị gì cả vì useEffect sẽ chuyển hướng người dùng
   }
 
   return (
