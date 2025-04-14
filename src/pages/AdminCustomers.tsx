@@ -12,6 +12,7 @@ import { Loader2, Search, User, UserPlus, MoreHorizontal, Mail, Phone, MapPin } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthCheck } from "@/components/auth/AuthCheck";
+import { Link } from "react-router-dom";
 
 // Define custom PostgresError type
 interface PostgresError {
@@ -68,13 +69,10 @@ const AdminCustomers = () => {
     }
     
     try {
-      // First get the user ID from auth.users based on email
-      // We'll need to use a custom SQL function to get the user id
-      const { data: userData, error: userError } = await supabase
-        .from('auth')
-        .select('id')
-        .eq('email', adminEmail)
-        .single();
+      // Instead of directly querying auth.users, we'll use a RPC function to get the user ID
+      const { data: userData, error: userError } = await supabase.rpc('get_user_by_email', {
+        email: adminEmail
+      });
       
       if (userError || !userData) {
         toast.error("Không tìm thấy người dùng với email này");
@@ -85,7 +83,7 @@ const AdminCustomers = () => {
       const { error } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userData.id,
+          user_id: userData,
           role: 'admin'
         });
         
