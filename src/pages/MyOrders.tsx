@@ -111,25 +111,33 @@ const MyOrders = () => {
       setError(null);
       
       try {
+        // Fixed query to properly handle the relationship between orders and customers
         const { data, error } = await supabase
           .from('orders')
           .select(`
             *,
-            customers!orders_customer_id_fkey(*),
-            players(*),
-            product_lines(*),
-            print_configs(*)
+            customers(*)
           `)
           .eq('customer_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) {
-          throw error;
+          console.error('Error fetching orders:', error);
+          setError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+          return;
+        }
+        
+        if (!data || data.length === 0) {
+          // No error but no data
+          setOrders([]);
+          setError(null);
+          setIsLoading(false);
+          return;
         }
         
         // Transform orders data
         const transformedOrders: Order[] = data.map((order) => {
-          // Get customer info
+          // Get customer info - safely handling the customers object
           const customerInfo = order.customers ? {
             id: order.customers.id,
             name: order.customers.name || '',
@@ -297,10 +305,6 @@ const MyOrders = () => {
               <div>
                 <h3 className="font-medium">Lỗi tải dữ liệu</h3>
                 <p className="text-sm mt-1">{error}</p>
-                <p className="text-sm mt-2">
-                  Nếu lỗi liên quan đến "relationship between orders and customers", 
-                  có thể cần phải khởi động lại server để áp dụng các thay đổi cơ sở dữ liệu.
-                </p>
               </div>
             </div>
           </div>
