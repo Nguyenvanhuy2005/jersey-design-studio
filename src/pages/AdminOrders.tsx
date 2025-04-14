@@ -236,160 +236,168 @@ const AdminOrders = () => {
     }
   };
 
+  const fetchOrders = async () => {
+    setFetchingData(true);
+    setFetchError(null);
+    console.log("Fetching orders data...");
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          players(*), 
+          product_lines(*), 
+          print_configs(*),
+          customers(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching orders:", error);
+        setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+        toast.error(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+        setOrders([]); // Don't use mock data in production
+        setFetchingData(false);
+        return;
+      }
+      
+      if (!data || data.length === 0) {
+        console.log("No orders found");
+        setOrders([]);
+        setFetchingData(false);
+        return;
+      }
+      
+      console.log("Raw orders data:", data);
+      
+      const transformedOrders: Order[] = await Promise.all(data.map(async order => {
+        // Process reference images
+        let processedReferenceImages: string[] = [];
+        if (order.reference_images && Array.isArray(order.reference_images)) {
+          processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
+        }
+        
+        // Process design data
+        if (order.design_data) {
+          const designData = order.design_data as {
+            reference_images?: any[];
+          };
+          if (designData && typeof designData === 'object' && designData.reference_images && Array.isArray(designData.reference_images)) {
+            const refImagesFromDesignData = designData.reference_images.filter(item => typeof item === 'string').map(item => String(item));
+            processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
+          }
+        }
+        
+        // Check design images existence
+        let designImageFront = order.design_image_front || order.design_image || '';
+        let designImageBack = order.design_image_back || '';
+        
+        console.log(`Order ${order.id} design images:`, {
+          front: designImageFront,
+          back: designImageBack
+        });
+
+        // Transform customer data if available
+        const customerData = order.customers || null;
+        const customerInfo = customerData && typeof customerData === 'object' ? {
+          id: customerData.id,
+          name: customerData.name || '',
+          address: customerData.address || '',
+          phone: customerData.phone || '',
+          delivery_note: customerData.delivery_note || '',
+          created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
+        } : undefined;
+        
+        // Convert design_data to proper DesignData type
+        let typedDesignData: any = {};
+        if (order.design_data && typeof order.design_data === 'object') {
+          typedDesignData = order.design_data;
+        }
+        
+        return {
+          id: order.id,
+          teamName: order.team_name || '',
+          status: order.status as 'new' | 'processing' | 'completed',
+          totalCost: order.total_cost,
+          createdAt: new Date(order.created_at || ''),
+          notes: order.notes || '',
+          designImage: order.design_image || '',
+          designImageFront: order.design_image_front || '',
+          designImageBack: order.design_image_back || '',
+          referenceImages: processedReferenceImages,
+          customerInfo: customerInfo,
+          customer_id: order.customer_id,
+          players: order.players ? order.players.map((player: any) => ({
+            id: player.id,
+            name: player.name || '',
+            number: player.number?.toString() || "0",
+            size: player.size as 'S' | 'M' | 'L' | 'XL',
+            printImage: player.print_image || false,
+            jersey_color: player.jersey_color || '',
+            uniform_type: player.uniform_type || 'player',
+            line_1: player.line_1 || '',
+            line_3: player.line_3 || '',
+            chest_text: player.chest_text || '',
+            chest_number: player.chest_number || false,
+            pants_number: player.pants_number || false,
+            logo_chest_left: player.logo_chest_left || false,
+            logo_chest_right: player.logo_chest_right || false,
+            logo_chest_center: player.logo_chest_center || false,
+            logo_sleeve_left: player.logo_sleeve_left || false,
+            logo_sleeve_right: player.logo_sleeve_right || false,
+            pet_chest: player.pet_chest || '',
+            logo_pants: player.logo_pants || false,
+            note: player.note || ''
+          })) : [],
+          productLines: order.product_lines ? order.product_lines.map((line: any) => ({
+            id: line.id,
+            product: line.product,
+            position: line.position,
+            material: line.material,
+            size: line.size,
+            points: line.points || 0,
+            content: line.content || ''
+          })) : [],
+          printConfig: order.print_configs && order.print_configs.length > 0 ? {
+            id: order.print_configs[0].id,
+            font: order.print_configs[0].font || 'Arial',
+            backMaterial: order.print_configs[0].back_material || '',
+            backColor: order.print_configs[0].back_color || '',
+            frontMaterial: order.print_configs[0].front_material || '',
+            frontColor: order.print_configs[0].front_color || '',
+            sleeveMaterial: order.print_configs[0].sleeve_material || '',
+            sleeveColor: order.print_configs[0].sleeve_color || '',
+            legMaterial: order.print_configs[0].leg_material || '',
+            legColor: order.print_configs[0].leg_color || ''
+          } : {
+            font: 'Arial',
+            backMaterial: 'In chuyển nhiệt',
+            backColor: 'Đen',
+            frontMaterial: 'In chuyển nhiệt',
+            frontColor: 'Đen',
+            sleeveMaterial: 'In chuyển nhiệt',
+            sleeveColor: 'Đen',
+            legMaterial: 'In chuyển nhiệt',
+            legColor: 'Đen'
+          },
+          designData: typedDesignData
+        };
+      }));
+      
+      console.log("Transformed orders:", transformedOrders);
+      setOrders(transformedOrders);
+    } catch (e) {
+      console.error("Exception in fetchOrders:", e);
+      setFetchError(`Có lỗi xảy ra khi tải dữ liệu: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      toast.error("Có lỗi xảy ra khi tải dữ liệu");
+      setOrders([]); // Don't use mock data in production
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      const fetchOrders = async () => {
-        setFetchingData(true);
-        setFetchError(null);
-        console.log("Fetching orders data...");
-        try {
-          const { data, error } = await supabase
-            .from('orders')
-            .select(`
-              *,
-              players(*), 
-              product_lines(*), 
-              print_configs(*),
-              customers:customer_id(*)
-            `)
-            .order('created_at', { ascending: false });
-          
-          if (error) {
-            console.error("Error fetching orders:", error);
-            setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
-            toast.error(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
-            setOrders([]); // Don't use mock data in production
-            setFetchingData(false);
-            return;
-          }
-          
-          if (!data || data.length === 0) {
-            console.log("No orders found");
-            setOrders([]);
-            setFetchingData(false);
-            return;
-          }
-          
-          console.log("Raw orders data:", data);
-          
-          const transformedOrders: Order[] = await Promise.all(data.map(async order => {
-            // Process reference images
-            let processedReferenceImages: string[] = [];
-            if (order.reference_images && Array.isArray(order.reference_images)) {
-              processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-            }
-            
-            // Process design data
-            if (order.design_data) {
-              const designData = order.design_data as {
-                reference_images?: any[];
-              };
-              if (designData && typeof designData === 'object' && designData.reference_images && Array.isArray(designData.reference_images)) {
-                const refImagesFromDesignData = designData.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-                processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
-              }
-            }
-            
-            // Check design images existence
-            let designImageFront = order.design_image_front || order.design_image || '';
-            let designImageBack = order.design_image_back || '';
-            
-            console.log(`Order ${order.id} design images:`, {
-              front: designImageFront,
-              back: designImageBack
-            });
-
-            // Transform customer data if available
-            const customerInfo = order.customers ? {
-              id: order.customers.id,
-              name: order.customers.name || '',
-              address: order.customers.address || '',
-              phone: order.customers.phone || '',
-              delivery_note: order.customers.delivery_note || '',
-              created_at: order.customers.created_at ? new Date(order.customers.created_at) : undefined
-            } : undefined;
-            
-            return {
-              id: order.id,
-              teamName: order.team_name || '',
-              status: order.status as 'new' | 'processing' | 'completed',
-              totalCost: order.total_cost,
-              createdAt: new Date(order.created_at || ''),
-              notes: order.notes || '',
-              designImage: order.design_image || '',
-              designImageFront: order.design_image_front || '',
-              designImageBack: order.design_image_back || '',
-              referenceImages: processedReferenceImages,
-              customerInfo: customerInfo,
-              customer_id: order.customer_id,
-              players: order.players ? order.players.map((player: any) => ({
-                id: player.id,
-                name: player.name || '',
-                number: player.number,
-                size: player.size as 'S' | 'M' | 'L' | 'XL',
-                printImage: player.print_image || false,
-                jersey_color: player.jersey_color || '',
-                uniform_type: player.uniform_type || 'player',
-                line_1: player.line_1 || '',
-                line_3: player.line_3 || '',
-                chest_text: player.chest_text || '',
-                chest_number: player.chest_number || false,
-                pants_number: player.pants_number || false,
-                logo_chest_left: player.logo_chest_left || false,
-                logo_chest_right: player.logo_chest_right || false,
-                logo_chest_center: player.logo_chest_center || false,
-                logo_sleeve_left: player.logo_sleeve_left || false,
-                logo_sleeve_right: player.logo_sleeve_right || false,
-                pet_chest: player.pet_chest || '',
-                logo_pants: player.logo_pants || false,
-                note: player.note || ''
-              })) : [],
-              productLines: order.product_lines ? order.product_lines.map((line: any) => ({
-                id: line.id,
-                product: line.product,
-                position: line.position,
-                material: line.material,
-                size: line.size,
-                points: line.points || 0,
-                content: line.content || ''
-              })) : [],
-              printConfig: order.print_configs && order.print_configs.length > 0 ? {
-                id: order.print_configs[0].id,
-                font: order.print_configs[0].font || 'Arial',
-                backMaterial: order.print_configs[0].back_material || '',
-                backColor: order.print_configs[0].back_color || '',
-                frontMaterial: order.print_configs[0].front_material || '',
-                frontColor: order.print_configs[0].front_color || '',
-                sleeveMaterial: order.print_configs[0].sleeve_material || '',
-                sleeveColor: order.print_configs[0].sleeve_color || '',
-                legMaterial: order.print_configs[0].leg_material || '',
-                legColor: order.print_configs[0].leg_color || ''
-              } : {
-                font: 'Arial',
-                backMaterial: 'In chuyển nhiệt',
-                backColor: 'Đen',
-                frontMaterial: 'In chuyển nhiệt',
-                frontColor: 'Đen',
-                sleeveMaterial: 'In chuyển nhiệt',
-                sleeveColor: 'Đen',
-                legMaterial: 'In chuyển nhiệt',
-                legColor: 'Đen'
-              },
-              designData: order.design_data || {}
-            };
-          }));
-          
-          console.log("Transformed orders:", transformedOrders);
-          setOrders(transformedOrders);
-        } catch (e) {
-          console.error("Exception in fetchOrders:", e);
-          setFetchError(`Có lỗi xảy ra khi tải dữ liệu: ${e instanceof Error ? e.message : 'Unknown error'}`);
-          toast.error("Có lỗi xảy ra khi tải dữ liệu");
-          setOrders([]); // Don't use mock data in production
-        } finally {
-          setFetchingData(false);
-        }
-      };
       fetchOrders();
     }
   }, [user]);
@@ -417,7 +425,7 @@ const AdminOrders = () => {
         console.error("Error updating order status:", error);
         toast.error("Không thể cập nhật trạng thái đơn hàng");
       } else {
-        toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${newStatus === 'new' ? 'Mới' : newStatus === 'processing' ? 'Đang xử lý' : 'Đã hoàn thành'}`);
+        toast.success(`Trạng thái đơn hàng đã được cập nh��t thành ${newStatus === 'new' ? 'Mới' : newStatus === 'processing' ? 'Đang xử lý' : 'Đã hoàn thành'}`);
       }
     });
   };

@@ -1,7 +1,8 @@
+
 export interface Player {
   id?: string;
   name: string;
-  number: string; // Changed from number to string
+  number: string; // Keep as string in the interface for UI purposes
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
   jersey_color?: string;

@@ -80,7 +80,7 @@ export const useOrderSubmission = ({
       }
       
       // Step 2: Upload jersey design previews from canvas
-      const designImages = {};
+      const designImages: Record<string, string> = {};
       setUploadProgress(20);
       
       if (jerseyCanvasRef.current) {
@@ -160,8 +160,8 @@ export const useOrderSubmission = ({
           total_cost: totalCost,
           status: 'new',
           notes: notes,
-          design_image_front: designImages.front,
-          design_image_back: designImages.back,
+          design_image_front: designImages.front || null,
+          design_image_back: designImages.back || null,
           reference_images: referenceImagePaths,
           design_data: enhancedDesignData
         });
@@ -195,10 +195,11 @@ export const useOrderSubmission = ({
       setUploadProgress(70);
       
       // Step 5: Insert players
+      // Convert string numbers to integers for database compatibility
       const playersData = players.map(player => ({
         order_id: orderId,
         name: player.name,
-        number: player.number,
+        number: parseInt(player.number) || 0, // Convert string to number
         size: player.size,
         print_image: player.printImage,
         jersey_color: player.jersey_color,
