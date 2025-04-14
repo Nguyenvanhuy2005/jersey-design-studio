@@ -1,0 +1,119 @@
+
+import { useState, useEffect } from "react";
+import { Customer } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export function useCustomerForm(initialCustomer?: Customer) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [customerInfo, setCustomerInfo] = useState<Customer>({
+    name: initialCustomer?.name || "",
+    address: initialCustomer?.address || "",
+    phone: initialCustomer?.phone || "",
+    delivery_note: initialCustomer?.delivery_note || ""
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchCustomerInfo();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchCustomerInfo = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+        
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          console.error("Error fetching customer info:", error);
+          toast.error("Không thể tải thông tin khách hàng");
+        }
+        setLoading(false);
+        return;
+      }
+      
+      if (data) {
+        const customerData = {
+          id: data.id,
+          name: data.name || "",
+          address: data.address || "",
+          phone: data.phone || "",
+          delivery_note: data.delivery_note || "",
+          created_at: data.created_at ? new Date(data.created_at) : undefined
+        };
+        
+        setCustomerInfo(customerData);
+      }
+    } catch (error) {
+      console.error("Error fetching customer:", error);
+      toast.error("Có lỗi khi tải thông tin khách hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof Customer, value: string) => {
+    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveCustomerInfo = async () => {
+    if (!user) {
+      toast.error("Bạn cần đăng nhập để lưu thông tin khách hàng");
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .upsert({
+          id: user.id,
+          name: customerInfo.name,
+          address: customerInfo.address,
+          phone: customerInfo.phone,
+          delivery_note: customerInfo.delivery_note
+        }, {
+          onConflict: 'id'
+        });
+        
+      if (error) {
+        toast.error("Không thể lưu thông tin khách hàng");
+        console.error("Error saving customer info:", error);
+        return;
+      }
+      
+      toast.success("Đã lưu thông tin khách hàng");
+    } catch (error) {
+      console.error("Error saving customer info:", error);
+      toast.error("Không thể lưu thông tin khách hàng");
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const isFormComplete = () => {
+    return customerInfo.name.trim() !== "" && 
+           customerInfo.address.trim() !== "" && 
+           customerInfo.phone.trim() !== "";
+  };
+
+  return {
+    loading,
+    saving,
+    customerInfo,
+    handleInputChange,
+    saveCustomerInfo,
+    isFormComplete
+  };
+}
