@@ -20,7 +20,7 @@ export const ProtectedRoute = ({ requireAdmin = false }: ProtectedRouteProps) =>
   
   // If user is authenticated
   if (user) {
-    // If the route requires admin permission
+    // If the route requires admin permission and user is not admin
     if (requireAdmin && !isAdmin) {
       // User is not an admin, redirect to home
       return <Navigate to="/" replace />;

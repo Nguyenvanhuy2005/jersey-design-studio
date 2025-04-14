@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,11 +56,14 @@ const AdminCustomers = () => {
     }
     
     try {
-      // First get the user ID from auth.users based on email
-      const { data: userData, error: userError } = await supabase
-        .rpc('get_user_id_by_email', { user_email: adminEmail });
-      
-      if (userError || !userData) {
+      // Get the user ID from the customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', adminEmail)
+        .single();
+        
+      if (customerError || !customerData) {
         toast.error("Không tìm thấy người dùng với email này");
         return;
       }
@@ -70,10 +72,10 @@ const AdminCustomers = () => {
       const { error } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userData,
+          user_id: customerData.id,
           role: 'admin'
         });
-        
+          
       if (error) {
         if (error.code === '23505') { // Unique constraint violation
           toast.info("Người dùng này đã có quyền admin");
