@@ -60,7 +60,7 @@ export function OrderPreviewTab({
       
       <div className="text-center p-2 bg-blue-50 rounded-md">
         <p className="text-sm text-blue-600">
-          Thiết kế hiển thị ở trên sử dụng vị trí in cố định cho tất cả các logo và số áo. 
+          Thiết kế hiển thị ở trên sử dụng vị trí in cố định cho tất cả các logo, số áo và tên. 
           Khách hàng không thể chỉnh sửa vị trí in trên áo.
         </p>
       </div>

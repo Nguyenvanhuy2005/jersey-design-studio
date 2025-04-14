@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { getFont } from '@/utils/jersey-utils';
 
 interface JerseyBackProps {
   ctx: CanvasRenderingContext2D;
@@ -66,31 +65,34 @@ export const JerseyBack = ({
   
   console.log(`Rendering back jersey with text: player=${playerName}, number=${playerNumber}, team=${teamName}`);
   
-  // Draw player name (upper back - above number)
+  // Draw player name (IN DÒNG 1 - upper back - above number) - Fixed position and size
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 24;
-    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for player name
+    const fontSize = 25; // Fixed font size 25px
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`); // Adjust size for player name
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
+    // Fixed position: center, 50px from top (5cm from collar)
     ctx.fillText(playerNameDisplayed, 150, 50, 180);
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
-  // Draw player number (center back)
+  // Draw player number (IN DÒNG 2 - center back) - Fixed position and size
   if (playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 100;
-    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for player number
+    const fontSize = 60; // Fixed font size 60px
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`); // Adjust size for player number
+    // Fixed position: center, 150px from top (15cm from collar)
     ctx.fillText(playerNumber.toString(), 150, 150);
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
-  // Draw team name (lower back - below number)
+  // Draw team name (IN DÒNG 3 - lower back - below number) - Fixed position and size
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 18;
-    ctx.font = fontFamily.replace('20px', `${fontSize}px`); // Adjust size for team name
+    const fontSize = 25; // Fixed font size 25px, same as player name
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`); // Adjust size for team name
     const teamNameDisplayed = teamName.length > 20 ? teamName.substring(0, 20) + '...' : teamName;
+    // Fixed position: center, 230px from top (2cm below number)
     ctx.fillText(teamNameDisplayed, 150, 230, 180);
     console.log(`Drew team name: ${teamNameDisplayed} with font: ${ctx.font}`);
   }

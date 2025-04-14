@@ -66,13 +66,18 @@ export function UniformPreview({
           <div className={`flex-1 bg-muted/30 p-4 rounded-md ${showPants ? 'lg:w-1/2' : 'w-full'}`}>
             <div className="flex justify-center">
               <CanvasJersey 
-                teamName={teamName || "TEAM NAME"}
+                teamName={currentPlayer?.name?.split(' ')[0] || teamName || "TEAM"}
                 playerName={currentPlayer?.name || ""}
                 playerNumber={currentPlayer?.number || 0}
                 logos={logos}
                 view={previewView}
                 printConfig={printConfig}
-                designData={designData}
+                designData={{
+                  ...designData,
+                  line_1: { content: currentPlayer?.name || "", enabled: true },
+                  line_2: { content: String(currentPlayer?.number || "0"), enabled: true },
+                  line_3: { content: teamName, enabled: true }
+                }}
                 canvasRef={canvasRef}
               />
             </div>
@@ -86,7 +91,7 @@ export function UniformPreview({
             <div className="flex-1 bg-muted/30 p-4 rounded-md lg:w-1/2">
               <div className="flex justify-center">
                 <CanvasJersey 
-                  teamName={teamName || "TEAM NAME"}
+                  teamName={currentPlayer?.name?.split(' ')[0] || teamName || "TEAM"}
                   playerName={currentPlayer?.name || ""}
                   playerNumber={currentPlayer?.number || 0}
                   logos={logos.filter(logo => logo.position === 'pants')}

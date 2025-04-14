@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { getFont } from '@/utils/jersey-utils';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
@@ -54,25 +53,25 @@ export const JerseyPants = ({
   if (playerNumber !== undefined) {
     ctx.fillStyle = '#FFD700'; // Yellow number
     const fontSize = 35; // Slightly smaller for better fit on short pants
-    ctx.font = fontFamily.replace('20px', `${fontSize}px`);
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
     ctx.fillText(playerNumber.toString(), 125, 40);
     console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font}`);
   }
   
-  // Draw logo if provided (on right leg)
+  // Draw logo if provided (on right leg) - now with fixed position and size
   if (logo && logo.image) {
     try {
-      // Calculate logo dimensions with scale
-      const logoWidth = logo.image.width * (logo.position.scale || 1);
-      const logoHeight = logo.image.height * (logo.position.scale || 1);
+      // Fixed logo dimensions - 40x40px
+      const logoWidth = 40;
+      const logoHeight = 40;
       
-      // Position the logo on the right leg
-      const x = logo.position.x || 180;
-      const y = logo.position.y || 40;
+      // Fixed position - 20px from left, 20px from top
+      const x = 115;
+      const y = 20;
       
-      // Draw the logo
+      // Draw the logo at fixed position with fixed size
       ctx.drawImage(logo.image, x - logoWidth/2, y - logoHeight/2, logoWidth, logoHeight);
-      console.log(`Drew logo on pants at position: ${x},${y} with scale: ${logo.position.scale || 1}`);
+      console.log(`Drew logo on pants at fixed position: ${x},${y} with fixed size: 40x40px`);
     } catch (error) {
       console.error("Error drawing logo on pants:", error);
     }
