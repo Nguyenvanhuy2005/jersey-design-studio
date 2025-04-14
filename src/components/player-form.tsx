@@ -47,6 +47,7 @@ interface ExtendedPlayer extends Player {
   logo_pants?: boolean;
   pet_chest?: string;
   note?: string;
+  print_style?: string;
 }
 
 export function PlayerForm({ 
@@ -76,7 +77,8 @@ export function PlayerForm({
     logo_chest_center: false,
     logo_sleeve_left: false,
     logo_sleeve_right: false,
-    logo_pants: false
+    logo_pants: false,
+    print_style: printStyle
   });
   
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -142,7 +144,8 @@ export function PlayerForm({
       logo_chest_center: false,
       logo_sleeve_left: false,
       logo_sleeve_right: false,
-      logo_pants: false
+      logo_pants: false,
+      print_style: printStyle
     });
   };
 
@@ -172,7 +175,8 @@ export function PlayerForm({
         logo_chest_center: false,
         logo_sleeve_left: false,
         logo_sleeve_right: false,
-        logo_pants: false
+        logo_pants: false,
+        print_style: printStyle
       });
     }
   };
@@ -208,7 +212,8 @@ export function PlayerForm({
       logo_chest_center: false,
       logo_sleeve_left: false,
       logo_sleeve_right: false,
-      logo_pants: false
+      logo_pants: false,
+      print_style: printStyle
     });
   };
 
@@ -288,7 +293,8 @@ export function PlayerForm({
             logo_sleeve_right: row["LOGO TAY PHẢI"] === "YES" || row["LOGO TAY PHẢI"] === true,
             pet_chest: row["IN PET NGỰC"] || "",
             logo_pants: row["LOGO QUẦN"] === "YES" || row["LOGO QUẦN"] === true,
-            note: row["GHI CHÚ"] || ""
+            note: row["GHI CHÚ"] || "",
+            print_style: row["KIỂU IN"] || printStyle
           };
         });
         
@@ -338,13 +344,38 @@ export function PlayerForm({
     <Card className={cn(className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Danh sách cầu thủ</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          {players.length > 0 ? `${players.length} cầu thủ` : "Chưa có cầu thủ"}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            {players.length > 0 ? `${players.length} cầu thủ` : "Chưa có cầu thủ"}
+          </div>
+          {players.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Select
+                value={printStyle}
+                onValueChange={(value) => {
+                  const updatedPlayers = players.map(player => ({
+                    ...player,
+                    print_style: value
+                  }));
+                  onPlayersChange(updatedPlayers);
+                  toast.success("Đã cập nhật kiểu in cho tất cả cầu thủ");
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Chọn kiểu in" />
+                </SelectTrigger>
+                <SelectContent>
+                  {printStyleOptions.map(style => (
+                    <SelectItem key={style} value={style}>{style}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Player list table */}
         {players.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -356,6 +387,7 @@ export function PlayerForm({
                   <th className="p-2 text-left">Size</th>
                   <th className="p-2 text-left">Màu áo</th>
                   <th className="p-2 text-left">Loại</th>
+                  <th className="p-2 text-left">Kiểu in</th>
                   <th className="p-2 text-center">Số ngực</th>
                   <th className="p-2 text-center">Số quần</th>
                   <th className="p-2 text-center">Logo ngực</th>
@@ -378,6 +410,28 @@ export function PlayerForm({
                         extendedPlayer.jersey_color || "Vàng"
                       }</td>
                       <td className="p-2">{extendedPlayer.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}</td>
+                      <td className="p-2">
+                        <Select
+                          value={player.print_style}
+                          onValueChange={(value) => {
+                            const updatedPlayers = [...players];
+                            updatedPlayers[index] = {
+                              ...player,
+                              print_style: value
+                            };
+                            onPlayersChange(updatedPlayers);
+                          }}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Chọn kiểu in" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {printStyleOptions.map(style => (
+                              <SelectItem key={style} value={style}>{style}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                       <td className="p-2 text-center">{extendedPlayer.chest_number ? '✓' : '-'}</td>
                       <td className="p-2 text-center">{extendedPlayer.pants_number ? '✓' : '-'}</td>
                       <td className="p-2 text-center">
@@ -601,6 +655,23 @@ export function PlayerForm({
               />
               <Label htmlFor="logoPants" className="text-xs">Logo quần</Label>
             </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="printStyle">Kiểu in</Label>
+            <Select 
+              value={newPlayer.print_style}
+              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
+            >
+              <SelectTrigger id="printStyle">
+                <SelectValue placeholder="Chọn kiểu in" />
+              </SelectTrigger>
+              <SelectContent>
+                {printStyleOptions.map(style => (
+                  <SelectItem key={style} value={style}>{style}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="md:col-span-6">
