@@ -22,6 +22,7 @@ export const OrdersList = ({
   onStatusChange
 }: OrdersListProps) => {
   const [imageAvailability, setImageAvailability] = useState<Record<string, {front: boolean, back: boolean}>>({});
+  const [isCheckingImages, setIsCheckingImages] = useState<boolean>(false);
   
   // Filter orders based on statusFilter
   const filteredOrders = statusFilter === "all" 
@@ -31,23 +32,38 @@ export const OrdersList = ({
   // Check image availability when orders change
   useEffect(() => {
     const checkImages = async () => {
+      if (orders.length === 0) return;
+      
+      setIsCheckingImages(true);
       const availability: Record<string, {front: boolean, back: boolean}> = {};
       
-      for (const order of orders) {
-        if (order.id) {
-          const frontExists = order.designImageFront || order.designImage 
-            ? await checkFileExistsInStorage('design_images', order.designImageFront || order.designImage || '')
-            : false;
+      try {
+        for (const order of orders) {
+          if (order.id) {
+            const frontImagePath = order.designImageFront || order.designImage || '';
+            const backImagePath = order.designImageBack || '';
             
-          const backExists = order.designImageBack 
-            ? await checkFileExistsInStorage('design_images', order.designImageBack) 
-            : false;
-            
-          availability[order.id] = { front: frontExists, back: backExists };
+            // Only check if paths exist
+            const frontExists = frontImagePath 
+              ? await checkFileExistsInStorage('design_images', frontImagePath)
+              : false;
+              
+            const backExists = backImagePath
+              ? await checkFileExistsInStorage('design_images', backImagePath) 
+              : false;
+              
+            availability[order.id] = { front: frontExists, back: backExists };
+            console.log(`Checked images for order ${order.id}:`, { frontExists, backExists });
+          }
         }
+        
+        setImageAvailability(availability);
+      } catch (error) {
+        console.error("Error checking image availability:", error);
+        // In case of error, assume images don't exist
+      } finally {
+        setIsCheckingImages(false);
       }
-      
-      setImageAvailability(availability);
     };
     
     if (orders.length > 0) {
@@ -66,6 +82,7 @@ export const OrdersList = ({
           key={order.id}
           order={order}
           imageAvailability={imageAvailability}
+          isCheckingImages={isCheckingImages}
           onViewDetails={onViewDetails}
           onViewImage={onViewImage}
           onStatusChange={onStatusChange}

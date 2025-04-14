@@ -12,14 +12,22 @@ export const checkFileExistsInStorage = async (
   path: string
 ): Promise<boolean> => {
   try {
-    if (!path) return false;
+    if (!path || path.trim() === '') {
+      console.log('Empty file path provided, skipping check');
+      return false;
+    }
     
     // Get the folder path and filename
     const pathParts = path.split('/');
     const fileName = pathParts.pop();
     const folderPath = pathParts.join('/');
     
-    if (!fileName) return false;
+    if (!fileName || fileName.trim() === '') {
+      console.log('Invalid file path format, no filename found');
+      return false;
+    }
+    
+    console.log(`Checking if file exists: bucket=${bucket}, folder=${folderPath}, file=${fileName}`);
     
     const { data, error } = await supabase.storage
       .from(bucket)
@@ -29,7 +37,13 @@ export const checkFileExistsInStorage = async (
       });
       
     if (error) {
+      // Log detailed error information
       console.error(`Error checking if file exists in ${bucket}:`, error);
+      
+      if (error.message.includes('The resource was not found')) {
+        console.log(`Bucket ${bucket} might not exist`);
+      }
+      
       return false;
     }
     
@@ -37,7 +51,7 @@ export const checkFileExistsInStorage = async (
     console.log(`File ${path} in ${bucket} exists: ${fileExists}`);
     return fileExists;
   } catch (err) {
-    console.error(`Error checking if file exists in ${bucket}:`, err);
+    console.error(`Exception checking if file exists in ${bucket}:`, err);
     return false;
   }
 };
@@ -53,7 +67,8 @@ export const verifyImageUpload = async (
   path: string
 ): Promise<{ success: boolean, publicUrl: string | null }> => {
   try {
-    if (!path) {
+    if (!path || path.trim() === '') {
+      console.log('Empty file path provided for verification');
       return { success: false, publicUrl: null };
     }
     
@@ -69,6 +84,11 @@ export const verifyImageUpload = async (
     const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(path);
+    
+    if (!data || !data.publicUrl) {
+      console.warn(`Failed to get public URL for file ${path} in ${bucket}`);
+      return { success: false, publicUrl: null };
+    }
     
     console.log(`Successfully verified image upload to ${bucket}: ${path}`);
     return { success: true, publicUrl: data.publicUrl };

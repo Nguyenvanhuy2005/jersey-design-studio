@@ -1,3 +1,4 @@
+
 import { Order } from "@/types";
 import { OrderStatus } from "./OrderStatus";
 import { OrderImageButtons } from "./OrderImageButtons";
@@ -6,6 +7,7 @@ import { OrderActions } from "./OrderActions";
 type OrderTableRowProps = {
   order: Order;
   imageAvailability: Record<string, {front: boolean, back: boolean}>;
+  isCheckingImages?: boolean;
   onViewDetails: (order: Order) => void;
   onViewImage: (imageUrl: string | null) => void;
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
@@ -14,6 +16,7 @@ type OrderTableRowProps = {
 export const OrderTableRow = ({
   order,
   imageAvailability,
+  isCheckingImages = false,
   onViewDetails,
   onViewImage,
   onStatusChange
@@ -46,6 +49,7 @@ export const OrderTableRow = ({
             frontDesignImage={order.designImageFront || order.designImage}
             backDesignImage={order.designImageBack}
             imageAvailability={orderAvailability}
+            isCheckingImages={isCheckingImages}
             onViewImage={onViewImage}
           />
         ) : (
