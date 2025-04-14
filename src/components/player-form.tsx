@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -460,12 +461,12 @@ export function PlayerForm({
         )}
         
         {/* Add player form */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-4 items-end">
           <div>
             <Label htmlFor="playerNumber">Số áo</Label>
             <Input 
               id="playerNumber"
-              type="text" // Changed from "number" to "text" to allow leading zeros
+              type="text"
               value={newPlayer.number || ""}
               onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
               placeholder="Số áo"
@@ -513,7 +514,7 @@ export function PlayerForm({
                   {SIZES.kids.map((size) => (
                     <SelectItem key={size} value={size}>{size}</SelectItem>
                   ))}
-                </SelectGroup>
+                </SelectContent>
               </SelectContent>
             </Select>
           </div>
@@ -537,7 +538,24 @@ export function PlayerForm({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 md:col-span-2">
+          <div>
+            <Label htmlFor="printStyle">Kiểu in</Label>
+            <Select 
+              value={newPlayer.print_style}
+              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
+            >
+              <SelectTrigger id="printStyle">
+                <SelectValue placeholder="Chọn kiểu in" />
+              </SelectTrigger>
+              <SelectContent>
+                {printStyleOptions.map(style => (
+                  <SelectItem key={style} value={style}>{style}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="chestNumber"
