@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAdmin: boolean;
-  error: string | null; // Add error property
+  error: string | null;
   signOut: () => Promise<void>;
 }
 

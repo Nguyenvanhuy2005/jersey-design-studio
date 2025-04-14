@@ -69,8 +69,12 @@ const AdminCustomers = () => {
     
     try {
       // First get the user ID from auth.users based on email
+      // We'll need to use a custom SQL function to get the user id
       const { data: userData, error: userError } = await supabase
-        .rpc('get_user_id_by_email', { user_email: adminEmail });
+        .from('auth')
+        .select('id')
+        .eq('email', adminEmail)
+        .single();
       
       if (userError || !userData) {
         toast.error("Không tìm thấy người dùng với email này");
@@ -81,7 +85,7 @@ const AdminCustomers = () => {
       const { error } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userData,
+          user_id: userData.id,
           role: 'admin'
         });
         

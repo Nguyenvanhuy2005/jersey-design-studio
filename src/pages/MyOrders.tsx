@@ -55,7 +55,7 @@ const MyOrders = () => {
           designImage: order.design_image || '',
           designImageFront: order.design_image_front || '',
           designImageBack: order.design_image_back || '',
-          referenceImages: order.reference_images || [],
+          referenceImages: Array.isArray(order.reference_images) ? order.reference_images as string[] : [],
           customer_id: order.customer_id,
           players: (order.players || []).map((player: any): Player => ({
             id: player.id,
