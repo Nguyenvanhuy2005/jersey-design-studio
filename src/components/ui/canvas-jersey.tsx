@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -40,17 +39,11 @@ export function CanvasJersey({
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
   const [fontFace, setFontFace] = useState<FontFace | null>(null);
   
-  // Disable logo interaction - the preview is now view-only
   const isInteractionDisabled = true;
-  
-  // Device pixel ratio for high-resolution displays
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  
-  // Canvas dimensions - for high-resolution rendering
   const canvasWidth = 300;
   const canvasHeight = 300;
 
-  // Custom hook for logo editing functionality - but we'll disable it
   const { 
     selectedLogo,
     isDragging,
@@ -66,13 +59,11 @@ export function CanvasJersey({
     setLogoPositions
   });
 
-  // Debug loaded logos
   useEffect(() => {
     console.log('Current logos prop:', logos);
     console.log('Current design data:', designData);
   }, [logos, designData]);
 
-  // Load custom font if provided
   useEffect(() => {
     if (printConfig?.customFontUrl && printConfig.customFontFile) {
       const fontName = printConfig.customFontFile.name.split('.')[0];
@@ -97,12 +88,10 @@ export function CanvasJersey({
     }
   }, [printConfig?.customFontUrl, printConfig?.customFontFile, designData?.font_text]);
 
-  // Load logos and their positions from database or from designData
   useEffect(() => {
     if (logos && logos.length > 0) {
       console.log("Attempting to load logos:", logos.length);
       
-      // Initialize positions map with any saved positions from database or designData
       const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
       
       const positionKeysMap: Record<string, string> = {
@@ -114,7 +103,6 @@ export function CanvasJersey({
         'pants': 'logo_pants'
       };
       
-      // First check if we have positions in designData
       if (designData) {
         logos.forEach(logo => {
           if (logo.id) {
@@ -132,18 +120,13 @@ export function CanvasJersey({
         });
       }
       
-      // Fetch saved positions from Supabase for any logos without positions
       const fetchLogoPositions = async () => {
         for (const logo of logos) {
           if (logo.id && !initialPositions.has(logo.id)) {
             try {
-              // Extract UUID from logo.id if it's not already a UUID
               let logoId = logo.id;
               
-              // If the logo ID contains non-UUID format (like logo-timestamp-random)
-              // Generate a new UUID for it and map it to this logo
               if (logoId.startsWith('logo-') || !isValidUUID(logoId)) {
-                // Check if we already have this logo mapped to a UUID
                 const { data, error } = await supabase
                   .from('logos')
                   .select('id, file_path')
@@ -151,11 +134,9 @@ export function CanvasJersey({
                   .single();
                 
                 if (error || !data) {
-                  // If no mapping exists, create a new one
                   const newUUID = uuidv4();
                   console.log(`Generated new UUID ${newUUID} for logo ${logoId}`);
                   
-                  // Store the mapping in Supabase
                   const { error: insertError } = await supabase
                     .from('logos')
                     .insert({
@@ -176,19 +157,16 @@ export function CanvasJersey({
                     console.error("Error creating logo mapping:", insertError);
                   } else {
                     logoId = newUUID;
-                    // Update the logo.id with the UUID for this session
                     logo.id = newUUID;
                     console.log(`Created and stored new UUID ${newUUID} for logo ${logo.file.name}`);
                   }
                 } else {
-                  // Use the existing UUID mapping
                   logoId = data.id;
-                  logo.id = data.id; // Update the logo.id with the UUID
+                  logo.id = data.id;
                   console.log(`Found existing UUID ${logoId} for logo ${logo.file.name}`);
                 }
               }
               
-              // Now fetch position data using the UUID
               const { data: posData, error: posError } = await supabase
                 .from('logos')
                 .select('x_position, y_position, scale')
@@ -197,7 +175,6 @@ export function CanvasJersey({
               
               if (posError) {
                 console.error(`Error fetching position for logo ${logoId}:`, posError);
-                // Set default position if error occurs
                 const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 50 } : 
                                   logo.position === 'chest_right' ? { x: 220, y: 50 } :
                                   logo.position === 'chest_center' ? { x: 150, y: 100 } :
@@ -214,7 +191,6 @@ export function CanvasJersey({
               }
               
               if (posData) {
-                // Use saved position if available
                 initialPositions.set(logoId, {
                   x: posData.x_position ?? (logo.position === 'chest_left' ? 80 : 
                                           logo.position === 'chest_right' ? 220 : 
@@ -230,7 +206,6 @@ export function CanvasJersey({
               }
             } catch (err) {
               console.error("Error in fetchLogoPositions:", err);
-              // Set default position if error occurs
               const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 50 } : 
                               logo.position === 'chest_right' ? { x: 220, y: 50 } :
                               logo.position === 'chest_center' ? { x: 150, y: 100 } :
@@ -249,7 +224,6 @@ export function CanvasJersey({
         
         setLogoPositions(initialPositions);
         
-        // Now load the logo images with these positions
         loadLogoImages(logos, initialPositions, true)
           .then(logoMap => {
             console.log(`Successfully loaded ${logoMap.size} logos`);
@@ -271,7 +245,6 @@ export function CanvasJersey({
     }
   }, [logos]);
 
-  // Configure and render the canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
@@ -281,11 +254,9 @@ export function CanvasJersey({
 
     console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
     
-    // Set the canvas dimensions based on device pixel ratio
     canvas.width = canvasWidth * pixelRatio;
     canvas.height = canvasHeight * pixelRatio;
     
-    // Set the display size to maintain visual dimensions
     canvas.style.width = `${canvasWidth}px`;
     canvas.style.height = `${canvasHeight}px`;
 
@@ -295,22 +266,17 @@ export function CanvasJersey({
       return;
     }
 
-    // Scale the context to match the device pixel ratio
     ctx.scale(pixelRatio, pixelRatio);
     
-    // Enable high-quality image smoothing
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) {
       (ctx as any).imageSmoothingQuality = 'high';
     }
 
-    // Only proceed if the custom font is loaded or if no custom font is needed
     if ((printConfig?.customFontUrl && !loadedFont) && 
         !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
       console.log('Waiting for custom font to load...');
-      // Wait for font to load
       setTimeout(() => {
-        // Force a re-render
         setLoadedFont(prev => !prev);
       }, 100);
       return;
@@ -318,10 +284,8 @@ export function CanvasJersey({
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
     
-    // Clear canvas with proper scaling
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // Get the font to use
     const fontToUse = designData?.font_text?.font 
       ? `bold 20px "${designData.font_text.font}", sans-serif` 
       : getFont(printConfig);
@@ -330,10 +294,8 @@ export function CanvasJersey({
       ? `bold 20px "${designData.font_number.font}", sans-serif` 
       : fontToUse;
 
-    // Draw the appropriate jersey view with proper scaling
     if (view === 'front') {
       console.log('Rendering front jersey view');
-      // Render front jersey
       JerseyFront({
         ctx,
         playerNumber,
@@ -351,7 +313,6 @@ export function CanvasJersey({
       });
     } else if (view === 'back') {
       console.log('Rendering back jersey view');
-      // Render back jersey
       JerseyBack({
         ctx,
         teamName: designData?.line_3?.content || teamName,
@@ -361,7 +322,6 @@ export function CanvasJersey({
       });
     } else if (view === 'pants') {
       console.log('Rendering pants view');
-      // Find pants logo if available
       const pantsLogo = logos.find(logo => logo.position === 'pants');
       let logoImage;
       let logoPosition;
@@ -371,11 +331,14 @@ export function CanvasJersey({
         logoPosition = logoPositions.get(pantsLogo.id);
       }
       
-      // Render pants
+      const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
+      console.log('Pants number enabled:', pantsNumberEnabled);
+      
       JerseyPants({
         ctx,
         playerNumber,
         fontFamily: numberFontToUse,
+        pants_number_enabled: pantsNumberEnabled,
         logo: logoImage && logoPosition ? {
           image: logoImage,
           position: logoPosition
@@ -384,7 +347,6 @@ export function CanvasJersey({
     }
   }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled]);
 
-  // Helper function to check if a string is a valid UUID
   function isValidUUID(id: string) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
@@ -401,7 +363,7 @@ export function CanvasJersey({
         style={{
           width: `${canvasWidth}px`,
           height: `${canvasHeight}px`,
-          cursor: 'default' // Default cursor instead of interaction cursor
+          cursor: 'default'
         }}
       />
       {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (

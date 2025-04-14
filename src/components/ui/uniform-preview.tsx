@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,10 +35,14 @@ export function UniformPreview({
   const playerNumber = currentPlayer?.number || 0;
   const playerLine3 = currentPlayer?.line_3 || teamName || "";
   
+  // Check if pants number should be enabled
+  const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
+  
   console.log("Current player data:", {
     line1: playerLine1,
     number: playerNumber,
-    line3: playerLine3
+    line3: playerLine3,
+    pantsNumberEnabled: pantsNumberEnabled
   });
 
   return (
@@ -108,7 +111,12 @@ export function UniformPreview({
                   logos={logos.filter(logo => logo.position === 'pants')}
                   view="pants"
                   printConfig={printConfig}
-                  designData={designData}
+                  designData={{
+                    ...designData,
+                    pants_number: { 
+                      enabled: pantsNumberEnabled
+                    }
+                  }}
                   canvasRef={canvasPantsRef}
                 />
               </div>

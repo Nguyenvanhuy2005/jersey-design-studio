@@ -5,6 +5,7 @@ interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
   playerNumber?: number;
   fontFamily: string;
+  pants_number_enabled?: boolean;
   logo?: {
     image: HTMLImageElement;
     position: { x: number; y: number; scale: number };
@@ -15,6 +16,7 @@ export const JerseyPants = ({
   ctx, 
   playerNumber, 
   fontFamily,
+  pants_number_enabled = true,
   logo
 }: JerseyPantsProps) => {
   // Clear the canvas before drawing
@@ -49,13 +51,19 @@ export const JerseyPants = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
-  // Draw player number (on left leg)
-  if (playerNumber !== undefined) {
+  // Draw player number (on left leg) - smaller size and adjusted position
+  if (playerNumber !== undefined && pants_number_enabled) {
     ctx.fillStyle = '#FFD700'; // Yellow number
-    const fontSize = 35; // Slightly smaller for better fit on short pants
+    const fontSize = 30; // Smaller font size (reduced from 35)
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    ctx.fillText(playerNumber.toString(), 125, 40);
-    console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font}`);
+    
+    // Position similar to the logo but on left leg
+    // Center x position of left leg is 125
+    const x = 125;
+    const y = 40; // Same vertical position as logo
+    
+    ctx.fillText(playerNumber.toString(), x, y);
+    console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font} at position ${x},${y}`);
   }
   
   // Draw logo if provided (on middle right leg) - Updated position
