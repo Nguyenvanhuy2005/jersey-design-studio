@@ -1,9 +1,8 @@
-
 export interface Player {
   id?: string;
   name: string;
-  number: string; // Changed from number to string
-  size: 'S' | 'M' | 'L' | 'XL';
+  number: string;
+  size: Size;
   printImage: boolean;
   jersey_color?: string;
   uniform_type?: 'player' | 'goalkeeper';
@@ -18,9 +17,9 @@ export interface Player {
   logo_chest_center?: boolean;
   logo_sleeve_left?: boolean;
   logo_sleeve_right?: boolean;
-  pet_chest?: string;
   logo_pants?: boolean;
   note?: string;
+  printStyle?: PrintType;
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
@@ -168,3 +167,17 @@ export interface Order {
   uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
 }
+
+export const ADULT_SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const;
+export const KID_SIZES = ['1', '3', '5', '7', '9', '11', '13', '15'] as const;
+
+export type AdultSize = typeof ADULT_SIZES[number];
+export type KidSize = typeof KID_SIZES[number];
+export type Size = AdultSize | KidSize;
+
+export const PRINT_TYPES = [
+  'In chuyển nhiệt',
+  'In decal'
+] as const;
+
+export type PrintType = typeof PRINT_TYPES[number];

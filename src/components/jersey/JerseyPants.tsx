@@ -1,9 +1,8 @@
-
 import React from 'react';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: string; // Changed from number to string
+  playerNumber?: string;
   fontFamily: string;
   pants_number_enabled?: boolean;
   logo?: {
@@ -51,39 +50,33 @@ export const JerseyPants = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
-  // Draw player number (on left leg) - smaller size and adjusted position
+  // Draw player number on left leg with correct position
   if (playerNumber !== undefined && pants_number_enabled) {
     ctx.fillStyle = '#FFD700'; // Yellow number
-    const fontSize = 30; // Smaller font size (reduced from 35)
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    
-    // Position similar to the logo but on left leg
-    // Center x position of left leg is 125
-    const x = 125;
-    const y = 40; // Same vertical position as logo
-    
-    ctx.fillText(playerNumber.toString(), x, y);
-    console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font} at position ${x},${y}`);
+    const fontSize = 30;
+    ctx.font = `bold ${fontSize}px ${fontFamily.split(',')[0].replace(/['"]+/g, '')}`;
+    ctx.fillText(playerNumber.toString(), 125, 40);
   }
   
-  // Draw logo if provided (on middle right leg) - Updated position
+  // Draw logo on right leg with correct position
   if (logo && logo.image) {
     try {
-      // Fixed logo dimensions - 40x40px
       const logoWidth = 40;
       const logoHeight = 40;
+      const x = 185;
+      const y = 40;
       
-      // Updated fixed position - middle of right leg
-      const x = 185; // Center of right leg
-      const y = 40;  // Center height of pants
-      
-      // Draw the logo at fixed position with fixed size
-      ctx.drawImage(logo.image, x - logoWidth/2, y - logoHeight/2, logoWidth, logoHeight);
-      console.log(`Drew logo on pants at fixed position: ${x},${y} with fixed size: 40x40px`);
+      ctx.drawImage(
+        logo.image, 
+        x - logoWidth/2,
+        y - logoHeight/2,
+        logoWidth, 
+        logoHeight
+      );
     } catch (error) {
       console.error("Error drawing logo on pants:", error);
     }
   }
   
-  return null; // This component just draws on the canvas, doesn't return JSX
+  return null;
 };
