@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
-import { Order } from "@/types";
+import { Order, Customer } from "@/types";
 import { LogOut, AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -256,7 +256,7 @@ const AdminOrders = () => {
         console.error("Error fetching orders:", error);
         setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
         toast.error(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
-        setOrders([]); // Don't use mock data in production
+        setOrders([]); 
         setFetchingData(false);
         return;
       }
@@ -271,13 +271,22 @@ const AdminOrders = () => {
       console.log("Raw orders data:", data);
       
       const transformedOrders: Order[] = await Promise.all(data.map(async order => {
-        // Process reference images
+        const customerData = order.customers ? (order.customers as Customer[])[0] : null;
+        
+        const customerInfo = customerData ? {
+          id: customerData.id || undefined,
+          name: customerData.name || '',
+          address: customerData.address || '',
+          phone: customerData.phone || '',
+          delivery_note: customerData.delivery_note || '',
+          created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
+        } : undefined;
+        
         let processedReferenceImages: string[] = [];
         if (order.reference_images && Array.isArray(order.reference_images)) {
           processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
         }
         
-        // Process design data
         if (order.design_data) {
           const designData = order.design_data as {
             reference_images?: any[];
@@ -288,7 +297,6 @@ const AdminOrders = () => {
           }
         }
         
-        // Check design images existence
         let designImageFront = order.design_image_front || order.design_image || '';
         let designImageBack = order.design_image_back || '';
         
@@ -297,23 +305,6 @@ const AdminOrders = () => {
           back: designImageBack
         });
 
-        // Transform customer data if available
-        const customerData = order.customers || null;
-        const customerInfo = customerData && typeof customerData === 'object' ? {
-          id: customerData.id,
-          name: customerData.name || '',
-          address: customerData.address || '',
-          phone: customerData.phone || '',
-          delivery_note: customerData.delivery_note || '',
-          created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
-        } : undefined;
-        
-        // Convert design_data to proper DesignData type
-        let typedDesignData: any = {};
-        if (order.design_data && typeof order.design_data === 'object') {
-          typedDesignData = order.design_data;
-        }
-        
         return {
           id: order.id,
           teamName: order.team_name || '',
@@ -380,7 +371,7 @@ const AdminOrders = () => {
             legMaterial: 'In chuyển nhiệt',
             legColor: 'Đen'
           },
-          designData: typedDesignData
+          designData: order.design_data
         };
       }));
       
@@ -390,7 +381,7 @@ const AdminOrders = () => {
       console.error("Exception in fetchOrders:", e);
       setFetchError(`Có lỗi xảy ra khi tải dữ liệu: ${e instanceof Error ? e.message : 'Unknown error'}`);
       toast.error("Có lỗi xảy ra khi tải dữ liệu");
-      setOrders([]); // Don't use mock data in production
+      setOrders([]); 
     } finally {
       setFetchingData(false);
     }
