@@ -1,112 +1,147 @@
 
-import { Button } from "@/components/ui/button";
-import { Layout } from "@/components/layout/layout";
+import React from "react";
 import { Link } from "react-router-dom";
-import { CanvasJersey } from "@/components/ui/canvas-jersey";
-import { ArrowRight } from "lucide-react";
+import { Layout } from "@/components/layout/layout";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  ArrowRight,
+  ClipboardList,
+  LayoutDashboard,
+  LogIn, 
+  ShoppingBag, 
+  Shirt,
+  UserCircle
+} from "lucide-react";
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-secondary via-secondary to-background py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-                Thiết kế áo đấu bóng đá của riêng bạn
+      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/20">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
+            <div className="space-y-4">
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+                Thiết kế áo đấu bóng đá chuyên nghiệp
               </h1>
-              <p className="text-lg text-secondary-foreground mb-8">
-                Dễ dàng thiết kế và đặt áo đấu cho đội bóng của bạn với công cụ thiết kế trực tuyến của chúng tôi.
-                Chất lượng in ấn hàng đầu, giao hàng nhanh chóng.
+              <p className="text-muted-foreground text-lg md:text-xl">
+                Tạo và đặt thiết kế áo đấu độc đáo cho đội của bạn với dịch vụ thiết kế và sản xuất hàng đầu.
               </p>
-              <Link to="/create-order">
-                <Button size="lg" className="text-lg px-8">
-                  Tạo đơn hàng <ArrowRight className="ml-2 h-5 w-5" />
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="lg">
+                  <Link to="/create-order">
+                    Bắt đầu thiết kế <ShoppingBag className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
-              </Link>
+                {!user ? (
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/customer/auth">
+                      Đăng nhập <LogIn className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/customer/dashboard">
+                      Tài khoản <UserCircle className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
-            
             <div className="flex justify-center">
-              <div className="flex gap-4 relative">
-                <div className="transform rotate-[-15deg]">
-                  <CanvasJersey 
-                    teamName="FOOTBALL TEAM" 
-                    playerName="RONALDO" 
-                    playerNumber="7" 
-                    view="back"
-                  />
-                </div>
-                <div className="transform rotate-[15deg]">
-                  <CanvasJersey 
-                    teamName="FOOTBALL TEAM" 
-                    playerNumber="7" 
-                    view="front"
-                  />
-                </div>
+              <div className="relative w-full max-w-md">
+                <img
+                  src="https://images.unsplash.com/photo-1577212017308-55f2257055dc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
+                  alt="Soccer jersey"
+                  className="rounded-xl shadow-lg border"
+                />
               </div>
             </div>
           </div>
         </div>
       </section>
-      
+
       {/* Features Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Tại sao chọn dịch vụ của chúng tôi?</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-card p-6 rounded-lg shadow-md">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+      <section className="py-16 bg-background">
+        <div className="container px-4 md:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight">Tính năng nổi bật</h2>
+            <p className="text-muted-foreground mt-2">
+              Đặt hàng dễ dàng, quản lý tiện lợi
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {/* Feature 1 */}
+            <div className="flex flex-col items-center text-center space-y-3 p-6 bg-card rounded-lg shadow-sm border">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Shirt className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Chất lượng cao</h3>
+              <h3 className="font-bold text-xl">Thiết kế tùy chỉnh</h3>
               <p className="text-muted-foreground">
-                Chúng tôi sử dụng công nghệ in ấn tiên tiến và vải chất lượng cao để đảm bảo áo đấu bền, không phai màu sau nhiều lần giặt.
+                Tạo thiết kế áo đấu độc đáo với các tùy chọn về màu sắc, chất liệu và logo.
               </p>
             </div>
-            
-            <div className="bg-card p-6 rounded-lg shadow-md">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+
+            {/* Feature 2 */}
+            <div className="flex flex-col items-center text-center space-y-3 p-6 bg-card rounded-lg shadow-sm border">
+              <div className="p-3 rounded-full bg-primary/10">
+                <ClipboardList className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Giao hàng nhanh</h3>
+              <h3 className="font-bold text-xl">Theo dõi đơn hàng</h3>
               <p className="text-muted-foreground">
-                Thời gian hoàn thành chỉ từ 5-7 ngày làm việc. Đảm bảo đội bóng của bạn có áo đấu trước trận đấu quan trọng.
+                Xem trạng thái và theo dõi tiến độ đơn hàng của bạn qua tài khoản cá nhân.
               </p>
             </div>
-            
-            <div className="bg-card p-6 rounded-lg shadow-md">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
+
+            {/* Feature 3 */}
+            <div className="flex flex-col items-center text-center space-y-3 p-6 bg-card rounded-lg shadow-sm border">
+              <div className="p-3 rounded-full bg-primary/10">
+                <LayoutDashboard className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Tùy chỉnh hoàn toàn</h3>
+              <h3 className="font-bold text-xl">Quản lý tài khoản</h3>
               <p className="text-muted-foreground">
-                Tự do thiết kế với nhiều lựa chọn về màu sắc, kiểu dáng, font chữ và thêm logo đội bóng của bạn.
+                Quản lý thông tin cá nhân, địa chỉ giao hàng và lịch sử đơn hàng.
               </p>
             </div>
           </div>
+
+          <div className="flex justify-center mt-12">
+            <Button asChild variant="outline">
+              <Link to="/customer/auth">
+                Khám phá thêm <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
-      <section className="bg-primary/10 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Sẵn sàng tạo áo đấu cho đội bóng của bạn?</h2>
-          <p className="text-lg mb-8 max-w-xl mx-auto">
-            Bắt đầu ngay để có được bộ áo đấu chuyên nghiệp cho đội bóng của bạn với chất lượng tốt nhất và giá cả hợp lý.
-          </p>
-          <Link to="/create-order">
-            <Button size="lg" className="text-lg px-8">
-              Tạo đơn hàng ngay
-            </Button>
-          </Link>
+      <section className="py-16 bg-primary text-primary-foreground">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Bắt đầu tạo áo đấu cho đội bóng của bạn
+            </h2>
+            <p className="text-lg max-w-2xl">
+              Chỉ cần vài phút để thiết kế và đặt hàng. Đăng ký tài khoản để theo dõi đơn hàng và quản lý thông tin của bạn.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button asChild variant="secondary" size="lg">
+                <Link to="/create-order">
+                  Tạo đơn hàng
+                </Link>
+              </Button>
+              <Button asChild size="lg">
+                <Link to="/customer/auth">
+                  {user ? "Quản lý tài khoản" : "Đăng ký / Đăng nhập"}
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
     </Layout>
