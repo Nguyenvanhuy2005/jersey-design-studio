@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -63,8 +62,7 @@ export function CanvasJersey({
   useEffect(() => {
     console.log('Current logos prop:', logos);
     console.log('Current design data:', designData);
-    console.log('Current view:', view);
-  }, [logos, designData, view]);
+  }, [logos, designData]);
 
   useEffect(() => {
     if (printConfig?.customFontUrl && printConfig.customFontFile) {
@@ -298,8 +296,7 @@ export function CanvasJersey({
 
     if (view === 'front') {
       console.log('Rendering front jersey view');
-      // Pass numerical value for backward compatibility
-      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) || 0 : undefined;
+      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
       
       JerseyFront({
         ctx,

@@ -80,7 +80,7 @@ export const JerseyBack = ({
   // Increased font size from 60px to 100px as requested
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 100; // Increased from 60px/80px to 100px for much larger number
+    const fontSize = 100; // Increased font size from 60px to 100px
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px bold`); // Adjust size for player number and make it bold
     
     // Fixed position: center, 150px from top (15cm from top)

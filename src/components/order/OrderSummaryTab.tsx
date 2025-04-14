@@ -7,8 +7,6 @@ import { OrderSummary } from "@/components/order-summary";
 import { Player, Logo, ProductLine, Customer } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/utils/format-utils";
-import { useState, useEffect } from "react";
 
 interface OrderSummaryTabProps {
   isDemoApproved: boolean;
@@ -44,9 +42,6 @@ export function OrderSummaryTab({
   referenceImagesPreview
 }: OrderSummaryTabProps) {
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
-  const [frontImage, setFrontImage] = useState<string>('');
-  const [backImage, setBackImage] = useState<string>('');
-  const [pantsImage, setPantsImage] = useState<string>('');
   
   // Function to calculate print positions counts
   const calculatePrintCounts = () => {
@@ -93,58 +88,13 @@ export function OrderSummaryTab({
     return counts;
   };
 
-  // Generate images for both jersey views and pants when component loads
-  useEffect(() => {
-    if (jerseyCanvasRef.current && pantCanvasRef.current) {
-      // Capture initial front view
-      setFrontImage(jerseyCanvasRef.current.toDataURL('image/png'));
-      
-      // Create and inject an offscreen canvas element for capturing back view
-      const offscreenCanvas = document.createElement('canvas');
-      offscreenCanvas.width = jerseyCanvasRef.current.width;
-      offscreenCanvas.height = jerseyCanvasRef.current.height;
-      const offscreenCtx = offscreenCanvas.getContext('2d');
-      
-      if (offscreenCtx && players.length > 0) {
-        // Get current player for preview
-        const currentPlayer = players[0];
-        const teamName = currentPlayer.line_3 || currentPlayer.name?.split(' ')?.[0] || "TEAM";
-        const playerName = currentPlayer.line_1 || currentPlayer.name || "";
-        const playerNumber = currentPlayer.number || "";
-        
-        // Draw jersey back view on offscreen canvas
-        offscreenCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        
-        // Get the same font as the main canvas is using
-        const fontFamily = "Arial, sans-serif";
-        
-        // Draw simple back jersey on offscreen canvas
-        offscreenCtx.fillStyle = '#FFD700'; // Yellow jersey
-        offscreenCtx.fillRect(50, 0, 200, 300);
-        
-        // Draw text elements (simplified)
-        offscreenCtx.textAlign = 'center';
-        offscreenCtx.fillStyle = '#1A1A1A';
-        
-        // Player name (top)
-        offscreenCtx.font = `25px ${fontFamily}`;
-        offscreenCtx.fillText(playerName.toString(), 150, 50);
-        
-        // Player number (middle)
-        offscreenCtx.font = `bold 100px ${fontFamily}`;
-        offscreenCtx.fillText(playerNumber.toString(), 150, 150);
-        
-        // Team name (bottom)
-        offscreenCtx.font = `25px ${fontFamily}`;
-        offscreenCtx.fillText(teamName, 150, 220);
-        
-        setBackImage(offscreenCanvas.toDataURL('image/png'));
-      }
-      
-      // Capture pants view
-      setPantsImage(pantCanvasRef.current.toDataURL('image/png'));
+  // Function to capture canvas as image URL
+  const captureCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>) => {
+    if (canvasRef.current) {
+      return canvasRef.current.toDataURL('image/png');
     }
-  }, [jerseyCanvasRef, pantCanvasRef, players]);
+    return '';
+  };
 
   // Calculate print counts
   const printCounts = calculatePrintCounts();
@@ -206,9 +156,6 @@ export function OrderSummaryTab({
                     <span className="text-muted-foreground">Số lượng thủ môn:</span> {goalkeeperCount} bộ
                   </div>
                 </div>
-                <div className="mt-1">
-                  <span className="text-muted-foreground">Tổng chi phí:</span> {formatCurrency(calculateTotalCost())}
-                </div>
               </div>
               
               <Separator />
@@ -218,10 +165,10 @@ export function OrderSummaryTab({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt trước áo</h4>
-                    {frontImage && (
+                    {jerseyCanvasRef.current && (
                       <div className="flex justify-center">
                         <img 
-                          src={frontImage} 
+                          src={captureCanvas(jerseyCanvasRef)} 
                           alt="Mặt trước áo"
                           className="max-h-40 object-contain"
                         />
@@ -230,10 +177,10 @@ export function OrderSummaryTab({
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt sau áo</h4>
-                    {backImage && (
+                    {jerseyCanvasRef.current && (
                       <div className="flex justify-center">
                         <img 
-                          src={backImage} 
+                          src={captureCanvas(jerseyCanvasRef)} 
                           alt="Mặt sau áo"
                           className="max-h-40 object-contain"
                         />
@@ -242,10 +189,10 @@ export function OrderSummaryTab({
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Quần</h4>
-                    {pantsImage && (
+                    {pantCanvasRef.current && (
                       <div className="flex justify-center">
                         <img 
-                          src={pantsImage} 
+                          src={captureCanvas(pantCanvasRef)} 
                           alt="Quần"
                           className="max-h-40 object-contain"
                         />
@@ -387,7 +334,6 @@ export function OrderSummaryTab({
           onClick={onSubmitOrder}
           disabled={isSubmitting || isGeneratingDesign}
           size="lg"
-          className="bg-yellow-500 hover:bg-yellow-600"
         >
           {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
         </Button>
