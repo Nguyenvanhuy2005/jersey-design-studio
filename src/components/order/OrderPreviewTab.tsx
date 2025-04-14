@@ -1,5 +1,4 @@
 
-import { useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +57,13 @@ export function OrderPreviewTab({
         canvasRef={jerseyCanvasRef}
         canvasPantsRef={pantCanvasRef}
       />
+      
+      <div className="text-center p-2 bg-blue-50 rounded-md">
+        <p className="text-sm text-blue-600">
+          Thiết kế hiển thị ở trên sử dụng vị trí in cố định cho tất cả các logo và số áo. 
+          Khách hàng không thể chỉnh sửa vị trí in trên áo.
+        </p>
+      </div>
       
       {productLines.length > 0 && (
         <div className="space-y-6">

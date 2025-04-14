@@ -39,7 +39,9 @@ export function CanvasJersey({
   const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number, scale: number }>>(new Map());
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
   const [fontFace, setFontFace] = useState<FontFace | null>(null);
-  const [saveTimer, setSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Disable logo interaction - the preview is now view-only
+  const isInteractionDisabled = true;
   
   // Device pixel ratio for high-resolution displays
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
@@ -48,7 +50,7 @@ export function CanvasJersey({
   const canvasWidth = 300;
   const canvasHeight = 300;
 
-  // Custom hook for Canva-style logo editing functionality
+  // Custom hook for logo editing functionality - but we'll disable it
   const { 
     selectedLogo,
     isDragging,
@@ -196,12 +198,12 @@ export function CanvasJersey({
               if (posError) {
                 console.error(`Error fetching position for logo ${logoId}:`, posError);
                 // Set default position if error occurs
-                const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                                  logo.position === 'chest_right' ? { x: 220, y: 60 } :
+                const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 50 } : 
+                                  logo.position === 'chest_right' ? { x: 220, y: 50 } :
                                   logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                                  logo.position === 'sleeve_left' ? { x: 30, y: 40 } :
+                                  logo.position === 'sleeve_left' ? { x: 30, y: 50 } :
                                   logo.position === 'pants' ? { x: 195, y: 100 } :
-                                  { x: 270, y: 40 };
+                                  { x: 270, y: 50 };
                 
                 initialPositions.set(logoId, {
                   x: defaultPos.x,
@@ -220,7 +222,7 @@ export function CanvasJersey({
                                           logo.position === 'sleeve_left' ? 30 : 
                                           logo.position === 'pants' ? 195 : 270),
                   y: posData.y_position ?? (logo.position === 'chest_center' ? 100 : 
-                                          logo.position === 'pants' ? 100 : 60),
+                                          logo.position === 'pants' ? 100 : 50),
                   scale: posData.scale ?? 1.0
                 });
                 
@@ -229,12 +231,12 @@ export function CanvasJersey({
             } catch (err) {
               console.error("Error in fetchLogoPositions:", err);
               // Set default position if error occurs
-              const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 60 } : 
-                              logo.position === 'chest_right' ? { x: 220, y: 60 } :
+              const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 50 } : 
+                              logo.position === 'chest_right' ? { x: 220, y: 50 } :
                               logo.position === 'chest_center' ? { x: 150, y: 100 } :
-                              logo.position === 'sleeve_left' ? { x: 30, y: 40 } :
+                              logo.position === 'sleeve_left' ? { x: 30, y: 50 } :
                               logo.position === 'pants' ? { x: 195, y: 100 } : 
-                              { x: 270, y: 40 };
+                              { x: 270, y: 50 };
               
               initialPositions.set(logo.id, {
                 x: defaultPos.x,
@@ -255,14 +257,6 @@ export function CanvasJersey({
               console.warn(`Warning: Only ${logoMap.size} out of ${logos.length} logos were loaded`);
             }
             setLoadedLogos(logoMap);
-            
-            // Auto-select the first logo if only one logo exists
-            if (logos.length === 1 && logos[0].id) {
-              // Small delay to ensure the canvas is rendered first
-              setTimeout(() => {
-                console.log("Auto-selecting the only logo:", logos[0].id);
-              }, 500);
-            }
           })
           .catch(err => {
             console.error("Error loading logos:", err);
@@ -276,56 +270,6 @@ export function CanvasJersey({
       setLogoPositions(new Map());
     }
   }, [logos]);
-  
-  // Save logo positions to database when they change - with improved error handling
-  useEffect(() => {
-    // Skip if no logos or positions
-    if (logos.length === 0 || logoPositions.size === 0) return;
-    
-    // Debounce the save operation
-    if (saveTimer) {
-      clearTimeout(saveTimer);
-    }
-    
-    const timer = setTimeout(async () => {
-      console.log("Saving logo positions to database...");
-      
-      for (const [logoId, position] of logoPositions.entries()) {
-        try {
-          // Skip any non-UUID format IDs
-          if (!isValidUUID(logoId)) {
-            console.warn(`Skipping save for non-UUID logo ID: ${logoId}`);
-            continue;
-          }
-          
-          const { error } = await supabase
-            .from('logos')
-            .update({
-              x_position: position.x,
-              y_position: position.y,
-              scale: position.scale
-            })
-            .eq('id', logoId);
-          
-          if (error) {
-            console.error(`Error updating position for logo ${logoId}:`, error);
-            toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
-          } else {
-            console.log(`Updated position for logo ${logoId}:`, position);
-          }
-        } catch (err) {
-          console.error("Error saving logo position:", err);
-          toast.error(`Không thể lưu vị trí logo. Vui lòng thử lại sau.`);
-        }
-      }
-    }, 500); // 500ms debounce
-    
-    setSaveTimer(timer);
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [logoPositions, logos.length]);
 
   // Configure and render the canvas
   useEffect(() => {
@@ -373,7 +317,6 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
-    console.log('Selected logo for control buttons:', selectedLogo);
     
     // Clear canvas with proper scaling
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -400,10 +343,10 @@ export function CanvasJersey({
         fontFamily: fontToUse,
         numberFontFamily: numberFontToUse,
         highQuality: true,
-        selectedLogo,
-        onLogoMove: handleLogoMove,
-        onLogoResize: handleLogoResize,
-        onLogoDelete: handleLogoDelete,
+        selectedLogo: isInteractionDisabled ? null : selectedLogo,
+        onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
+        onLogoResize: isInteractionDisabled ? undefined : handleLogoResize,
+        onLogoDelete: isInteractionDisabled ? undefined : handleLogoDelete,
         designData
       });
     } else if (view === 'back') {
@@ -439,32 +382,13 @@ export function CanvasJersey({
         } : undefined
       });
     }
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled]);
 
   // Helper function to check if a string is a valid UUID
   function isValidUUID(id: string) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
   }
-
-  // Instructions for logo selection and control
-  useEffect(() => {
-    if (logos && logos.length > 0 && (view === 'front' || view === 'pants')) {
-      toast.info(
-        "Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước.",
-        { 
-          id: "logo-instructions",
-          duration: 5000
-        }
-      );
-    }
-  }, [logos, view]);
-
-  // Update cursor style based on dragging state
-  const getCursorStyle = () => {
-    if (!selectedLogo) return 'pointer';
-    return isDragging ? 'grabbing' : 'grab';
-  };
 
   return (
     <div className="relative">
@@ -474,20 +398,16 @@ export function CanvasJersey({
         height={canvasHeight * pixelRatio} 
         className="jersey-canvas mx-auto"
         id="jersey-design-canvas"
-        onMouseDown={startDrag}
-        onMouseMove={continueDrag}
-        onMouseUp={endDrag}
-        onMouseLeave={endDrag}
         style={{
           width: `${canvasWidth}px`,
           height: `${canvasHeight}px`,
-          cursor: getCursorStyle()
+          cursor: 'default' // Default cursor instead of interaction cursor
         }}
       />
       {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
-            Nhấn vào logo để chọn, kéo để di chuyển, kéo các góc để chỉnh kích thước
+            Xem trước thiết kế áo với vị trí in cố định
           </p>
         </div>
       )}

@@ -18,6 +18,24 @@ interface JerseyFrontProps {
   designData?: Partial<DesignData>;
 }
 
+// Fixed positions for logos (in canvas coordinates)
+const FIXED_POSITIONS = {
+  'chest_left': { x: 80, y: 50, scale: 0.7 },   // Left chest logo
+  'chest_right': { x: 220, y: 50, scale: 0.7 }, // Right chest logo
+  'chest_center': { x: 150, y: 100, scale: 1.0 }, // Center chest logo
+  'sleeve_left': { x: 30, y: 50, scale: 0.5 },  // Left sleeve logo
+  'sleeve_right': { x: 270, y: 50, scale: 0.5 } // Right sleeve logo
+};
+
+// Fixed sizes for logos (relative to base size)
+const LOGO_SCALES = {
+  'chest_left': 0.7,   // 70% of base size (7cm x 7cm)
+  'chest_right': 0.7,  // 70% of base size
+  'chest_center': 1.0, // 100% of base size (10cm x 10cm)
+  'sleeve_left': 0.5,  // 50% of base size (5cm x 5cm)
+  'sleeve_right': 0.5  // 50% of base size
+};
+
 export const JerseyFront = ({
   ctx,
   playerNumber,
@@ -92,15 +110,16 @@ export const JerseyFront = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
-  // Draw chest number if enabled in designData
+  // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
     ctx.fillStyle = designData.chest_number.color === 'Đen' ? '#1A1A1A' : 
                     designData.chest_number.color === 'Trắng' ? '#FFFFFF' :
                     designData.chest_number.color === 'Đỏ' ? '#FF0000' :
                     designData.chest_number.color === 'Xanh' ? '#0000FF' : '#1A1A1A';
-    const fontSize = 45;
-    ctx.font = numberFontFamily.replace('20px', `${fontSize}px`);
-    ctx.fillText(playerNumber.toString(), 150, 120);
+    const fontSize = 50; // Fixed size of 5cm (50px in canvas)
+    ctx.font = numberFontFamily.replace(/\d+px/, `${fontSize}px`);
+    // Position 20px below chest center logo position
+    ctx.fillText(playerNumber.toString(), 150, 140); 
     console.log(`Drew chest number: ${playerNumber} with font: ${ctx.font}`);
   }
   
@@ -111,12 +130,13 @@ export const JerseyFront = ({
                     designData.chest_text.color === 'Đỏ' ? '#FF0000' :
                     designData.chest_text.color === 'Xanh' ? '#0000FF' : '#1A1A1A';
     const fontSize = 24;
-    ctx.font = fontFamily.replace('20px', `${fontSize}px`);
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
+    // Position at center chest, above number
     ctx.fillText(designData.chest_text.content, 150, 80, 180);
     console.log(`Drew chest text: ${designData.chest_text.content} with font: ${ctx.font}`);
   }
   
-  // Draw logos
+  // Draw logos with fixed positions and sizes
   if (loadedLogos.size > 0) {
     console.log(`Drawing ${loadedLogos.size} logos on jersey`);
     
@@ -137,55 +157,51 @@ export const JerseyFront = ({
       }
       
       const img = loadedLogos.get(logo.id);
-      const position = logoPositions.get(logo.id);
       
       if (!img) {
         console.warn(`Image not found for logo ID ${logo.id}`);
         return;
       }
       
-      if (!position) {
-        console.warn(`Position not found for logo ID ${logo.id}`);
-        return;
-      }
-      
       try {
-        // Calculate logo dimensions with scale
-        const logoWidth = img.width * position.scale;
-        const logoHeight = img.height * position.scale;
-        
-        // Draw the logo
-        ctx.drawImage(img, position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
-        console.log(`Drew logo ${logo.id} at position ${position.x},${position.y} with scale ${position.scale}`);
-        
-        // Draw highlight if this logo is selected
-        if (selectedLogo === logo.id) {
-          ctx.strokeStyle = '#3b82f6'; // Blue highlight
-          ctx.lineWidth = 2;
-          ctx.strokeRect(position.x - logoWidth/2, position.y - logoHeight/2, logoWidth, logoHeight);
-          
-          // Draw resize handles on corners
-          const handleSize = 8;
-          ctx.fillStyle = 'white';
-          ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth = 1;
-          
-          // Top-left handle
-          ctx.fillRect(position.x - logoWidth/2 - handleSize/2, position.y - logoHeight/2 - handleSize/2, handleSize, handleSize);
-          ctx.strokeRect(position.x - logoWidth/2 - handleSize/2, position.y - logoHeight/2 - handleSize/2, handleSize, handleSize);
-          
-          // Top-right handle
-          ctx.fillRect(position.x + logoWidth/2 - handleSize/2, position.y - logoHeight/2 - handleSize/2, handleSize, handleSize);
-          ctx.strokeRect(position.x + logoWidth/2 - handleSize/2, position.y - logoHeight/2 - handleSize/2, handleSize, handleSize);
-          
-          // Bottom-left handle
-          ctx.fillRect(position.x - logoWidth/2 - handleSize/2, position.y + logoHeight/2 - handleSize/2, handleSize, handleSize);
-          ctx.strokeRect(position.x - logoWidth/2 - handleSize/2, position.y + logoHeight/2 - handleSize/2, handleSize, handleSize);
-          
-          // Bottom-right handle
-          ctx.fillRect(position.x + logoWidth/2 - handleSize/2, position.y + logoHeight/2 - handleSize/2, handleSize, handleSize);
-          ctx.strokeRect(position.x + logoWidth/2 - handleSize/2, position.y + logoHeight/2 - handleSize/2, handleSize, handleSize);
+        // Get fixed position for this logo type
+        const fixedPosition = FIXED_POSITIONS[logo.position as keyof typeof FIXED_POSITIONS];
+        if (!fixedPosition) {
+          console.warn(`No fixed position defined for logo position: ${logo.position}`);
+          return;
         }
+
+        // Use fixed scale based on position
+        const scale = LOGO_SCALES[logo.position as keyof typeof LOGO_SCALES] || 1.0;
+        
+        // Calculate logo dimensions with fixed scale
+        const baseSize = 100; // Base size for logos (100px = 10cm)
+        const logoWidth = baseSize * scale;
+        const logoHeight = baseSize * scale;
+        
+        // Calculate aspect ratio to maintain proportions
+        const aspectRatio = img.width / img.height;
+        let drawWidth = logoWidth;
+        let drawHeight = logoHeight;
+        
+        if (aspectRatio > 1) {
+          // Wider than tall
+          drawHeight = drawWidth / aspectRatio;
+        } else {
+          // Taller than wide
+          drawWidth = drawHeight * aspectRatio;
+        }
+        
+        // Draw the logo at fixed position with fixed size
+        ctx.drawImage(
+          img, 
+          fixedPosition.x - drawWidth/2,  // Center horizontally
+          fixedPosition.y - drawHeight/2, // Center vertically
+          drawWidth, 
+          drawHeight
+        );
+        
+        console.log(`Drew logo ${logo.id} at fixed position (${fixedPosition.x},${fixedPosition.y}) with scale ${scale}`);
       } catch (error) {
         console.error(`Error drawing logo ${logo.id}:`, error);
       }
