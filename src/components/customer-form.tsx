@@ -1,14 +1,15 @@
+
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LoaderCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CustomerFormLoading } from "./customer/loading-state";
+import { CustomerFormUnauthenticated } from "./customer/unauthenticated-state";
+import { CustomerFormFields } from "./customer/customer-form-fields";
 
 interface CustomerFormProps {
   onCustomerInfoChange: (customerInfo: Customer) => void;
@@ -45,7 +46,7 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
         .single();
         
       if (error) {
-        if (error.code !== 'PGRST116') { // Not found error
+        if (error.code !== 'PGRST116') {
           console.error("Error fetching customer info:", error);
           toast.error("Không thể tải thông tin khách hàng");
         }
@@ -96,6 +97,8 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
           address: customerInfo.address,
           phone: customerInfo.phone,
           delivery_note: customerInfo.delivery_note
+        }, {
+          onConflict: 'id'
         });
         
       if (error) {
@@ -120,37 +123,11 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
   };
 
   if (!user) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Thông tin khách hàng</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="p-4 text-center bg-yellow-50 rounded-md">
-            <p className="text-yellow-800">Bạn cần đăng nhập để tiếp tục đặt đơn hàng.</p>
-            <Button variant="outline" className="mt-2" asChild>
-              <a href="/login">Đăng nhập</a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <CustomerFormUnauthenticated />;
   }
 
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Thông tin khách hàng</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-4">
-            <LoaderCircle className="h-6 w-6 animate-spin" />
-            <span className="ml-2">Đang tải thông tin...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <CustomerFormLoading />;
   }
 
   return (
@@ -159,46 +136,10 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
         <CardTitle>Thông tin khách hàng</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="name">Họ tên</Label>
-          <Input 
-            id="name"
-            value={customerInfo.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Nhập họ tên khách hàng"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="address">Địa chỉ</Label>
-          <Input 
-            id="address"
-            value={customerInfo.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            placeholder="Nhập địa chỉ giao hàng"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="phone">Số điện thoại</Label>
-          <Input 
-            id="phone"
-            value={customerInfo.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder="Nhập số điện thoại liên hệ"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="delivery_note">Ghi chú giao hàng</Label>
-          <Textarea 
-            id="delivery_note"
-            value={customerInfo.delivery_note || ""}
-            onChange={(e) => handleInputChange('delivery_note', e.target.value)}
-            placeholder="Nhập ghi chú về việc giao hàng (không bắt buộc)"
-            rows={3}
-          />
-        </div>
+        <CustomerFormFields 
+          customerInfo={customerInfo}
+          handleInputChange={handleInputChange}
+        />
         
         <Button 
           type="button" 
