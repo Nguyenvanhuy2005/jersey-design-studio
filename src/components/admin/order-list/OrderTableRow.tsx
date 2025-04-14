@@ -1,12 +1,7 @@
-
 import { Order } from "@/types";
 import { OrderStatus } from "./OrderStatus";
 import { OrderImageButtons } from "./OrderImageButtons";
 import { OrderActions } from "./OrderActions";
-import {
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
 
 type OrderTableRowProps = {
   order: Order;
@@ -36,15 +31,15 @@ export const OrderTableRow = ({
   const totalCount = order.players.length;
   
   return (
-    <TableRow key={order.id}>
-      <TableCell>{order.id}</TableCell>
-      <TableCell className="font-medium">{order.customerInfo?.name || "—"}</TableCell>
-      <TableCell>{totalCount} bộ (Cầu thủ: {playerCount}, Thủ môn: {goalkeeperCount})</TableCell>
-      <TableCell>
+    <tr key={order.id} className="border-t border-muted">
+      <td className="p-3">{order.id}</td>
+      <td className="p-3 font-medium">{order.customerInfo?.name || "—"}</td>
+      <td className="p-3">{totalCount} bộ (Cầu thủ: {playerCount}, Thủ môn: {goalkeeperCount})</td>
+      <td className="p-3">
         <OrderStatus status={order.status} />
-      </TableCell>
-      <TableCell>{formatDate(order.createdAt)}</TableCell>
-      <TableCell>
+      </td>
+      <td className="p-3">{formatDate(order.createdAt)}</td>
+      <td className="p-3">
         {(order.designImageFront || order.designImage || order.designImageBack) ? (
           <OrderImageButtons 
             orderId={order.id}
@@ -56,14 +51,14 @@ export const OrderTableRow = ({
         ) : (
           <span className="text-muted-foreground text-sm">Không có</span>
         )}
-      </TableCell>
-      <TableCell>
+      </td>
+      <td className="p-3">
         <OrderActions 
           order={order}
           onViewDetails={onViewDetails}
           onStatusChange={onStatusChange}
         />
-      </TableCell>
-    </TableRow>
+      </td>
+    </tr>
   );
 };

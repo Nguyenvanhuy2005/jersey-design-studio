@@ -12,11 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthCheck } from "@/components/auth/AuthCheck";
 
-type PostgresError = {
-  code?: string;
-  message?: string;
-};
-
 const AdminCustomers = () => {
   const { isAdmin } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -26,6 +21,7 @@ const AdminCustomers = () => {
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
 
+  // Fetch customers data
   useEffect(() => {
     const fetchCustomers = async () => {
       setIsLoading(true);
@@ -60,6 +56,7 @@ const AdminCustomers = () => {
     }
     
     try {
+      // Get the user ID from the customers table
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('id')
@@ -71,6 +68,7 @@ const AdminCustomers = () => {
         return;
       }
       
+      // Insert into user_roles with admin role
       const { error } = await supabase
         .from('user_roles')
         .insert({
@@ -79,12 +77,11 @@ const AdminCustomers = () => {
         });
           
       if (error) {
-        const pgError = error as PostgresError;
-        if (pgError.code === '23505') {
+        if (error.code === '23505') { // Unique constraint violation
           toast.info("Người dùng này đã có quyền admin");
         } else {
           toast.error("Không thể cấp quyền admin");
-          console.error(pgError);
+          console.error(error);
         }
       } else {
         toast.success(`Đã cấp quyền admin cho ${adminEmail}`);
@@ -92,12 +89,12 @@ const AdminCustomers = () => {
         setAdminEmail("");
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      console.error("Error creating admin:", errorMessage);
+      console.error("Error creating admin:", error);
       toast.error("Có lỗi xảy ra");
     }
   };
   
+  // Filter customers based on search query
   const filteredCustomers = customers.filter(customer => 
     customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||

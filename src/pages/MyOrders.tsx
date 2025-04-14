@@ -55,9 +55,7 @@ const MyOrders = () => {
           designImage: order.design_image || '',
           designImageFront: order.design_image_front || '',
           designImageBack: order.design_image_back || '',
-          referenceImages: Array.isArray(order.reference_images) 
-            ? order.reference_images.filter((item: any) => typeof item === 'string')
-            : [],
+          referenceImages: order.reference_images || [],
           customer_id: order.customer_id,
           players: order.players ? order.players.map((player: any) => ({
             id: player.id,
@@ -220,6 +218,7 @@ const MyOrders = () => {
               <OrderDetails 
                 order={selectedOrder} 
                 onViewImage={handleViewImage}
+                // Read-only mode for customers
                 onStatusChange={() => {}}
               />
             )}
