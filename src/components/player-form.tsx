@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Player, Logo } from "@/types";
+import { Player, Logo, UniformSize } from "@/types";
 import { X, Plus, Upload, Download, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -25,8 +25,13 @@ interface PlayerFormProps {
   logos?: Logo[];
 }
 
+// Size configuration
+const SIZES = {
+  adult: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const,
+  kids: ['1', '3', '5', '7', '9', '11', '13', '15'] as const
+};
+
 interface ExtendedPlayer extends Player {
-  jersey_color?: string;
   uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
   line_2?: string;
@@ -39,8 +44,8 @@ interface ExtendedPlayer extends Player {
   logo_chest_center?: boolean;
   logo_sleeve_left?: boolean;
   logo_sleeve_right?: boolean;
-  pet_chest?: string;
   logo_pants?: boolean;
+  pet_chest?: string;
   note?: string;
 }
 
@@ -58,10 +63,9 @@ export function PlayerForm({
 }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
     name: "",
-    number: "", // Changed from 0 to empty string
+    number: "",
     size: "M",
     printImage: true,
-    jersey_color: "yellow",
     uniform_type: "player",
     line_1: "",
     line_3: "",
@@ -125,10 +129,9 @@ export function PlayerForm({
     // Reset form
     setNewPlayer({
       name: "",
-      number: "", // Changed from 0 to empty string
+      number: "",
       size: "M",
       printImage: true,
-      jersey_color: "yellow",
       uniform_type: "player",
       line_1: "",
       line_3: "",
@@ -156,10 +159,9 @@ export function PlayerForm({
       // Reset form
       setNewPlayer({
         name: "",
-        number: "", // Changed from 0 to empty string
+        number: "",
         size: "M",
         printImage: true,
-        jersey_color: "yellow",
         uniform_type: "player",
         line_1: "",
         line_3: "",
@@ -193,10 +195,9 @@ export function PlayerForm({
     // Reset form
     setNewPlayer({
       name: "",
-      number: "", // Changed from 0 to empty string
+      number: "",
       size: "M",
       printImage: true,
-      jersey_color: "yellow",
       uniform_type: "player",
       line_1: "",
       line_3: "",
@@ -216,10 +217,10 @@ export function PlayerForm({
       {
         "STT": 1,
         "TÊN IN TRÊN SỐ": "Tên trên số",
-        "SỐ": "01", // Changed from 10 to "01" to show leading zero
+        "SỐ": "01",
         "TÊN IN DƯỚI SỐ": "Tên đội",
         "SIZE": "M",
-        "MÀU ÁO": "yellow",
+        "KIỂU IN": "decal",
         "GHI CHÚ": "",
         "LOẠI QUẦN ÁO": "player",
         "IN CHỮ NGỰC": "",
@@ -230,7 +231,6 @@ export function PlayerForm({
         "LOGO NGỰC GIỮA": false,
         "LOGO TAY TRÁI": false,
         "LOGO TAY PHẢI": false,
-        "IN PET NGỰC": "",
         "LOGO QUẦN": false
       }
     ];
@@ -239,7 +239,6 @@ export function PlayerForm({
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     
-    // Generate and download the Excel file
     XLSX.writeFile(wb, "danh_sach_cau_thu_template.xlsx");
   };
 
@@ -273,7 +272,6 @@ export function PlayerForm({
             number: playerNumber,
             size: row["KÍCH THƯỚC"] || "M",
             printImage: row["IN HÌNH"] === "YES" || row["IN HÌNH"] === true,
-            jersey_color: row["MÀU ÁO"] || "yellow",
             uniform_type: (row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thủ môn" || 
                           row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? 
                           "goalkeeper" : "player",
@@ -458,16 +456,24 @@ export function PlayerForm({
             <Label htmlFor="playerSize">Kích thước</Label>
             <Select 
               value={newPlayer.size}
-              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as "S" | "M" | "L" | "XL" }))}
+              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as UniformSize }))}
             >
               <SelectTrigger id="playerSize">
                 <SelectValue placeholder="Size" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="S">S</SelectItem>
-                <SelectItem value="M">M</SelectItem>
-                <SelectItem value="L">L</SelectItem>
-                <SelectItem value="XL">XL</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Người lớn</SelectLabel>
+                  {SIZES.adult.map((size) => (
+                    <SelectItem key={size} value={size}>{size}</SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Trẻ em</SelectLabel>
+                  {SIZES.kids.map((size) => (
+                    <SelectItem key={size} value={size}>{size}</SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>

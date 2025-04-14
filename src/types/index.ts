@@ -1,9 +1,8 @@
-
 export interface Player {
   id?: string;
   name: string;
-  number: string; // Changed from number to string
-  size: 'S' | 'M' | 'L' | 'XL';
+  number: string;
+  size: UniformSize;
   printImage: boolean;
   jersey_color?: string;
   uniform_type?: 'player' | 'goalkeeper';
@@ -18,7 +17,6 @@ export interface Player {
   logo_chest_center?: boolean;
   logo_sleeve_left?: boolean;
   logo_sleeve_right?: boolean;
-  pet_chest?: string;
   logo_pants?: boolean;
   note?: string;
 }
@@ -47,7 +45,6 @@ export interface PrintConfig {
   legColor: string;
 }
 
-// Added new types for print positions
 export type PrintPosition = 
   | 'pants_number' 
   | 'back_number' 
@@ -73,7 +70,6 @@ export interface ProductLine {
   content: string;
 }
 
-// New interface for fixed print positions
 export interface PrintPositionConfig {
   enabled: boolean;
   material?: string;
@@ -81,7 +77,6 @@ export interface PrintPositionConfig {
   content?: string;
 }
 
-// Interface for logo position configurations
 export interface LogoPositionConfig extends PrintPositionConfig {
   logo_id?: string;
   x_position?: number;
@@ -89,7 +84,6 @@ export interface LogoPositionConfig extends PrintPositionConfig {
   scale?: number;
 }
 
-// Updated DesignData to match new requirements
 export interface DesignData {
   uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
@@ -138,7 +132,6 @@ export interface DesignData {
   reference_images?: string[];
 }
 
-// New interface for customer information
 export interface Customer {
   id?: string;
   name: string;
@@ -159,12 +152,16 @@ export interface Order {
   status: 'new' | 'processing' | 'completed';
   createdAt?: Date;
   notes?: string;
-  designImage?: string;        // Legacy field - kept for backward compatibility
-  designImageFront?: string;   // Front design image path
-  designImageBack?: string;    // Back design image path
-  referenceImages: string[];   // Using string[] to match what we're transforming data to
-  customer_id?: string;        // Reference to the customer who placed the order
-  designData?: DesignData;     // New field to store all design-related data
+  designImage?: string;
+  designImageFront?: string;
+  designImageBack?: string;
+  referenceImages: string[];
+  customer_id?: string;
+  designData?: DesignData;
   uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
 }
+
+export type AdultSize = 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '4XL';
+export type KidsSize = '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15';
+export type UniformSize = AdultSize | KidsSize;

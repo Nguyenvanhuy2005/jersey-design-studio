@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -162,10 +161,8 @@ export function OrderInfoTab({
             logos={logos}
             fontSize={fontText}
             fontNumber={fontNumber}
-            printStyleOptions={["In chuyển nhiệt", "In decal", "In PET"]}
+            printStyleOptions={["decal", "transfer"]}
             printStyle={printStyle}
-            printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
-            printColor={printColor}
           />
         </CardContent>
       </Card>
