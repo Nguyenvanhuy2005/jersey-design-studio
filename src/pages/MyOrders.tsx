@@ -5,13 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Order, Player } from "@/types";
+import { Order } from "@/types";
 import { Loader2, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
-import { Link } from "react-router-dom";
 
 const MyOrders = () => {
   const { user } = useAuth();
@@ -57,37 +56,8 @@ const MyOrders = () => {
           designImageBack: order.design_image_back || '',
           referenceImages: order.reference_images || [],
           customer_id: order.customer_id,
-          players: order.players ? order.players.map((player: any) => ({
-            id: player.id,
-            name: player.name || '',
-            number: player.number?.toString() || "0",
-            size: player.size as 'S' | 'M' | 'L' | 'XL',
-            printImage: player.print_image || false,
-            jersey_color: player.jersey_color || '',
-            uniform_type: player.uniform_type || 'player',
-            line_1: player.line_1 || '',
-            line_3: player.line_3 || '',
-            chest_text: player.chest_text || '',
-            chest_number: player.chest_number || false,
-            pants_number: player.pants_number || false,
-            logo_chest_left: player.logo_chest_left || false,
-            logo_chest_right: player.logo_chest_right || false,
-            logo_chest_center: player.logo_chest_center || false,
-            logo_sleeve_left: player.logo_sleeve_left || false,
-            logo_sleeve_right: player.logo_sleeve_right || false,
-            pet_chest: player.pet_chest || '',
-            logo_pants: player.logo_pants || false,
-            note: player.note || ''
-          })) : [],
-          productLines: order.product_lines ? order.product_lines.map((line: any) => ({
-            id: line.id,
-            product: line.product,
-            position: line.position,
-            material: line.material,
-            size: line.size,
-            points: line.points || 0,
-            content: line.content || ''
-          })) : [],
+          players: order.players || [],
+          productLines: order.product_lines || [],
           printConfig: order.print_configs && order.print_configs.length > 0 ? {
             id: order.print_configs[0].id,
             font: order.print_configs[0].font || 'Arial',
