@@ -111,12 +111,15 @@ const MyOrders = () => {
       setError(null);
       
       try {
-        // Fixed query to properly handle the relationship between orders and customers
+        // Updated query to include all necessary related tables
         const { data, error } = await supabase
           .from('orders')
           .select(`
             *,
-            customers(*)
+            customers(*),
+            players(*),
+            product_lines(*),
+            print_configs(*)
           `)
           .eq('customer_id', user.id)
           .order('created_at', { ascending: false });
