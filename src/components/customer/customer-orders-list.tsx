@@ -35,8 +35,8 @@ export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
 
   const sortedOrders = useMemo(() => {
     return [...orders].sort((a, b) => {
-      const dateA = parseDateSafely(a.createdAt);
-      const dateB = parseDateSafely(b.createdAt);
+      const dateA = a.createdAt instanceof Date ? a.createdAt : parseDateSafely(a.createdAt);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : parseDateSafely(b.createdAt);
       return dateB.getTime() - dateA.getTime();
     });
   }, [orders]);

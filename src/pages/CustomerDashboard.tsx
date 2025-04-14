@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CustomerForm } from "@/components/customer-form";
 import { CustomerOrdersList } from "@/components/customer/customer-orders-list";
 import { ChangePasswordForm } from "@/components/customer/change-password-form";
+import { dbOrderToOrder } from "@/utils/adapters";
 
 const CustomerDashboard = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -93,7 +94,9 @@ const CustomerDashboard = () => {
       }
       
       if (data) {
-        setOrders(data);
+        // Convert database orders to application Order type
+        const convertedOrders = data.map(order => dbOrderToOrder(order));
+        setOrders(convertedOrders);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);

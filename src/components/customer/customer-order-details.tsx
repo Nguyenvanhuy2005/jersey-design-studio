@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Download, LoaderCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { dbOrderToOrder } from "@/utils/adapters";
 
 export function CustomerOrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -49,7 +50,9 @@ export function CustomerOrderDetails() {
       }
       
       if (orderData) {
-        setOrder(orderData as Order);
+        // Convert database order to application Order type
+        const convertedOrder = dbOrderToOrder({ ...orderData, players: [] });
+        setOrder(convertedOrder);
         
         // Fetch players for this order
         const { data: playersData, error: playersError } = await supabase
@@ -60,8 +63,16 @@ export function CustomerOrderDetails() {
         if (playersError) {
           console.error("Error fetching players:", playersError);
           toast.error("Không thể tải danh sách cầu thủ");
-        } else {
-          setPlayers(playersData as Player[]);
+        } else if (playersData) {
+          // Convert database players to application Player type
+          const convertedPlayers = playersData.map(player => ({
+            id: player.id,
+            name: player.name || "",
+            number: String(player.number),
+            size: player.size as 'S' | 'M' | 'L' | 'XL',
+            printImage: player.print_image || false
+          }));
+          setPlayers(convertedPlayers);
         }
       }
     } catch (error) {
