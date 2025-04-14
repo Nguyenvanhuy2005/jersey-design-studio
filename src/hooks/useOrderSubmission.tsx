@@ -421,7 +421,7 @@ export const useOrderSubmission = ({
             logo_sleeve_right: p.logo_sleeve_right || false,
             logo_pants: p.logo_pants || false,
             pet_chest: p.pet_chest || null,
-            jersey_color: p.jersey_color || 'yellow',
+            print_style: p.print_style || null,
             note: p.note || null
           };
         });
