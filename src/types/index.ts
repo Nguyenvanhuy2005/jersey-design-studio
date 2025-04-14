@@ -18,6 +18,7 @@ export interface Player {
   logo_sleeve_left?: boolean;
   logo_sleeve_right?: boolean;
   logo_pants?: boolean;
+  pet_chest?: string;
   note?: string;
 }
 
