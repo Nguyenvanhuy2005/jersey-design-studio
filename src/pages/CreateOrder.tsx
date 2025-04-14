@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -225,6 +224,9 @@ const CreateOrder = () => {
                 isSubmitting={isSubmitting}
                 isGeneratingDesign={isGeneratingDesign}
                 onSubmitOrder={handleSubmitOrder}
+                jerseyCanvasRef={jerseyCanvasRef}
+                pantCanvasRef={pantCanvasRef}
+                referenceImagesPreview={referenceImagesPreview}
               />
             </TabsContent>
           </Tabs>

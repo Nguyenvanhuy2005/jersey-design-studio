@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Logo, Player, ProductLine, Customer } from "@/types";
-import { formatNumberWithCommas } from "@/utils/format-utils";
 
 interface OrderSummaryProps {
   teamName: string;
@@ -22,7 +21,6 @@ export function OrderSummary({
   productLines,
   uniformType,
   quantity,
-  totalCost,
   customerInfo
 }: OrderSummaryProps) {
   return (
@@ -155,20 +153,8 @@ export function OrderSummary({
                 )}
               </div>
             </div>
-            <Separator />
           </>
         )}
-        
-        {/* Total Cost */}
-        <div className="pt-2">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Tổng chi phí:</h3>
-            <span className="text-lg font-bold">{formatNumberWithCommas(totalCost)} VNĐ</span>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Đã bao gồm chi phí quần áo và in ấn
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
