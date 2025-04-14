@@ -947,8 +947,8 @@ const CreateOrder = () => {
             <TabsContent value="info" className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <CustomerForm 
-                  customer={customerInfo} 
-                  setCustomer={setCustomerInfo} 
+                  onCustomerInfoChange={setCustomerInfo} 
+                  initialCustomer={customerInfo}
                 />
                 
                 <div className="space-y-6">
@@ -994,20 +994,24 @@ const CreateOrder = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong mu���n.
+                        Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong muốn.
                       </p>
                     </CardContent>
                   </Card>
                   
                   <PrintGlobalSettings 
+                    fontTextOptions={["Arial", "Times New Roman", "Impact", "Comic Sans MS"]}
                     fontText={fontText}
-                    setFontText={setFontText}
+                    onFontTextChange={setFontText}
+                    fontNumberOptions={["Arial", "Times New Roman", "Impact", "Comic Sans MS"]}
                     fontNumber={fontNumber}
-                    setFontNumber={setFontNumber}
+                    onFontNumberChange={setFontNumber}
+                    printStyleOptions={["In chuyển nhiệt", "In decal", "In PET"]}
                     printStyle={printStyle}
-                    setPrintStyle={setPrintStyle}
+                    onPrintStyleChange={setPrintStyle}
+                    printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
                     printColor={printColor}
-                    setPrintColor={setPrintColor}
+                    onPrintColorChange={setPrintColor}
                   />
                   
                   <Card>
@@ -1017,7 +1021,7 @@ const CreateOrder = () => {
                     <CardContent>
                       <LogoUpload 
                         logos={logos} 
-                        setLogos={setLogos} 
+                        onLogosChange={setLogos} 
                       />
                     </CardContent>
                   </Card>
@@ -1040,8 +1044,14 @@ const CreateOrder = () => {
                 <CardContent>
                   <PlayerForm
                     players={players}
-                    setPlayers={setPlayers}
+                    onPlayersChange={setPlayers}
                     logos={logos}
+                    fontSize={fontText}
+                    fontNumber={fontNumber}
+                    printStyleOptions={["In chuyển nhiệt", "In decal", "In PET"]}
+                    printStyle={printStyle}
+                    printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
+                    printColor={printColor}
                   />
                 </CardContent>
               </Card>
@@ -1122,9 +1132,14 @@ const CreateOrder = () => {
               {isDemoApproved ? (
                 <div className="space-y-6">
                   <OrderSummary 
-                    players={players} 
+                    teamName={players[0]?.name?.split(' ')[0] || "TEAM"}
+                    players={players}
+                    logos={logos}
+                    productLines={productLines}
+                    uniformType={players[0]?.uniform_type || 'player'}
+                    quantity={players.length}
+                    totalCost={calculateTotalCost()}
                     customerInfo={customerInfo}
-                    designData={designData}
                   />
                   
                   <Card>
@@ -1135,7 +1150,8 @@ const CreateOrder = () => {
                       {productLines.length > 0 ? (
                         <ProductLineTable 
                           productLines={productLines} 
-                          setProductLines={setProductLines}
+                          onProductLinesChange={setProductLines}
+                          logos={logos}
                         />
                       ) : (
                         <Alert>
@@ -1150,8 +1166,13 @@ const CreateOrder = () => {
                   </Card>
                   
                   <OrderCostSummary 
-                    productLines={productLines}
-                    players={players}
+                    uniformCount={players.length}
+                    jerseyUnitPrice={120000}
+                    goalkeeperUnitPrice={150000}
+                    playerCount={players.filter(p => (p as any).uniform_type !== 'goalkeeper').length}
+                    goalkeeperCount={players.filter(p => (p as any).uniform_type === 'goalkeeper').length}
+                    printPositionsCount={productLines.length}
+                    printUnitPrice={20000}
                     totalCost={calculateTotalCost()}
                   />
                   
