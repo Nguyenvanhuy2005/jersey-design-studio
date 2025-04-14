@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Player } from "@/types";
+import { Player, Logo } from "@/types";
 import { X, Plus, Upload, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,6 +22,7 @@ interface PlayerFormProps {
   printStyle: string;
   printColorOptions: string[];
   printColor: string;
+  logos?: Logo[];
 }
 
 interface ExtendedPlayer extends Player {
@@ -53,7 +53,8 @@ export function PlayerForm({
   printStyleOptions,
   printStyle,
   printColorOptions,
-  printColor
+  printColor,
+  logos
 }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
     name: "",
@@ -213,7 +214,7 @@ export function PlayerForm({
         const updatedPlayers = [...players, ...validPlayers];
         onPlayersChange(updatedPlayers);
         
-        toast.success(`Đã nhập ${validPlayers.length} cầu thủ từ file Excel`);
+        toast.success(`Đã nhập ${validPlayers.length} cầu thủ t�� file Excel`);
       } catch (error) {
         console.error("Error parsing Excel file:", error);
         toast.error("Có lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng file.");
