@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -120,12 +119,6 @@ export function OrderInfoTab({
             fontNumberOptions={["Arial", "Times New Roman", "Impact", "Comic Sans MS"]}
             fontNumber={fontNumber}
             onFontNumberChange={onFontNumberChange}
-            printStyleOptions={["In chuyển nhiệt", "In decal", "In PET"]}
-            printStyle={printStyle}
-            onPrintStyleChange={onPrintStyleChange}
-            printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
-            printColor={printColor}
-            onPrintColorChange={onPrintColorChange}
           />
           
           <Card>
@@ -144,7 +137,7 @@ export function OrderInfoTab({
       
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Danh sách cầu thủ</CardTitle>
+          <CardTitle>Thông tin in ấn</CardTitle>
           {players.length > 0 && (
             <Button
               variant="outline"
@@ -162,9 +155,9 @@ export function OrderInfoTab({
             logos={logos}
             fontSize={fontText}
             fontNumber={fontNumber}
-            printStyleOptions={["decal", "transfer"]}
-            printStyle={printStyle}
+            printStyleOptions={["In chuyển nhiệt", "In decal"]}
             printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
+            printStyle={printStyle}
             printColor={printColor}
           />
         </CardContent>

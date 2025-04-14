@@ -152,6 +152,7 @@ export type Database = {
           number: number
           order_id: string | null
           print_image: boolean | null
+          print_style: string
           size: string
         }
         Insert: {
@@ -162,6 +163,7 @@ export type Database = {
           number: number
           order_id?: string | null
           print_image?: boolean | null
+          print_style?: string
           size: string
         }
         Update: {
@@ -172,6 +174,7 @@ export type Database = {
           number?: number
           order_id?: string | null
           print_image?: boolean | null
+          print_style?: string
           size?: string
         }
         Relationships: [
