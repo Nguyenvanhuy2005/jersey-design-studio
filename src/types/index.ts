@@ -1,11 +1,9 @@
-
 export interface Player {
   id?: string;
   name: string;
   number: string;
   size: UniformSize;
   printImage: boolean;
-  jersey_color?: string;
   uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
   line_2?: string;

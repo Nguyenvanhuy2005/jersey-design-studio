@@ -331,15 +331,6 @@ export function PlayerForm({
     e.target.value = "";
   };
 
-  const jerseyColors = [
-    { value: "yellow", label: "Vàng" },
-    { value: "red", label: "Đỏ" },
-    { value: "blue", label: "Xanh dương" },
-    { value: "green", label: "Xanh lá" },
-    { value: "white", label: "Trắng" },
-    { value: "black", label: "Đen" },
-  ];
-
   return (
     <Card className={cn(className)}>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -385,7 +376,6 @@ export function PlayerForm({
                   <th className="p-2 text-left">Tên trên số</th>
                   <th className="p-2 text-left">Tên dưới số</th>
                   <th className="p-2 text-left">Size</th>
-                  <th className="p-2 text-left">Màu áo</th>
                   <th className="p-2 text-left">Loại</th>
                   <th className="p-2 text-left">Kiểu in</th>
                   <th className="p-2 text-center">Số ngực</th>
@@ -405,10 +395,6 @@ export function PlayerForm({
                       <td className="p-2">{extendedPlayer.line_1 || "-"}</td>
                       <td className="p-2">{extendedPlayer.line_3 || "-"}</td>
                       <td className="p-2">{player.size}</td>
-                      <td className="p-2">{
-                        jerseyColors.find(c => c.value === extendedPlayer.jersey_color)?.label || 
-                        extendedPlayer.jersey_color || "Vàng"
-                      }</td>
                       <td className="p-2">{extendedPlayer.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}</td>
                       <td className="p-2">
                         <Select
@@ -528,23 +514,6 @@ export function PlayerForm({
                     <SelectItem key={size} value={size}>{size}</SelectItem>
                   ))}
                 </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="jerseyColor">Màu áo</Label>
-            <Select 
-              value={newPlayer.jersey_color || "yellow"}
-              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, jersey_color: value }))}
-            >
-              <SelectTrigger id="jerseyColor">
-                <SelectValue placeholder="Màu áo" />
-              </SelectTrigger>
-              <SelectContent>
-                {jerseyColors.map(color => (
-                  <SelectItem key={color.value} value={color.value}>{color.label}</SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -721,9 +690,9 @@ export function PlayerForm({
           </div>
           <div className="text-xs text-muted-foreground mt-2">
             <p className="mb-1">Format file Excel bao gồm các cột:</p>
-            <p>STT, TÊN IN TRÊN SỐ, SỐ, TÊN IN DƯỚI SỐ, SIZE, MÀU ÁO, GHI CHÚ, LOẠI QUẦN ÁO (CẦU THỦ/THỦ MÔN), 
+            <p>STT, TÊN IN TRÊN SỐ, SỐ, TÊN IN DƯỚI SỐ, SIZE, GHI CHÚ, LOẠI QUẦN ÁO (CẦU THỦ/THỦ MÔN), 
               IN SỐ NGỰC (YES/NO), IN SỐ QUẦN (YES/NO), LOGO NGỰC TRÁI (YES/NO), LOGO NGỰC PHẢI (YES/NO), 
-              LOGO NGỰC GIỮA (YES/NO), LOGO TAY TRÁI (YES/NO), LOGO TAY PHẢI (YES/NO), LOGO QUẦN (YES/NO)</p>
+              LOGO NGỰC GIỮA (YES/NO), LOGO TAY TRÁI (YES/NO), LOGO TAY PHẢI (YES/NO), LOGO QUẦN (YES/NO), KIỂU IN</p>
           </div>
         </div>
       </CardFooter>
