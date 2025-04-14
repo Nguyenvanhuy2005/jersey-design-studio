@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,20 +54,40 @@ export const useOrderForm = () => {
 
   useEffect(() => {
     const fetchCustomerInfo = async () => {
-      if (user) {
+      if (!user) {
+        setCustomerInfo({
+          name: "",
+          address: "",
+          phone: ""
+        });
+        return;
+      }
+
+      try {
         const { data, error } = await supabase
           .from('customers')
           .select('*')
           .eq('id', user.id)
           .single();
         
-        if (data && !error) {
+        if (error) {
+          console.error("Error fetching customer info:", error);
+          if (error.code !== 'PGRST116') { // Not found error
+            toast.error("Không thể tải thông tin khách hàng");
+          }
+          return;
+        }
+        
+        if (data) {
           const customerData: Customer = {
             ...data,
             created_at: parseDateSafely(data.created_at)
           };
           setCustomerInfo(customerData);
         }
+      } catch (error) {
+        console.error("Error in fetchCustomerInfo:", error);
+        toast.error("Có lỗi khi tải thông tin khách hàng");
       }
     };
     

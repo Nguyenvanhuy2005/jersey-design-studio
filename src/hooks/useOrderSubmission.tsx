@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -291,12 +291,30 @@ export const useOrderSubmission = ({
     setIsSubmitting(true);
     
     try {
+      // First update customer info
+      const { error: customerError } = await supabase
+        .from('customers')
+        .upsert({
+          id: user.id,
+          name: customerInfo.name,
+          address: customerInfo.address,
+          phone: customerInfo.phone,
+          delivery_note: customerInfo.delivery_note
+        }, {
+          onConflict: 'id'
+        });
+          
+      if (customerError) {
+        console.error("Error updating customer info:", customerError);
+        toast.error("Không thể cập nhật thông tin khách hàng");
+        return;
+      }
+
       await createStorageBucketsIfNeeded();
       
       const orderId = uuidv4();
       const logoUrls: string[] = [];
       
-      console.log("Starting design images generation...");
       const { frontPath, backPath, pantsPath } = await generateOrderDesignImages(orderId, jerseyCanvasRef, pantCanvasRef);
       
       if (!frontPath && !backPath) {
@@ -359,7 +377,6 @@ export const useOrderSubmission = ({
 
       const designDataJson = prepareDesignDataForStorage(finalDesignData);
 
-      console.log("Inserting order with design_images:", { frontPath, backPath, pantsPath });
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -374,7 +391,7 @@ export const useOrderSubmission = ({
           design_image_front: frontPath || null,
           design_image_back: backPath || null,
           reference_images: referenceImagePaths,
-          customer_id: user.id
+          customer_id: user.id  // Ensure we set the customer_id
         });
         
       if (orderError) {
@@ -382,21 +399,6 @@ export const useOrderSubmission = ({
         throw orderError;
       }
 
-      const { error: customerError } = await supabase
-        .from('customers')
-        .upsert({
-          id: user.id,
-          name: customerInfo.name,
-          address: customerInfo.address,
-          phone: customerInfo.phone,
-          delivery_note: customerInfo.delivery_note
-        });
-          
-      if (customerError) {
-        console.error("Error updating customer info:", customerError);
-        toast.warning("Không thể cập nhật thông tin khách hàng, nhưng vẫn tiếp tục tạo đơn hàng.");
-      }
-      
       if (players.length > 0) {
         const playersToInsert = players.map(p => {
           return {

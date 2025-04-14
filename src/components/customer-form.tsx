@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +26,6 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
     delivery_note: initialCustomer?.delivery_note || ""
   });
 
-  // Fetch customer info when component mounts
   useEffect(() => {
     if (user) {
       fetchCustomerInfo();
@@ -47,7 +45,10 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
         .single();
         
       if (error) {
-        console.error("Error fetching customer info:", error);
+        if (error.code !== 'PGRST116') { // Not found error
+          console.error("Error fetching customer info:", error);
+          toast.error("Không thể tải thông tin khách hàng");
+        }
         setLoading(false);
         return;
       }
@@ -67,6 +68,7 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
       }
     } catch (error) {
       console.error("Error fetching customer:", error);
+      toast.error("Có lỗi khi tải thông tin khách hàng");
     } finally {
       setLoading(false);
     }
