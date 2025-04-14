@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,138 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OrdersList } from "@/components/admin/OrdersList";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
-import { checkDesignImageExists, checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/image-utils";
-
-const mockOrders: Order[] = [{
-  id: "order-1",
-  teamName: "FC Barcelona",
-  players: Array(11).fill(null).map((_, i) => ({
-    id: `player-${i + 1}-1`,
-    name: `Player ${i + 1}`,
-    number: String(i + 1),
-    size: i % 2 === 0 ? "M" : "L",
-    printImage: i % 3 === 0
-  })),
-  printConfig: {
-    font: "Arial",
-    backMaterial: "In chuyển nhiệt",
-    backColor: "Trắng",
-    frontMaterial: "In chuyển nhiệt",
-    frontColor: "Đen",
-    sleeveMaterial: "In chuyển nhiệt",
-    sleeveColor: "Đen",
-    legMaterial: "In chuyển nhiệt",
-    legColor: "Đen"
-  },
-  productLines: [{
-    id: "product-1-1",
-    product: "Áo thi đấu",
-    position: "Lưng trên",
-    material: "In chuyển nhiệt",
-    size: "Trung bình",
-    points: 1,
-    content: "Tên cầu thủ"
-  }, {
-    id: "product-1-2",
-    product: "Áo thi đấu",
-    position: "Lưng giữa",
-    material: "In chuyển nhiệt",
-    size: "Lớn",
-    points: 1,
-    content: "Số áo"
-  }],
-  totalCost: 3500000,
-  status: "new",
-  designImage: "order-1/design.png",
-  createdAt: new Date(2023, 3, 15),
-  referenceImages: []
-}, {
-  id: "order-2",
-  teamName: "Manchester United",
-  players: Array(15).fill(null).map((_, i) => ({
-    id: `player-${i + 1}-2`,
-    name: `Player ${i + 1}`,
-    number: String(i + 1),
-    size: i % 2 === 0 ? "L" : "XL",
-    printImage: i % 2 === 0
-  })),
-  printConfig: {
-    font: "Helvetica",
-    backMaterial: "In trực tiếp",
-    backColor: "Đen",
-    frontMaterial: "In trực tiếp",
-    frontColor: "Đen",
-    sleeveMaterial: "In trực tiếp",
-    sleeveColor: "Đen",
-    legMaterial: "In trực tiếp",
-    legColor: "Đen"
-  },
-  productLines: [{
-    id: "product-2-1",
-    product: "Áo thi đấu",
-    position: "Lưng trên",
-    material: "In trực tiếp",
-    size: "Trung bình",
-    points: 1,
-    content: "Tên cầu thủ"
-  }, {
-    id: "product-2-2",
-    product: "Áo thi đấu",
-    position: "Lưng giữa",
-    material: "In trực tiếp",
-    size: "Lớn",
-    points: 1,
-    content: "Số áo"
-  }],
-  totalCost: 4200000,
-  status: "processing",
-  designImage: "order-2/design.png",
-  createdAt: new Date(2023, 3, 20),
-  referenceImages: []
-}, {
-  id: "order-3",
-  teamName: "Real Madrid",
-  players: Array(18).fill(null).map((_, i) => ({
-    id: `player-${i + 1}-3`,
-    name: `Player ${i + 1}`,
-    number: String(i + 1),
-    size: i % 3 === 0 ? "S" : i % 3 === 1 ? "M" : "L",
-    printImage: true
-  })),
-  printConfig: {
-    font: "Roboto",
-    backMaterial: "In chuyển nhi���t",
-    backColor: "Đen",
-    frontMaterial: "In chuyển nhiệt",
-    frontColor: "Trắng",
-    sleeveMaterial: "In chuyển nhiệt",
-    sleeveColor: "Trắng",
-    legMaterial: "In chuyển nhiệt",
-    legColor: "Trắng"
-  },
-  productLines: [{
-    id: "product-3-1",
-    product: "Áo thi đấu",
-    position: "Lưng trên",
-    material: "In chuyển nhiệt",
-    size: "Trung bình",
-    points: 1,
-    content: "Tên cầu thủ"
-  }, {
-    id: "product-3-2",
-    product: "Áo thi đấu",
-    position: "Lưng giữa",
-    material: "In chuyển nhiệt",
-    size: "Lớn",
-    points: 1,
-    content: "Số áo"
-  }],
-  totalCost: 5400000,
-  status: "completed",
-  designImage: "order-3/design.png",
-  createdAt: new Date(2023, 2, 10),
-  referenceImages: []
-}];
+import { checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/storage/bucket-utils";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -271,28 +139,32 @@ const AdminOrders = () => {
       
       console.log("Raw orders data:", data);
       
-      const transformedOrders: Order[] = await Promise.all(data.map(async order => {
+      const transformedOrders: Order[] = await Promise.all(data.map(async (order: any) => {
         // Safely handle customers data with proper type checking
         let customerInfo: Customer | undefined = undefined;
         
         if (order.customers) {
-          // Handle potential error or array
+          // Check if customers is an array and not empty
           if (Array.isArray(order.customers) && order.customers.length > 0) {
             const customerData = order.customers[0];
-            customerInfo = {
-              id: customerData.id,
-              name: customerData.name || '',
-              address: customerData.address || '',
-              phone: customerData.phone || '',
-              delivery_note: customerData.delivery_note || '',
-              created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
-            };
+            
+            // Ensure customerData is not null before accessing its properties
+            if (customerData) {
+              customerInfo = {
+                id: customerData.id,
+                name: customerData.name || '',
+                address: customerData.address || '',
+                phone: customerData.phone || '',
+                delivery_note: customerData.delivery_note || '',
+                created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
+              };
+            }
           }
         }
         
         let processedReferenceImages: string[] = [];
         if (order.reference_images && Array.isArray(order.reference_images)) {
-          processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
+          processedReferenceImages = order.reference_images.filter((item: any) => typeof item === 'string').map((item: any) => String(item));
         }
         
         // Handle design_data from database and convert to the DesignData type
@@ -305,28 +177,129 @@ const AdminOrders = () => {
           typedDesignData = {
             uniform_type: rawData.uniform_type as 'player' | 'goalkeeper' | 'mixed' | undefined,
             quantity: rawData.quantity,
-            logos: rawData.logos as Array<{
-              logo_id: string;
-              position: string;
-              x_position: number;
-              y_position: number;
-              scale: number;
-            }> | undefined,
-            line_1: rawData.line_1 as any,
-            line_2: rawData.line_2 as any,
-            line_3: rawData.line_3 as any,
-            chest_text: rawData.chest_text as any,
-            chest_number: rawData.chest_number as any,
-            pants_number: rawData.pants_number as any,
-            logo_chest_left: rawData.logo_chest_left as any,
-            logo_chest_right: rawData.logo_chest_right as any,
-            logo_chest_center: rawData.logo_chest_center as any,
-            logo_sleeve_left: rawData.logo_sleeve_left as any,
-            logo_sleeve_right: rawData.logo_sleeve_right as any,
-            pet_chest: rawData.pet_chest as any,
-            logo_pants: rawData.logo_pants as any,
-            font_text: rawData.font_text as any,
-            font_number: rawData.font_number as any,
+            logos: Array.isArray(rawData.logos) ? rawData.logos.map((logo: any) => ({
+              logo_id: logo.logo_id || '',
+              position: logo.position || '',
+              x_position: Number(logo.x_position) || 0,
+              y_position: Number(logo.y_position) || 0,
+              scale: Number(logo.scale) || 1.0,
+            })) : undefined,
+            line_1: rawData.line_1 ? {
+              enabled: Boolean(rawData.line_1.enabled),
+              material: rawData.line_1.material,
+              color: rawData.line_1.color,
+              content: rawData.line_1.content,
+              font: rawData.line_1.font,
+              font_file: rawData.line_1.font_file
+            } : undefined,
+            line_2: rawData.line_2 ? {
+              enabled: Boolean(rawData.line_2.enabled),
+              material: rawData.line_2.material,
+              color: rawData.line_2.color,
+              content: rawData.line_2.content,
+              font: rawData.line_2.font,
+              font_file: rawData.line_2.font_file
+            } : undefined,
+            line_3: rawData.line_3 ? {
+              enabled: Boolean(rawData.line_3.enabled),
+              material: rawData.line_3.material,
+              color: rawData.line_3.color,
+              content: rawData.line_3.content,
+              font: rawData.line_3.font,
+              font_file: rawData.line_3.font_file
+            } : undefined,
+            chest_text: rawData.chest_text ? {
+              enabled: Boolean(rawData.chest_text.enabled),
+              material: rawData.chest_text.material,
+              color: rawData.chest_text.color,
+              content: rawData.chest_text.content,
+              font: rawData.chest_text.font,
+              font_file: rawData.chest_text.font_file
+            } : undefined,
+            chest_number: rawData.chest_number ? {
+              enabled: Boolean(rawData.chest_number.enabled),
+              material: rawData.chest_number.material,
+              color: rawData.chest_number.color,
+              content: rawData.chest_number.content
+            } : undefined,
+            pants_number: rawData.pants_number ? {
+              enabled: Boolean(rawData.pants_number.enabled),
+              material: rawData.pants_number.material,
+              color: rawData.pants_number.color,
+              content: rawData.pants_number.content
+            } : undefined,
+            logo_chest_left: rawData.logo_chest_left ? {
+              enabled: Boolean(rawData.logo_chest_left.enabled),
+              material: rawData.logo_chest_left.material,
+              color: rawData.logo_chest_left.color,
+              logo_id: rawData.logo_chest_left.logo_id,
+              x_position: Number(rawData.logo_chest_left.x_position) || 0,
+              y_position: Number(rawData.logo_chest_left.y_position) || 0,
+              scale: Number(rawData.logo_chest_left.scale) || 1.0
+            } : undefined,
+            logo_chest_right: rawData.logo_chest_right ? {
+              enabled: Boolean(rawData.logo_chest_right.enabled),
+              material: rawData.logo_chest_right.material,
+              color: rawData.logo_chest_right.color,
+              logo_id: rawData.logo_chest_right.logo_id,
+              x_position: Number(rawData.logo_chest_right.x_position) || 0,
+              y_position: Number(rawData.logo_chest_right.y_position) || 0,
+              scale: Number(rawData.logo_chest_right.scale) || 1.0
+            } : undefined,
+            logo_chest_center: rawData.logo_chest_center ? {
+              enabled: Boolean(rawData.logo_chest_center.enabled),
+              material: rawData.logo_chest_center.material,
+              color: rawData.logo_chest_center.color,
+              logo_id: rawData.logo_chest_center.logo_id,
+              x_position: Number(rawData.logo_chest_center.x_position) || 0,
+              y_position: Number(rawData.logo_chest_center.y_position) || 0,
+              scale: Number(rawData.logo_chest_center.scale) || 1.0
+            } : undefined,
+            logo_sleeve_left: rawData.logo_sleeve_left ? {
+              enabled: Boolean(rawData.logo_sleeve_left.enabled),
+              material: rawData.logo_sleeve_left.material,
+              color: rawData.logo_sleeve_left.color,
+              logo_id: rawData.logo_sleeve_left.logo_id,
+              x_position: Number(rawData.logo_sleeve_left.x_position) || 0,
+              y_position: Number(rawData.logo_sleeve_left.y_position) || 0,
+              scale: Number(rawData.logo_sleeve_left.scale) || 1.0
+            } : undefined,
+            logo_sleeve_right: rawData.logo_sleeve_right ? {
+              enabled: Boolean(rawData.logo_sleeve_right.enabled),
+              material: rawData.logo_sleeve_right.material,
+              color: rawData.logo_sleeve_right.color,
+              logo_id: rawData.logo_sleeve_right.logo_id,
+              x_position: Number(rawData.logo_sleeve_right.x_position) || 0,
+              y_position: Number(rawData.logo_sleeve_right.y_position) || 0,
+              scale: Number(rawData.logo_sleeve_right.scale) || 1.0
+            } : undefined,
+            pet_chest: rawData.pet_chest ? {
+              enabled: Boolean(rawData.pet_chest.enabled),
+              material: rawData.pet_chest.material,
+              color: rawData.pet_chest.color,
+              content: rawData.pet_chest.content
+            } : undefined,
+            logo_pants: rawData.logo_pants ? {
+              enabled: Boolean(rawData.logo_pants.enabled),
+              material: rawData.logo_pants.material,
+              color: rawData.logo_pants.color,
+              logo_id: rawData.logo_pants.logo_id,
+              x_position: Number(rawData.logo_pants.x_position) || 0,
+              y_position: Number(rawData.logo_pants.y_position) || 0,
+              scale: Number(rawData.logo_pants.scale) || 1.0
+            } : undefined,
+            font_text: rawData.font_text ? {
+              font: rawData.font_text.font || 'Arial',
+              font_file: rawData.font_text.font_file
+            } : {
+              font: 'Arial'
+            },
+            font_number: rawData.font_number ? {
+              font: rawData.font_number.font || 'Arial',
+              font_file: rawData.font_number.font_file
+            } : {
+              font: 'Arial'
+            },
             print_style: rawData.print_style,
             print_color: rawData.print_color,
             reference_images: Array.isArray(rawData.reference_images) ? rawData.reference_images : []
