@@ -89,8 +89,10 @@ const AdminCustomers = () => {
         setIsAdminDialogOpen(false);
         setAdminEmail("");
       }
-    } catch (error: any) {
-      console.error("Error creating admin:", error);
+    } catch (error) {
+      // Use a type assertion here to avoid deep type instantiation
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating admin:", errorMessage);
       toast.error("Có lỗi xảy ra");
     }
   };
