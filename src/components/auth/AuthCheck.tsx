@@ -1,24 +1,18 @@
 
-import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface AuthCheckProps {
   children: ReactNode;
-  redirectTo?: string;
+  adminOnly?: boolean;
 }
 
-export const AuthCheck = ({ children, redirectTo = '/admin' }: AuthCheckProps) => {
-  const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate(redirectTo, { replace: true });
-    }
-  }, [user, isLoading, navigate, redirectTo]);
+export const AuthCheck = ({ children, adminOnly = false }: AuthCheckProps) => {
+  const { user, isLoading, isAdmin } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -30,20 +24,27 @@ export const AuthCheck = ({ children, redirectTo = '/admin' }: AuthCheckProps) =
 
   if (!user) {
     return (
+      <Navigate 
+        to="/login" 
+        state={{ from: location }}
+        replace 
+      />
+    );
+  }
+
+  if (adminOnly && !isAdmin) {
+    return (
       <Card className="w-full max-w-md mx-auto mt-8">
         <CardHeader>
-          <CardTitle>Đăng nhập để tiếp tục</CardTitle>
+          <CardTitle>Quyền truy cập bị từ chối</CardTitle>
           <CardDescription>
-            Bạn cần đăng nhập hoặc đăng ký tài khoản để tạo đơn hàng mới.
+            Bạn cần quyền quản trị viên để truy cập trang này.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col space-y-2">
-            <Button onClick={() => navigate(redirectTo)}>
-              Đăng nhập / Đăng ký
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/')}>
-              Quay lại trang chủ
+            <Button variant="outline" onClick={() => window.history.back()}>
+              Quay lại
             </Button>
           </div>
         </CardContent>
