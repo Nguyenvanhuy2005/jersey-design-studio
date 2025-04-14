@@ -3,7 +3,7 @@ import React from 'react';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: number;
+  playerNumber?: string; // Changed from number to string
   fontFamily: string;
   pants_number_enabled?: boolean;
   logo?: {

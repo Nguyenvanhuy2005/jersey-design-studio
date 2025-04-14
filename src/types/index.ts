@@ -2,7 +2,7 @@
 export interface Player {
   id?: string;
   name: string;
-  number: number;
+  number: string; // Changed from number to string
   size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
   jersey_color?: string;

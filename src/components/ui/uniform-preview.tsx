@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +33,7 @@ export function UniformPreview({
   
   // Extract player data for jersey
   const playerLine1 = currentPlayer?.line_1 || currentPlayer?.name || "";
-  const playerNumber = currentPlayer?.number || 0;
+  const playerNumber = currentPlayer?.number || ""; // Changed from 0 to empty string
   const playerLine3 = currentPlayer?.line_3 || teamName || "";
   
   // Check if pants number should be enabled
@@ -89,7 +90,7 @@ export function UniformPreview({
                 designData={{
                   ...designData,
                   line_1: { content: playerLine1, enabled: true },
-                  line_2: { content: String(playerNumber || "0"), enabled: true },
+                  line_2: { content: playerNumber || "0", enabled: true },
                   line_3: { content: playerLine3, enabled: true }
                 }}
                 canvasRef={canvasRef}

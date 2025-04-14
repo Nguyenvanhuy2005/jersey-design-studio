@@ -13,6 +13,14 @@ export const validateOrderForm = ({ players, customerInfo }: OrderFormValidation
     return false;
   }
   
+  // Check if any player has an empty or invalid number
+  for (const player of players) {
+    if (!player.number || player.number.trim() === '') {
+      toast.error("Có cầu thủ chưa có số áo. Vui lòng kiểm tra lại danh sách.");
+      return false;
+    }
+  }
+  
   if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
     toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
     return false;

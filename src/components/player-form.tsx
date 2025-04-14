@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +58,7 @@ export function PlayerForm({
 }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
     name: "",
-    number: 0,
+    number: "", // Changed from 0 to empty string
     size: "M",
     printImage: true,
     jersey_color: "yellow",
@@ -80,8 +79,8 @@ export function PlayerForm({
   const [editingPlayerIndex, setEditingPlayerIndex] = useState<number | null>(null);
 
   const addOrUpdatePlayer = () => {
-    if (newPlayer.number <= 0) {
-      toast.error("Vui lòng nhập số áo lớn hơn 0");
+    if (!newPlayer.number || newPlayer.number === "0") {
+      toast.error("Vui lòng nhập số áo hợp lệ");
       return;
     }
     
@@ -126,7 +125,7 @@ export function PlayerForm({
     // Reset form
     setNewPlayer({
       name: "",
-      number: 0,
+      number: "", // Changed from 0 to empty string
       size: "M",
       printImage: true,
       jersey_color: "yellow",
@@ -217,7 +216,7 @@ export function PlayerForm({
       {
         "STT": 1,
         "TÊN IN TRÊN SỐ": "Tên trên số",
-        "SỐ": 10,
+        "SỐ": "01", // Changed from 10 to "01" to show leading zero
         "TÊN IN DƯỚI SỐ": "Tên đội",
         "SIZE": "M",
         "MÀU ÁO": "yellow",
@@ -263,11 +262,15 @@ export function PlayerForm({
         
         // Map Excel data to player objects
         const newPlayers: ExtendedPlayer[] = jsonData.map((row, index) => {
+          // Get the player number as a string to preserve leading zeros
+          let playerNumber = row["SỐ"] !== undefined ? String(row["SỐ"]) : 
+                             row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
+          
           // Convert the fields to match our Player type
           return {
             id: `player-${Date.now()}-${index}`,
             name: row["TÊN CẦU THỦ"] || "",
-            number: Number(row["SỐ ÁO"]) || 0,
+            number: playerNumber,
             size: row["KÍCH THƯỚC"] || "M",
             printImage: row["IN HÌNH"] === "YES" || row["IN HÌNH"] === true,
             jersey_color: row["MÀU ÁO"] || "yellow",
@@ -275,7 +278,7 @@ export function PlayerForm({
                           row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? 
                           "goalkeeper" : "player",
             line_1: row["TÊN IN TRÊN SỐ"] || "",
-            line_2: String(row["SỐ"]) || String(row["SỐ ÁO"]) || "",
+            line_2: playerNumber || "",
             line_3: row["TÊN IN DƯỚI SỐ"] || "",
             chest_text: row["IN CHỮ NGỰC"] || "",
             chest_number: row["IN SỐ NGỰC"] === "YES" || row["IN SỐ NGỰC"] === true,
@@ -292,7 +295,7 @@ export function PlayerForm({
         });
         
         // Filter out invalid players (e.g., those without numbers)
-        const validPlayers = newPlayers.filter(p => p.number > 0);
+        const validPlayers = newPlayers.filter(p => p.number && p.number !== "");
         
         if (validPlayers.length === 0) {
           toast.error("Không tìm thấy dữ liệu cầu thủ hợp lệ trong file Excel");
@@ -311,7 +314,7 @@ export function PlayerForm({
         const updatedPlayers = [...players, ...validPlayers];
         onPlayersChange(updatedPlayers);
         
-        toast.success(`Đã nhập ${validPlayers.length} cầu thủ t�� file Excel`);
+        toast.success(`Đã nhập ${validPlayers.length} cầu thủ từ file Excel`);
       } catch (error) {
         console.error("Error parsing Excel file:", error);
         toast.error("Có lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng file.");
@@ -424,11 +427,10 @@ export function PlayerForm({
             <Label htmlFor="playerNumber">Số áo</Label>
             <Input 
               id="playerNumber"
-              type="number"
+              type="text" // Changed from "number" to "text" to allow leading zeros
               value={newPlayer.number || ""}
-              onChange={(e) => setNewPlayer(prev => ({ ...prev, number: parseInt(e.target.value) || 0 }))}
+              onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
               placeholder="Số áo"
-              min={1}
             />
           </div>
           

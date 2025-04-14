@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -13,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 interface CanvasJerseyProps {
   teamName: string;
   playerName?: string;
-  playerNumber?: number;
+  playerNumber?: string;  // Changed from number to string
   logos?: Logo[];
   view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
