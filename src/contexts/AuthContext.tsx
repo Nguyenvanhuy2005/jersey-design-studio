@@ -7,7 +7,6 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
-  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -21,28 +20,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, currentSession) => {
+      (_event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        
-        if (currentSession?.user) {
-          // Check if user is admin
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', currentSession.user.id)
-            .eq('role', 'admin')
-            .single();
-          
-          setIsAdmin(!!data);
-        } else {
-          setIsAdmin(false);
-        }
       }
     );
 
@@ -52,18 +36,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        
-        if (currentSession?.user) {
-          // Check if user is admin
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', currentSession.user.id)
-            .eq('role', 'admin')
-            .single();
-          
-          setIsAdmin(!!data);
-        }
       } catch (error) {
         console.error('Error loading session:', error);
       } finally {
@@ -88,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

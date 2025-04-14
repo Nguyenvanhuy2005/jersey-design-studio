@@ -14,7 +14,7 @@ import { LoaderCircle } from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -26,11 +26,7 @@ const LoginPage = () => {
 
   // Redirect if already logged in
   if (user) {
-    if (isAdmin) {
-      navigate("/admin/orders");
-    } else {
-      navigate("/");
-    }
+    navigate("/");
     return null;
   }
 
@@ -48,20 +44,7 @@ const LoginPage = () => {
         toast.error(`Đăng nhập thất bại: ${error.message}`);
       } else if (data.user) {
         toast.success("Đăng nhập thành công!");
-        
-        // Check if user is admin to redirect appropriately
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .eq('role', 'admin')
-          .single();
-          
-        if (roleData) {
-          navigate("/admin/orders");
-        } else {
-          navigate("/");
-        }
+        navigate("/");
       }
     } catch (error) {
       toast.error("Có lỗi xảy ra khi đăng nhập");
@@ -89,8 +72,6 @@ const LoginPage = () => {
         options: {
           data: {
             name,
-            address,
-            phone
           },
         }
       });
@@ -101,6 +82,21 @@ const LoginPage = () => {
       }
       
       if (data.user) {
+        // Create customer profile
+        const { error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            id: data.user.id,
+            name,
+            address,
+            phone
+          });
+        
+        if (customerError) {
+          toast.error(`Không thể tạo thông tin khách hàng: ${customerError.message}`);
+          return;
+        }
+        
         toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
         setActiveTab("login");
       }
@@ -117,7 +113,7 @@ const LoginPage = () => {
       <div className="container max-w-md mx-auto py-12">
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Đăng nhập hệ thống</CardTitle>
+            <CardTitle className="text-center">In Áo Đá Banh</CardTitle>
             <CardDescription className="text-center">Đăng nhập hoặc đăng ký tài khoản</CardDescription>
           </CardHeader>
           <CardContent>

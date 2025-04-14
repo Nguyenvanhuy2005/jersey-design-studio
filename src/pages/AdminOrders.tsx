@@ -140,12 +140,15 @@ const AdminOrders = () => {
       console.log("Raw orders data:", data);
       
       const transformedOrders: Order[] = await Promise.all(data.map(async (order: any) => {
+        // Safely handle customers data with proper type checking
         let customerInfo: Customer | undefined = undefined;
         
         if (order.customers) {
+          // Check if customers is an array and not empty
           if (Array.isArray(order.customers) && order.customers.length > 0) {
             const customerData = order.customers[0];
             
+            // Ensure customerData is not null before accessing its properties
             if (customerData) {
               customerInfo = {
                 id: customerData.id,
@@ -164,9 +167,11 @@ const AdminOrders = () => {
           processedReferenceImages = order.reference_images.filter((item: any) => typeof item === 'string').map((item: any) => String(item));
         }
         
+        // Handle design_data from database and convert to the DesignData type
         let typedDesignData: DesignData | undefined = undefined;
         
         if (order.design_data && typeof order.design_data === 'object') {
+          // Convert Json to DesignData by explicitly mapping fields
           const rawData: any = order.design_data;
           
           typedDesignData = {

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const checkDesignImageExists = async (path: string): Promise<boolean> => {
@@ -49,41 +50,7 @@ export const getFallbackImageUrl = (type: 'design' | 'reference'): string => {
   return type === 'design' ? '/placeholder.svg' : '/placeholder.svg';
 };
 
-export const getReferenceImageUrls = (referenceImages?: string[]): string[] => {
-  if (!referenceImages || referenceImages.length === 0) {
-    console.log("No reference images provided");
-    return [];
-  }
-  
-  // Remove any duplicate entries
-  const uniqueReferenceImages = [...new Set(referenceImages)];
-  console.log(`Deduplicating ${referenceImages.length} images to ${uniqueReferenceImages.length} unique images`);
-  
-  const urls = uniqueReferenceImages
-    .map(path => {
-      // If the path is already a URL, return it as is
-      if (path.startsWith('http')) {
-        return path;
-      }
-      
-      // Otherwise, get the public URL from Supabase storage
-      try {
-        const { data } = supabase.storage
-          .from('reference_images')
-          .getPublicUrl(path);
-          
-        return data.publicUrl;
-      } catch (err) {
-        console.error(`Error getting URL for reference image ${path}:`, err);
-        return null;
-      }
-    })
-    .filter((url): url is string => url !== null);
-  
-  console.log(`Generated ${urls.length} reference image URLs out of ${uniqueReferenceImages.length} unique paths`);
-  return urls;
-};
-
+// Check if storage buckets exist
 export const checkStorageBucketsExist = async () => {
   try {
     const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -131,6 +98,7 @@ export const checkStorageBucketsExist = async () => {
   }
 };
 
+// Create storage buckets if needed
 export const createStorageBucketsIfNeeded = async () => {
   const created = { designImages: false, referenceImages: false };
   

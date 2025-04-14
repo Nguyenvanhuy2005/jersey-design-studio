@@ -1,3 +1,4 @@
+
 export interface Player {
   id?: string;
   name: string;
@@ -143,7 +144,6 @@ export interface Customer {
   name: string;
   address: string;
   phone: string;
-  email?: string;
   delivery_note?: string;
   created_at?: Date | string;
 }
