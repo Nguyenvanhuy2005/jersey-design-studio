@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Logo, Player, ProductLine, Customer } from "@/types";
+import { formatNumberWithCommas } from "@/utils/format-utils";
 
 interface OrderSummaryProps {
   teamName: string;
@@ -59,7 +60,7 @@ export function OrderSummary({
                     <th className="text-left py-2">Tên cầu thủ</th>
                     <th className="text-center py-2">Số áo</th>
                     <th className="text-center py-2">Kích thước</th>
-                    <th className="text-center py-2">Loại</th>
+                    <th className="text-center py-2">In hình</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -68,7 +69,7 @@ export function OrderSummary({
                       <td className="py-2">{player.name || "(Không tên)"}</td>
                       <td className="text-center py-2">{player.number}</td>
                       <td className="text-center py-2">{player.size}</td>
-                      <td className="text-center py-2">{player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}</td>
+                      <td className="text-center py-2">{player.printImage ? "Có" : "Không"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -132,19 +133,6 @@ export function OrderSummary({
         
         <Separator />
         
-        {/* Cost Summary */}
-        <div>
-          <h3 className="font-semibold mb-2">Chi phí</h3>
-          <div className="text-xl font-bold">
-            {totalCost.toLocaleString('vi-VN')} đ
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            * Đây chỉ là giá ước tính. Chi phí có thể thay đổi tùy thuộc vào yêu cầu cụ thể.
-          </p>
-        </div>
-        
-        <Separator />
-        
         {/* Customer Info */}
         {customerInfo && (
           <>
@@ -167,8 +155,20 @@ export function OrderSummary({
                 )}
               </div>
             </div>
+            <Separator />
           </>
         )}
+        
+        {/* Total Cost */}
+        <div className="pt-2">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Tổng chi phí:</h3>
+            <span className="text-lg font-bold">{formatNumberWithCommas(totalCost)} VNĐ</span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Đã bao gồm chi phí quần áo và in ấn
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
@@ -179,7 +179,7 @@ function getPositionLabel(position: string): string {
   switch (position) {
     case 'chest_left': return 'Ngực trái';
     case 'chest_right': return 'Ngực phải';
-    case 'chest_center': return 'Ngực giữa';
+    case 'chest_center': return 'Giữa ngực';
     case 'sleeve_left': return 'Tay trái';
     case 'sleeve_right': return 'Tay phải';
     case 'pants': return 'Quần';

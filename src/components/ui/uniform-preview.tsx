@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
@@ -39,21 +39,11 @@ export function UniformPreview({
   // Check if pants number should be enabled
   const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
   
-  // Re-render previews when view changes
-  useEffect(() => {
-    // Allow canvas to update when view changes
-    const timer = setTimeout(() => {
-      // This empty timeout triggers a re-render after the state has been updated
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [previewView, showPants, previewPlayer]);
-  
   console.log("Current player data:", {
     line1: playerLine1,
     number: playerNumber,
     line3: playerLine3,
-    pantsNumberEnabled: pantsNumberEnabled,
-    view: previewView
+    pantsNumberEnabled: pantsNumberEnabled
   });
 
   return (
