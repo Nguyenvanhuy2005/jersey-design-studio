@@ -44,49 +44,59 @@ const MyOrders = () => {
         }
         
         // Transform orders data
-        const transformedOrders: Order[] = data.map((order) => ({
-          id: order.id,
-          teamName: order.team_name || '',
-          status: order.status as 'new' | 'processing' | 'completed',
-          totalCost: order.total_cost,
-          createdAt: new Date(order.created_at || ''),
-          notes: order.notes || '',
-          designImage: order.design_image || '',
-          designImageFront: order.design_image_front || '',
-          designImageBack: order.design_image_back || '',
-          referenceImages: Array.isArray(order.reference_images) ? order.reference_images as string[] : [],
-          customer_id: order.customer_id,
-          players: (order.players || []).map((player: any): Player => ({
-            id: player.id,
-            name: player.name || '',
-            number: player.number.toString(), // Convert number to string
-            size: player.size as 'S' | 'M' | 'L' | 'XL',
-            printImage: player.print_image || false // Correctly map print_image to printImage
-          })),
-          productLines: order.product_lines || [],
-          printConfig: order.print_configs && order.print_configs.length > 0 ? {
-            id: order.print_configs[0].id,
-            font: order.print_configs[0].font || 'Arial',
-            backMaterial: order.print_configs[0].back_material || '',
-            backColor: order.print_configs[0].back_color || '',
-            frontMaterial: order.print_configs[0].front_material || '',
-            frontColor: order.print_configs[0].front_color || '',
-            sleeveMaterial: order.print_configs[0].sleeve_material || '',
-            sleeveColor: order.print_configs[0].sleeve_color || '',
-            legMaterial: order.print_configs[0].leg_material || '',
-            legColor: order.print_configs[0].leg_color || ''
-          } : {
-            font: 'Arial',
-            backMaterial: 'In chuyển nhiệt',
-            backColor: 'Đen',
-            frontMaterial: 'In chuyển nhiệt',
-            frontColor: 'Đen',
-            sleeveMaterial: 'In chuyển nhiệt',
-            sleeveColor: 'Đen',
-            legMaterial: 'In chuyển nhiệt',
-            legColor: 'Đen'
+        const transformedOrders: Order[] = data.map((order) => {
+          // Ensure reference images are always an array of strings
+          let processedReferenceImages: string[] = [];
+          if (order.reference_images && Array.isArray(order.reference_images)) {
+            processedReferenceImages = order.reference_images
+              .filter((item: any) => typeof item === 'string')
+              .map((item: string) => item);
           }
-        }));
+          
+          return {
+            id: order.id,
+            teamName: order.team_name || '',
+            status: order.status as 'new' | 'processing' | 'completed',
+            totalCost: order.total_cost,
+            createdAt: new Date(order.created_at || ''),
+            notes: order.notes || '',
+            designImage: order.design_image || '',
+            designImageFront: order.design_image_front || '',
+            designImageBack: order.design_image_back || '',
+            referenceImages: processedReferenceImages,
+            customer_id: order.customer_id,
+            players: (order.players || []).map((player: any): Player => ({
+              id: player.id,
+              name: player.name || '',
+              number: player.number.toString(), // Convert number to string
+              size: player.size as 'S' | 'M' | 'L' | 'XL',
+              printImage: player.print_image || false // Correctly map print_image to printImage
+            })),
+            productLines: order.product_lines || [],
+            printConfig: order.print_configs && order.print_configs.length > 0 ? {
+              id: order.print_configs[0].id,
+              font: order.print_configs[0].font || 'Arial',
+              backMaterial: order.print_configs[0].back_material || '',
+              backColor: order.print_configs[0].back_color || '',
+              frontMaterial: order.print_configs[0].front_material || '',
+              frontColor: order.print_configs[0].front_color || '',
+              sleeveMaterial: order.print_configs[0].sleeve_material || '',
+              sleeveColor: order.print_configs[0].sleeve_color || '',
+              legMaterial: order.print_configs[0].leg_material || '',
+              legColor: order.print_configs[0].leg_color || ''
+            } : {
+              font: 'Arial',
+              backMaterial: 'In chuyển nhiệt',
+              backColor: 'Đen',
+              frontMaterial: 'In chuyển nhiệt',
+              frontColor: 'Đen',
+              sleeveMaterial: 'In chuyển nhiệt',
+              sleeveColor: 'Đen',
+              legMaterial: 'In chuyển nhiệt',
+              legColor: 'Đen'
+            }
+          };
+        });
         
         setOrders(transformedOrders);
       } catch (e) {

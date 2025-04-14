@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,12 +68,12 @@ const AdminCustomers = () => {
     }
     
     try {
-      // Instead of directly querying auth.users, we'll use a RPC function to get the user ID
-      const { data: userData, error: userError } = await supabase.rpc('get_user_by_email', {
+      // Use the RPC function get_user_by_email to get the user ID
+      const { data: userId, error: userError } = await supabase.rpc('get_user_by_email', {
         email: adminEmail
       });
       
-      if (userError || !userData) {
+      if (userError || !userId) {
         toast.error("Không tìm thấy người dùng với email này");
         return;
       }
@@ -83,7 +82,7 @@ const AdminCustomers = () => {
       const { error } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userData,
+          user_id: userId,
           role: 'admin'
         });
         
