@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+
+import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { OrderPreviewTab } from "@/components/order/OrderPreviewTab";
 import { OrderSummaryTab } from "@/components/order/OrderSummaryTab";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { JerseyPreviewHelper } from "@/components/jersey/PreviewHelper";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
@@ -21,12 +23,18 @@ const CreateOrder = () => {
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   const pantCanvasRef = useRef<HTMLCanvasElement>(null);
   
+  // Preview image URLs for different views
+  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string>('');
+  const [backPreviewUrl, setBackPreviewUrl] = useState<string>('');
+  const [pantsPreviewUrl, setPantsPreviewUrl] = useState<string>('');
+  
   const {
     activeTab,
     setActiveTab,
     isSubmitting,
     setIsSubmitting,
     isGeneratingDesign,
+    setIsGeneratingDesign,
     isDemoApproved,
     setIsDemoApproved,
     players,
@@ -86,6 +94,19 @@ const CreateOrder = () => {
     printColor
   });
 
+  // Use the JerseyPreviewHelper to generate preview images
+  const handleFrontPreviewRender = (imageUrl: string) => {
+    setFrontPreviewUrl(imageUrl);
+  };
+  
+  const handleBackPreviewRender = (imageUrl: string) => {
+    setBackPreviewUrl(imageUrl);
+  };
+  
+  const handlePantsPreviewRender = (imageUrl: string) => {
+    setPantsPreviewUrl(imageUrl);
+  };
+
   const handleViewDemo = () => {
     if (!validateOrderForm({ players, customerInfo })) return;
     
@@ -123,6 +144,9 @@ const CreateOrder = () => {
     
     submitOrder(jerseyCanvasRef, pantCanvasRef);
   };
+
+  // Get a representative player for preview
+  const previewPlayer = players.length > 0 ? players[0] : null;
 
   return (
     <Layout>
@@ -230,6 +254,41 @@ const CreateOrder = () => {
               />
             </TabsContent>
           </Tabs>
+          
+          {/* Hidden preview generators - they render jersey images for different views */}
+          {previewPlayer && (
+            <>
+              <div className="hidden">
+                <JerseyPreviewHelper
+                  view="front"
+                  player={previewPlayer}
+                  logos={logos}
+                  printConfig={printConfig}
+                  designData={designData}
+                  onRender={handleFrontPreviewRender}
+                />
+                <JerseyPreviewHelper
+                  view="back"
+                  player={previewPlayer}
+                  logos={logos}
+                  printConfig={printConfig}
+                  designData={designData}
+                  onRender={handleBackPreviewRender}
+                />
+                <JerseyPreviewHelper
+                  view="pants"
+                  player={previewPlayer}
+                  logos={logos.filter(logo => logo.position === 'pants')}
+                  printConfig={printConfig}
+                  designData={{
+                    ...designData,
+                    pants_number: { enabled: designData?.pants_number?.enabled ?? false }
+                  }}
+                  onRender={handlePantsPreviewRender}
+                />
+              </div>
+            </>
+          )}
         </div>
       </AuthCheck>
     </Layout>

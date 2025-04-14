@@ -7,6 +7,8 @@ import { OrderSummary } from "@/components/order-summary";
 import { Player, Logo, ProductLine, Customer } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { CanvasJersey } from "@/components/ui/canvas-jersey";
+import { useEffect, useState } from "react";
 
 interface OrderSummaryTabProps {
   isDemoApproved: boolean;
@@ -42,6 +44,9 @@ export function OrderSummaryTab({
   referenceImagesPreview
 }: OrderSummaryTabProps) {
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
+  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string>('');
+  const [backPreviewUrl, setBackPreviewUrl] = useState<string>('');
+  const [pantsPreviewUrl, setPantsPreviewUrl] = useState<string>('');
   
   // Function to calculate print positions counts
   const calculatePrintCounts = () => {
@@ -95,6 +100,22 @@ export function OrderSummaryTab({
     }
     return '';
   };
+
+  useEffect(() => {
+    // Capture previews when component mounts or references change
+    if (jerseyCanvasRef.current) {
+      setFrontPreviewUrl(captureCanvas(jerseyCanvasRef));
+      
+      // Delay capturing back view to ensure canvas is updated
+      setTimeout(() => {
+        setBackPreviewUrl(captureCanvas(jerseyCanvasRef));
+      }, 500);
+    }
+    
+    if (pantCanvasRef.current) {
+      setPantsPreviewUrl(captureCanvas(pantCanvasRef));
+    }
+  }, [jerseyCanvasRef, pantCanvasRef]);
 
   // Calculate print counts
   const printCounts = calculatePrintCounts();
@@ -165,39 +186,33 @@ export function OrderSummaryTab({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt trước áo</h4>
-                    {jerseyCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(jerseyCanvasRef)} 
-                          alt="Mặt trước áo"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={frontPreviewUrl || '/placeholder.svg'} 
+                        alt="Mặt trước áo"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt sau áo</h4>
-                    {jerseyCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(jerseyCanvasRef)} 
-                          alt="Mặt sau áo"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={backPreviewUrl || '/placeholder.svg'} 
+                        alt="Mặt sau áo"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Quần</h4>
-                    {pantCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(pantCanvasRef)} 
-                          alt="Quần"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={pantsPreviewUrl || '/placeholder.svg'} 
+                        alt="Quần"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -221,6 +236,18 @@ export function OrderSummaryTab({
                   </div>
                 </>
               )}
+              
+              <Separator />
+              
+              <div>
+                <h3 className="font-medium mb-2">Giá tiền:</h3>
+                <div className="text-xl font-bold">
+                  {calculateTotalCost().toLocaleString('vi-VN')} đ
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  * Đây chỉ là giá ước tính. Chi phí có thể thay đổi tùy thuộc vào yêu cầu cụ thể.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

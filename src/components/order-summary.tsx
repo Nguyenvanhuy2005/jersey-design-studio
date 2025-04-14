@@ -21,6 +21,7 @@ export function OrderSummary({
   productLines,
   uniformType,
   quantity,
+  totalCost,
   customerInfo
 }: OrderSummaryProps) {
   return (
@@ -58,7 +59,7 @@ export function OrderSummary({
                     <th className="text-left py-2">Tên cầu thủ</th>
                     <th className="text-center py-2">Số áo</th>
                     <th className="text-center py-2">Kích thước</th>
-                    <th className="text-center py-2">In hình</th>
+                    <th className="text-center py-2">Loại</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -67,7 +68,7 @@ export function OrderSummary({
                       <td className="py-2">{player.name || "(Không tên)"}</td>
                       <td className="text-center py-2">{player.number}</td>
                       <td className="text-center py-2">{player.size}</td>
-                      <td className="text-center py-2">{player.printImage ? "Có" : "Không"}</td>
+                      <td className="text-center py-2">{player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -131,6 +132,19 @@ export function OrderSummary({
         
         <Separator />
         
+        {/* Cost Summary */}
+        <div>
+          <h3 className="font-semibold mb-2">Chi phí</h3>
+          <div className="text-xl font-bold">
+            {totalCost.toLocaleString('vi-VN')} đ
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            * Đây chỉ là giá ước tính. Chi phí có thể thay đổi tùy thuộc vào yêu cầu cụ thể.
+          </p>
+        </div>
+        
+        <Separator />
+        
         {/* Customer Info */}
         {customerInfo && (
           <>
@@ -165,7 +179,7 @@ function getPositionLabel(position: string): string {
   switch (position) {
     case 'chest_left': return 'Ngực trái';
     case 'chest_right': return 'Ngực phải';
-    case 'chest_center': return 'Giữa ngực';
+    case 'chest_center': return 'Ngực giữa';
     case 'sleeve_left': return 'Tay trái';
     case 'sleeve_right': return 'Tay phải';
     case 'pants': return 'Quần';
