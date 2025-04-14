@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+
+import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const CreateOrder = () => {
   const { user } = useAuth();
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   const pantCanvasRef = useRef<HTMLCanvasElement>(null);
+  const backCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const {
     activeTab,
@@ -155,6 +157,7 @@ const CreateOrder = () => {
                 <Button 
                   onClick={handleSubmitOrder}
                   disabled={isSubmitting || isGeneratingDesign}
+                  className="bg-yellow-500 hover:bg-yellow-600"
                 >
                   {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
                 </Button>

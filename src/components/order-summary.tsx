@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Logo, Player, ProductLine, Customer } from "@/types";
+import { formatCurrency } from "@/utils/format-utils";
 
 interface OrderSummaryProps {
   teamName: string;
@@ -21,6 +22,7 @@ export function OrderSummary({
   productLines,
   uniformType,
   quantity,
+  totalCost,
   customerInfo
 }: OrderSummaryProps) {
   return (
@@ -42,10 +44,40 @@ export function OrderSummary({
             <p>
               <span className="text-muted-foreground">Số lượng quần áo:</span> {quantity} bộ
             </p>
+            <p>
+              <span className="text-muted-foreground">Tổng chi phí:</span> {formatCurrency(totalCost)}
+            </p>
           </div>
         </div>
         
         <Separator />
+        
+        {/* Customer Info */}
+        {customerInfo && (
+          <>
+            <div>
+              <h3 className="font-semibold mb-2">Thông tin khách hàng</h3>
+              <div className="grid gap-1 text-sm">
+                <p>
+                  <span className="text-muted-foreground">Họ tên:</span> {customerInfo.name}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Địa chỉ:</span> {customerInfo.address}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Số điện thoại:</span> {customerInfo.phone}
+                </p>
+                {customerInfo.delivery_note && (
+                  <p>
+                    <span className="text-muted-foreground">Ghi chú giao hàng:</span> {customerInfo.delivery_note}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <Separator />
+          </>
+        )}
         
         {/* Player List */}
         <div>
@@ -58,7 +90,7 @@ export function OrderSummary({
                     <th className="text-left py-2">Tên cầu thủ</th>
                     <th className="text-center py-2">Số áo</th>
                     <th className="text-center py-2">Kích thước</th>
-                    <th className="text-center py-2">In hình</th>
+                    <th className="text-center py-2">Loại áo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -67,7 +99,9 @@ export function OrderSummary({
                       <td className="py-2">{player.name || "(Không tên)"}</td>
                       <td className="text-center py-2">{player.number}</td>
                       <td className="text-center py-2">{player.size}</td>
-                      <td className="text-center py-2">{player.printImage ? "Có" : "Không"}</td>
+                      <td className="text-center py-2">
+                        {player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -128,33 +162,6 @@ export function OrderSummary({
             <p className="text-sm text-muted-foreground">Không có thông tin in ấn</p>
           )}
         </div>
-        
-        <Separator />
-        
-        {/* Customer Info */}
-        {customerInfo && (
-          <>
-            <div>
-              <h3 className="font-semibold mb-2">Thông tin khách hàng</h3>
-              <div className="grid gap-1 text-sm">
-                <p>
-                  <span className="text-muted-foreground">Họ tên:</span> {customerInfo.name}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Địa chỉ:</span> {customerInfo.address}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Số điện thoại:</span> {customerInfo.phone}
-                </p>
-                {customerInfo.delivery_note && (
-                  <p>
-                    <span className="text-muted-foreground">Ghi chú giao hàng:</span> {customerInfo.delivery_note}
-                  </p>
-                )}
-              </div>
-            </div>
-          </>
-        )}
       </CardContent>
     </Card>
   );
