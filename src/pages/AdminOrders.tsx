@@ -243,7 +243,16 @@ const AdminOrders = () => {
         setFetchError(null);
         console.log("Fetching orders data...");
         try {
-          const { data, error } = await supabase.from('orders').select('*, players(*), product_lines(*), print_configs(*)').order('created_at', { ascending: false });
+          const { data, error } = await supabase
+            .from('orders')
+            .select(`
+              *,
+              players(*), 
+              product_lines(*), 
+              print_configs(*),
+              customers:customer_id(*)
+            `)
+            .order('created_at', { ascending: false });
           
           if (error) {
             console.error("Error fetching orders:", error);
@@ -289,6 +298,16 @@ const AdminOrders = () => {
               front: designImageFront,
               back: designImageBack
             });
+
+            // Transform customer data if available
+            const customerInfo = order.customers ? {
+              id: order.customers.id,
+              name: order.customers.name || '',
+              address: order.customers.address || '',
+              phone: order.customers.phone || '',
+              delivery_note: order.customers.delivery_note || '',
+              created_at: order.customers.created_at ? new Date(order.customers.created_at) : undefined
+            } : undefined;
             
             return {
               id: order.id,
@@ -301,12 +320,29 @@ const AdminOrders = () => {
               designImageFront: order.design_image_front || '',
               designImageBack: order.design_image_back || '',
               referenceImages: processedReferenceImages,
+              customerInfo: customerInfo,
+              customer_id: order.customer_id,
               players: order.players ? order.players.map((player: any) => ({
                 id: player.id,
                 name: player.name || '',
                 number: player.number,
                 size: player.size as 'S' | 'M' | 'L' | 'XL',
-                printImage: player.print_image || false
+                printImage: player.print_image || false,
+                jersey_color: player.jersey_color || '',
+                uniform_type: player.uniform_type || 'player',
+                line_1: player.line_1 || '',
+                line_3: player.line_3 || '',
+                chest_text: player.chest_text || '',
+                chest_number: player.chest_number || false,
+                pants_number: player.pants_number || false,
+                logo_chest_left: player.logo_chest_left || false,
+                logo_chest_right: player.logo_chest_right || false,
+                logo_chest_center: player.logo_chest_center || false,
+                logo_sleeve_left: player.logo_sleeve_left || false,
+                logo_sleeve_right: player.logo_sleeve_right || false,
+                pet_chest: player.pet_chest || '',
+                logo_pants: player.logo_pants || false,
+                note: player.note || ''
               })) : [],
               productLines: order.product_lines ? order.product_lines.map((line: any) => ({
                 id: line.id,
@@ -338,7 +374,8 @@ const AdminOrders = () => {
                 sleeveColor: 'Đen',
                 legMaterial: 'In chuyển nhiệt',
                 legColor: 'Đen'
-              }
+              },
+              designData: order.design_data || {}
             };
           }));
           
@@ -476,9 +513,8 @@ const AdminOrders = () => {
               <thead className="bg-muted">
                 <tr>
                   <th className="p-3 text-left">ID</th>
-                  <th className="p-3 text-left">Tên đội</th>
+                  <th className="p-3 text-left">Họ tên khách hàng</th>
                   <th className="p-3 text-left">Số lượng áo</th>
-                  <th className="p-3 text-left">Tổng chi phí</th>
                   <th className="p-3 text-left">Trạng thái</th>
                   <th className="p-3 text-left">Ngày tạo</th>
                   <th className="p-3 text-left">Thiết kế</th>
@@ -488,7 +524,7 @@ const AdminOrders = () => {
               <tbody>
                 {isLoading || fetchingData ? (
                   <tr>
-                    <td colSpan={8} className="p-4 text-center">
+                    <td colSpan={7} className="p-4 text-center">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
                         <span>Đang tải dữ liệu...</span>

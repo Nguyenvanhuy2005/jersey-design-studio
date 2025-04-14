@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -19,11 +18,10 @@ import { JerseyPreviewHelper } from "@/components/jersey/PreviewHelper";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   const pantCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Preview image URLs for different views
   const [frontPreviewUrl, setFrontPreviewUrl] = useState<string>('');
   const [backPreviewUrl, setBackPreviewUrl] = useState<string>('');
   const [pantsPreviewUrl, setPantsPreviewUrl] = useState<string>('');
@@ -94,7 +92,6 @@ const CreateOrder = () => {
     printColor
   });
 
-  // Use the JerseyPreviewHelper to generate preview images
   const handleFrontPreviewRender = (imageUrl: string) => {
     setFrontPreviewUrl(imageUrl);
   };
@@ -145,8 +142,28 @@ const CreateOrder = () => {
     submitOrder(jerseyCanvasRef, pantCanvasRef);
   };
 
-  // Get a representative player for preview
   const previewPlayer = players.length > 0 ? players[0] : null;
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Vui lòng đăng nhập để tạo đơn hàng");
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto py-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Layout>
@@ -255,7 +272,6 @@ const CreateOrder = () => {
             </TabsContent>
           </Tabs>
           
-          {/* Hidden preview generators - they render jersey images for different views */}
           {previewPlayer && (
             <>
               <div className="hidden">

@@ -1,4 +1,3 @@
-
 export interface Player {
   id?: string;
   name: string;
@@ -164,6 +163,7 @@ export interface Order {
   designImageBack?: string;    // Back design image path
   referenceImages: string[];   // Using string[] to match what we're transforming data to
   customer_id?: string;        // Reference to the customer who placed the order
+  customerInfo?: Customer;     // Customer information
   designData?: DesignData;     // New field to store all design-related data
   uniform_type?: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
