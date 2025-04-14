@@ -1,3 +1,4 @@
+
 export interface Player {
   id?: string;
   name: string;
@@ -20,6 +21,7 @@ export interface Player {
   logo_pants?: boolean;
   pet_chest?: string;
   note?: string;
+  print_style?: string;
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
