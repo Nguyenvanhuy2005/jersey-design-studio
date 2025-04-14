@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,9 +89,7 @@ const AdminCustomers = () => {
         setAdminEmail("");
       }
     } catch (error) {
-      // Use a type assertion here to avoid deep type instantiation
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      console.error("Error creating admin:", errorMessage);
+      console.error("Error creating admin:", error);
       toast.error("Có lỗi xảy ra");
     }
   };
