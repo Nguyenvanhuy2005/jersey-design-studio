@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
-import { Order, Customer } from "@/types";
+import { Order, Customer, DesignData } from "@/types";
 import { LogOut, AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -271,30 +272,65 @@ const AdminOrders = () => {
       console.log("Raw orders data:", data);
       
       const transformedOrders: Order[] = await Promise.all(data.map(async order => {
-        const customerData = order.customers ? (order.customers as Customer[])[0] : null;
+        // Safely handle customers data with proper type checking
+        let customerInfo: Customer | undefined = undefined;
         
-        const customerInfo = customerData ? {
-          id: customerData.id || undefined,
-          name: customerData.name || '',
-          address: customerData.address || '',
-          phone: customerData.phone || '',
-          delivery_note: customerData.delivery_note || '',
-          created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
-        } : undefined;
+        if (order.customers) {
+          // Handle potential error or array
+          if (Array.isArray(order.customers) && order.customers.length > 0) {
+            const customerData = order.customers[0];
+            customerInfo = {
+              id: customerData.id,
+              name: customerData.name || '',
+              address: customerData.address || '',
+              phone: customerData.phone || '',
+              delivery_note: customerData.delivery_note || '',
+              created_at: customerData.created_at ? new Date(customerData.created_at) : undefined
+            };
+          }
+        }
         
         let processedReferenceImages: string[] = [];
         if (order.reference_images && Array.isArray(order.reference_images)) {
           processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
         }
         
-        if (order.design_data) {
-          const designData = order.design_data as {
-            reference_images?: any[];
+        // Handle design_data from database and convert to the DesignData type
+        let typedDesignData: DesignData | undefined = undefined;
+        
+        if (order.design_data && typeof order.design_data === 'object') {
+          // Convert Json to DesignData by explicitly mapping fields
+          const rawData: any = order.design_data;
+          
+          typedDesignData = {
+            uniform_type: rawData.uniform_type as 'player' | 'goalkeeper' | 'mixed' | undefined,
+            quantity: rawData.quantity,
+            logos: rawData.logos as Array<{
+              logo_id: string;
+              position: string;
+              x_position: number;
+              y_position: number;
+              scale: number;
+            }> | undefined,
+            line_1: rawData.line_1 as any,
+            line_2: rawData.line_2 as any,
+            line_3: rawData.line_3 as any,
+            chest_text: rawData.chest_text as any,
+            chest_number: rawData.chest_number as any,
+            pants_number: rawData.pants_number as any,
+            logo_chest_left: rawData.logo_chest_left as any,
+            logo_chest_right: rawData.logo_chest_right as any,
+            logo_chest_center: rawData.logo_chest_center as any,
+            logo_sleeve_left: rawData.logo_sleeve_left as any,
+            logo_sleeve_right: rawData.logo_sleeve_right as any,
+            pet_chest: rawData.pet_chest as any,
+            logo_pants: rawData.logo_pants as any,
+            font_text: rawData.font_text as any,
+            font_number: rawData.font_number as any,
+            print_style: rawData.print_style,
+            print_color: rawData.print_color,
+            reference_images: Array.isArray(rawData.reference_images) ? rawData.reference_images : []
           };
-          if (designData && typeof designData === 'object' && designData.reference_images && Array.isArray(designData.reference_images)) {
-            const refImagesFromDesignData = designData.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-            processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
-          }
         }
         
         let designImageFront = order.design_image_front || order.design_image || '';
@@ -371,7 +407,7 @@ const AdminOrders = () => {
             legMaterial: 'In chuyển nhiệt',
             legColor: 'Đen'
           },
-          designData: order.design_data
+          designData: typedDesignData
         };
       }));
       
