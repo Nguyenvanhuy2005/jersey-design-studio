@@ -5,7 +5,7 @@ interface JerseyBackProps {
   ctx: CanvasRenderingContext2D;
   teamName?: string;
   playerName?: string;
-  playerNumber?: number;
+  playerNumber?: string;  // Changed from number to string
   fontFamily: string;
 }
 
@@ -76,28 +76,27 @@ export const JerseyBack = ({
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
-  // Draw player number (IN DÒNG 2 - center back) - Fixed position and size
-  if (playerNumber !== undefined) {
+  // Draw player number (IN DÒNG 2 - middle back - bold number) - Fixed position and size
+  if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 60; // Fixed font size 60px
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`); // Adjust size for player number
-    // Fixed position: center, 150px from top (15cm from collar)
-    ctx.fillText(playerNumber.toString(), 150, 150);
+    const fontSize = 100; // Fixed font size 100px for number
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px bold`); // Adjust size for player number and make it bold
+    
+    // Fixed position: center, 150px from top (15cm from top)
+    ctx.fillText(playerNumber, 150, 150, 180);
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
   // Draw team name (IN DÒNG 3 - lower back - below number) - Fixed position and size
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 25; // Fixed font size 25px, same as player name
+    const fontSize = 25; // Fixed font size 25px
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`); // Adjust size for team name
-    const teamNameDisplayed = teamName.length > 20 ? teamName.substring(0, 20) + '...' : teamName;
-    // Fixed position: center, 230px from top (2cm below number)
-    ctx.fillText(teamNameDisplayed, 150, 230, 180);
-    console.log(`Drew team name: ${teamNameDisplayed} with font: ${ctx.font}`);
+    
+    // Fixed position: center, 220px from top (22cm from top / 7cm below number)
+    ctx.fillText(teamName, 150, 220, 180);
+    console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
-  
-  console.log("JerseyBack rendering complete");
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };

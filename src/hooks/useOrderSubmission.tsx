@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -425,7 +424,12 @@ export const useOrderSubmission = ({
           };
         });
         
-        await supabase.from('players').insert(playersToInsert);
+        const dbCompatiblePlayers = playersToInsert.map(player => ({
+          ...player,
+          number: parseInt(player.number, 10) || 0
+        }));
+        
+        await supabase.from('players').insert(dbCompatiblePlayers);
       }
       
       toast.success("Đơn hàng đã được tạo thành công!");

@@ -156,7 +156,7 @@ export function PlayerForm({
       // Reset form
       setNewPlayer({
         name: "",
-        number: 0,
+        number: "", // Changed from 0 to empty string
         size: "M",
         printImage: true,
         jersey_color: "yellow",
@@ -193,7 +193,7 @@ export function PlayerForm({
     // Reset form
     setNewPlayer({
       name: "",
-      number: 0,
+      number: "", // Changed from 0 to empty string
       size: "M",
       printImage: true,
       jersey_color: "yellow",

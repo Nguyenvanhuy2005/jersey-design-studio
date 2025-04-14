@@ -33,14 +33,14 @@ const Index = () => {
                   <CanvasJersey 
                     teamName="FOOTBALL TEAM" 
                     playerName="RONALDO" 
-                    playerNumber={7} 
+                    playerNumber="7" 
                     view="back"
                   />
                 </div>
                 <div className="transform rotate-[15deg]">
                   <CanvasJersey 
                     teamName="FOOTBALL TEAM" 
-                    playerNumber={7} 
+                    playerNumber="7" 
                     view="front"
                   />
                 </div>

@@ -20,7 +20,7 @@ const mockOrders: Order[] = [{
   players: Array(11).fill(null).map((_, i) => ({
     id: `player-${i + 1}-1`,
     name: `Player ${i + 1}`,
-    number: i + 1,
+    number: String(i + 1),
     size: i % 2 === 0 ? "M" : "L",
     printImage: i % 3 === 0
   })),
@@ -63,7 +63,7 @@ const mockOrders: Order[] = [{
   players: Array(15).fill(null).map((_, i) => ({
     id: `player-${i + 1}-2`,
     name: `Player ${i + 1}`,
-    number: i + 1,
+    number: String(i + 1),
     size: i % 2 === 0 ? "L" : "XL",
     printImage: i % 2 === 0
   })),
@@ -106,7 +106,7 @@ const mockOrders: Order[] = [{
   players: Array(18).fill(null).map((_, i) => ({
     id: `player-${i + 1}-3`,
     name: `Player ${i + 1}`,
-    number: i + 1,
+    number: String(i + 1),
     size: i % 3 === 0 ? "S" : i % 3 === 1 ? "M" : "L",
     printImage: true
   })),
