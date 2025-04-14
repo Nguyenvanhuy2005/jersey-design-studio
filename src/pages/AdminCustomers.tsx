@@ -13,6 +13,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthCheck } from "@/components/auth/AuthCheck";
 
+// Define custom PostgresError type
+interface PostgresError {
+  code?: string;
+  message?: string;
+}
+
+// Type guard for Postgres errors
+function isPostgresError(error: unknown): error is PostgresError {
+  return typeof error === 'object' && error !== null && ('code' in error || 'message' in error);
+}
+
 const AdminCustomers = () => {
   const { isAdmin } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -75,7 +86,7 @@ const AdminCustomers = () => {
         });
         
       if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+        if (isPostgresError(error) && error.code === '23505') { // Unique constraint violation
           toast.info("Người dùng này đã có quyền admin");
         } else {
           toast.error("Không thể cấp quyền admin");

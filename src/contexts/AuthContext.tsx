@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAdmin: boolean;
+  error: string | null; // Add error property
   signOut: () => Promise<void>;
 }
 
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Add error state
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -32,14 +34,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (currentSession?.user) {
           // Check if user is admin
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', currentSession.user.id)
-            .eq('role', 'admin')
-            .single();
-          
-          setIsAdmin(!!data);
+          try {
+            const { data } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', currentSession.user.id)
+              .eq('role', 'admin')
+              .single();
+            
+            setIsAdmin(!!data);
+            setError(null); // Clear any previous errors
+          } catch (err) {
+            console.error("Error checking admin status:", err);
+            setError("Không thể kiểm tra quyền admin");
+          }
         } else {
           setIsAdmin(false);
         }
@@ -55,17 +63,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (currentSession?.user) {
           // Check if user is admin
-          const { data } = await supabase
+          const { data, error: adminError } = await supabase
             .from('user_roles')
             .select('role')
             .eq('user_id', currentSession.user.id)
             .eq('role', 'admin')
             .single();
           
+          if (adminError) {
+            console.error("Error checking admin status:", adminError);
+            setError("Không thể kiểm tra quyền admin");
+          }
+          
           setIsAdmin(!!data);
         }
       } catch (error) {
         console.error('Error loading session:', error);
+        setError("Có lỗi khi tải thông tin đăng nhập");
       } finally {
         setIsLoading(false);
       }
@@ -82,13 +96,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoading(true);
     try {
       await supabase.auth.signOut();
+      setError(null); // Clear any errors on sign out
+    } catch (err) {
+      console.error("Error signing out:", err);
+      setError("Có lỗi khi đăng xuất");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, isAdmin, error, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Order } from "@/types";
+import { Order, Player } from "@/types";
 import { Loader2, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderDetails } from "@/components/admin/OrderDetails";
 import { ImageViewer } from "@/components/admin/ImageViewer";
+import { Link } from "react-router-dom";
 
 const MyOrders = () => {
   const { user } = useAuth();
@@ -56,7 +57,13 @@ const MyOrders = () => {
           designImageBack: order.design_image_back || '',
           referenceImages: order.reference_images || [],
           customer_id: order.customer_id,
-          players: order.players || [],
+          players: (order.players || []).map((player: any): Player => ({
+            id: player.id,
+            name: player.name || '',
+            number: player.number.toString(), // Convert number to string
+            size: player.size as 'S' | 'M' | 'L' | 'XL',
+            printImage: player.print_image || false // Correctly map print_image to printImage
+          })),
           productLines: order.product_lines || [],
           printConfig: order.print_configs && order.print_configs.length > 0 ? {
             id: order.print_configs[0].id,
