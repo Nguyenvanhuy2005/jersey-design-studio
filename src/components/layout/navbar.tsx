@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
 
 export function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -28,9 +28,19 @@ export function Navbar() {
             Tạo đơn hàng
           </Link>
           {user && (
-            <Link to="/admin/orders" className="hover:text-primary transition-colors">
-              Quản lý đơn hàng
+            <Link to="/my-orders" className="hover:text-primary transition-colors">
+              Đơn hàng của tôi
             </Link>
+          )}
+          {isAdmin && (
+            <>
+              <Link to="/admin/orders" className="hover:text-primary transition-colors">
+                Quản lý đơn hàng
+              </Link>
+              <Link to="/admin/customers" className="hover:text-primary transition-colors">
+                Quản lý khách hàng
+              </Link>
+            </>
           )}
         </nav>
         
@@ -43,9 +53,9 @@ export function Navbar() {
               </Button>
             </div>
           ) : (
-            <Link to="/admin">
+            <Link to="/login">
               <Button variant="outline" className="text-secondary-foreground">
-                Đăng nhập Admin
+                Đăng nhập / Đăng ký
               </Button>
             </Link>
           )}

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Order } from "@/types";
 import { Loader2 } from "lucide-react";
 import { OrderTableRow } from "./order-list/OrderTableRow";
@@ -29,7 +29,7 @@ export const OrdersList = ({
     : orders.filter(order => order.status === statusFilter);
 
   // Check image availability when orders change
-  useState(() => {
+  useEffect(() => {
     const checkImages = async () => {
       const availability: Record<string, {front: boolean, back: boolean}> = {};
       
