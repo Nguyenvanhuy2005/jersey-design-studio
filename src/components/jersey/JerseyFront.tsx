@@ -4,7 +4,7 @@ import { Logo, DesignData } from '@/types';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: number;
+  playerNumber?: number;  // Keep as number for backward compatibility
   loadedLogos: Map<string, HTMLImageElement>;
   logoPositions: Map<string, { x: number, y: number, scale: number }>;
   logos: Logo[];

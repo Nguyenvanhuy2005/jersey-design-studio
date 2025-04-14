@@ -296,9 +296,11 @@ export function CanvasJersey({
 
     if (view === 'front') {
       console.log('Rendering front jersey view');
+      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
+      
       JerseyFront({
         ctx,
-        playerNumber,
+        playerNumber: numericPlayerNumber,
         loadedLogos,
         logoPositions,
         logos: logos || [],
