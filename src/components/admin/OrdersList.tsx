@@ -5,6 +5,13 @@ import { Loader2 } from "lucide-react";
 import { OrderTableRow } from "./order-list/OrderTableRow";
 import { NoOrders } from "./order-list/NoOrders";
 import { checkFileExistsInStorage } from "@/utils/storage/file-utils";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface OrdersListProps {
   orders: Order[];
@@ -12,6 +19,7 @@ interface OrdersListProps {
   onViewDetails: (order: Order) => void;
   onViewImage: (imageUrl: string | null) => void;
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
+  isLoading?: boolean;
 }
 
 export const OrdersList = ({
@@ -19,7 +27,8 @@ export const OrdersList = ({
   statusFilter,
   onViewDetails,
   onViewImage,
-  onStatusChange
+  onStatusChange,
+  isLoading = false
 }: OrdersListProps) => {
   const [imageAvailability, setImageAvailability] = useState<Record<string, {front: boolean, back: boolean}>>({});
   
@@ -55,8 +64,27 @@ export const OrdersList = ({
     }
   }, [orders]);
 
+  if (isLoading) {
+    return (
+      <TableRow>
+        <TableCell colSpan={7} className="p-4 text-center">
+          <div className="flex justify-center items-center">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <span>Đang tải dữ liệu...</span>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   if (filteredOrders.length === 0) {
-    return <NoOrders />;
+    return (
+      <TableRow>
+        <TableCell colSpan={7}>
+          <NoOrders />
+        </TableCell>
+      </TableRow>
+    );
   }
 
   return (
