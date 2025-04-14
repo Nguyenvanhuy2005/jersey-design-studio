@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Player, Logo } from "@/types";
-import { X, Plus, Upload, Download } from "lucide-react";
+import { X, Plus, Upload, Download, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -74,21 +75,55 @@ export function PlayerForm({
     logo_sleeve_right: false,
     logo_pants: false
   });
+  
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editingPlayerIndex, setEditingPlayerIndex] = useState<number | null>(null);
 
-  const addPlayer = () => {
+  const addOrUpdatePlayer = () => {
     if (newPlayer.number <= 0) {
       toast.error("Vui lòng nhập số áo lớn hơn 0");
       return;
     }
     
-    // Check if number is already used
-    if (players.some(p => p.number === newPlayer.number)) {
-      toast.error(`Số áo ${newPlayer.number} đã được sử dụng`);
-      return;
+    const updatedPlayers = [...players];
+    
+    if (isEditing && editingPlayerIndex !== null) {
+      // Check if number is used by another player (excluding the one being edited)
+      const isDuplicateNumber = players.some((p, idx) => 
+        idx !== editingPlayerIndex && p.number === newPlayer.number
+      );
+      
+      if (isDuplicateNumber) {
+        toast.error(`Số áo ${newPlayer.number} đã được sử dụng bởi cầu thủ khác`);
+        return;
+      }
+      
+      // Update existing player
+      updatedPlayers[editingPlayerIndex] = { 
+        ...newPlayer, 
+        id: players[editingPlayerIndex].id 
+      };
+      
+      onPlayersChange(updatedPlayers);
+      toast.success("Cập nhật thông tin cầu thủ thành công");
+      
+      // Reset edit state
+      setIsEditing(false);
+      setEditingPlayerIndex(null);
+    } else {
+      // Add new player
+      // Check if number is already used
+      if (players.some(p => p.number === newPlayer.number)) {
+        toast.error(`Số áo ${newPlayer.number} đã được sử dụng`);
+        return;
+      }
+      
+      updatedPlayers.push({ ...newPlayer, id: `player-${Date.now()}` });
+      onPlayersChange(updatedPlayers);
+      toast.success("Thêm cầu thủ thành công");
     }
     
-    const updatedPlayers = [...players, { ...newPlayer, id: `player-${Date.now()}` }];
-    onPlayersChange(updatedPlayers);
+    // Reset form
     setNewPlayer({
       name: "",
       number: 0,
@@ -113,6 +148,68 @@ export function PlayerForm({
     const updatedPlayers = [...players];
     updatedPlayers.splice(index, 1);
     onPlayersChange(updatedPlayers);
+    
+    // If removing the player that's currently being edited, reset editing state
+    if (isEditing && editingPlayerIndex === index) {
+      setIsEditing(false);
+      setEditingPlayerIndex(null);
+      
+      // Reset form
+      setNewPlayer({
+        name: "",
+        number: 0,
+        size: "M",
+        printImage: true,
+        jersey_color: "yellow",
+        uniform_type: "player",
+        line_1: "",
+        line_3: "",
+        chest_number: false,
+        pants_number: false,
+        logo_chest_left: false,
+        logo_chest_right: false,
+        logo_chest_center: false,
+        logo_sleeve_left: false,
+        logo_sleeve_right: false,
+        logo_pants: false
+      });
+    }
+  };
+  
+  const editPlayer = (index: number) => {
+    const playerToEdit = players[index] as ExtendedPlayer;
+    setNewPlayer({
+      ...playerToEdit,
+      line_1: playerToEdit.line_1 || playerToEdit.name || "",
+      line_3: playerToEdit.line_3 || "",
+    });
+    setIsEditing(true);
+    setEditingPlayerIndex(index);
+  };
+  
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditingPlayerIndex(null);
+    
+    // Reset form
+    setNewPlayer({
+      name: "",
+      number: 0,
+      size: "M",
+      printImage: true,
+      jersey_color: "yellow",
+      uniform_type: "player",
+      line_1: "",
+      line_3: "",
+      chest_number: false,
+      pants_number: false,
+      logo_chest_left: false,
+      logo_chest_right: false,
+      logo_chest_center: false,
+      logo_sleeve_left: false,
+      logo_sleeve_right: false,
+      logo_pants: false
+    });
   };
 
   const downloadExcelTemplate = () => {
@@ -263,14 +360,14 @@ export function PlayerForm({
                   <th className="p-2 text-center">Logo ngực</th>
                   <th className="p-2 text-center">Logo tay</th>
                   <th className="p-2 text-left">Ghi chú</th>
-                  <th className="p-2 text-left">Xóa</th>
+                  <th className="p-2 text-left">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {players.map((player, index) => {
                   const extendedPlayer = player as ExtendedPlayer;
                   return (
-                    <tr key={player.id || index} className="border-b border-muted">
+                    <tr key={player.id || index} className={`border-b border-muted ${editingPlayerIndex === index ? 'bg-blue-50' : ''}`}>
                       <td className="p-2">{player.number}</td>
                       <td className="p-2">{extendedPlayer.line_1 || "-"}</td>
                       <td className="p-2">{extendedPlayer.line_3 || "-"}</td>
@@ -290,9 +387,24 @@ export function PlayerForm({
                       </td>
                       <td className="p-2">{extendedPlayer.note || "-"}</td>
                       <td className="p-2">
-                        <Button variant="ghost" size="icon" onClick={() => removePlayer(index)}>
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => editPlayer(index)}
+                            title="Sửa thông tin cầu thủ"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => removePlayer(index)}
+                            title="Xóa cầu thủ"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -493,10 +605,21 @@ export function PlayerForm({
             />
           </div>
           
-          <div className="md:col-span-2">
-            <Button onClick={addPlayer} className="w-full">
-              <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
-            </Button>
+          <div className="md:col-span-2 flex space-x-2">
+            {isEditing ? (
+              <>
+                <Button onClick={addOrUpdatePlayer} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  Cập nhật cầu thủ
+                </Button>
+                <Button variant="outline" onClick={cancelEdit} className="flex-1">
+                  Hủy
+                </Button>
+              </>
+            ) : (
+              <Button onClick={addOrUpdatePlayer} className="w-full">
+                <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

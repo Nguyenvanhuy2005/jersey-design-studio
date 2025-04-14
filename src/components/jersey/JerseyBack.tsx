@@ -21,6 +21,8 @@ export const JerseyBack = ({
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
   console.log(`Rendering JerseyBack on canvas ${canvasWidth}x${canvasHeight}`);
+  console.log(`JerseyBack data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
+  
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
   // Draw back jersey
@@ -62,8 +64,6 @@ export const JerseyBack = ({
   // Set high quality text rendering
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
-  
-  console.log(`Rendering back jersey with text: player=${playerName}, number=${playerNumber}, team=${teamName}`);
   
   // Draw player name (IN DÒNG 1 - upper back - above number) - Fixed position and size
   if (playerName) {

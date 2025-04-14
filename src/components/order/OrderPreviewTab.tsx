@@ -46,10 +46,21 @@ export function OrderPreviewTab({
     );
   }
 
+  // Get team name from first player
+  const currentPlayer = players[0];
+  const teamName = currentPlayer.line_3 || 
+                   currentPlayer.name?.split(' ')?.[0] || 
+                   "TEAM";
+
+  console.log("Preview player data:", {
+    player: currentPlayer,
+    teamName: teamName
+  });
+
   return (
     <div className="space-y-6">
       <UniformPreview
-        teamName={players[0]?.name?.split(' ')[0] || "TEAM"}
+        teamName={teamName}
         players={players}
         logos={logos}
         printConfig={printConfig}

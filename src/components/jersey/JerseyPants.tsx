@@ -58,16 +58,16 @@ export const JerseyPants = ({
     console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font}`);
   }
   
-  // Draw logo if provided (on right leg) - now with fixed position and size
+  // Draw logo if provided (on middle right leg) - Updated position
   if (logo && logo.image) {
     try {
       // Fixed logo dimensions - 40x40px
       const logoWidth = 40;
       const logoHeight = 40;
       
-      // Fixed position - 20px from left, 20px from top
-      const x = 115;
-      const y = 20;
+      // Updated fixed position - middle of right leg
+      const x = 185; // Center of right leg
+      const y = 40;  // Center height of pants
       
       // Draw the logo at fixed position with fixed size
       ctx.drawImage(logo.image, x - logoWidth/2, y - logoHeight/2, logoWidth, logoHeight);

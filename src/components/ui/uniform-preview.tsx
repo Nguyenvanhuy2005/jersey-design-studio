@@ -30,6 +30,17 @@ export function UniformPreview({
 
   // Get current player for preview
   const currentPlayer = players.length > 0 ? players[previewPlayer] : undefined;
+  
+  // Extract player data for jersey
+  const playerLine1 = currentPlayer?.line_1 || currentPlayer?.name || "";
+  const playerNumber = currentPlayer?.number || 0;
+  const playerLine3 = currentPlayer?.line_3 || teamName || "";
+  
+  console.log("Current player data:", {
+    line1: playerLine1,
+    number: playerNumber,
+    line3: playerLine3
+  });
 
   return (
     <Card>
@@ -66,17 +77,17 @@ export function UniformPreview({
           <div className={`flex-1 bg-muted/30 p-4 rounded-md ${showPants ? 'lg:w-1/2' : 'w-full'}`}>
             <div className="flex justify-center">
               <CanvasJersey 
-                teamName={currentPlayer?.name?.split(' ')[0] || teamName || "TEAM"}
-                playerName={currentPlayer?.name || ""}
-                playerNumber={currentPlayer?.number || 0}
+                teamName={playerLine3}
+                playerName={playerLine1}
+                playerNumber={playerNumber}
                 logos={logos}
                 view={previewView}
                 printConfig={printConfig}
                 designData={{
                   ...designData,
-                  line_1: { content: currentPlayer?.name || "", enabled: true },
-                  line_2: { content: String(currentPlayer?.number || "0"), enabled: true },
-                  line_3: { content: teamName, enabled: true }
+                  line_1: { content: playerLine1, enabled: true },
+                  line_2: { content: String(playerNumber || "0"), enabled: true },
+                  line_3: { content: playerLine3, enabled: true }
                 }}
                 canvasRef={canvasRef}
               />
@@ -91,9 +102,9 @@ export function UniformPreview({
             <div className="flex-1 bg-muted/30 p-4 rounded-md lg:w-1/2">
               <div className="flex justify-center">
                 <CanvasJersey 
-                  teamName={currentPlayer?.name?.split(' ')[0] || teamName || "TEAM"}
-                  playerName={currentPlayer?.name || ""}
-                  playerNumber={currentPlayer?.number || 0}
+                  teamName={playerLine3}
+                  playerName={playerLine1}
+                  playerNumber={playerNumber}
                   logos={logos.filter(logo => logo.position === 'pants')}
                   view="pants"
                   printConfig={printConfig}
@@ -122,7 +133,7 @@ export function UniformPreview({
                   className="h-auto py-2 justify-start"
                 >
                   <div className="text-left truncate">
-                    <div className="font-semibold truncate">{player.name || `Cầu thủ ${index + 1}`}</div>
+                    <div className="font-semibold truncate">{player.name || player.line_1 || `Cầu thủ ${index + 1}`}</div>
                     <div className="text-sm opacity-80">#{player.number} - {player.size}</div>
                   </div>
                 </Button>
