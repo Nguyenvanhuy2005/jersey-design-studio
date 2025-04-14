@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { CanvasJersey } from "@/components/ui/canvas-jersey"; 
 import { Player, Logo, PrintConfig, DesignData } from "@/types";
 
@@ -20,7 +20,7 @@ export function JerseyPreviewHelper({
   designData,
   onRender
 }: JerseyPreviewHelperProps) {
-  const canvasRef = useState<HTMLCanvasElement | null>(null)[1];
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
   const playerLine1 = player?.line_1 || player?.name || "";
   const playerNumber = player?.number?.toString() || ""; 
@@ -30,15 +30,15 @@ export function JerseyPreviewHelper({
   useEffect(() => {
     // Give canvas time to render
     const timer = setTimeout(() => {
-      if (canvasRef) {
-        const canvas = canvasRef;
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
         const imageUrl = canvas.toDataURL('image/png');
         onRender(imageUrl);
       }
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [view, player, logos, canvasRef, onRender]);
+  }, [view, player, logos, onRender]);
 
   return (
     <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
@@ -58,7 +58,7 @@ export function JerseyPreviewHelper({
             enabled: designData?.pants_number?.enabled ?? false
           }
         }}
-        canvasRef={{ current: canvasRef }}
+        canvasRef={canvasRef}
       />
     </div>
   );
