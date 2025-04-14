@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -88,7 +89,7 @@ const AdminCustomers = () => {
         setIsAdminDialogOpen(false);
         setAdminEmail("");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating admin:", error);
       toast.error("Có lỗi xảy ra");
     }
