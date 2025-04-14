@@ -14,7 +14,7 @@ export const ProtectedRoute = ({ requireAdmin = false }: ProtectedRouteProps) =>
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">Đang kiểm tra thông tin đăng nhập...</p>
       </div>
     );

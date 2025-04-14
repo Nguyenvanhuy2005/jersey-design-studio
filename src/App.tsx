@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
+import AdminLogin from "./pages/AdminLogin";
 import CreateOrder from "./pages/CreateOrder";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import MyOrders from "./pages/MyOrders";
@@ -29,6 +30,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               
               {/* Protected routes for any authenticated user */}
               <Route element={<ProtectedRoute />}>

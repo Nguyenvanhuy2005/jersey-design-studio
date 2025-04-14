@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut } from "lucide-react";
+import { LogOut, User, UserCog, ShoppingBag } from "lucide-react";
 
 export function Navbar() {
   const { user, isAdmin, signOut } = useAuth();
@@ -27,11 +27,15 @@ export function Navbar() {
           <Link to="/create-order" className="hover:text-primary transition-colors">
             Tạo đơn hàng
           </Link>
+          
+          {/* Show customer links only for logged in users */}
           {user && (
             <Link to="/my-orders" className="hover:text-primary transition-colors">
               Đơn hàng của tôi
             </Link>
           )}
+          
+          {/* Show admin links only for admin users */}
           {isAdmin && (
             <>
               <Link to="/admin/orders" className="hover:text-primary transition-colors">
@@ -48,20 +52,41 @@ export function Navbar() {
           {user ? (
             <div className="flex items-center gap-2">
               <span className="text-sm hidden md:inline">{user.email}</span>
-              <Button variant="outline" onClick={handleSignOut} className="text-secondary-foreground flex items-center gap-1">
+              {isAdmin && (
+                <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">
+                  Admin
+                </span>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut} 
+                className="text-secondary-foreground flex items-center gap-1"
+              >
                 <LogOut className="h-4 w-4" /> Đăng xuất
               </Button>
             </div>
           ) : (
-            <Link to="/login">
-              <Button variant="outline" className="text-secondary-foreground">
-                Đăng nhập / Đăng ký
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button variant="outline" className="text-secondary-foreground flex items-center gap-1">
+                  <User className="h-4 w-4 mr-1" />
+                  Đăng nhập
+                </Button>
+              </Link>
+              
+              {/* Admin login link */}
+              <Link to="/admin/login">
+                <Button variant="ghost" size="sm" className="text-secondary-foreground flex items-center gap-1">
+                  <UserCog className="h-4 w-4 mr-1" />
+                  Quản trị
+                </Button>
+              </Link>
+            </div>
           )}
           
           <Link to="/create-order">
-            <Button>
+            <Button className="flex items-center gap-1">
+              <ShoppingBag className="h-4 w-4 mr-1" />
               Tạo đơn hàng
             </Button>
           </Link>

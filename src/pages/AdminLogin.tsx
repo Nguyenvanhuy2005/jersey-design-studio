@@ -11,17 +11,21 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Chuyển hướng người dùng nếu đã đăng nhập
+  // Redirect user if already logged in and is admin
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && isAdmin && !isLoading) {
       navigate("/admin/orders");
+    } else if (user && !isAdmin && !isLoading) {
+      // If logged in but not admin, show message and redirect to home
+      toast.error("Bạn không có quyền truy cập vào trang quản trị");
+      navigate("/");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isAdmin, isLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +41,8 @@ const AdminLogin = () => {
         throw error;
       }
 
-      toast.success("Đăng nhập quản trị thành công");
-      
-      // Chuyển hướng sẽ được xử lý bởi useEffect khi user được cập nhật
-      // Thêm một setTimeout để đảm bảo chuyển hướng nếu useEffect không hoạt động
-      setTimeout(() => {
-        navigate("/admin/orders");
-      }, 500);
+      // Authentication successful, but need to check if user is admin
+      // This will be handled by the useEffect above once auth state updates
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Email hoặc mật khẩu không đúng");
@@ -52,7 +51,7 @@ const AdminLogin = () => {
     }
   };
 
-  // Nếu đang kiểm tra trạng thái đăng nhập, hiển thị trạng thái loading
+  // If still checking auth status
   if (isLoading) {
     return (
       <Layout>
@@ -63,9 +62,9 @@ const AdminLogin = () => {
     );
   }
 
-  // Nếu đã đăng nhập, redirect tới trang admin (không hiển thị form đăng nhập)
+  // If already logged in, don't show the form (useEffect will handle redirect)
   if (user) {
-    return null; // Không hiển thị gì cả vì useEffect sẽ chuyển hướng người dùng
+    return null;
   }
 
   return (
