@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { dbOrderToOrder } from '@/utils/adapters';
+import { dbOrderToOrder, DbPlayer } from '@/utils/adapters';
 
 interface UseOrdersProps {
   statusFilter: string;
@@ -92,7 +93,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           return dbOrderToOrder(
             dbOrder, 
             customerData || undefined, 
-            playersData || undefined, 
+            playersData as DbPlayer[] || undefined, 
             productLinesData || undefined,
             printConfigData || undefined
           );
