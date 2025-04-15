@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DesignData } from "@/types";
+import { DesignData, LogoPositionConfig, PrintPositionConfig } from "@/types";
 
 interface PrintPositionsFormProps {
   designData?: Partial<DesignData>;
@@ -45,38 +44,26 @@ export function PrintPositionsForm({
     const updatedDesignData = { ...designData };
     const logoKey = `logo_${position}` as keyof Partial<DesignData>;
     
-    if (checked) {
-      // Use type assertion to fix the TypeScript error
-      updatedDesignData[logoKey] = {
-        enabled: checked,
-        material: printStyle
-      } as any;
-    } else {
-      // Use type assertion for the disabled state as well
-      updatedDesignData[logoKey] = {
-        enabled: false
-      } as any;
-    }
+    const logoConfig: LogoPositionConfig = {
+      enabled: checked,
+      material: printStyle
+    };
     
+    updatedDesignData[logoKey] = logoConfig;
     onDesignDataChange(updatedDesignData);
   };
   
   const handleLineChange = (line: 'line_1' | 'line_3' | 'chest_text' | 'pet_chest', field: string, value: any) => {
     const updatedDesignData = { ...designData };
     
-    if (!updatedDesignData[line]) {
-      updatedDesignData[line] = {
-        enabled: true,
-        content: '',
-        color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
-        material: printStyle
-      } as any;
-    }
+    const lineConfig: PrintPositionConfig = {
+      enabled: true,
+      content: value,
+      color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
+      material: printStyle
+    };
     
-    if (updatedDesignData[line]) {
-      (updatedDesignData[line] as any)[field] = value;
-    }
-    
+    updatedDesignData[line] = lineConfig;
     onDesignDataChange(updatedDesignData);
   };
 
