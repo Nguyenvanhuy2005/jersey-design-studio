@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +42,7 @@ const AdminOrders = () => {
     to: Date | undefined;
   }>({
     from: searchParams.get("dateFrom") ? new Date(searchParams.get("dateFrom") || "") : undefined,
-    to: searchParams.get("dateTo") ? new Date(dateTo || "") : undefined,
+    to: searchParams.get("dateTo") ? new Date(searchParams.get("dateTo") || "") : undefined,
   });
   const [customersList, setCustomersList] = useState<{ id: string; name: string }[]>([]);
 
