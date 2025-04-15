@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface JerseyBackProps {
@@ -22,8 +21,7 @@ export const JerseyBack = ({
   
   console.log(`Rendering JerseyBack on canvas ${canvasWidth}x${canvasHeight}`);
   console.log(`JerseyBack data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
-  
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  console.log(`Using font family: ${fontFamily}`);
   
   // Draw back jersey
   ctx.fillStyle = '#FFD700'; // Yellow jersey
@@ -69,8 +67,7 @@ export const JerseyBack = ({
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 25;
-    // Use proper font shorthand order: weight size family
-    ctx.font = `normal ${fontSize}px ${fontFamily}, sans-serif`;
+    ctx.font = `normal ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 40);
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
@@ -81,8 +78,7 @@ export const JerseyBack = ({
     ctx.fillStyle = '#1A1A1A';
     // Adjust font size based on number of digits
     const fontSize = playerNumber.length > 2 ? 180 : 240;
-    // Use numeric weight instead of 'bold' for better compatibility
-    ctx.font = `700 ${fontSize}px ${fontFamily}, sans-serif`;
+    ctx.font = `700 ${fontSize}px ${fontFamily}`;
     
     // Center the number vertically
     ctx.fillText(playerNumber, 150, 160);
@@ -93,8 +89,7 @@ export const JerseyBack = ({
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 25;
-    // Use proper font shorthand order: weight size family
-    ctx.font = `normal ${fontSize}px ${fontFamily}, sans-serif`;
+    ctx.font = `normal ${fontSize}px ${fontFamily}`;
     ctx.fillText(teamName, 150, 270);
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
