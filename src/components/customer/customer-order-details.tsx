@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -33,6 +34,7 @@ export function CustomerOrderDetails() {
 
   const fetchOrderDetails = async (orderId: string) => {
     try {
+      // First, fetch the basic order information
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select("*")
@@ -47,11 +49,64 @@ export function CustomerOrderDetails() {
         return;
       }
       
-      if (orderData) {
-        console.log("Raw order data:", orderData);
-        const convertedOrder = dbOrderToOrder(orderData as any);
-        setOrder(convertedOrder);
+      if (!orderData) {
+        setLoading(false);
+        return;
       }
+      
+      // Fetch the associated players
+      const { data: playersData, error: playersError } = await supabase
+        .from("players")
+        .select("*")
+        .eq("order_id", orderId);
+        
+      if (playersError) {
+        console.error("Error fetching players:", playersError);
+      }
+      
+      // Fetch print config
+      const { data: printConfigData, error: printConfigError } = await supabase
+        .from("print_configs")
+        .select("*")
+        .eq("order_id", orderId)
+        .single();
+        
+      if (printConfigError && printConfigError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error("Error fetching print config:", printConfigError);
+      }
+      
+      // Fetch product lines
+      const { data: productLinesData, error: productLinesError } = await supabase
+        .from("product_lines")
+        .select("*")
+        .eq("order_id", orderId);
+        
+      if (productLinesError) {
+        console.error("Error fetching product lines:", productLinesError);
+      }
+      
+      // Fetch logos
+      const { data: logosData, error: logosError } = await supabase
+        .from("logos")
+        .select("*")
+        .eq("order_id", orderId);
+        
+      if (logosError) {
+        console.error("Error fetching logos:", logosError);
+      }
+      
+      // Combine all the data
+      const completeOrder = {
+        ...orderData,
+        players: playersData || [],
+        printConfig: printConfigData || {},
+        productLines: productLinesData || [],
+        logos: logosData || []
+      };
+      
+      console.log("Complete order data:", completeOrder);
+      const convertedOrder = dbOrderToOrder(completeOrder as any);
+      setOrder(convertedOrder);
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Có lỗi khi tải thông tin đơn hàng");
@@ -110,120 +165,89 @@ export function CustomerOrderDetails() {
             Quay lại
           </Link>
         </Button>
+        <Badge>{
+          order.status === 'new' ? 'Đơn mới' :
+          order.status === 'processing' ? 'Đang xử lý' :
+          order.status === 'completed' ? 'Hoàn thành' :
+          order.status
+        }</Badge>
       </div>
 
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div>
+              <CardTitle className="text-2xl">Đơn hàng #{order.id}</CardTitle>
+              <CardDescription>
+                Ngày đặt: {createdAt.toLocaleDateString("vi-VN")}
+              </CardDescription>
+            </div>
+            {order.teamName && (
+              <div className="bg-muted px-3 py-1 rounded-md text-sm">
+                Đội: <span className="font-semibold">{order.teamName}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+      </Card>
+
       <Tabs defaultValue="details" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="details">Chi tiết đơn hàng</TabsTrigger>
-          <TabsTrigger value="players">Danh sách cầu thủ</TabsTrigger>
-          <TabsTrigger value="designs">Thiết kế</TabsTrigger>
+        <TabsList className="w-full">
+          <TabsTrigger value="details" className="flex-1">Chi tiết đơn hàng</TabsTrigger>
+          <TabsTrigger value="players" className="flex-1">Danh sách cầu thủ</TabsTrigger>
+          <TabsTrigger value="designs" className="flex-1">Thiết kế</TabsTrigger>
+          <TabsTrigger value="printList" className="flex-1">Danh sách in ấn</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-2xl">Thông tin đơn hàng #{order.id}</CardTitle>
-                    <CardDescription>
-                      Ngày đặt: {createdAt.toLocaleDateString("vi-VN")}
-                    </CardDescription>
-                  </div>
-                  {order.status && (
-                    <Badge>{
-                      order.status === 'new' ? 'Đơn mới' :
-                      order.status === 'processing' ? 'Đang xử lý' :
-                      order.status === 'completed' ? 'Hoàn thành' :
-                      order.status
-                    }</Badge>
-                  )}
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Printer className="h-5 w-5" />
+                  Cấu hình in ấn
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Print Configuration */}
-                <div>
-                  <h3 className="font-medium flex items-center gap-2 mb-4">
-                    <Printer className="h-4 w-4" />
-                    Cấu hình in ấn
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                        <Type className="h-4 w-4" />
-                        Font chữ và kiểu in
-                      </h4>
-                      <Table>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell className="font-medium">Font chữ/số</TableCell>
-                            <TableCell>{order.printConfig?.font || "Arial"}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                        <Shirt className="h-4 w-4" />
-                        Chất liệu và màu sắc
-                      </h4>
-                      <Table>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell className="font-medium">Chất liệu áo trước</TableCell>
-                            <TableCell>{order.printConfig?.frontMaterial}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="font-medium">Màu áo trước</TableCell>
-                            <TableCell>{order.printConfig?.frontColor}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="font-medium">Chất liệu áo sau</TableCell>
-                            <TableCell>{order.printConfig?.backMaterial}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="font-medium">Màu áo sau</TableCell>
-                            <TableCell>{order.printConfig?.backColor}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Print Lines */}
-                <div>
-                  <h3 className="font-medium mb-4">Danh sách in ấn</h3>
-                  <div className="overflow-x-auto">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      Font chữ và kiểu in
+                    </h4>
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>STT</TableHead>
-                          <TableHead>Sản phẩm</TableHead>
-                          <TableHead>Vị trí</TableHead>
-                          <TableHead>Chất liệu</TableHead>
-                          <TableHead>Kích thước</TableHead>
-                          <TableHead>Nội dung</TableHead>
-                        </TableRow>
-                      </TableHeader>
                       <TableBody>
-                        {order.productLines?.map((line, index) => (
-                          <TableRow key={line.id || index}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>{line.product}</TableCell>
-                            <TableCell>{line.position}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Printer className="h-4 w-4" />
-                                {line.material}
-                              </div>
-                            </TableCell>
-                            <TableCell>{line.size}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">
-                              {line.content || "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        <TableRow>
+                          <TableCell className="font-medium">Font chữ/số</TableCell>
+                          <TableCell>{order.printConfig?.font || "Arial"}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Shirt className="h-4 w-4" />
+                      Chất liệu và màu sắc
+                    </h4>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="font-medium">Chất liệu áo trước</TableCell>
+                          <TableCell>{order.printConfig?.frontMaterial}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Màu áo trước</TableCell>
+                          <TableCell>{order.printConfig?.frontColor}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Chất liệu áo sau</TableCell>
+                          <TableCell>{order.printConfig?.backMaterial}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="font-medium">Màu áo sau</TableCell>
+                          <TableCell>{order.printConfig?.backColor}</TableCell>
+                        </TableRow>
                       </TableBody>
                     </Table>
                   </div>
@@ -272,12 +296,21 @@ export function CustomerOrderDetails() {
                                 Tên in: {player.line_1}
                               </p>
                             )}
+                            {player.uniform_type === 'goalkeeper' && (
+                              <Badge variant="outline" className="mt-1">Thủ môn</Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{player.number}</TableCell>
                         <TableCell>{player.size}</TableCell>
                         <TableCell>
                           <div className="space-y-1 text-sm">
+                            {player.line_1 && (
+                              <p>- In dòng trên số lưng: {player.line_1}</p>
+                            )}
+                            {player.line_3 && (
+                              <p>- In dòng dưới số lưng: {player.line_3}</p>
+                            )}
                             {player.chest_number && (
                               <p>- In số ngực</p>
                             )}
@@ -287,17 +320,26 @@ export function CustomerOrderDetails() {
                             {player.pants_number && (
                               <p>- In số quần</p>
                             )}
-                            {player.logo_chest_left && (
-                              <p>- Logo ngực trái</p>
+                            {(player.logo_chest_left || 
+                              player.logo_chest_right || 
+                              player.logo_chest_center || 
+                              player.logo_sleeve_left || 
+                              player.logo_sleeve_right || 
+                              player.logo_pants) && (
+                              <p className="font-medium mt-1">Vị trí logo:</p>
                             )}
-                            {player.logo_chest_right && (
-                              <p>- Logo ngực phải</p>
+                            {player.logo_chest_left && (<p>- Logo ngực trái</p>)}
+                            {player.logo_chest_right && (<p>- Logo ngực phải</p>)}
+                            {player.logo_chest_center && (<p>- Logo ngực giữa</p>)}
+                            {player.logo_sleeve_left && (<p>- Logo tay trái</p>)}
+                            {player.logo_sleeve_right && (<p>- Logo tay phải</p>)}
+                            {player.logo_pants && (<p>- Logo quần</p>)}
+                            {player.pet_chest && (
+                              <p>- PET ngực: {player.pet_chest}</p>
                             )}
-                            {player.logo_chest_center && (
-                              <p>- Logo ngực giữa</p>
-                            )}
+                            <p className="font-medium mt-1">Kiểu in: {player.print_style || "In chuyển nhiệt"}</p>
                             {player.note && (
-                              <p className="text-muted-foreground">Ghi chú: {player.note}</p>
+                              <p className="text-muted-foreground mt-1">Ghi chú: {player.note}</p>
                             )}
                           </div>
                         </TableCell>
@@ -312,10 +354,11 @@ export function CustomerOrderDetails() {
 
         <TabsContent value="designs">
           <div className="grid gap-6">
+            {/* Jersey and Pants Designs */}
             {(order.designImageFront || order.designImage || order.designImageBack) && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Thiết kế áo</CardTitle>
+                  <CardTitle>Thiết kế áo đấu</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -344,6 +387,7 @@ export function CustomerOrderDetails() {
               </Card>
             )}
 
+            {/* Reference Images */}
             {order.referenceImages && order.referenceImages.length > 0 && (
               <Card>
                 <CardHeader>
@@ -364,6 +408,56 @@ export function CustomerOrderDetails() {
               </Card>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="printList">
+          <Card>
+            <CardHeader>
+              <CardTitle>Danh sách in ấn ({order.productLines?.length || 0} vị trí)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>STT</TableHead>
+                      <TableHead>Sản phẩm</TableHead>
+                      <TableHead>Vị trí</TableHead>
+                      <TableHead>Chất liệu</TableHead>
+                      <TableHead>Kích thước</TableHead>
+                      <TableHead>Nội dung</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {order.productLines?.map((line, index) => (
+                      <TableRow key={line.id || index}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{line.product}</TableCell>
+                        <TableCell>{line.position}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Printer className="h-4 w-4" />
+                            {line.material}
+                          </div>
+                        </TableCell>
+                        <TableCell>{line.size}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {line.content || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {order.productLines?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          Không có thông tin in ấn
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
