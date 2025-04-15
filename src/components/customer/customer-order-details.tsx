@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { parseDateSafely } from "@/utils/format-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, LoaderCircle, MapPin, Phone, Shirt, User, Type } from "lucide-react";
@@ -33,7 +33,6 @@ export function CustomerOrderDetails() {
 
   const fetchOrderDetails = async (orderId: string) => {
     try {
-      // Fetch order with all related data in a single query
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select(`
