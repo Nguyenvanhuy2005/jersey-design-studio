@@ -69,18 +69,20 @@ export const JerseyBack = ({
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 25;
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
+    // Use proper font shorthand order: weight size family
+    ctx.font = `normal ${fontSize}px ${fontFamily}, sans-serif`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 40);
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
-  // Draw player number (IN DÒNG 2 - middle back - bold number)
+  // Draw player number (IN DÒNG 2 - middle back - large number)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
     // Adjust font size based on number of digits
     const fontSize = playerNumber.length > 2 ? 180 : 240;
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px bold`);
+    // Use numeric weight instead of 'bold' for better compatibility
+    ctx.font = `700 ${fontSize}px ${fontFamily}, sans-serif`;
     
     // Center the number vertically
     ctx.fillText(playerNumber, 150, 160);
@@ -91,11 +93,11 @@ export const JerseyBack = ({
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 25;
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
+    // Use proper font shorthand order: weight size family
+    ctx.font = `normal ${fontSize}px ${fontFamily}, sans-serif`;
     ctx.fillText(teamName, 150, 270);
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };
-
