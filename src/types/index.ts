@@ -193,7 +193,7 @@ export interface Customer {
   phone: string;
   address: string;
   delivery_note?: string;
-  created_at?: Date;
+  created_at?: string;
 }
 
 export interface Order {

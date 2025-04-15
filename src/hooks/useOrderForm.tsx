@@ -18,9 +18,11 @@ export const useOrderForm = () => {
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referenceImagesPreview, setReferenceImagesPreview] = useState<string[]>([]);
   const [customerInfo, setCustomerInfo] = useState<Customer>({
+    id: '',
     name: "",
     address: "",
-    phone: ""
+    phone: "",
+    email: ""
   });
   
   const [fontText, setFontText] = useState<string>("Arial");
@@ -56,9 +58,11 @@ export const useOrderForm = () => {
     const fetchCustomerInfo = async () => {
       if (!user) {
         setCustomerInfo({
+          id: '',
           name: "",
           address: "",
-          phone: ""
+          phone: "",
+          email: ""
         });
         return;
       }

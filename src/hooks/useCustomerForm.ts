@@ -10,10 +10,12 @@ export function useCustomerForm(initialCustomer?: Customer) {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [customerInfo, setCustomerInfo] = useState<Customer>({
+    id: initialCustomer?.id || '',
     name: initialCustomer?.name || "",
     address: initialCustomer?.address || "",
     phone: initialCustomer?.phone || "",
-    delivery_note: initialCustomer?.delivery_note || ""
+    delivery_note: initialCustomer?.delivery_note || "",
+    email: initialCustomer?.email || ""
   });
 
   useEffect(() => {

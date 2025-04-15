@@ -60,9 +60,13 @@ const AdminCustomers = () => {
               .eq("customer_id", customer.id);
             
             return {
-              ...customer,
-              email: '',
-              created_at: new Date(customer.created_at || new Date()),
+              id: customer.id,
+              name: customer.name || "",
+              email: "",
+              phone: customer.phone || "",
+              address: customer.address || "",
+              delivery_note: customer.delivery_note || "",
+              created_at: customer.created_at || new Date().toISOString(),
               order_count: count || 0
             } as CustomerWithOrderCount;
           })
