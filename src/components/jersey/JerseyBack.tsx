@@ -15,9 +15,9 @@ export const JerseyBack = ({
   playerNumber,
   fontFamily
 }: JerseyBackProps) => {
-  // Clear the canvas before drawing
-  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
-  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  // Use raw canvas dimensions without devicePixelRatio adjustment
+  const canvasWidth = ctx.canvas.width;
+  const canvasHeight = ctx.canvas.height;
   
   console.log(`Rendering JerseyBack on canvas ${canvasWidth}x${canvasHeight}`);
   console.log(`JerseyBack data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
@@ -63,35 +63,33 @@ export const JerseyBack = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
-  // Draw player name (IN DÒNG 1 - upper back - above number)
+  // Draw player name (top)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 45;
+    const fontSize = 90; // Doubled from 45 to match the scaling
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 50);
+    ctx.fillText(playerNameDisplayed, 300, 100); // Adjusted positions to match new scaling
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
-  // Draw player number (IN DÒNG 2 - middle back - large number)
+  // Draw player number (middle)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 300;
+    const fontSize = 600; // Doubled from 300 to match the scaling
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    
-    // Center the number vertically, position unchanged
-    ctx.fillText(playerNumber, 150, 160);
+    ctx.fillText(playerNumber, 300, 320); // Adjusted positions to match new scaling
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
-  // Draw team name (IN DÒNG 3 - lower back - below number)
+  // Draw team name (bottom)
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 45;
+    const fontSize = 90; // Doubled from 45 to match the scaling
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 150, 260);
+    ctx.fillText(teamName, 300, 520); // Adjusted positions to match new scaling
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
-  return null; // This component just draws on the canvas, doesn't return JSX
+  return null;
 };
