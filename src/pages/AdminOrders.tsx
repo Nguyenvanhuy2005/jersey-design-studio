@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Layout } from "@/components/layout/layout";
 import { Order } from "@/types";
@@ -64,38 +65,7 @@ const AdminOrders = () => {
       return;
     }
     
-    const checkStorageBuckets = async () => {
-      if (!user) return;
-      setStorageBucketsStatus(prev => ({
-        ...prev,
-        checking: true
-      }));
-      try {
-        const result = await checkStorageBucketsExist();
-        setStorageBucketsStatus({
-          designImages: result.designImages,
-          referenceImages: result.referenceImages,
-          checking: false,
-          error: result.error
-        });
-        console.log("Storage buckets check:", result);
-        if (!result.designImages || !result.referenceImages) {
-          toast.error("Bucket không tồn tại trong storage. Hãy tạo bucket để hiển thị hình ảnh.", {
-            duration: 5000,
-          });
-        }
-      } catch (err) {
-        console.error("Error checking storage buckets:", err);
-        setStorageBucketsStatus({
-          designImages: false,
-          referenceImages: false,
-          checking: false,
-          error: err instanceof Error ? err.message : 'Unknown error'
-        });
-      }
-    };
     if (user && isAdmin) {
-      checkStorageBuckets();
       fetchCustomers();
     }
   }, [user, isAdmin, isLoading, navigate]);
@@ -114,35 +84,6 @@ const AdminOrders = () => {
       setCustomersList(data || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
-    }
-  };
-
-  const handleCreateBuckets = async () => {
-    setCreatingBuckets(true);
-    try {
-      const result = await createStorageBucketsIfNeeded();
-      if (result.success) {
-        if (result.created.designImages || result.created.referenceImages) {
-          toast.success("Đã tạo bucket thành công!");
-
-          const updatedStatus = await checkStorageBucketsExist();
-          setStorageBucketsStatus({
-            designImages: updatedStatus.designImages,
-            referenceImages: updatedStatus.referenceImages,
-            checking: false,
-            error: updatedStatus.error
-          });
-        } else {
-          toast.info("Buckets đã tồn tại, không cần tạo mới.");
-        }
-      } else {
-        toast.error(`Không thể tạo bucket: ${result.message}`);
-      }
-    } catch (error) {
-      console.error("Error creating buckets:", error);
-      toast.error("Có lỗi khi tạo bucket");
-    } finally {
-      setCreatingBuckets(false);
     }
   };
 
@@ -337,7 +278,7 @@ const AdminOrders = () => {
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      });
+      }`);
 
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
       console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
@@ -558,7 +499,7 @@ const AdminOrders = () => {
               <tbody>
                 {fetchingData ? (
                   <tr>
-                    <td colSpan={9} className="p-4 text-center">
+                    <td colSpan={8} className="p-4 text-center">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
                         <span>Đang tải dữ liệu...</span>
