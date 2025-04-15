@@ -181,6 +181,11 @@ const AdminOrders = () => {
             customerName = customerData.name || "Không xác định";
           }
         }
+
+        let teamName = '';
+        if (order.design_data && typeof order.design_data === 'object') {
+          teamName = (order.design_data as any)?.team_name || '';
+        }
         
         return {
           id: order.id,
@@ -194,7 +199,7 @@ const AdminOrders = () => {
           referenceImages: processedReferenceImages,
           customerName: customerName,
           customerId: order.customer_id,
-          teamName: order.design_data?.team_name || '',
+          teamName: teamName,
           players: order.players ? order.players.map((player: any) => ({
             id: player.id,
             name: player.name || '',
@@ -277,7 +282,7 @@ const AdminOrders = () => {
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      }`);
+      });
 
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
       console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
