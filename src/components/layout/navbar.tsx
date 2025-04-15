@@ -14,37 +14,9 @@ export function Navbar() {
   return (
     <header className="bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Link to="/" className="font-bold text-xl">
-            Jersey Design Studio
-          </Link>
-        </div>
-        
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className="hover:text-primary transition-colors">
-            Trang chủ
-          </Link>
-          <Link to="/create-order" className="hover:text-primary transition-colors">
-            Tạo đơn hàng
-          </Link>
-          {user && (
-            <>
-              <Link to="/customer/dashboard" className="hover:text-primary transition-colors">
-                Trang khách hàng
-              </Link>
-              {isAdmin && (
-                <>
-                  <Link to="/admin/orders" className="hover:text-primary transition-colors">
-                    Quản lý đơn hàng
-                  </Link>
-                  <Link to="/admin/customers" className="hover:text-primary transition-colors">
-                    Quản lý khách hàng
-                  </Link>
-                </>
-              )}
-            </>
-          )}
-        </nav>
+        <Link to="/" className="font-bold text-xl">
+          Jersey Design Studio
+        </Link>
         
         <div className="flex items-center gap-2">
           {user ? (
