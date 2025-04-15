@@ -137,7 +137,6 @@ const AdminOrders = () => {
         if (result.created.designImages || result.created.referenceImages) {
           toast.success("Đã tạo bucket thành công!");
 
-          // Re-check bucket status
           const updatedStatus = await checkStorageBucketsExist();
           setStorageBucketsStatus({
             designImages: updatedStatus.designImages,
@@ -385,7 +384,7 @@ const AdminOrders = () => {
       params.set('status', statusFilter);
     }
     
-    if (customerFilter) {
+    if (customerFilter && customerFilter !== 'all') {
       params.set('customer', customerFilter);
     }
     
@@ -411,7 +410,7 @@ const AdminOrders = () => {
 
   const handleResetFilters = () => {
     setStatusFilter('all');
-    setCustomerFilter('');
+    setCustomerFilter('all');
     setSearchTerm('');
     setDateRange({ from: undefined, to: undefined });
     setSearchParams(new URLSearchParams());
