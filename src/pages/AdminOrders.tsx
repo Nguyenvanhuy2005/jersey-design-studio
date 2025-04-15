@@ -31,7 +31,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "all");
-  const [customerFilter, setCustomerFilter] = useState<string>(searchParams.get("customer") || "");
+  const [customerFilter, setCustomerFilter] = useState<string>(searchParams.get("customer") || "all");
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get("search") || "");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -170,17 +170,15 @@ const AdminOrders = () => {
     setFetchError(null);
     console.log("Fetching orders data...");
     try {
-      // Start building the query
       let query = supabase
         .from('orders')
         .select('*, players(*), product_lines(*), print_configs(*)');
       
-      // Apply filters
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
       
-      if (customerFilter) {
+      if (customerFilter && customerFilter !== 'all') {
         query = query.eq('customer_id', customerFilter);
       }
       
@@ -188,7 +186,6 @@ const AdminOrders = () => {
         query = query.or(`team_name.ilike.%${searchTerm}%, notes.ilike.%${searchTerm}%`);
       }
       
-      // Date range filters
       if (dateRange.from) {
         const fromDate = format(dateRange.from, 'yyyy-MM-dd');
         query = query.gte('created_at', `${fromDate}T00:00:00`);
@@ -199,10 +196,8 @@ const AdminOrders = () => {
         query = query.lte('created_at', `${toDate}T23:59:59`);
       }
       
-      // Order by created_at
       query = query.order('created_at', { ascending: false });
       
-      // Execute query
       const { data, error } = await query;
       
       if (error) {
@@ -224,13 +219,11 @@ const AdminOrders = () => {
       console.log("Raw orders data:", data);
       
       const transformedOrders: Order[] = await Promise.all(data.map(async order => {
-        // Process reference images
         let processedReferenceImages: string[] = [];
         if (order.reference_images && Array.isArray(order.reference_images)) {
           processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
         }
         
-        // Process design data
         if (order.design_data) {
           const designData = order.design_data as {
             reference_images?: any[];
@@ -241,7 +234,6 @@ const AdminOrders = () => {
           }
         }
         
-        // Check design images existence
         let designImageFront = order.design_image_front || order.design_image || '';
         let designImageBack = order.design_image_back || '';
         
@@ -250,7 +242,6 @@ const AdminOrders = () => {
           back: designImageBack
         });
         
-        // Get customer info
         let customerName = "Không xác định";
         if (order.customer_id) {
           const { data: customerData } = await supabase
@@ -346,13 +337,11 @@ const AdminOrders = () => {
         return;
       }
       
-      // Update orders state
       const updatedOrders = orders.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
       
-      // Update selected order if it's the one being modified
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -361,9 +350,8 @@ const AdminOrders = () => {
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      }`);
+      });
 
-      // For now, we'll just log the status change in the console
       console.log(`Order ${orderId} status changed from ${orders.find(order => order.id === orderId)?.status} to ${newStatus}`);
     } catch (error) {
       console.error("Error updating status:", error);
@@ -482,7 +470,7 @@ const AdminOrders = () => {
                 <SelectValue placeholder="Lọc theo khách hàng" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả khách hàng</SelectItem>
+                <SelectItem value="all">Tất cả khách hàng</SelectItem>
                 {customersList.map(customer => (
                   <SelectItem key={customer.id} value={customer.id}>
                     {customer.name || customer.id}
