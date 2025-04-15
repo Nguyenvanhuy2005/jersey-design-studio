@@ -23,7 +23,7 @@ export const OrderDetails = ({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Chi tiết đơn hàng: {order.teamName}</DialogTitle>
+        <DialogTitle>Chi tiết đơn hàng #{order.id}</DialogTitle>
       </DialogHeader>
       
       <div className="space-y-4 my-4">

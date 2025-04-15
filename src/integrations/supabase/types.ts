@@ -90,7 +90,6 @@ export type Database = {
           notes: string | null
           reference_images: Json | null
           status: string
-          team_name: string | null
           total_cost: number
           updated_at: string | null
         }
@@ -106,7 +105,6 @@ export type Database = {
           notes?: string | null
           reference_images?: Json | null
           status?: string
-          team_name?: string | null
           total_cost?: number
           updated_at?: string | null
         }
@@ -122,7 +120,6 @@ export type Database = {
           notes?: string | null
           reference_images?: Json | null
           status?: string
-          team_name?: string | null
           total_cost?: number
           updated_at?: string | null
         }

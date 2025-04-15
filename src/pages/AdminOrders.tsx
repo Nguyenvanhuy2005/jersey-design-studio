@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -185,7 +184,6 @@ const AdminOrders = () => {
         
         return {
           id: order.id,
-          teamName: order.team_name || '',
           status: order.status as 'new' | 'processing' | 'completed',
           totalCost: order.total_cost,
           createdAt: new Date(order.created_at || ''),

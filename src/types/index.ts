@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -199,7 +198,6 @@ export interface Customer {
 
 export interface Order {
   id: string;
-  teamName: string;
   players: Player[];
   productLines: ProductLine[];
   printConfig: PrintConfig;
