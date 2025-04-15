@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Order } from "@/types";
 import { ImageIcon } from "lucide-react";
 import { getReferenceImageUrls } from "@/utils/image-utils";
+import { Input } from "@/components/ui/input";
 
 interface ReferenceImagesProps {
   referenceImages: Order['referenceImages'];
@@ -12,14 +13,15 @@ interface ReferenceImagesProps {
 export const ReferenceImages = ({ referenceImages, onViewImage }: ReferenceImagesProps) => {
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [referenceImagesLoaded, setReferenceImagesLoaded] = useState<boolean[]>([]);
+  const [productNames, setProductNames] = useState<string[]>([]);
   
   useEffect(() => {
     if (Array.isArray(referenceImages) && referenceImages.length > 0) {
-      // Remove duplicates by creating a Set and then converting back to array
       const uniqueReferenceImages = [...new Set(referenceImages)];
       const urls = getReferenceImageUrls(uniqueReferenceImages);
       setReferenceImageUrls(urls);
       setReferenceImagesLoaded(Array(urls.length).fill(false));
+      setProductNames(Array(urls.length).fill(""));
       console.log(`Generated ${urls.length} unique reference image URLs from ${referenceImages.length} paths`);
     }
   }, [referenceImages]);
@@ -40,6 +42,14 @@ export const ReferenceImages = ({ referenceImages, onViewImage }: ReferenceImage
       return newLoaded;
     });
   };
+
+  const handleProductNameChange = (index: number, name: string) => {
+    setProductNames(prev => {
+      const newNames = [...prev];
+      newNames[index] = name;
+      return newNames;
+    });
+  };
   
   if (referenceImageUrls.length === 0) {
     return null;
@@ -47,28 +57,33 @@ export const ReferenceImages = ({ referenceImages, onViewImage }: ReferenceImage
   
   return (
     <div>
-      <h3 className="font-semibold mb-2">Hình ảnh tham khảo ({referenceImageUrls.length})</h3>
-      <div className="flex flex-wrap gap-2">
+      <h3 className="font-semibold mb-2">Sản phẩm cần in ({referenceImageUrls.length})</h3>
+      <div className="flex flex-wrap gap-4">
         {referenceImageUrls.map((imageUrl, index) => (
-          <div 
-            key={index}
-            className="group relative h-16 w-16 overflow-hidden rounded border border-muted"
-          >
-            <img
-              src={imageUrl}
-              alt={`Reference ${index + 1}`}
-              className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
-              onClick={() => onViewImage(imageUrl)}
-              onLoad={() => handleImageLoad(index)}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = 'https://via.placeholder.com/150?text=Error';
-                handleImageError(Array.isArray(referenceImages) ? referenceImages[index] : '', index);
-              }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-              <ImageIcon className="h-6 w-6 text-white" />
+          <div key={index} className="space-y-2">
+            <div className="group relative h-16 w-16 overflow-hidden rounded border border-muted">
+              <img
+                src={imageUrl}
+                alt={`Sản phẩm ${index + 1}`}
+                className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
+                onClick={() => onViewImage(imageUrl)}
+                onLoad={() => handleImageLoad(index)}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://via.placeholder.com/150?text=Error';
+                  handleImageError(Array.isArray(referenceImages) ? referenceImages[index] : '', index);
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <ImageIcon className="h-6 w-6 text-white" />
+              </div>
             </div>
+            <Input
+              placeholder="Tên sản phẩm"
+              value={productNames[index]}
+              onChange={(e) => handleProductNameChange(index, e.target.value)}
+              className="w-full"
+            />
           </div>
         ))}
       </div>
