@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,9 +9,9 @@ import { toast } from "sonner";
 export const useOrderForm = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("info");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
-  const [isDemoApproved, setIsDemoApproved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isGeneratingDesign, setIsGeneratingDesign] = useState<boolean>(false);
+  const [isDemoApproved, setIsDemoApproved] = useState<boolean>(false);
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [logos, setLogos] = useState<Logo[]>([]);
@@ -85,7 +86,8 @@ export const useOrderForm = () => {
         if (data) {
           const customerData: Customer = {
             ...data,
-            created_at: parseDateSafely(data.created_at)
+            // Fix this line: parse the created_at as a string instead of a Date
+            created_at: data.created_at ? data.created_at : undefined
           };
           setCustomerInfo(customerData);
         }

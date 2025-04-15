@@ -16,10 +16,12 @@ export interface DbOrder {
   reference_images: any;
   customer_id: string | null;
   total_cost: number;
-  players: any; // JSONB array in the new structure
-  logos: any; // JSONB array in the new structure
-  product_lines: any; // JSONB array in the new structure
-  print_config: any; // JSONB object in the new structure
+  players: any; // Now a JSONB array in the new structure
+  logos: any; // Now a JSONB array in the new structure
+  product_lines: any; // Now a JSONB array in the new structure
+  print_config: any; // Now a JSONB object in the new structure
+  players_count?: number; // Added for new schema
+  completed_at?: string; // Added for new schema
 }
 
 export interface DbPlayer {
@@ -56,7 +58,7 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
       id: p.id,
       name: p.name || "",
       number: String(p.number),
-      size: p.size as 'S' | 'M' | 'L' | 'XL',
+      size: p.size as 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL',
       printImage: p.print_image || false,
     }));
   }
@@ -108,14 +110,14 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
     printConfig: {
       id: dbOrder.id,
       font: printConfig.font || "Arial",
-      backMaterial: printConfig.back_material || "In chuyển nhiệt",
-      backColor: printConfig.back_color || "Đen",
-      frontMaterial: printConfig.front_material || "In chuyển nhiệt",
-      frontColor: printConfig.front_color || "Đen",
-      sleeveMaterial: printConfig.sleeve_material || "In chuyển nhiệt",
-      sleeveColor: printConfig.sleeve_color || "Đen",
-      legMaterial: printConfig.leg_material || "In chuyển nhiệt",
-      legColor: printConfig.leg_color || "Đen",
+      backMaterial: printConfig.back_material || printConfig.backMaterial || "In chuyển nhiệt",
+      backColor: printConfig.back_color || printConfig.backColor || "Đen",
+      frontMaterial: printConfig.front_material || printConfig.frontMaterial || "In chuyển nhiệt",
+      frontColor: printConfig.front_color || printConfig.frontColor || "Đen",
+      sleeveMaterial: printConfig.sleeve_material || printConfig.sleeveMaterial || "In chuyển nhiệt",
+      sleeveColor: printConfig.sleeve_color || printConfig.sleeveColor || "Đen",
+      legMaterial: printConfig.leg_material || printConfig.legMaterial || "In chuyển nhiệt",
+      legColor: printConfig.leg_color || printConfig.legColor || "Đen",
     },
     productLines: productLines,
     totalCost: dbOrder.total_cost || 0,

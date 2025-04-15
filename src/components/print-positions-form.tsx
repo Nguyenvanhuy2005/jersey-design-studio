@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DesignData, LogoPositionConfig } from "@/types";
+import { DesignData } from "@/types";
 
 interface PrintPositionsFormProps {
   designData?: Partial<DesignData>;
@@ -42,18 +42,19 @@ export function PrintPositionsForm({
   
   const handleLogoChange = (position: string, checked: boolean) => {
     const updatedDesignData = { ...designData };
-    const logoKey = `logo_${position}` as keyof DesignData;
+    const logoKey = `logo_${position}` as keyof Partial<DesignData>;
     
-    const logoConfig: LogoPositionConfig = {
-      enabled: checked,
-      material: printStyle,
-      logo_id: undefined,
-      x_position: undefined,
-      y_position: undefined,
-      scale: undefined
-    };
+    if (checked) {
+      updatedDesignData[logoKey] = {
+        enabled: checked,
+        material: printStyle
+      };
+    } else {
+      updatedDesignData[logoKey] = {
+        enabled: false
+      };
+    }
     
-    updatedDesignData[logoKey] = logoConfig;
     onDesignDataChange(updatedDesignData);
   };
   

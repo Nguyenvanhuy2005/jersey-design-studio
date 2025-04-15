@@ -92,6 +92,7 @@ const CustomerDashboard = () => {
       
       if (data) {
         // Convert database orders to application Order type
+        // Each order in data now includes players, logos, etc. as JSONB arrays
         const convertedOrders = data.map(order => dbOrderToOrder(order));
         setOrders(convertedOrders);
       }
