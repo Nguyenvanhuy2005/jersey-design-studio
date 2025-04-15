@@ -42,18 +42,26 @@ export function PrintPositionsForm({
   
   const handleLogoChange = (position: string, checked: boolean) => {
     const updatedDesignData = { ...designData };
-    const logoKey = `logo_${position}` as keyof Partial<DesignData>;
+    const logoKey = `logo_${position}` as keyof DesignData;
     
-    const logoConfig: LogoPositionConfig = {
-      enabled: checked,
-      material: printStyle
-    };
+    if (checked) {
+      const logoConfig: LogoPositionConfig = {
+        enabled: checked,
+        material: printStyle
+      };
+      (updatedDesignData[logoKey] as LogoPositionConfig) = logoConfig;
+    } else {
+      const logoConfig: LogoPositionConfig = {
+        enabled: false,
+        material: undefined
+      };
+      (updatedDesignData[logoKey] as LogoPositionConfig) = logoConfig;
+    }
     
-    updatedDesignData[logoKey] = logoConfig;
     onDesignDataChange(updatedDesignData);
   };
   
-  const handleLineChange = (line: 'line_1' | 'line_3' | 'chest_text' | 'pet_chest', field: string, value: any) => {
+  const handleLineChange = (line: 'line_1' | 'line_3' | 'chest_text' | 'pet_chest', field: string, value: string) => {
     const updatedDesignData = { ...designData };
     
     const lineConfig: PrintPositionConfig = {
@@ -63,7 +71,7 @@ export function PrintPositionsForm({
       material: printStyle
     };
     
-    updatedDesignData[line] = lineConfig;
+    (updatedDesignData[line] as PrintPositionConfig) = lineConfig;
     onDesignDataChange(updatedDesignData);
   };
 
