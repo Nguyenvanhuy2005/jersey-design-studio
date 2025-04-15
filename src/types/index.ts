@@ -187,10 +187,11 @@ export interface DesignData {
 }
 
 export interface Customer {
-  id?: string;
+  id: string;
   name: string;
-  address: string;
+  email?: string;
   phone: string;
+  address: string;
   delivery_note?: string;
   created_at?: Date;
 }

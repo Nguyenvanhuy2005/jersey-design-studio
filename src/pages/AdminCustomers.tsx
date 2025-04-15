@@ -18,10 +18,14 @@ interface Customer {
   order_count: number;
 }
 
+interface CustomerWithOrderCount extends Customer {
+  order_count: number;
+}
+
 const AdminCustomers = () => {
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithOrderCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +44,6 @@ const AdminCustomers = () => {
     setError(null);
 
     try {
-      // First, fetch all customers
       const { data: customersData, error: customersError } = await supabase
         .from("customers")
         .select("*")
@@ -48,31 +51,28 @@ const AdminCustomers = () => {
 
       if (customersError) throw customersError;
 
-      // For each customer, fetch their orders count in a separate query
       if (customersData) {
         const customersWithOrderCounts = await Promise.all(
           customersData.map(async (customer) => {
-            const { count, error: countError } = await supabase
+            const { count } = await supabase
               .from("orders")
               .select("id", { count: 'exact', head: true })
               .eq("customer_id", customer.id);
             
             return {
               ...customer,
-              created_at: new Date(customer.created_at),
+              email: '',
+              created_at: new Date(customer.created_at || new Date()),
               order_count: count || 0
-            };
+            } as CustomerWithOrderCount;
           })
         );
 
         setCustomers(customersWithOrderCounts);
-      } else {
-        setCustomers([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(err.message || "Error fetching customers data");
-      toast.error("Could not load customer data");
     } finally {
       setLoading(false);
     }

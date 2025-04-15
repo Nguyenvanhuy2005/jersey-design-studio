@@ -44,13 +44,20 @@ export function PrintPositionsForm({
     const updatedDesignData = { ...designData };
     const logoKey = `logo_${position}` as keyof DesignData;
     
-    if (!updatedDesignData[logoKey]) {
+    if (checked) {
+      updatedDesignData[logoKey] = {
+        enabled: checked,
+        material: printStyle,
+        logo_id: undefined,
+        x_position: undefined,
+        y_position: undefined,
+        scale: undefined
+      };
+    } else {
       updatedDesignData[logoKey] = {
         enabled: checked,
         material: printStyle
       };
-    } else {
-      (updatedDesignData[logoKey] as any).enabled = checked;
     }
     
     onDesignDataChange(updatedDesignData);
