@@ -88,7 +88,7 @@ export function OrderSummary({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {logos.map((logo, index) => (
                   <div key={logo.id || index} className="border rounded p-2 text-center">
-                    <img src={logo.previewUrl} alt={`Logo ${index + 1}`} className="h-16 w-16 object-contain mx-auto" />
+                    <img src={logo.previewUrl || logo.url} alt={`Logo ${index + 1}`} className="h-16 w-16 object-contain mx-auto" />
                     <p className="text-xs mt-1">{getPositionLabel(logo.position)}</p>
                   </div>
                 ))}

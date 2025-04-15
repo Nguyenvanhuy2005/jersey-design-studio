@@ -1,17 +1,42 @@
+
 export interface Player {
   id: string;
   name: string;
   number: string;
-  size: 'S' | 'M' | 'L' | 'XL';
+  size: 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
   printImage: boolean;
   imageFront?: string;
   imageBack?: string;
+  // Add missing player properties
+  uniform_type?: 'player' | 'goalkeeper';
+  line_1?: string;
+  line_2?: string;
+  line_3?: string;
+  chest_text?: string;
+  chest_number?: boolean;
+  pants_number?: boolean;
+  logo_chest_left?: boolean;
+  logo_chest_right?: boolean;
+  logo_chest_center?: boolean;
+  logo_sleeve_left?: boolean;
+  logo_sleeve_right?: boolean;
+  logo_pants?: boolean;
+  pet_chest?: string;
+  note?: string;
+  print_style?: string;
 }
+
+export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
+
+export type UniformSize = 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
 
 export interface Logo {
   id: string;
-  url: string;
-  position: 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
+  url?: string;
+  position: LogoPosition;
+  // Add missing logo properties
+  file?: File;
+  previewUrl?: string;
 }
 
 export interface PrintConfig {
@@ -25,6 +50,9 @@ export interface PrintConfig {
   sleeveColor: string;
   legMaterial: string;
   legColor: string;
+  // Add missing print config properties
+  customFontFile?: File;
+  customFontUrl?: string;
 }
 
 export interface ProductLine {
@@ -35,6 +63,16 @@ export interface ProductLine {
   size: string;
   points: number;
   content: string;
+}
+
+export interface PrintPositionConfig {
+  enabled: boolean;
+  color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+  material?: string;
+}
+
+export interface LogoPositionConfig {
+  enabled: boolean;
 }
 
 export interface DesignData {
@@ -63,11 +101,25 @@ export interface DesignData {
   logo_sleeve_right: {
     enabled: boolean;
   };
+  logo_pants: {
+    enabled: boolean;
+  };
   font_text: {
     font: string;
   };
   font_number: {
     font: string;
+  };
+  // Add missing design data properties
+  line_1?: {
+    enabled: boolean;
+    content: string;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+  };
+  line_3?: {
+    enabled: boolean;
+    content: string;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
   };
 }
 
@@ -94,6 +146,8 @@ export interface Order {
   designImageFront?: string;
   designImageBack?: string;
   referenceImages?: string[];
-  customerName?: string;    // Added customer name
-  customerId?: string;      // Added customer id
+  customerName?: string;
+  customerId?: string;
+  designData?: any;
+  user_id?: string;
 }

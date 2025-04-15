@@ -1,3 +1,4 @@
+
 import { AlertCircle, Camera } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export function OrderSummaryTab({
     };
     
     players.forEach(player => {
+      // Use optional chaining to safely access properties that might not exist
       if (player.line_1) counts.line_1++;
       if (player.number) counts.line_2++;
       if (player.line_3) counts.line_3++;
