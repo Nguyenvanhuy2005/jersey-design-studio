@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UniformPreview } from "@/components/ui/uniform-preview";
 import { formatCurrency } from "@/utils/format-utils";
 import { Player, Logo, PrintConfig, DesignData, ProductLine } from "@/types";
+
 interface OrderPreviewTabProps {
   players: Player[];
   logos: Logo[];
@@ -18,6 +19,7 @@ interface OrderPreviewTabProps {
   jerseyCanvasRef: React.RefObject<HTMLCanvasElement>;
   pantCanvasRef: React.RefObject<HTMLCanvasElement>;
 }
+
 export function OrderPreviewTab({
   players,
   logos,
@@ -41,13 +43,18 @@ export function OrderPreviewTab({
       </Alert>;
   }
 
-  // Get team name from first player
   const currentPlayer = players[0];
-  const teamName = currentPlayer.line_3 || currentPlayer.name?.split(' ')?.[0] || "TEAM";
-  console.log("Preview player data:", {
+  const teamName = currentPlayer.line_3 || 
+                   currentPlayer.name?.split(' ')?.[0] || 
+                   "TEAM";
+
+  console.log("Preview team name:", {
     player: currentPlayer,
-    teamName: teamName
+    teamName: teamName,
+    line_3: currentPlayer.line_3,
+    nameFirstPart: currentPlayer.name?.split(' ')?.[0]
   });
+
   return <div className="space-y-6">
       <UniformPreview teamName={teamName} players={players} logos={logos} printConfig={printConfig} designData={designData} jerseyCanvasRef={jerseyCanvasRef} pantCanvasRef={pantCanvasRef} />
       

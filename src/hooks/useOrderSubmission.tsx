@@ -376,11 +376,15 @@ export const useOrderSubmission = ({
 
       const designDataJson = prepareDesignDataForStorage(finalDesignData);
 
+      const teamName = players.length > 0 
+        ? (players[0].line_3 || players[0].name?.split(' ')?.[0] || "Team") 
+        : "Team";
+
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
-          team_name: players[0].name || "Team",
+          team_name: teamName,
           logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
           status: 'new',
           total_cost: totalCost,
