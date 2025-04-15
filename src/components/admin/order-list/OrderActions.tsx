@@ -17,7 +17,7 @@ export const OrderActions = ({
   onStatusChange
 }: OrderActionsProps) => {
   const handleSendEmail = (order: Order) => {
-    toast.success(`Email đã được gửi đến khách hàng về đơn hàng: ${order.teamName}`);
+    toast.success(`Email đã được gửi đến khách hàng về đơn hàng: ${order.teamName || 'Không có tên'}`);
   };
   
   return (

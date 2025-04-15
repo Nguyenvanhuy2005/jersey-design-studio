@@ -40,7 +40,7 @@ export const OrderDetails = ({
         
         <OrderActions 
           orderId={order.id}
-          teamName={order.teamName}
+          teamName={order.teamName || 'Không có tên'}
           onStatusChange={onStatusChange}
         />
 

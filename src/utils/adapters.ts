@@ -116,7 +116,6 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
   // Create a valid Order object
   return {
     id: dbOrder.id,
-    teamName: dbOrder.team_name || "",
     players: players,
     printConfig: {
       id: dbOrder.id,
@@ -140,6 +139,8 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
     designImageBack: dbOrder.design_image_back || undefined,
     referenceImages: refImages,
     designData: dbOrder.design_data,
-    customerId: dbOrder.customer_id
+    customerId: dbOrder.customer_id,
+    // Extract team name from design_data if available (for backward compatibility)
+    teamName: dbOrder.design_data?.team_name || ""
   };
 }

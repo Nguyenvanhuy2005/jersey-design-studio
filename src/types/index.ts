@@ -213,4 +213,5 @@ export interface Order {
   customerId?: string;
   designData?: any;
   user_id?: string;
+  teamName?: string;
 }

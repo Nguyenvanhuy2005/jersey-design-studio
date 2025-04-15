@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order, Player } from "@/types";
@@ -50,7 +49,6 @@ export function CustomerOrderDetails() {
       
       if (orderData) {
         console.log("Raw order data:", orderData);
-        // Convert database order to application Order type
         const convertedOrder = dbOrderToOrder(orderData as any);
         setOrder(convertedOrder);
       }

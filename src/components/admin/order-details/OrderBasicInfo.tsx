@@ -29,7 +29,7 @@ export const OrderBasicInfo = ({ order }: OrderBasicInfoProps) => {
     <div>
       <h3 className="font-semibold">Thông tin cơ bản</h3>
       <p><span className="text-muted-foreground">ID:</span> {order.id}</p>
-      <p><span className="text-muted-foreground">Tên đội:</span> {order.teamName}</p>
+      <p><span className="text-muted-foreground">Tên đội:</span> {order.teamName || 'Không có tên'}</p>
       <p><span className="text-muted-foreground">Số lượng áo:</span> {order.players.length}</p>
       <p><span className="text-muted-foreground">Tổng chi phí:</span> {order.totalCost.toLocaleString()} VNĐ</p>
       <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(order.status)}</p>

@@ -194,6 +194,7 @@ const AdminOrders = () => {
           referenceImages: processedReferenceImages,
           customerName: customerName,
           customerId: order.customer_id,
+          teamName: order.design_data?.team_name || '',
           players: order.players ? order.players.map((player: any) => ({
             id: player.id,
             name: player.name || '',

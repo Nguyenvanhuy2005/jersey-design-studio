@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -29,14 +28,11 @@ const OrderConfirmation = () => {
     references: [] as boolean[]
   });
   
-  // Redirect if no order data (e.g. if user accessed this page directly)
   if (!order) {
     return <Navigate to="/" replace />;
   }
 
-  // Get the public URLs for design and reference images
   useEffect(() => {
-    // Front design (either from designImageFront or fallback to designImage for compatibility)
     const frontDesignPath = order.designImageFront || order.designImage;
     if (frontDesignPath) {
       const url = getDesignImageUrl(frontDesignPath);
@@ -44,14 +40,12 @@ const OrderConfirmation = () => {
       console.log("Front design image URL in OrderConfirmation:", url);
     }
     
-    // Back design
     if (order.designImageBack) {
       const url = getDesignImageUrl(order.designImageBack);
       setDesignImageBackUrl(url);
       console.log("Back design image URL in OrderConfirmation:", url);
     }
 
-    // Get the public URLs for reference images if they exist
     if (Array.isArray(order.referenceImages) && order.referenceImages.length > 0) {
       const urls = getReferenceImageUrls(order.referenceImages);
       setReferenceImageUrls(urls);
@@ -118,7 +112,7 @@ const OrderConfirmation = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Tên đội</p>
-                <p className="font-medium">{order.teamName}</p>
+                <p className="font-medium">{order.teamName || "Không có tên"}</p>
               </div>
               
               <div>
@@ -141,7 +135,6 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
-            {/* Design images section */}
             {(designImageFrontUrl || designImageBackUrl) && (
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">Hình ảnh thiết kế</h3>
@@ -192,7 +185,6 @@ const OrderConfirmation = () => {
               </div>
             )}
 
-            {/* Reference images section */}
             {referenceImageUrls.length > 0 && (
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">Hình ảnh tham khảo</h3>
@@ -246,7 +238,6 @@ const OrderConfirmation = () => {
         </div>
       </div>
 
-      {/* Image preview dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
