@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -364,20 +363,20 @@ const AdminOrders = () => {
         'Đã hoàn thành'
       }`);
 
-      // Log action for audit trail
-      await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: user?.id,
-          action: 'update_status',
-          table_name: 'orders',
-          row_id: orderId,
-          old_value: orders.find(order => order.id === orderId)?.status,
-          new_value: newStatus,
-          created_at: new Date().toISOString()
-        })
-        .catch(error => console.error("Error logging audit trail:", error));
-
+      // Log action for audit trail - use a direct SQL execution approach instead
+      try {
+        await supabase.rpc('log_audit_action', {
+          user_id_param: user?.id,
+          action_param: 'update_status',
+          table_name_param: 'orders',
+          row_id_param: orderId,
+          old_value_param: orders.find(order => order.id === orderId)?.status,
+          new_value_param: newStatus
+        });
+      } catch (auditErr) {
+        console.error("Error logging audit trail:", auditErr);
+        // Don't block the main operation if audit logging fails
+      }
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Có lỗi khi cập nhật trạng thái đơn hàng");

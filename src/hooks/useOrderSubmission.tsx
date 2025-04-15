@@ -291,7 +291,6 @@ export const useOrderSubmission = ({
     setIsSubmitting(true);
     
     try {
-      // First update customer info
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({

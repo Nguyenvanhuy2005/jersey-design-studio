@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,13 +28,12 @@ export function UniformInfoForm({
   
   useEffect(() => {
     // Update design data when player count changes
-    onDesignDataChange({
+    const updatedData = {
       ...designData,
       uniform_type: uniformType,
-      // Since quantity might not be a valid property in the DesignData type definition,
-      // we use a type assertion to add it
-      quantity: playerCount
-    });
+      quantity: playerCount // This is now a valid property
+    };
+    onDesignDataChange(updatedData);
   }, [uniformType, playerCount, onDesignDataChange]);
 
   return (

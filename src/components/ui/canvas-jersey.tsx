@@ -1,3 +1,7 @@
+
+// Fix for the "Expected 2 arguments, but got 1" error on line 70
+// We need to modify the function call that's causing the issue
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -6,7 +10,7 @@ import { useDragLogos } from '@/components/jersey/useDragLogos';
 import { JerseyFront } from '@/components/jersey/JerseyFront';
 import { JerseyBack } from '@/components/jersey/JerseyBack';
 import { JerseyPants } from '@/components/jersey/JerseyPants';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -67,12 +71,13 @@ export function CanvasJersey({
   useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
-      loadCustomFont(customFontUrl).then(fontFace => {
-        setFontFace(fontFace);
-        setLoadedFont(true);
-      }).catch(error => {
-        console.error("Error loading custom font:", error);
-      });
+      loadCustomFont(customFontUrl, 'Custom Font') // Fix: Adding the second parameter 'Custom Font' as font name
+        .then(fontFace => {
+          setFontFace(fontFace);
+          setLoadedFont(true);
+        }).catch(error => {
+          console.error("Error loading custom font:", error);
+        });
     } else {
       setLoadedFont(true);
     }

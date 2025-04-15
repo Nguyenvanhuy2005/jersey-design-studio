@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -7,7 +6,6 @@ export interface Player {
   printImage: boolean;
   imageFront?: string;
   imageBack?: string;
-  // Add missing player properties
   uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
   line_2?: string;
@@ -34,7 +32,6 @@ export interface Logo {
   id: string;
   url?: string;
   position: LogoPosition;
-  // Add missing logo properties
   file?: File;
   previewUrl?: string;
 }
@@ -50,7 +47,6 @@ export interface PrintConfig {
   sleeveColor: string;
   legMaterial: string;
   legColor: string;
-  // Add missing print config properties
   customFontFile?: File;
   customFontUrl?: string;
 }
@@ -83,7 +79,7 @@ export interface LogoPositionConfig {
 }
 
 export interface DesignData {
-  uniform_type: 'player' | 'goalkeeper';
+  uniform_type: 'player' | 'goalkeeper' | 'mixed';
   quantity?: number;
   chest_number: {
     enabled: boolean;
@@ -95,6 +91,7 @@ export interface DesignData {
     content: string;
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
+    font?: string;
   };
   logo_chest_left: {
     enabled: boolean;
@@ -152,7 +149,6 @@ export interface DesignData {
     font: string;
     font_file?: string;
   };
-  // Add missing design data properties
   line_1?: {
     enabled: boolean;
     content: string;
@@ -185,6 +181,9 @@ export interface DesignData {
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
   };
+  reference_images?: string[];
+  print_style?: string;
+  print_color?: string;
 }
 
 export interface Customer {

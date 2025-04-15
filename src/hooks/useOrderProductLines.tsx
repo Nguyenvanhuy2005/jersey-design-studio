@@ -191,7 +191,7 @@ export const useOrderProductLines = (
     
     const hasGoalkeeper = players.some(p => p.uniform_type === 'goalkeeper');
     if (hasGoalkeeper) {
-      newDesignData.uniform_type = 'mixed' as any;
+      newDesignData.uniform_type = 'mixed';
     }
     
     const firstPlayer = players[0];
@@ -201,25 +201,25 @@ export const useOrderProductLines = (
         enabled: true,
         material: printStyle,
         color: printColor as any,
-        content: firstPlayer.line_1 || "",
-        font: fontText
+        content: firstPlayer.line_1 || ""
       };
     }
     
-    newDesignData.line_2 = {
-      enabled: true,
-      material: printStyle,
-      color: printColor as any,
-      font: fontNumber
-    };
+    if (players.some(p => p.line_2)) {
+      newDesignData.line_2 = {
+        enabled: true,
+        material: printStyle,
+        color: printColor as any,
+        font: fontNumber
+      };
+    }
     
     if (players.some(p => p.line_3)) {
       newDesignData.line_3 = {
         enabled: true,
         material: printStyle,
         color: printColor as any,
-        content: firstPlayer.line_3 || "",
-        font: fontText
+        content: firstPlayer.line_3 || ""
       };
     }
     
@@ -228,8 +228,7 @@ export const useOrderProductLines = (
         enabled: true,
         material: printStyle,
         color: printColor as any,
-        content: firstPlayer.chest_text || "",
-        font: fontText
+        content: firstPlayer.chest_text || ""
       };
     }
     

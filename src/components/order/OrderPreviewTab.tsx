@@ -65,8 +65,8 @@ export function OrderPreviewTab({
         logos={logos}
         printConfig={printConfig}
         designData={designData}
-        canvasRef={jerseyCanvasRef}
-        canvasPantsRef={pantCanvasRef}
+        jerseyCanvasRef={jerseyCanvasRef}
+        pantCanvasRef={pantCanvasRef}
       />
       
       <div className="text-center p-2 bg-blue-50 rounded-md">

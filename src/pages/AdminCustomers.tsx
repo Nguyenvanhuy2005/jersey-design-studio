@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
@@ -39,54 +38,41 @@ const AdminCustomers = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // First get all customers
+      // First, fetch all customers
       const { data: customersData, error: customersError } = await supabase
-        .from('customers')
-        .select('*');
-        
-      if (customersError) {
-        throw customersError;
+        .from("customers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (customersError) throw customersError;
+
+      // For each customer, fetch their orders count in a separate query
+      if (customersData) {
+        const customersWithOrderCounts = await Promise.all(
+          customersData.map(async (customer) => {
+            const { count, error: countError } = await supabase
+              .from("orders")
+              .select("id", { count: 'exact', head: true })
+              .eq("customer_id", customer.id);
+            
+            return {
+              ...customer,
+              created_at: new Date(customer.created_at),
+              order_count: count || 0
+            };
+          })
+        );
+
+        setCustomers(customersWithOrderCounts);
+      } else {
+        setCustomers([]);
       }
-      
-      // Then get all users to match emails
-      const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) {
-        console.error("Error fetching users:", usersError);
-      }
-      
-      // Then get order counts
-      const { data: orderCountData, error: orderCountError } = await supabase
-        .from('orders')
-        .select('customer_id, count')
-        .group('customer_id');
-        
-      if (orderCountError) {
-        console.error("Error fetching order counts:", orderCountError);
-      }
-      
-      // Combine data
-      const enhancedCustomers = customersData.map(customer => {
-        // Find matching user
-        const matchingUser = usersData?.users?.find(user => user.id === customer.id);
-        
-        // Find order count
-        const orderCount = orderCountData?.find(item => item.customer_id === customer.id)?.count || 0;
-        
-        return {
-          ...customer,
-          email: matchingUser?.email || "Không có email",
-          order_count: orderCount
-        };
-      });
-      
-      setCustomers(enhancedCustomers);
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      setError("Không thể tải danh sách khách hàng");
-      toast.error("Không thể tải danh sách khách hàng");
+    } catch (err) {
+      console.error("Error fetching customers:", err);
+      setError(err.message || "Error fetching customers data");
+      toast.error("Could not load customer data");
     } finally {
       setLoading(false);
     }
