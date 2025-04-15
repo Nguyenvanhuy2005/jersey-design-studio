@@ -17,7 +17,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { checkDesignImageExists, checkStorageBucketsExist, createStorageBucketsIfNeeded } from "@/utils/image-utils";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -338,9 +337,8 @@ const AdminOrders = () => {
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      }`);
+      });
 
-      // Fix the template literal syntax by using regular string concatenation
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
       console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
     } catch (error) {
@@ -408,31 +406,33 @@ const AdminOrders = () => {
   };
 
   if (isLoading || (fetchingData && orders.length === 0)) {
-    return <Layout>
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    </Layout>;
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
   }
 
-  return <Layout>
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
-        
-        <div className="flex gap-2 items-center">
-          {user && <div className="flex items-center mr-4">
-            <span className="text-sm mr-2">{user.email}</span>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-1">
-              <LogOut className="h-4 w-4" /> Đăng xuất
-            </Button>
-          </div>}
+  return (
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
+          
+          <div className="flex gap-2 items-center">
+            {user && <div className="flex items-center mr-4">
+              <span className="text-sm mr-2">{user.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-1">
+                <LogOut className="h-4 w-4" /> Đăng xuất
+              </Button>
+            </div>}
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-muted/30 p-4 rounded-md mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+        
+        <div className="bg-muted/30 p-4 rounded-md mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -528,66 +528,67 @@ const AdminOrders = () => {
           </div>
         </div>
         
-      {fetchError && (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
-          <div className="flex gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            <div>
-              <h3 className="font-medium text-red-800">Lỗi tải dữ liệu</h3>
-              <p className="text-sm text-red-700 mt-1">{fetchError}</p>
+        {fetchError && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-medium text-red-800">Lỗi tải dữ liệu</h3>
+                <p className="text-sm text-red-700 mt-1">{fetchError}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      <div className="bg-card rounded-md shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-left">ID</th>
-                <th className="p-3 text-left">Khách hàng</th>
-                <th className="p-3 text-left">Số lượng áo</th>
-                <th className="p-3 text-left">Tổng chi phí</th>
-                <th className="p-3 text-left">Trạng thái</th>
-                <th className="p-3 text-left">Ngày tạo</th>
-                <th className="p-3 text-left">Thiết kế</th>
-                <th className="p-3 text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fetchingData ? (
+        )}
+        
+        <div className="bg-card rounded-md shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted">
                 <tr>
-                  <td colSpan={9} className="p-4 text-center">
-                    <div className="flex justify-center items-center">
-                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                      <span>Đang tải dữ liệu...</span>
-                    </div>
-                  </td>
+                  <th className="p-3 text-left">ID</th>
+                  <th className="p-3 text-left">Khách hàng</th>
+                  <th className="p-3 text-left">Số lượng áo</th>
+                  <th className="p-3 text-left">Tổng chi phí</th>
+                  <th className="p-3 text-left">Trạng thái</th>
+                  <th className="p-3 text-left">Ngày tạo</th>
+                  <th className="p-3 text-left">Thiết kế</th>
+                  <th className="p-3 text-center">Hành động</th>
                 </tr>
-              ) : (
-                <OrdersList 
-                  orders={orders} 
-                  statusFilter={statusFilter} 
-                  onViewDetails={handleViewDetails} 
-                  onViewImage={handleViewImage} 
-                  onStatusChange={handleStatusChange} 
-                />
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {fetchingData ? (
+                  <tr>
+                    <td colSpan={9} className="p-4 text-center">
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        <span>Đang tải dữ liệu...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <OrdersList 
+                    orders={orders} 
+                    statusFilter={statusFilter} 
+                    onViewDetails={handleViewDetails} 
+                    onViewImage={handleViewImage} 
+                    onStatusChange={handleStatusChange} 
+                  />
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        {selectedOrder && <OrderDetails order={selectedOrder} onViewImage={handleViewImage} onStatusChange={handleStatusChange} />}
-      </DialogContent>
-    </Dialog>
-    
-    <ImageViewer isOpen={!!selectedImage} onClose={handleCloseImageViewer} imageUrl={selectedImage} />
-  </Layout>;
+      
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedOrder && <OrderDetails order={selectedOrder} onViewImage={handleViewImage} onStatusChange={handleStatusChange} />}
+        </DialogContent>
+      </Dialog>
+      
+      <ImageViewer isOpen={!!selectedImage} onClose={handleCloseImageViewer} imageUrl={selectedImage} />
+    </Layout>
+  );
 };
 
 export default AdminOrders;
