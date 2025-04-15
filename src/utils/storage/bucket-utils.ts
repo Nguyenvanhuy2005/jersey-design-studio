@@ -73,8 +73,6 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
     const { designImages, referenceImages, error } = await checkStorageBucketsExist();
     
     if (error) {
-      // If we can't check buckets due to permissions, assume they exist
-      // This fixes the issue where RLS policy prevents bucket creation but buckets already exist
       console.warn(`Unable to check buckets: ${error}. Assuming they exist and continuing...`);
       return { 
         success: true, 
@@ -92,18 +90,13 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
         });
         
         if (createError) {
-          // If error is due to RLS policy, assume bucket exists and continue
-          if (createError.message.includes('row-level security policy')) {
-            console.warn("Unable to create design_images bucket due to RLS policy. Assuming it exists.");
-          } else {
-            console.error("Error creating design_images bucket:", createError);
-          }
+          console.error("Error creating design_images bucket:", createError);
         } else {
           console.log("Successfully created design_images bucket");
           created.designImages = true;
         }
       } catch (err) {
-        console.warn("Exception creating design_images bucket. Assuming it exists:", err);
+        console.warn("Exception creating design_images bucket:", err);
       }
     } else {
       console.log("design_images bucket already exists");
@@ -118,24 +111,18 @@ export const createStorageBucketsIfNeeded = async (): Promise<{
         });
         
         if (createError) {
-          // If error is due to RLS policy, assume bucket exists and continue
-          if (createError.message.includes('row-level security policy')) {
-            console.warn("Unable to create reference_images bucket due to RLS policy. Assuming it exists.");
-          } else {
-            console.error("Error creating reference_images bucket:", createError);
-          }
+          console.error("Error creating reference_images bucket:", createError);
         } else {
           console.log("Successfully created reference_images bucket");
           created.referenceImages = true;
         }
       } catch (err) {
-        console.warn("Exception creating reference_images bucket. Assuming it exists:", err);
+        console.warn("Exception creating reference_images bucket:", err);
       }
     } else {
       console.log("reference_images bucket already exists");
     }
     
-    // Success if we either created buckets or they already existed
     return { 
       success: true, 
       message: 'Buckets check completed',

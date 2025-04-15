@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -92,8 +93,11 @@ const CustomerDashboard = () => {
       
       if (data) {
         // Convert database orders to application Order type
-        // Each order in data now includes players, logos, etc. as JSONB arrays
-        const convertedOrders = data.map(order => dbOrderToOrder(order));
+        // Each order now includes players, logos, etc. as JSONB arrays
+        const convertedOrders = data.map((order: any) => {
+          console.log("Raw order data:", order);
+          return dbOrderToOrder(order as any);
+        });
         setOrders(convertedOrders);
       }
     } catch (error) {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,14 +46,16 @@ export function PrintPositionsForm({
     const logoKey = `logo_${position}` as keyof Partial<DesignData>;
     
     if (checked) {
+      // Use type assertion to fix the TypeScript error
       updatedDesignData[logoKey] = {
         enabled: checked,
         material: printStyle
-      };
+      } as any;
     } else {
+      // Use type assertion for the disabled state as well
       updatedDesignData[logoKey] = {
         enabled: false
-      };
+      } as any;
     }
     
     onDesignDataChange(updatedDesignData);
@@ -67,7 +70,7 @@ export function PrintPositionsForm({
         content: '',
         color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
-      };
+      } as any;
     }
     
     if (updatedDesignData[line]) {

@@ -13,13 +13,17 @@ export interface DbOrder {
   design_image: string | null;
   design_image_front: string | null;
   design_image_back: string | null;
-  reference_images: any;
+  reference_images: string[] | any;
   customer_id: string | null;
   total_cost: number;
-  players: any; // Now a JSONB array in the new structure
-  logos: any; // Now a JSONB array in the new structure
-  product_lines: any; // Now a JSONB array in the new structure
-  print_config: any; // Now a JSONB object in the new structure
+  logo_url?: string | null;
+  
+  // The following fields are now expected to be part of the JSONB data in the database
+  // They are optional in the type to handle both old and new data structures
+  players?: any; // For JSONB arrays in the new structure
+  logos?: any; // For JSONB arrays in the new structure
+  product_lines?: any; // For JSONB arrays in the new structure
+  print_config?: any; // For JSONB object in the new structure
   players_count?: number; // Added for new schema
   completed_at?: string; // Added for new schema
 }
@@ -49,47 +53,54 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
 
 /**
  * Converts a database order to application Order model
+ * This function has been updated to handle the new database schema with JSONB fields
  */
 export function dbOrderToOrder(dbOrder: DbOrder): Order {
-  // Parse players from JSONB
+  // Parse players from JSONB or direct array
   let players: Player[] = [];
-  if (dbOrder.players && Array.isArray(dbOrder.players)) {
-    players = dbOrder.players.map((p: any) => ({
-      id: p.id,
-      name: p.name || "",
-      number: String(p.number),
-      size: p.size as 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL',
-      printImage: p.print_image || false,
-    }));
+  if (dbOrder.players) {
+    if (Array.isArray(dbOrder.players)) {
+      players = dbOrder.players.map((p: any) => ({
+        id: p.id || '',
+        name: p.name || "",
+        number: String(p.number || 0),
+        size: p.size as 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL',
+        printImage: p.print_image || false,
+      }));
+    }
   }
 
   // Parse reference images
   let refImages: string[] = [];
-  if (typeof dbOrder.reference_images === 'string') {
-    try {
-      refImages = JSON.parse(dbOrder.reference_images);
-    } catch (e) {
-      refImages = [];
+  if (dbOrder.reference_images) {
+    if (typeof dbOrder.reference_images === 'string') {
+      try {
+        refImages = JSON.parse(dbOrder.reference_images);
+      } catch (e) {
+        refImages = [];
+      }
+    } else if (Array.isArray(dbOrder.reference_images)) {
+      refImages = dbOrder.reference_images.filter(item => typeof item === 'string').map(item => String(item));
     }
-  } else if (Array.isArray(dbOrder.reference_images)) {
-    refImages = dbOrder.reference_images;
   }
 
   // Parse product lines from JSONB
   let productLines: any[] = [];
-  if (dbOrder.product_lines && Array.isArray(dbOrder.product_lines)) {
-    productLines = dbOrder.product_lines.map((pl: any) => ({
-      id: pl.id,
-      product: pl.product || "",
-      position: pl.position || "",
-      material: pl.material || "",
-      size: pl.size || "",
-      points: pl.points || 0,
-      content: pl.content || ""
-    }));
+  if (dbOrder.product_lines) {
+    if (Array.isArray(dbOrder.product_lines)) {
+      productLines = dbOrder.product_lines.map((pl: any) => ({
+        id: pl.id || '',
+        product: pl.product || "",
+        position: pl.position || "",
+        material: pl.material || "",
+        size: pl.size || "",
+        points: pl.points || 0,
+        content: pl.content || ""
+      }));
+    }
   }
 
-  // Parse print config from JSONB
+  // Parse print config from JSONB or use defaults
   const printConfig = dbOrder.print_config || {
     font: "Arial",
     backMaterial: "In chuyển nhiệt",
