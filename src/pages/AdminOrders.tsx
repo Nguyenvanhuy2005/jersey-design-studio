@@ -14,6 +14,7 @@ import { ImageViewer } from "@/components/admin/ImageViewer";
 import { OrderFilters } from "@/components/admin/order-list/OrderFilters";
 import { OrdersError } from "@/components/admin/order-list/OrdersError";
 import { useOrders } from "@/hooks/useOrders";
+import { format } from "date-fns";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ const AdminOrders = () => {
       const updatedOrders = orders.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
       );
-      setOrders(updatedOrders);
+      fetchOrders();
       
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
