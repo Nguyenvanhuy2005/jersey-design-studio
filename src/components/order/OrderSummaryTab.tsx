@@ -2,12 +2,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Player, Order, ProductLine, Customer } from "@/types";
+import { Player, Logo, ProductLine, Customer } from "@/types";
 import { OrderPlayersTable } from "./OrderPlayersTable";
 
 interface OrderSummaryTabProps {
   isDemoApproved: boolean;
   players: Player[];
+  logos: Logo[];
   productLines: ProductLine[];
   customerInfo: Customer;
   isSubmitting: boolean;
@@ -16,6 +17,9 @@ interface OrderSummaryTabProps {
   jerseyCanvasRef: React.RefObject<HTMLCanvasElement>;
   pantCanvasRef: React.RefObject<HTMLCanvasElement>;
   referenceImagesPreview: string[];
+  calculateTotalCost: () => number;
+  getPlayerAndGoalkeeperCounts: () => { playerCount: number; goalkeeperCount: number };
+  onProductLinesChange: React.Dispatch<React.SetStateAction<ProductLine[]>>;
 }
 
 export function OrderSummaryTab({
