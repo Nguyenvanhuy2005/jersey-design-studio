@@ -39,11 +39,11 @@ export const OrderBasicInfo = ({ order }: OrderBasicInfoProps) => {
         <div className="mt-2 pt-2 border-t">
           <h4 className="font-medium mb-1">Thông tin khách hàng</h4>
           <p><span className="text-muted-foreground">Tên khách hàng:</span> {order.customerName || 'Không xác định'}</p>
-          {order.customerEmail && (
-            <p><span className="text-muted-foreground">Email:</span> {order.customerEmail}</p>
-          )}
           {order.customerPhone && (
             <p><span className="text-muted-foreground">Số điện thoại:</span> {order.customerPhone}</p>
+          )}
+          {order.customerAddress && (
+            <p><span className="text-muted-foreground">Địa chỉ:</span> {order.customerAddress}</p>
           )}
         </div>
         

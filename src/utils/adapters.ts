@@ -4,7 +4,7 @@ import { Order, Player } from "@/types";
 // Define types for raw database models
 export interface DbOrder {
   id: string;
-  team_name: string | null;
+  team_name?: string | null;
   status: string;
   notes: string | null;
   created_at: string;
@@ -17,16 +17,14 @@ export interface DbOrder {
   customer_id: string | null;
   total_cost: number;
   logo_url?: string | null;
-  customers?: any; // For joined customer data
-  
-  // The following fields are now expected to be part of the JSONB data in the database
-  // They are optional in the type to handle both old and new data structures
-  players?: any; // For JSONB arrays in the new structure
-  logos?: any; // For JSONB arrays in the new structure
-  product_lines?: any; // For JSONB arrays in the new structure
-  print_config?: any; // For JSONB object in the new structure
-  players_count?: number; // Added for new schema
-  completed_at?: string; // Added for new schema
+}
+
+export interface DbCustomer {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  address: string | null;
+  delivery_note?: string | null;
 }
 
 export interface DbPlayer {
@@ -36,6 +34,31 @@ export interface DbPlayer {
   number: number;
   print_image: boolean | null;
   design_image: string | null;
+}
+
+export interface DbPrintConfig {
+  id: string;
+  font: string | null;
+  back_material: string | null;
+  back_color: string | null;
+  front_material: string | null;
+  front_color: string | null;
+  sleeve_material: string | null;
+  sleeve_color: string | null;
+  leg_material: string | null;
+  leg_color: string | null;
+  font_file: string | null;
+  logo_positions: any | null;
+}
+
+export interface DbProductLine {
+  id: string;
+  product: string;
+  position: string;
+  material: string;
+  size: string;
+  points: number | null;
+  content: string | null;
 }
 
 /**
@@ -53,103 +76,108 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
 }
 
 /**
- * Converts a database order to application Order model
- * This function has been updated to handle the new database schema with JSONB fields
+ * Parse reference images from different formats
  */
-export function dbOrderToOrder(dbOrder: DbOrder): Order {
-  // Parse players from JSONB or direct array
-  let players: Player[] = [];
-  if (dbOrder.players) {
-    if (Array.isArray(dbOrder.players)) {
-      players = dbOrder.players.map((p: any) => ({
-        id: p.id || '',
-        name: p.name || "",
-        number: String(p.number || 0),
-        size: p.size as 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL',
-        printImage: p.print_image || false,
-      }));
+export function parseReferenceImages(referenceImages: any): string[] {
+  if (!referenceImages) return [];
+  
+  if (typeof referenceImages === 'string') {
+    try {
+      return JSON.parse(referenceImages);
+    } catch {
+      return [];
     }
   }
+  
+  if (Array.isArray(referenceImages)) {
+    return referenceImages.filter(item => typeof item === 'string').map(String);
+  }
+  
+  return [];
+}
 
+/**
+ * Extracts team name from order data
+ */
+export function extractTeamName(order: DbOrder): string {
+  if (order.team_name) return order.team_name;
+  
+  if (order.design_data && typeof order.design_data === 'object') {
+    return (order.design_data as any)?.team_name || '';
+  }
+  
+  return '';
+}
+
+/**
+ * Converts a database order with related data to application Order model
+ */
+export function dbOrderToOrder(
+  dbOrder: DbOrder, 
+  customer?: DbCustomer, 
+  players?: DbPlayer[], 
+  productLines?: DbProductLine[],
+  printConfig?: DbPrintConfig
+): Order {
   // Parse reference images
-  let refImages: string[] = [];
-  if (dbOrder.reference_images) {
-    if (typeof dbOrder.reference_images === 'string') {
-      try {
-        refImages = JSON.parse(dbOrder.reference_images);
-      } catch (e) {
-        refImages = [];
-      }
-    } else if (Array.isArray(dbOrder.reference_images)) {
-      refImages = dbOrder.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-    }
-  }
-
-  // Parse product lines from JSONB
-  let productLines: any[] = [];
-  if (dbOrder.product_lines) {
-    if (Array.isArray(dbOrder.product_lines)) {
-      productLines = dbOrder.product_lines.map((pl: any) => ({
-        id: pl.id || '',
-        product: pl.product || "",
-        position: pl.position || "",
-        material: pl.material || "",
-        size: pl.size || "",
-        points: pl.points || 0,
-        content: pl.content || ""
-      }));
-    }
-  }
-
-  // Parse print config from JSONB or use defaults
-  const printConfig = dbOrder.print_config || {
-    font: "Arial",
-    backMaterial: "In chuyển nhiệt",
-    backColor: "Đen",
-    frontMaterial: "In chuyển nhiệt",
-    frontColor: "Đen",
-    sleeveMaterial: "In chuyển nhiệt",
-    sleeveColor: "Đen",
-    legMaterial: "In chuyển nhiệt",
-    legColor: "Đen"
+  const refImages = parseReferenceImages(dbOrder.reference_images);
+  
+  // Get team name
+  const teamName = extractTeamName(dbOrder);
+  
+  // Default print config if none provided
+  const defaultPrintConfig = {
+    id: dbOrder.id,
+    font: 'Arial',
+    backMaterial: 'In chuyển nhiệt',
+    backColor: 'Đen',
+    frontMaterial: 'In chuyển nhiệt',
+    frontColor: 'Đen',
+    sleeveMaterial: 'In chuyển nhiệt',
+    sleeveColor: 'Đen',
+    legMaterial: 'In chuyển nhiệt',
+    legColor: 'Đen',
   };
-
-  // Extract customer data if available
-  let customerName = undefined;
-  let customerEmail = undefined;
-  let customerPhone = undefined;
-  let customerAddress = undefined;
-
-  if (dbOrder.customers) {
-    customerName = dbOrder.customers.name;
-    customerEmail = dbOrder.customers.email;
-    customerPhone = dbOrder.customers.phone;
-    customerAddress = dbOrder.customers.address;
-  }
-
-  // Get team name from order data or design data
-  let teamName = dbOrder.team_name || '';
-  if (!teamName && dbOrder.design_data?.team_name) {
-    teamName = dbOrder.design_data.team_name;
-  }
+  
+  const processedPrintConfig = printConfig ? {
+    id: printConfig.id,
+    font: printConfig.font || 'Arial',
+    backMaterial: printConfig.back_material || 'In chuyển nhiệt',
+    backColor: printConfig.back_color || 'Đen',
+    frontMaterial: printConfig.front_material || 'In chuyển nhiệt',
+    frontColor: printConfig.front_color || 'Đen',
+    sleeveMaterial: printConfig.sleeve_material || 'In chuyển nhiệt',
+    sleeveColor: printConfig.sleeve_color || 'Đen',
+    legMaterial: printConfig.leg_material || 'In chuyển nhiệt',
+    legColor: printConfig.leg_color || 'Đen'
+  } : defaultPrintConfig;
+  
+  // Process players
+  const processedPlayers = players ? players.map(player => ({
+    id: player.id,
+    name: player.name || "",
+    number: String(player.number),
+    size: player.size as 'S' | 'M' | 'L' | 'XL',
+    printImage: player.print_image || false
+  })) : [];
+  
+  // Process product lines
+  const processedProductLines = productLines ? productLines.map(line => ({
+    id: line.id,
+    product: line.product,
+    position: line.position,
+    material: line.material,
+    size: line.size,
+    points: line.points || 0,
+    content: line.content || ''
+  })) : [];
 
   // Create a valid Order object
   return {
     id: dbOrder.id,
-    players: players,
-    printConfig: {
-      id: dbOrder.id,
-      font: printConfig.font || "Arial",
-      backMaterial: printConfig.back_material || printConfig.backMaterial || "In chuyển nhiệt",
-      backColor: printConfig.back_color || printConfig.backColor || "Đen",
-      frontMaterial: printConfig.front_material || printConfig.frontMaterial || "In chuyển nhiệt",
-      frontColor: printConfig.front_color || printConfig.frontColor || "Đen",
-      sleeveMaterial: printConfig.sleeve_material || printConfig.sleeveMaterial || "In chuyển nhiệt",
-      sleeveColor: printConfig.sleeve_color || printConfig.sleeveColor || "Đen",
-      legMaterial: printConfig.leg_material || printConfig.legMaterial || "In chuyển nhiệt",
-      legColor: printConfig.leg_color || printConfig.legColor || "Đen",
-    },
-    productLines: productLines,
+    players: processedPlayers,
+    printConfig: processedPrintConfig,
+    productLines: processedProductLines,
     totalCost: dbOrder.total_cost || 0,
     status: dbOrder.status as 'new' | 'processing' | 'completed',
     createdAt: new Date(dbOrder.created_at),
@@ -160,10 +188,9 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
     referenceImages: refImages,
     designData: dbOrder.design_data,
     customerId: dbOrder.customer_id,
-    customerName: customerName,
-    customerEmail: customerEmail,
-    customerPhone: customerPhone,
-    customerAddress: customerAddress,
-    teamName: teamName || dbOrder.design_data?.team_name || ""
+    customerName: customer?.name || "Không xác định",
+    customerPhone: customer?.phone || undefined,
+    customerAddress: customer?.address || undefined,
+    teamName
   };
 }

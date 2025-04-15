@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { dbOrderToOrder } from "@/utils/adapters";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const AdminOrders = () => {
     to: Date | undefined;
   }>({
     from: searchParams.get("dateFrom") ? new Date(searchParams.get("dateFrom") || "") : undefined,
-    to: searchParams.get("dateTo") ? new Date(searchParams.get("dateTo") || "") : undefined,
+    to: searchParams.get("dateTo") ? new Date(dateTo || "") : undefined,
   });
   const [customersList, setCustomersList] = useState<{ id: string; name: string }[]>([]);
 
@@ -97,15 +98,10 @@ const AdminOrders = () => {
     setFetchError(null);
     console.log("Fetching orders data...");
     try {
+      // Use separate queries to fetch orders and related data to avoid relationship ambiguity
       let query = supabase
         .from('orders')
-        .select(`
-          *,
-          players(*),
-          product_lines(*),
-          print_configs(*),
-          customers(name, email, phone, address)
-        `);
+        .select('*');
       
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -113,10 +109,6 @@ const AdminOrders = () => {
       
       if (customerFilter && customerFilter !== 'all') {
         query = query.eq('customer_id', customerFilter);
-      }
-      
-      if (searchTerm) {
-        query = query.or(`customers.name.ilike.%${searchTerm}%`);
       }
       
       if (dateRange.from) {
@@ -131,79 +123,102 @@ const AdminOrders = () => {
       
       query = query.order('created_at', { ascending: false });
       
-      const { data, error } = await query;
+      const { data: ordersData, error: ordersError } = await query;
       
-      if (error) {
-        console.error("Error fetching orders:", error);
-        setFetchError(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
-        toast.error(`Không thể tải dữ liệu đơn hàng: ${error.message}`);
+      if (ordersError) {
+        console.error("Error fetching orders:", ordersError);
+        setFetchError(`Không thể tải dữ liệu đơn hàng: ${ordersError.message}`);
+        toast.error(`Không thể tải dữ liệu đơn hàng: ${ordersError.message}`);
         setOrders([]);
         setFetchingData(false);
         return;
       }
       
-      if (!data || data.length === 0) {
+      if (!ordersData || ordersData.length === 0) {
         console.log("No orders found");
         setOrders([]);
         setFetchingData(false);
         return;
       }
       
-      console.log("Raw orders data:", data);
+      console.log("Raw orders data:", ordersData);
       
-      const transformedOrders: Order[] = await Promise.all(data.map(async order => {
-        let processedReferenceImages: string[] = [];
-        if (order.reference_images && Array.isArray(order.reference_images)) {
-          processedReferenceImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-        }
-        
-        if (order.design_data) {
-          const designData = order.design_data as {
-            reference_images?: any[];
-          };
-          if (designData && typeof designData === 'object' && designData.reference_images && Array.isArray(designData.reference_images)) {
-            const refImagesFromDesignData = designData.reference_images.filter(item => typeof item === 'string').map(item => String(item));
-            processedReferenceImages = [...processedReferenceImages, ...refImagesFromDesignData];
-          }
-        }
-        
-        let designImageFront = order.design_image_front || order.design_image || '';
-        let designImageBack = order.design_image_back || '';
-        
-        console.log(`Order ${order.id} design images:`, {
-          front: designImageFront,
-          back: designImageBack
-        });
-        
+      // Process orders with related data
+      const transformedOrders: Order[] = await Promise.all(ordersData.map(async order => {
+        // Fetch customer data separately to avoid relationship ambiguity
         let customerName = "Không xác định";
         let customerEmail = undefined;
         let customerPhone = undefined;
         let customerAddress = undefined;
         
-        if (order.customers) {
-          customerName = order.customers.name || "Không xác định";
-          customerEmail = order.customers.email;
-          customerPhone = order.customers.phone;
-          customerAddress = order.customers.address;
-        } else if (order.customer_id) {
+        if (order.customer_id) {
           const { data: customerData } = await supabase
             .from('customers')
-            .select('name, email, phone, address')
+            .select('name, phone, address')
             .eq('id', order.customer_id)
             .single();
             
           if (customerData) {
             customerName = customerData.name || "Không xác định";
-            customerEmail = customerData.email;
             customerPhone = customerData.phone;
             customerAddress = customerData.address;
           }
         }
-
+        
+        // Fetch players data
+        const { data: playersData } = await supabase
+          .from('players')
+          .select('*')
+          .eq('order_id', order.id);
+          
+        const players = playersData ? playersData.map(player => ({
+          id: player.id,
+          name: player.name || '',
+          number: String(player.number),
+          size: player.size as 'S' | 'M' | 'L' | 'XL',
+          printImage: player.print_image || false
+        })) : [];
+        
+        // Fetch product lines data
+        const { data: productLinesData } = await supabase
+          .from('product_lines')
+          .select('*')
+          .eq('order_id', order.id);
+          
+        const productLines = productLinesData ? productLinesData.map(line => ({
+          id: line.id,
+          product: line.product,
+          position: line.position,
+          material: line.material,
+          size: line.size,
+          points: line.points || 0,
+          content: line.content || ''
+        })) : [];
+        
+        // Fetch print config data
+        const { data: printConfigData } = await supabase
+          .from('print_configs')
+          .select('*')
+          .eq('order_id', order.id)
+          .single();
+          
+        // Parse reference images
+        let refImages: string[] = [];
+        if (order.reference_images) {
+          if (typeof order.reference_images === 'string') {
+            try {
+              refImages = JSON.parse(order.reference_images);
+            } catch (e) {
+              refImages = [];
+            }
+          } else if (Array.isArray(order.reference_images)) {
+            refImages = order.reference_images.filter(item => typeof item === 'string').map(item => String(item));
+          }
+        }
+        
+        // Extract team name
         let teamName = '';
-        if (order.team_name) {
-          teamName = order.team_name;
-        } else if (order.design_data && typeof order.design_data === 'object') {
+        if (order.design_data && typeof order.design_data === 'object') {
           teamName = (order.design_data as any)?.team_name || '';
         }
         
@@ -216,40 +231,26 @@ const AdminOrders = () => {
           designImage: order.design_image || '',
           designImageFront: order.design_image_front || '',
           designImageBack: order.design_image_back || '',
-          referenceImages: processedReferenceImages,
+          referenceImages: refImages,
           customerName: customerName,
           customerId: order.customer_id,
           customerEmail: customerEmail,
           customerPhone: customerPhone,
           customerAddress: customerAddress,
           teamName: teamName,
-          players: order.players ? order.players.map((player: any) => ({
-            id: player.id,
-            name: player.name || '',
-            number: player.number,
-            size: player.size as 'S' | 'M' | 'L' | 'XL',
-            printImage: player.print_image || false
-          })) : [],
-          productLines: order.product_lines ? order.product_lines.map((line: any) => ({
-            id: line.id,
-            product: line.product,
-            position: line.position,
-            material: line.material,
-            size: line.size,
-            points: line.points || 0,
-            content: line.content || ''
-          })) : [],
-          printConfig: order.print_configs && order.print_configs.length > 0 ? {
-            id: order.print_configs[0].id,
-            font: order.print_configs[0].font || 'Arial',
-            backMaterial: order.print_configs[0].back_material || '',
-            backColor: order.print_configs[0].back_color || '',
-            frontMaterial: order.print_configs[0].front_material || '',
-            frontColor: order.print_configs[0].front_color || '',
-            sleeveMaterial: order.print_configs[0].sleeve_material || '',
-            sleeveColor: order.print_configs[0].sleeve_color || '',
-            legMaterial: order.print_configs[0].leg_material || '',
-            legColor: order.print_configs[0].leg_color || ''
+          players: players,
+          productLines: productLines,
+          printConfig: printConfigData ? {
+            id: printConfigData.id,
+            font: printConfigData.font || 'Arial',
+            backMaterial: printConfigData.back_material || 'In chuyển nhiệt',
+            backColor: printConfigData.back_color || 'Đen',
+            frontMaterial: printConfigData.front_material || 'In chuyển nhiệt',
+            frontColor: printConfigData.front_color || 'Đen',
+            sleeveMaterial: printConfigData.sleeve_material || 'In chuyển nhiệt',
+            sleeveColor: printConfigData.sleeve_color || 'Đen',
+            legMaterial: printConfigData.leg_material || 'In chuyển nhiệt',
+            legColor: printConfigData.leg_color || 'Đen'
           } : {
             font: 'Arial',
             backMaterial: 'In chuyển nhiệt',

@@ -35,6 +35,9 @@ export const OrderTableRow = ({
           {order.teamName && (
             <p className="text-xs text-muted-foreground">Đội: {order.teamName}</p>
           )}
+          {order.customerPhone && (
+            <p className="text-xs text-muted-foreground">SĐT: {order.customerPhone}</p>
+          )}
         </div>
       </td>
       <td className="p-3">{order.players.length}</td>
