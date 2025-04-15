@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface JerseyBackProps {
@@ -63,33 +64,34 @@ export const JerseyBack = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   
-  // Draw player name (top)
+  // Draw player name (top) - positioned at the upper part of jersey
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 90; // Doubled from 45 to match the scaling
+    const fontSize = 90;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 300, 100); // Adjusted positions to match new scaling
+    ctx.fillText(playerNameDisplayed, 150, 80); // Centered horizontally (150), upper back (80)
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
-  // Draw player number (middle)
+  // Draw player number (middle) - positioned in center of jersey
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 600; // Doubled from 300 to match the scaling
+    const fontSize = 300;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(playerNumber, 300, 320); // Adjusted positions to match new scaling
+    ctx.fillText(playerNumber, 150, 160); // Centered horizontally (150), middle of jersey (160)
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
-  // Draw team name (bottom)
+  // Draw team name (bottom) - positioned at lower back
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 90; // Doubled from 45 to match the scaling
+    const fontSize = 90;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 300, 520); // Adjusted positions to match new scaling
+    ctx.fillText(teamName, 150, 240); // Centered horizontally (150), lower back (240)
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
   return null;
 };
+
