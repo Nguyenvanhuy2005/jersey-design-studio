@@ -25,7 +25,6 @@ interface PlayerFormProps {
   logos?: Logo[];
 }
 
-// Size configuration
 const SIZES = {
   adult: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const,
   kids: ['1', '3', '5', '7', '9', '11', '13', '15'] as const
@@ -93,7 +92,6 @@ export function PlayerForm({
     const updatedPlayers = [...players];
     
     if (isEditing && editingPlayerIndex !== null) {
-      // Check if number is used by another player (excluding the one being edited)
       const isDuplicateNumber = players.some((p, idx) => 
         idx !== editingPlayerIndex && p.number === newPlayer.number
       );
@@ -103,7 +101,6 @@ export function PlayerForm({
         return;
       }
       
-      // Update existing player
       updatedPlayers[editingPlayerIndex] = { 
         ...newPlayer, 
         id: players[editingPlayerIndex].id 
@@ -112,12 +109,9 @@ export function PlayerForm({
       onPlayersChange(updatedPlayers);
       toast.success("Cập nhật thông tin cầu thủ thành công");
       
-      // Reset edit state
       setIsEditing(false);
       setEditingPlayerIndex(null);
     } else {
-      // Add new player
-      // Check if number is already used
       if (players.some(p => p.number === newPlayer.number)) {
         toast.error(`Số áo ${newPlayer.number} đã được sử dụng`);
         return;
@@ -128,7 +122,6 @@ export function PlayerForm({
       toast.success("Thêm cầu thủ thành công");
     }
     
-    // Reset form
     setNewPlayer({
       name: "",
       number: "",
@@ -154,12 +147,10 @@ export function PlayerForm({
     updatedPlayers.splice(index, 1);
     onPlayersChange(updatedPlayers);
     
-    // If removing the player that's currently being edited, reset editing state
     if (isEditing && editingPlayerIndex === index) {
       setIsEditing(false);
       setEditingPlayerIndex(null);
       
-      // Reset form
       setNewPlayer({
         name: "",
         number: "",
@@ -196,7 +187,6 @@ export function PlayerForm({
     setIsEditing(false);
     setEditingPlayerIndex(null);
     
-    // Reset form
     setNewPlayer({
       name: "",
       number: "",
@@ -257,20 +247,15 @@ export function PlayerForm({
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        // Get the first worksheet
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert the worksheet to JSON
         const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
         
-        // Map Excel data to player objects
         const newPlayers: ExtendedPlayer[] = jsonData.map((row, index) => {
-          // Get the player number as a string to preserve leading zeros
           let playerNumber = row["SỐ"] !== undefined ? String(row["SỐ"]) : 
                              row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
           
-          // Convert the fields to match our Player type
           return {
             id: `player-${Date.now()}-${index}`,
             name: row["TÊN CẦU THỦ"] || "",
@@ -298,7 +283,6 @@ export function PlayerForm({
           };
         });
         
-        // Filter out invalid players (e.g., those without numbers)
         const validPlayers = newPlayers.filter(p => p.number && p.number !== "");
         
         if (validPlayers.length === 0) {
@@ -306,7 +290,6 @@ export function PlayerForm({
           return;
         }
         
-        // Check for duplicate numbers
         const numbers = validPlayers.map(p => p.number);
         const duplicateNumbers = numbers.filter((num, idx) => numbers.indexOf(num) !== idx);
         
@@ -314,7 +297,6 @@ export function PlayerForm({
           toast.warning(`Các số áo ${duplicateNumbers.join(', ')} bị trùng lặp trong file. Vui lòng kiểm tra lại.`);
         }
         
-        // Add the players from the Excel file
         const updatedPlayers = [...players, ...validPlayers];
         onPlayersChange(updatedPlayers);
         
@@ -327,7 +309,6 @@ export function PlayerForm({
     
     reader.readAsArrayBuffer(file);
     
-    // Reset file input
     e.target.value = "";
   };
 
@@ -459,7 +440,6 @@ export function PlayerForm({
           </div>
         )}
         
-        {/* Add player form */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-4 items-end">
           <div>
             <Label htmlFor="playerNumber">Số áo</Label>
@@ -553,8 +533,8 @@ export function PlayerForm({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          
+          <div className="grid grid-cols-3 gap-1 md:col-span-2">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="chestNumber"
@@ -563,7 +543,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, chest_number: checked === true }))
                 }
               />
-              <Label htmlFor="chestNumber">In số ngực</Label>
+              <Label htmlFor="chestNumber" className="text-xs">In số ngực</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -573,11 +553,11 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, pants_number: checked === true }))
                 }
               />
-              <Label htmlFor="pantsNumber">In số quần</Label>
+              <Label htmlFor="pantsNumber" className="text-xs">In số quần</Label>
             </div>
           </div>
           
-          <div className="grid grid-cols-3 gap-1 md:col-span-2">
+          <div className="grid grid-cols-3 gap-1 md:col-span-3">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="logoChestLeft"
@@ -641,23 +621,6 @@ export function PlayerForm({
               />
               <Label htmlFor="logoPants" className="text-xs">Logo quần</Label>
             </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="printStyle">Kiểu in</Label>
-            <Select 
-              value={newPlayer.print_style}
-              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
-            >
-              <SelectTrigger id="printStyle">
-                <SelectValue placeholder="Chọn kiểu in" />
-              </SelectTrigger>
-              <SelectContent>
-                {printStyleOptions.map(style => (
-                  <SelectItem key={style} value={style}>{style}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           
           <div className="md:col-span-6">
