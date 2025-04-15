@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -278,11 +279,12 @@ const AdminOrders = () => {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
       
+      // Fix the template literal issue - properly closing the string
       toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      });
+      }`);
 
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
       console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
