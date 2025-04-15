@@ -2,11 +2,20 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'customer';
+  created_at: string;
+}
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -20,6 +29,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -27,6 +37,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       (_event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        
+        // Check admin status if user is logged in
+        if (currentSession?.user) {
+          checkAdminStatus(currentSession.user.id);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
@@ -36,6 +53,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        
+        // Check admin status if user is logged in
+        if (currentSession?.user) {
+          checkAdminStatus(currentSession.user.id);
+        }
       } catch (error) {
         console.error('Error loading session:', error);
       } finally {
@@ -50,17 +72,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(data?.role === 'admin');
+    } catch (error) {
+      console.error('Error in checkAdminStatus:', error);
+      setIsAdmin(false);
+    }
+  };
+
   const signOut = async () => {
     setIsLoading(true);
     try {
       await supabase.auth.signOut();
+      setIsAdmin(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Có lỗi khi đăng xuất');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );

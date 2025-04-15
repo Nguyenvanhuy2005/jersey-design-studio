@@ -2,10 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserCircle } from "lucide-react";
+import { LogOut, UserCircle, ShoppingBag, Settings } from "lucide-react";
 
 export function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -32,10 +32,15 @@ export function Navbar() {
               <Link to="/customer/dashboard" className="hover:text-primary transition-colors">
                 Trang khách hàng
               </Link>
-              {user.app_metadata?.role === 'admin' && (
-                <Link to="/admin/orders" className="hover:text-primary transition-colors">
-                  Quản lý đơn hàng
-                </Link>
+              {isAdmin && (
+                <>
+                  <Link to="/admin/orders" className="hover:text-primary transition-colors">
+                    Quản lý đơn hàng
+                  </Link>
+                  <Link to="/admin/customers" className="hover:text-primary transition-colors">
+                    Quản lý khách hàng
+                  </Link>
+                </>
               )}
             </>
           )}
@@ -44,6 +49,13 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {user ? (
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" asChild className="text-secondary-foreground flex items-center gap-1">
+                  <Link to="/admin/orders">
+                    <Settings className="h-4 w-4" /> Quản trị
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline" asChild>
                 <Link to="/customer/dashboard" className="text-secondary-foreground flex items-center gap-1">
                   <UserCircle className="h-4 w-4" /> Tài khoản
@@ -63,6 +75,7 @@ export function Navbar() {
           
           <Link to="/create-order">
             <Button>
+              <ShoppingBag className="h-4 w-4 mr-1" />
               Tạo đơn hàng
             </Button>
           </Link>

@@ -2,8 +2,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const ProtectedRoute = () => {
-  const { user, isLoading } = useAuth();
+interface ProtectedRouteProps {
+  requireAdmin?: boolean;
+}
+
+export const ProtectedRoute = ({ requireAdmin = false }: ProtectedRouteProps) => {
+  const { user, isLoading, isAdmin } = useAuth();
   
   // While checking authentication status, show loading
   if (isLoading) {
@@ -14,11 +18,16 @@ export const ProtectedRoute = () => {
     );
   }
   
-  // If user is authenticated, render child routes
-  if (user) {
-    return <Outlet />;
+  // If user is not authenticated, redirect to login
+  if (!user) {
+    return <Navigate to="/customer/auth" replace />;
   }
   
-  // If user is not authenticated, redirect to login
-  return <Navigate to="/admin" replace />;
+  // If admin access is required but user is not admin
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/customer/dashboard" replace />;
+  }
+  
+  // If user is authenticated and meets role requirements, render child routes
+  return <Outlet />;
 };

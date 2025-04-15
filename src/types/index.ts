@@ -1,41 +1,22 @@
 export interface Player {
-  id?: string;
+  id: string;
   name: string;
   number: string;
-  size: UniformSize;
+  size: 'S' | 'M' | 'L' | 'XL';
   printImage: boolean;
-  uniform_type?: 'player' | 'goalkeeper';
-  line_1?: string;
-  line_2?: string;
-  line_3?: string;
-  chest_text?: string;
-  chest_number?: boolean;
-  pants_number?: boolean;
-  logo_chest_left?: boolean;
-  logo_chest_right?: boolean;
-  logo_chest_center?: boolean;
-  logo_sleeve_left?: boolean;
-  logo_sleeve_right?: boolean;
-  logo_pants?: boolean;
-  pet_chest?: string;
-  note?: string;
-  print_style?: string;
+  imageFront?: string;
+  imageBack?: string;
 }
 
-export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
-
 export interface Logo {
-  id?: string;
-  file: File;
-  position: LogoPosition;
-  previewUrl: string;
+  id: string;
+  url: string;
+  position: 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
 }
 
 export interface PrintConfig {
   id?: string;
   font: string;
-  customFontFile?: File;
-  customFontUrl?: string;
   backMaterial: string;
   backColor: string;
   frontMaterial: string;
@@ -45,21 +26,6 @@ export interface PrintConfig {
   legMaterial: string;
   legColor: string;
 }
-
-export type PrintPosition = 
-  | 'pants_number' 
-  | 'back_number' 
-  | 'above_back_number' 
-  | 'below_back_number'
-  | 'chest_text'
-  | 'chest_number'
-  | 'logo_sleeve_left'
-  | 'logo_sleeve_right'
-  | 'logo_chest_left'
-  | 'logo_chest_right'
-  | 'logo_chest_center'
-  | 'logo_pants'
-  | 'pet_chest';
 
 export interface ProductLine {
   id: string;
@@ -71,66 +37,38 @@ export interface ProductLine {
   content: string;
 }
 
-export interface PrintPositionConfig {
-  enabled: boolean;
-  material?: string;
-  color?: string;
-  content?: string;
-}
-
-export interface LogoPositionConfig extends PrintPositionConfig {
-  logo_id?: string;
-  x_position?: number;
-  y_position?: number;
-  scale?: number;
-}
-
 export interface DesignData {
-  uniform_type?: 'player' | 'goalkeeper' | 'mixed';
-  quantity?: number;
-  logos?: Array<{
-    logo_id: string;
-    position: string;
-    x_position: number;
-    y_position: number;
-    scale: number;
-  }>;
-  line_1?: PrintPositionConfig & {
-    font?: string;
-    font_file?: string;
+  uniform_type: 'player' | 'goalkeeper';
+  chest_number: {
+    enabled: boolean;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
   };
-  line_2?: PrintPositionConfig & {
-    font?: string;
-    font_file?: string;
+  chest_text: {
+    enabled: boolean;
+    content: string;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
   };
-  line_3?: PrintPositionConfig & {
-    font?: string;
-    font_file?: string;
+  logo_chest_left: {
+    enabled: boolean;
   };
-  chest_text?: PrintPositionConfig & {
-    font?: string;
-    font_file?: string;
+  logo_chest_right: {
+    enabled: boolean;
   };
-  chest_number?: PrintPositionConfig;
-  pants_number?: PrintPositionConfig;
-  logo_chest_left?: LogoPositionConfig;
-  logo_chest_right?: LogoPositionConfig;
-  logo_chest_center?: LogoPositionConfig;
-  logo_sleeve_left?: LogoPositionConfig;
-  logo_sleeve_right?: LogoPositionConfig;
-  pet_chest?: PrintPositionConfig;
-  logo_pants?: LogoPositionConfig;
-  font_text?: {
+  logo_chest_center: {
+    enabled: boolean;
+  };
+  logo_sleeve_left: {
+    enabled: boolean;
+  };
+  logo_sleeve_right: {
+    enabled: boolean;
+  };
+  font_text: {
     font: string;
-    font_file?: string;
   };
-  font_number?: {
+  font_number: {
     font: string;
-    font_file?: string;
   };
-  print_style?: string;
-  print_color?: string;
-  reference_images?: string[];
 }
 
 export interface Customer {
@@ -139,16 +77,15 @@ export interface Customer {
   address: string;
   phone: string;
   delivery_note?: string;
-  created_at?: Date | string;
+  created_at?: Date;
 }
 
 export interface Order {
-  id?: string;
+  id: string;
   teamName: string;
   players: Player[];
-  logos?: Logo[];
-  printConfig: PrintConfig;
   productLines: ProductLine[];
+  printConfig: PrintConfig;
   totalCost: number;
   status: 'new' | 'processing' | 'completed';
   createdAt?: Date;
@@ -156,13 +93,7 @@ export interface Order {
   designImage?: string;
   designImageFront?: string;
   designImageBack?: string;
-  referenceImages: string[];
-  customer_id?: string;
-  designData?: DesignData;
-  uniform_type?: 'player' | 'goalkeeper' | 'mixed';
-  quantity?: number;
+  referenceImages?: string[];
+  customerName?: string;    // Added customer name
+  customerId?: string;      // Added customer id
 }
-
-export type AdultSize = 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '4XL';
-export type KidsSize = '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15';
-export type UniformSize = AdultSize | KidsSize;

@@ -30,6 +30,7 @@ export const OrderTableRow = ({
     <tr key={order.id} className="border-t border-muted">
       <td className="p-3">{order.id}</td>
       <td className="p-3 font-medium">{order.teamName}</td>
+      <td className="p-3">{order.customerName || "Không xác định"}</td>
       <td className="p-3">{order.players.length}</td>
       <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
       <td className="p-3">
