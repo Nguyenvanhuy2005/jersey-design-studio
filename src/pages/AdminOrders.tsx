@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,17 +36,6 @@ const AdminOrders = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchingData, setFetchingData] = useState(true);
-  const [storageBucketsStatus, setStorageBucketsStatus] = useState<{
-    designImages: boolean;
-    referenceImages: boolean;
-    checking: boolean;
-    error?: string;
-  }>({
-    designImages: false,
-    referenceImages: false,
-    checking: true
-  });
-  const [creatingBuckets, setCreatingBuckets] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -172,7 +160,7 @@ const AdminOrders = () => {
     try {
       let query = supabase
         .from('orders')
-        .select('*, players(*), product_lines(*), print_configs(*)');
+        .select('*, players(*), product_lines(*), print_configs(*), customers(name)');
       
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -183,7 +171,7 @@ const AdminOrders = () => {
       }
       
       if (searchTerm) {
-        query = query.or(`team_name.ilike.%${searchTerm}%, notes.ilike.%${searchTerm}%`);
+        query = query.or(`customers.name.ilike.%${searchTerm}%`);
       }
       
       if (dateRange.from) {
@@ -448,7 +436,7 @@ const AdminOrders = () => {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm theo tên đội..."
+                placeholder="Tìm theo tên khách hàng..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -539,35 +527,7 @@ const AdminOrders = () => {
             </Button>
           </div>
         </div>
-      </div>
-      
-      {(!storageBucketsStatus.designImages || !storageBucketsStatus.referenceImages) && !storageBucketsStatus.checking && (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-4">
-          <div className="flex gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            <div>
-              <h3 className="font-medium">Cần tạo bucket lưu trữ</h3>
-              <p className="text-sm text-yellow-700 mt-1">
-                Để hiển thị hình ảnh thiết kế và tham khảo, hãy tạo các bucket lưu trữ.
-              </p>
-              <Button 
-                className="mt-2" 
-                size="sm" 
-                onClick={handleCreateBuckets} 
-                disabled={creatingBuckets}
-              >
-                {creatingBuckets ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Đang tạo...
-                  </>
-                ) : "Tạo buckets"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
+        
       {fetchError && (
         <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4">
           <div className="flex gap-2">
@@ -586,7 +546,6 @@ const AdminOrders = () => {
             <thead className="bg-muted">
               <tr>
                 <th className="p-3 text-left">ID</th>
-                <th className="p-3 text-left">Tên đội</th>
                 <th className="p-3 text-left">Khách hàng</th>
                 <th className="p-3 text-left">Số lượng áo</th>
                 <th className="p-3 text-left">Tổng chi phí</th>
