@@ -5,7 +5,7 @@ interface JerseyBackProps {
   ctx: CanvasRenderingContext2D;
   teamName?: string;
   playerName?: string;
-  playerNumber?: string;  // Changed from number to string
+  playerNumber?: string;
   fontFamily: string;
 }
 
@@ -77,10 +77,10 @@ export const JerseyBack = ({
   }
   
   // Draw player number (IN DÒNG 2 - middle back - bold number) - Fixed position and size
-  // Increased font size from 60px to 100px as requested
+  // Increased font size from 100px to 180px as requested
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 100; // Increased font size from 60px to 100px
+    const fontSize = 180; // Increased font size to 180px as requested
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px bold`); // Adjust size for player number and make it bold
     
     // Fixed position: center, 150px from top (15cm from top)

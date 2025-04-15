@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 
@@ -93,7 +92,6 @@ export const JerseyFront = ({
   ctx.lineTo(50, 80);
   ctx.lineTo(0, 100);
   ctx.lineTo(10, 50);
-  ctx.lineTo(50, 20);
   ctx.closePath();
   ctx.fill();
   

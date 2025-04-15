@@ -1,4 +1,3 @@
-
 import { AlertCircle, Camera } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +42,6 @@ export function OrderSummaryTab({
 }: OrderSummaryTabProps) {
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
   
-  // Function to calculate print positions counts
   const calculatePrintCounts = () => {
     const counts = {
       line_1: 0,
@@ -79,7 +77,6 @@ export function OrderSummaryTab({
       if (player.pet_chest) counts.pet_chest++;
     });
     
-    // Count print styles from product lines
     productLines.forEach(line => {
       if (line.material === "In chuyển nhiệt") counts.heat_transfer++;
       if (line.material === "In decal") counts.decal++;
@@ -88,7 +85,6 @@ export function OrderSummaryTab({
     return counts;
   };
 
-  // Function to capture canvas as image URL
   const captureCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>) => {
     if (canvasRef.current) {
       return canvasRef.current.toDataURL('image/png');
@@ -96,7 +92,6 @@ export function OrderSummaryTab({
     return '';
   };
 
-  // Calculate print counts
   const printCounts = calculatePrintCounts();
   
   if (!isDemoApproved) {
@@ -165,39 +160,33 @@ export function OrderSummaryTab({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt trước áo</h4>
-                    {jerseyCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(jerseyCanvasRef)} 
-                          alt="Mặt trước áo"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={jerseyCanvasRef.current?.toDataURL()} 
+                        alt="Mặt trước áo"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Mặt sau áo</h4>
-                    {jerseyCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(jerseyCanvasRef)} 
-                          alt="Mặt sau áo"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={jerseyCanvasRef.current?.toDataURL()} 
+                        alt="Mặt sau áo"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                   <div className="border rounded p-2">
                     <h4 className="text-sm font-medium mb-2 text-center">Quần</h4>
-                    {pantCanvasRef.current && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={captureCanvas(pantCanvasRef)} 
-                          alt="Quần"
-                          className="max-h-40 object-contain"
-                        />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img 
+                        src={pantCanvasRef.current?.toDataURL()} 
+                        alt="Quần"
+                        className="max-h-40 object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
