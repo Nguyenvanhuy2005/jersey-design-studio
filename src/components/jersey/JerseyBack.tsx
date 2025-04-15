@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface JerseyBackProps {
@@ -67,21 +66,20 @@ export const JerseyBack = ({
   // Draw player name (IN DÒNG 1 - upper back - above number)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 45; // Increased from 25 to 45
-    ctx.font = `700 ${fontSize}px ${fontFamily}`; // Changed to bold (700)
+    const fontSize = 45;
+    ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 50); // Adjusted Y position from 40 to 50
+    ctx.fillText(playerNameDisplayed, 150, 50);
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
   // Draw player number (IN DÒNG 2 - middle back - large number)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    // Increased font sizes significantly
-    const fontSize = playerNumber.length > 2 ? 240 : 300; // Increased from 180/240 to 240/300
+    const fontSize = 300;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     
-    // Center the number vertically, adjusted position
+    // Center the number vertically, position unchanged
     ctx.fillText(playerNumber, 150, 160);
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
@@ -89,12 +87,11 @@ export const JerseyBack = ({
   // Draw team name (IN DÒNG 3 - lower back - below number)
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 45; // Increased from 25 to 45
-    ctx.font = `700 ${fontSize}px ${fontFamily}`; // Changed to bold (700)
-    ctx.fillText(teamName, 150, 260); // Adjusted Y position from 270 to 260
+    const fontSize = 45;
+    ctx.font = `700 ${fontSize}px ${fontFamily}`;
+    ctx.fillText(teamName, 150, 260);
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
   return null; // This component just draws on the canvas, doesn't return JSX
 };
-
