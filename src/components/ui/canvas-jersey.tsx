@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 interface CanvasJerseyProps {
   teamName: string;
   playerName?: string;
-  playerNumber?: string;  // Changed from number to string
+  playerNumber?: string;
   logos?: Logo[];
   view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
@@ -33,12 +33,12 @@ export function CanvasJersey({
 }: CanvasJerseyProps) {
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasRef = externalCanvasRef || internalCanvasRef;
-  
+
   const [loadedLogos, setLoadedLogos] = useState<Map<string, HTMLImageElement>>(new Map());
   const [logoPositions, setLogoPositions] = useState<Map<string, { x: number, y: number, scale: number }>>(new Map());
   const [loadedFont, setLoadedFont] = useState<boolean>(false);
   const [fontFace, setFontFace] = useState<FontFace | null>(null);
-  
+
   const isInteractionDisabled = true;
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   const canvasWidth = 300;
@@ -65,35 +65,25 @@ export function CanvasJersey({
   }, [logos, designData]);
 
   useEffect(() => {
-    if (printConfig?.customFontUrl && printConfig.customFontFile) {
-      const fontName = printConfig.customFontFile.name.split('.')[0];
-      
-      loadCustomFont(printConfig.customFontUrl, fontName)
-        .then(loadedFont => {
-          if (loadedFont) {
-            setFontFace(loadedFont);
-            setLoadedFont(true);
-          }
-        });
+    const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
+    if (customFontUrl) {
+      loadCustomFont(customFontUrl).then(fontFace => {
+        setFontFace(fontFace);
+        setLoadedFont(true);
+      }).catch(error => {
+        console.error("Error loading custom font:", error);
+      });
+    } else {
+      setLoadedFont(true);
     }
-    
-    if (designData?.font_text?.font_file) {
-      loadCustomFont(designData.font_text.font_file, designData.font_text.font)
-        .then(loadedFont => {
-          if (loadedFont) {
-            setFontFace(loadedFont);
-            setLoadedFont(true);
-          }
-        });
-    }
-  }, [printConfig?.customFontUrl, printConfig?.customFontFile, designData?.font_text]);
+  }, [designData, logos, teamName, playerName, playerNumber]);
 
   useEffect(() => {
     if (logos && logos.length > 0) {
       console.log("Attempting to load logos:", logos.length);
-      
+
       const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
-      
+
       const positionKeysMap: Record<string, string> = {
         'chest_left': 'logo_chest_left',
         'chest_right': 'logo_chest_right',
@@ -102,13 +92,13 @@ export function CanvasJersey({
         'sleeve_right': 'logo_sleeve_right',
         'pants': 'logo_pants'
       };
-      
+
       if (designData) {
         logos.forEach(logo => {
           if (logo.id) {
             const positionKey = positionKeysMap[logo.position];
             const positionData = designData[positionKey as keyof DesignData] as any;
-            
+
             if (positionData && positionData.x_position !== undefined && positionData.y_position !== undefined) {
               initialPositions.set(logo.id, {
                 x: positionData.x_position,
@@ -119,24 +109,24 @@ export function CanvasJersey({
           }
         });
       }
-      
+
       const fetchLogoPositions = async () => {
         for (const logo of logos) {
           if (logo.id && !initialPositions.has(logo.id)) {
             try {
               let logoId = logo.id;
-              
+
               if (logoId.startsWith('logo-') || !isValidUUID(logoId)) {
                 const { data, error } = await supabase
                   .from('logos')
                   .select('id, file_path')
                   .eq('file_path', logo.file.name)
                   .single();
-                
+
                 if (error || !data) {
                   const newUUID = uuidv4();
                   console.log(`Generated new UUID ${newUUID} for logo ${logoId}`);
-                  
+
                   const { error: insertError } = await supabase
                     .from('logos')
                     .insert({
@@ -152,7 +142,7 @@ export function CanvasJersey({
                                   logo.position === 'pants' ? 100 : 60,
                       scale: 1.0
                     });
-                  
+
                   if (insertError) {
                     console.error("Error creating logo mapping:", insertError);
                   } else {
@@ -166,13 +156,13 @@ export function CanvasJersey({
                   console.log(`Found existing UUID ${logoId} for logo ${logo.file.name}`);
                 }
               }
-              
+
               const { data: posData, error: posError } = await supabase
                 .from('logos')
                 .select('x_position, y_position, scale')
                 .eq('id', logoId)
                 .single();
-              
+
               if (posError) {
                 console.error(`Error fetching position for logo ${logoId}:`, posError);
                 const defaultPos = logo.position === 'chest_left' ? { x: 80, y: 50 } : 
@@ -181,7 +171,7 @@ export function CanvasJersey({
                                   logo.position === 'sleeve_left' ? { x: 30, y: 50 } :
                                   logo.position === 'pants' ? { x: 195, y: 100 } :
                                   { x: 270, y: 50 };
-                
+
                 initialPositions.set(logoId, {
                   x: defaultPos.x,
                   y: defaultPos.y,
@@ -189,7 +179,7 @@ export function CanvasJersey({
                 });
                 continue;
               }
-              
+
               if (posData) {
                 initialPositions.set(logoId, {
                   x: posData.x_position ?? (logo.position === 'chest_left' ? 80 : 
@@ -201,7 +191,7 @@ export function CanvasJersey({
                                           logo.position === 'pants' ? 100 : 50),
                   scale: posData.scale ?? 1.0
                 });
-                
+
                 console.log(`Loaded position for logo ${logoId}:`, initialPositions.get(logoId));
               }
             } catch (err) {
@@ -212,7 +202,7 @@ export function CanvasJersey({
                               logo.position === 'sleeve_left' ? { x: 30, y: 50 } :
                               logo.position === 'pants' ? { x: 195, y: 100 } : 
                               { x: 270, y: 50 };
-              
+
               initialPositions.set(logo.id, {
                 x: defaultPos.x,
                 y: defaultPos.y,
@@ -221,9 +211,9 @@ export function CanvasJersey({
             }
           }
         }
-        
+
         setLogoPositions(initialPositions);
-        
+
         loadLogoImages(logos, initialPositions, true)
           .then(logoMap => {
             console.log(`Successfully loaded ${logoMap.size} logos`);
@@ -236,7 +226,7 @@ export function CanvasJersey({
             console.error("Error loading logos:", err);
           });
       };
-      
+
       fetchLogoPositions();
     } else {
       console.log("No logos to load");
@@ -253,10 +243,10 @@ export function CanvasJersey({
     }
 
     console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
-    
+
     canvas.width = canvasWidth * pixelRatio;
     canvas.height = canvasHeight * pixelRatio;
-    
+
     canvas.style.width = `${canvasWidth}px`;
     canvas.style.height = `${canvasHeight}px`;
 
@@ -267,7 +257,7 @@ export function CanvasJersey({
     }
 
     ctx.scale(pixelRatio, pixelRatio);
-    
+
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) {
       (ctx as any).imageSmoothingQuality = 'high';
@@ -283,7 +273,7 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
-    
+
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     const fontToUse = designData?.font_text?.font 
@@ -327,15 +317,15 @@ export function CanvasJersey({
       const pantsLogo = logos.find(logo => logo.position === 'pants');
       let logoImage;
       let logoPosition;
-      
+
       if (pantsLogo && pantsLogo.id && loadedLogos.has(pantsLogo.id)) {
         logoImage = loadedLogos.get(pantsLogo.id);
         logoPosition = logoPositions.get(pantsLogo.id);
       }
-      
+
       const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
       console.log('Pants number enabled:', pantsNumberEnabled);
-      
+
       JerseyPants({
         ctx,
         playerNumber,

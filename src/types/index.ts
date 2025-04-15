@@ -69,57 +69,121 @@ export interface PrintPositionConfig {
   enabled: boolean;
   color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
   material?: string;
+  content?: string;
+  font?: string;
 }
 
 export interface LogoPositionConfig {
   enabled: boolean;
+  material?: string;
+  logo_id?: string;
+  x_position?: number;
+  y_position?: number;
+  scale?: number;
 }
 
 export interface DesignData {
   uniform_type: 'player' | 'goalkeeper';
+  quantity?: number;
   chest_number: {
     enabled: boolean;
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
   };
   chest_text: {
     enabled: boolean;
     content: string;
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
   };
   logo_chest_left: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   logo_chest_right: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   logo_chest_center: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   logo_sleeve_left: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   logo_sleeve_right: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   logo_pants: {
     enabled: boolean;
+    material?: string;
+    logo_id?: string;
+    x_position?: number;
+    y_position?: number;
+    scale?: number;
   };
   font_text: {
     font: string;
+    font_file?: string;
   };
   font_number: {
     font: string;
+    font_file?: string;
   };
   // Add missing design data properties
   line_1?: {
     enabled: boolean;
     content: string;
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
+    font?: string;
+  };
+  line_2?: {
+    enabled: boolean;
+    content?: string;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
+    font?: string;
   };
   line_3?: {
     enabled: boolean;
     content: string;
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
+    font?: string;
+  };
+  pants_number?: {
+    enabled: boolean;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
+  };
+  pet_chest?: {
+    enabled: boolean;
+    content: string;
+    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
+    material?: string;
   };
 }
 

@@ -1,102 +1,77 @@
-
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DesignData } from "@/types";
 
 interface UniformInfoFormProps {
   teamName: string;
   onTeamNameChange: (name: string) => void;
-  notes: string;
-  onNotesChange: (notes: string) => void;
-  uniformType: 'player' | 'goalkeeper';
-  onUniformTypeChange: (type: 'player' | 'goalkeeper') => void;
-  quantity: number;
-  onQuantityChange: (quantity: number) => void;
+  uniformType: "player" | "goalkeeper";
+  onUniformTypeChange: (type: "player" | "goalkeeper") => void;
   designData: Partial<DesignData>;
   onDesignDataChange: (data: Partial<DesignData>) => void;
 }
 
-export function UniformInfoForm({ 
-  teamName, 
-  onTeamNameChange, 
-  notes, 
-  onNotesChange,
+export function UniformInfoForm({
+  teamName,
+  onTeamNameChange,
   uniformType,
   onUniformTypeChange,
-  quantity,
-  onQuantityChange,
   designData,
   onDesignDataChange
 }: UniformInfoFormProps) {
+  const [playerCount, setPlayerCount] = useState<number>(designData.quantity || 0);
   
-  // Update designData when uniformType or quantity changes
   useEffect(() => {
+    // Update design data when player count changes
     onDesignDataChange({
       ...designData,
       uniform_type: uniformType,
-      quantity: quantity
+      // Since quantity might not be a valid property in the DesignData type definition,
+      // we use a type assertion to add it
+      quantity: playerCount
     });
-  }, [uniformType, quantity]);
-  
+  }, [uniformType, playerCount, onDesignDataChange]);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Thông tin đội bóng</CardTitle>
+        <CardTitle>Thông tin chung</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="teamName">Tên đội bóng</Label>
-          <Input 
+          <Input
             id="teamName"
             value={teamName}
             onChange={(e) => onTeamNameChange(e.target.value)}
-            placeholder="Nhập tên đội bóng (không bắt buộc)"
+            placeholder="Nhập tên đội bóng"
           />
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="uniformType">Loại quần áo</Label>
-            <Select
-              value={uniformType}
-              onValueChange={(value: 'player' | 'goalkeeper') => onUniformTypeChange(value)}
-            >
-              <SelectTrigger id="uniformType">
-                <SelectValue placeholder="Chọn loại quần áo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="player">Cầu thủ</SelectItem>
-                <SelectItem value="goalkeeper">Thủ môn</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="quantity">Số lượng quần áo</Label>
-            <Input 
-              id="quantity"
-              type="number"
-              value={quantity || ""}
-              onChange={(e) => onQuantityChange(parseInt(e.target.value) || 0)}
-              placeholder="Nhập số lượng quần áo"
-              min={1}
-            />
-          </div>
-        </div>
-        
         <div>
-          <Label htmlFor="notes">Ghi chú</Label>
-          <Textarea 
-            id="notes"
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt (nếu có)"
-            rows={3}
+          <Label htmlFor="playerCount">Số lượng cầu thủ</Label>
+          <Input
+            id="playerCount"
+            type="number"
+            value={playerCount}
+            onChange={(e) => setPlayerCount(Number(e.target.value))}
+            placeholder="Nhập số lượng cầu thủ"
           />
+        </div>
+        <div>
+          <Label htmlFor="uniformType">Loại quần áo</Label>
+          <Select value={uniformType} onValueChange={onUniformTypeChange}>
+            <SelectTrigger id="uniformType">
+              <SelectValue placeholder="Chọn loại" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="player">Cầu thủ</SelectItem>
+              <SelectItem value="goalkeeper">Thủ môn</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>

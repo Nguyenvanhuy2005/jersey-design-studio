@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -141,6 +142,12 @@ export function PrintPositionsForm({
         enabled: true,
         material: "In chuyển nhiệt",
         color: "Đen"
+      },
+      pet_chest: {
+        enabled: false,
+        material: "In chuyển nhiệt",
+        color: "Đen",
+        content: ""
       }
     };
     

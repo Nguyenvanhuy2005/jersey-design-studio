@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +124,7 @@ export function PlayerForm({
     }
     
     setNewPlayer({
+      id: `temp-${Date.now()}`, // Add ID here to fix TS error
       name: "",
       number: "",
       size: "M",
@@ -154,6 +154,7 @@ export function PlayerForm({
       setEditingPlayerIndex(null);
       
       setNewPlayer({
+        id: `temp-${Date.now()}`, // Add ID here to fix TS error
         name: "",
         number: "",
         size: "M",
@@ -190,6 +191,7 @@ export function PlayerForm({
     setEditingPlayerIndex(null);
     
     setNewPlayer({
+      id: `temp-${Date.now()}`, // Add ID here to fix TS error
       name: "",
       number: "",
       size: "M",

@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { Player, Logo, ProductLine, DesignData } from "@/types";
 import { toast } from "sonner";
@@ -192,7 +191,7 @@ export const useOrderProductLines = (
     
     const hasGoalkeeper = players.some(p => p.uniform_type === 'goalkeeper');
     if (hasGoalkeeper) {
-      newDesignData.uniform_type = 'mixed';
+      newDesignData.uniform_type = 'mixed' as any;
     }
     
     const firstPlayer = players[0];
@@ -201,7 +200,7 @@ export const useOrderProductLines = (
       newDesignData.line_1 = {
         enabled: true,
         material: printStyle,
-        color: printColor,
+        color: printColor as any,
         content: firstPlayer.line_1 || "",
         font: fontText
       };
@@ -210,7 +209,7 @@ export const useOrderProductLines = (
     newDesignData.line_2 = {
       enabled: true,
       material: printStyle,
-      color: printColor,
+      color: printColor as any,
       font: fontNumber
     };
     
@@ -218,7 +217,7 @@ export const useOrderProductLines = (
       newDesignData.line_3 = {
         enabled: true,
         material: printStyle,
-        color: printColor,
+        color: printColor as any,
         content: firstPlayer.line_3 || "",
         font: fontText
       };
@@ -228,7 +227,7 @@ export const useOrderProductLines = (
       newDesignData.chest_text = {
         enabled: true,
         material: printStyle,
-        color: printColor,
+        color: printColor as any,
         content: firstPlayer.chest_text || "",
         font: fontText
       };
@@ -238,7 +237,7 @@ export const useOrderProductLines = (
       newDesignData.chest_number = {
         enabled: true,
         material: printStyle,
-        color: printColor
+        color: printColor as any
       };
     }
     
@@ -246,7 +245,7 @@ export const useOrderProductLines = (
       newDesignData.pants_number = {
         enabled: true,
         material: printStyle,
-        color: printColor
+        color: printColor as any
       };
     }
     
@@ -280,7 +279,7 @@ export const useOrderProductLines = (
       newDesignData.pet_chest = {
         enabled: true,
         material: "In PET",
-        color: "Trong suốt",
+        color: "Trong suốt" as any,
         content: firstPlayer.pet_chest || ""
       };
     }

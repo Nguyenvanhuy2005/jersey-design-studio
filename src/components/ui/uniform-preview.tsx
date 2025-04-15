@@ -1,160 +1,160 @@
-
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
-import { Player, Logo, PrintConfig, DesignData } from "@/types";
+import { Card } from "@/components/ui/card";
+import { Logo, PrintConfig, DesignData } from "@/types";
+import { Player } from "@/types";
+import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UniformPreviewProps {
   teamName: string;
-  players: Player[];
+  player?: Player;
   logos?: Logo[];
-  printConfig: PrintConfig;
+  printConfig?: PrintConfig;
   designData?: Partial<DesignData>;
-  canvasRef?: React.RefObject<HTMLCanvasElement>;
-  canvasPantsRef?: React.RefObject<HTMLCanvasElement>;
+  jerseyCanvasRef?: React.RefObject<HTMLCanvasElement>;
+  pantCanvasRef?: React.RefObject<HTMLCanvasElement>;
+  className?: string;
 }
 
 export function UniformPreview({
   teamName,
-  players,
+  player,
   logos = [],
   printConfig,
   designData,
-  canvasRef,
-  canvasPantsRef
+  jerseyCanvasRef,
+  pantCanvasRef,
+  className
 }: UniformPreviewProps) {
-  const [previewPlayer, setPreviewPlayer] = useState<number>(0);
-  const [previewView, setPreviewView] = useState<'front' | 'back'>('front');
-  const [showPants, setShowPants] = useState<boolean>(false);
-
-  // Get current player for preview
-  const currentPlayer = players.length > 0 ? players[previewPlayer] : undefined;
+  const [activeView, setActiveView] = useState<"front" | "back" | "pants">("front");
   
-  // Extract player data for jersey
-  const playerLine1 = currentPlayer?.line_1 || currentPlayer?.name || "";
-  const playerNumber = currentPlayer?.number || ""; // Changed from 0 to empty string
-  const playerLine3 = currentPlayer?.line_3 || teamName || "";
+  // Create default design data if not provided
+  const getDefaultDesignData = (): Partial<DesignData> => {
+    if (designData && Object.keys(designData).length > 0) {
+      return designData;
+    }
+    
+    if (!player) {
+      return {
+        uniform_type: "player",
+        logo_chest_left: { enabled: false },
+        logo_chest_right: { enabled: false },
+        logo_chest_center: { enabled: false },
+        logo_sleeve_left: { enabled: false },
+        logo_sleeve_right: { enabled: false },
+        logo_pants: { enabled: false },
+        chest_number: { enabled: false, color: "Đen" },
+        pants_number: { enabled: false, color: "Đen" },
+        chest_text: { enabled: false, content: "", color: "Đen" },
+        font_text: { font: "Arial" },
+        font_number: { font: "Arial" }
+      };
+    }
+    
+    return {
+      uniform_type: player.uniform_type || "player",
+      logo_chest_left: { 
+        enabled: player.logo_chest_left || false 
+      },
+      logo_chest_right: { 
+        enabled: player.logo_chest_right || false 
+      },
+      logo_chest_center: { 
+        enabled: player.logo_chest_center || false 
+      },
+      logo_sleeve_left: { 
+        enabled: player.logo_sleeve_left || false 
+      },
+      logo_sleeve_right: { 
+        enabled: player.logo_sleeve_right || false 
+      },
+      logo_pants: { 
+        enabled: player.logo_pants || false 
+      },
+      chest_number: { 
+        enabled: player.chest_number || false,
+        color: "Đen"
+      },
+      pants_number: { 
+        enabled: player.pants_number || false,
+        color: "Đen"
+      },
+      chest_text: { 
+        enabled: !!player.chest_text,
+        content: player.chest_text || "",
+        color: "Đen"
+      },
+      line_1: { 
+        enabled: !!player.line_1,
+        content: player.line_1 || "",
+        color: "Đen"
+      },
+      line_3: { 
+        enabled: !!player.line_3,
+        content: player.line_3 || "",
+        color: "Đen"
+      },
+      font_text: { 
+        font: "Arial" 
+      },
+      font_number: { 
+        font: "Arial" 
+      }
+    };
+  };
   
-  // Check if pants number should be enabled
-  const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
-  
-  console.log("Current player data:", {
-    line1: playerLine1,
-    number: playerNumber,
-    line3: playerLine3,
-    pantsNumberEnabled: pantsNumberEnabled
-  });
+  const effectiveDesignData = getDefaultDesignData();
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Xem trước thiết kế</CardTitle>
-        <div className="flex space-x-2">
-          <Button 
-            variant={previewView === 'front' ? 'default' : 'outline'} 
-            size="sm"
-            onClick={() => setPreviewView('front')}
-          >
+    <Card className={className}>
+      <Tabs defaultValue="front" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="front" onClick={() => setActiveView("front")}>
             Mặt trước
-          </Button>
-          <Button 
-            variant={previewView === 'back' ? 'default' : 'outline'}
-            size="sm" 
-            onClick={() => setPreviewView('back')}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="back" onClick={() => setActiveView("back")}>
             Mặt sau
-          </Button>
-          <Button 
-            variant={showPants ? 'default' : 'outline'}
-            size="sm" 
-            onClick={() => setShowPants(!showPants)}
-          >
-            {showPants ? "Ẩn quần" : "Xem quần"}
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        <div className="flex flex-col lg:flex-row justify-center gap-4">
-          {/* Jersey Preview */}
-          <div className={`flex-1 bg-muted/30 p-4 rounded-md ${showPants ? 'lg:w-1/2' : 'w-full'}`}>
-            <div className="flex justify-center">
-              <CanvasJersey 
-                teamName={playerLine3}
-                playerName={playerLine1}
-                playerNumber={playerNumber}
-                logos={logos}
-                view={previewView}
-                printConfig={printConfig}
-                designData={{
-                  ...designData,
-                  line_1: { content: playerLine1, enabled: true },
-                  line_2: { content: playerNumber || "0", enabled: true },
-                  line_3: { content: playerLine3, enabled: true }
-                }}
-                canvasRef={canvasRef}
-              />
-            </div>
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              {previewView === 'front' ? 'Mặt trước áo' : 'Mặt sau áo'}
-            </p>
-          </div>
-
-          {/* Pants Preview (Conditionally rendered) */}
-          {showPants && (
-            <div className="flex-1 bg-muted/30 p-4 rounded-md lg:w-1/2">
-              <div className="flex justify-center">
-                <CanvasJersey 
-                  teamName={playerLine3}
-                  playerName={playerLine1}
-                  playerNumber={playerNumber}
-                  logos={logos.filter(logo => logo.position === 'pants')}
-                  view="pants"
-                  printConfig={printConfig}
-                  designData={{
-                    ...designData,
-                    pants_number: { 
-                      enabled: pantsNumberEnabled
-                    }
-                  }}
-                  canvasRef={canvasPantsRef}
-                />
-              </div>
-              <p className="text-center text-sm text-muted-foreground mt-2">
-                Quần
-              </p>
-            </div>
-          )}
-        </div>
-        
-        {/* Player selection */}
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Chọn cầu thủ để xem trước</h3>
-          
-          {players.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-              {players.map((player, index) => (
-                <Button 
-                  key={player.id || index}
-                  variant={previewPlayer === index ? 'default' : 'outline'}
-                  onClick={() => setPreviewPlayer(index)}
-                  className="h-auto py-2 justify-start"
-                >
-                  <div className="text-left truncate">
-                    <div className="font-semibold truncate">{player.name || player.line_1 || `Cầu thủ ${index + 1}`}</div>
-                    <div className="text-sm opacity-80">#{player.number} - {player.size}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground p-4 text-center bg-muted/30 rounded-md">
-              Chưa có cầu thủ nào trong danh sách. Vui lòng thêm cầu thủ để xem trước.
-            </p>
-          )}
-        </div>
-      </CardContent>
+          </TabsTrigger>
+          <TabsTrigger value="pants" onClick={() => setActiveView("pants")}>
+            Quần
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="front" className="focus:outline-none">
+          <CanvasJersey
+            teamName={teamName}
+            playerName={player?.name}
+            playerNumber={player?.number}
+            logos={logos}
+            view="front"
+            printConfig={printConfig}
+            designData={effectiveDesignData}
+            canvasRef={jerseyCanvasRef}
+          />
+        </TabsContent>
+        <TabsContent value="back" className="focus:outline-none">
+          <CanvasJersey
+            teamName={teamName}
+            playerName={player?.name}
+            playerNumber={player?.number}
+            logos={logos}
+            view="back"
+            printConfig={printConfig}
+            designData={effectiveDesignData}
+            canvasRef={jerseyCanvasRef}
+          />
+        </TabsContent>
+        <TabsContent value="pants" className="focus:outline-none">
+          <CanvasJersey
+            teamName={teamName}
+            playerNumber={player?.number}
+            logos={logos}
+            view="pants"
+            printConfig={printConfig}
+            designData={effectiveDesignData}
+            canvasRef={pantCanvasRef}
+          />
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 }
