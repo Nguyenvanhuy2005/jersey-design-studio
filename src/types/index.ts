@@ -6,11 +6,9 @@ export interface Player {
   printImage: boolean;
   imageFront?: string;
   imageBack?: string;
-  uniform_type?: 'player' | 'goalkeeper';
+  uniform_type: 'player' | 'goalkeeper';
   line_1?: string;
-  line_2?: string;
   line_3?: string;
-  chest_text?: string;
   chest_number?: boolean;
   pants_number?: boolean;
   logo_chest_left?: boolean;
@@ -19,7 +17,6 @@ export interface Player {
   logo_sleeve_left?: boolean;
   logo_sleeve_right?: boolean;
   logo_pants?: boolean;
-  pet_chest?: string;
   note?: string;
   print_style?: string;
 }
