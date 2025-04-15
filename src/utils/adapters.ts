@@ -1,4 +1,3 @@
-
 import { Order, Player } from "@/types";
 
 // Define types for raw database models
@@ -34,6 +33,20 @@ export interface DbPlayer {
   number: number;
   print_image: boolean | null;
   design_image: string | null;
+  uniform_type: string | null;
+  line_1: string | null;
+  line_3: string | null;
+  chest_number: boolean | null;
+  pants_number: boolean | null;
+  logo_chest_left: boolean | null;
+  logo_chest_right: boolean | null;
+  logo_chest_center: boolean | null;
+  logo_sleeve_left: boolean | null;
+  logo_sleeve_right: boolean | null;
+  logo_pants: boolean | null;
+  note: string | null;
+  print_style: string | null;
+  pet_chest: string | null;
 }
 
 export interface DbPrintConfig {
@@ -72,6 +85,22 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     number: String(dbPlayer.number),
     size: dbPlayer.size as 'S' | 'M' | 'L' | 'XL',
     printImage: dbPlayer.print_image || false,
+    uniform_type: (dbPlayer.uniform_type as 'player' | 'goalkeeper') || 'player',
+    line_1: dbPlayer.line_1 || undefined,
+    line_3: dbPlayer.line_3 || undefined,
+    chest_number: dbPlayer.chest_number || undefined,
+    pants_number: dbPlayer.pants_number || undefined,
+    logo_chest_left: dbPlayer.logo_chest_left || undefined,
+    logo_chest_right: dbPlayer.logo_chest_right || undefined,
+    logo_chest_center: dbPlayer.logo_chest_center || undefined,
+    logo_sleeve_left: dbPlayer.logo_sleeve_left || undefined,
+    logo_sleeve_right: dbPlayer.logo_sleeve_right || undefined,
+    logo_pants: dbPlayer.logo_pants || undefined,
+    note: dbPlayer.note || undefined,
+    print_style: dbPlayer.print_style || undefined,
+    pet_chest: dbPlayer.pet_chest || undefined,
+    chest_text: undefined,
+    line_2: undefined
   };
 }
 
@@ -158,7 +187,23 @@ export function dbOrderToOrder(
     name: player.name || "",
     number: String(player.number),
     size: player.size as 'S' | 'M' | 'L' | 'XL',
-    printImage: player.print_image || false
+    printImage: player.print_image || false,
+    uniform_type: (player as any).uniform_type as 'player' | 'goalkeeper' || 'player',
+    line_1: (player as any).line_1 || undefined,
+    line_3: (player as any).line_3 || undefined,
+    chest_number: (player as any).chest_number || undefined,
+    pants_number: (player as any).pants_number || undefined,
+    logo_chest_left: (player as any).logo_chest_left || undefined,
+    logo_chest_right: (player as any).logo_chest_right || undefined,
+    logo_chest_center: (player as any).logo_chest_center || undefined,
+    logo_sleeve_left: (player as any).logo_sleeve_left || undefined,
+    logo_sleeve_right: (player as any).logo_sleeve_right || undefined,
+    logo_pants: (player as any).logo_pants || undefined,
+    note: (player as any).note || undefined,
+    print_style: (player as any).print_style || undefined,
+    pet_chest: (player as any).pet_chest || undefined,
+    chest_text: (player as any).chest_text || undefined,
+    line_2: (player as any).line_2 || undefined
   })) : [];
   
   // Process product lines

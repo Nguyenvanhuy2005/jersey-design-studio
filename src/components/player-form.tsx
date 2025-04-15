@@ -31,22 +31,9 @@ const SIZES = {
 };
 
 interface ExtendedPlayer extends Player {
-  uniform_type?: 'player' | 'goalkeeper';
-  line_1?: string;
-  line_2?: string;
-  line_3?: string;
   chest_text?: string;
-  chest_number?: boolean;
-  pants_number?: boolean;
-  logo_chest_left?: boolean;
-  logo_chest_right?: boolean;
-  logo_chest_center?: boolean;
-  logo_sleeve_left?: boolean;
-  logo_sleeve_right?: boolean;
-  logo_pants?: boolean;
   pet_chest?: string;
-  note?: string;
-  print_style?: string;
+  line_2?: string;
 }
 
 export function PlayerForm({ 
@@ -69,7 +56,9 @@ export function PlayerForm({
     printImage: true,
     uniform_type: "player",
     line_1: "",
+    line_2: "",
     line_3: "",
+    chest_text: "",
     chest_number: false,
     pants_number: false,
     logo_chest_left: false,
@@ -270,7 +259,7 @@ export function PlayerForm({
                           row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? 
                           "goalkeeper" : "player",
             line_1: row["TÊN IN TRÊN SỐ"] || "",
-            line_2: playerNumber || "",
+            line_2: row["TÊN IN DƯỚI SỐ"] || "",
             line_3: row["TÊN IN DƯỚI SỐ"] || "",
             chest_text: row["IN CHỮ NGỰC"] || "",
             chest_number: row["IN SỐ NGỰC"] === "YES" || row["IN SỐ NGỰC"] === true,
