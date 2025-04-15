@@ -1,5 +1,6 @@
 import React from 'react';
 import { Logo, DesignData } from '@/types';
+import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
@@ -50,63 +51,19 @@ export const JerseyFront = ({
   onLogoDelete,
   designData
 }: JerseyFrontProps) => {
-  // Clear canvas
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
   // Choose jersey color based on uniform type from designData
-  let jerseyColor = '#FFD700'; // Default is gold/yellow
-  if (designData?.uniform_type === 'goalkeeper') {
-    jerseyColor = '#4CAF50'; // Green for goalkeeper
-  }
+  let jerseyColor = designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700';
   
   console.log(`Rendering JerseyFront on canvas ${canvasWidth}x${canvasHeight} with ${loadedLogos.size} logos`);
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-  // Draw front jersey - main body
-  ctx.fillStyle = jerseyColor;
-  ctx.beginPath();
-  ctx.moveTo(80, 0);
-  ctx.lineTo(220, 0);
-  ctx.lineTo(250, 80);
-  ctx.lineTo(250, 300);
-  ctx.lineTo(50, 300);
-  ctx.lineTo(50, 80);
-  ctx.closePath();
-  ctx.fill();
   
-  // Draw collar
-  ctx.fillStyle = '#1A1A1A'; // Black collar
-  ctx.beginPath();
-  ctx.moveTo(120, 0);
-  ctx.lineTo(180, 0);
-  ctx.lineTo(180, 30);
-  ctx.arc(150, 30, 30, 0, Math.PI, true);
-  ctx.closePath();
-  ctx.fill();
+  // Draw the basic jersey shape using utility function
+  drawBasicJersey(ctx, jerseyColor);
   
-  // Draw sleeves
-  ctx.fillStyle = jerseyColor;
-  ctx.beginPath();
-  ctx.moveTo(80, 0);
-  ctx.lineTo(50, 80);
-  ctx.lineTo(0, 100);
-  ctx.lineTo(10, 50);
-  ctx.closePath();
-  ctx.fill();
-  
-  ctx.beginPath();
-  ctx.moveTo(220, 0);
-  ctx.lineTo(250, 80);
-  ctx.lineTo(300, 100);
-  ctx.lineTo(290, 50);
-  ctx.lineTo(250, 20);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Set high quality text rendering
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
+  // Setup canvas for text rendering
+  setupCanvas(ctx);
   
   // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
@@ -208,5 +165,5 @@ export const JerseyFront = ({
   
   console.log("JerseyFront rendering complete");
   
-  return null; // This component just draws on the canvas, doesn't return JSX
+  return null;
 };

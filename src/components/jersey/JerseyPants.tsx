@@ -1,9 +1,10 @@
 
 import React from 'react';
+import { setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: string; // Changed from number to string
+  playerNumber?: string;
   fontFamily: string;
   pants_number_enabled?: boolean;
   logo?: {
@@ -19,71 +20,53 @@ export const JerseyPants = ({
   pants_number_enabled = true,
   logo
 }: JerseyPantsProps) => {
-  // Clear the canvas before drawing
-  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
-  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  // Draw short pants
+  ctx.fillStyle = '#1A1A1A';
   
-  console.log(`Rendering JerseyPants on canvas ${canvasWidth}x${canvasHeight}`);
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  
-  // Draw short pants instead of long pants
-  ctx.fillStyle = '#1A1A1A'; // Black pants
-  
-  // Draw short pants - left side
+  // Left side
   ctx.beginPath();
   ctx.moveTo(100, 0);
   ctx.lineTo(150, 0);
-  ctx.lineTo(160, 80);  // Make them shorter
-  ctx.lineTo(90, 80);   // Make them shorter
+  ctx.lineTo(160, 80);
+  ctx.lineTo(90, 80);
   ctx.closePath();
   ctx.fill();
   
-  // Draw short pants - right side
+  // Right side
   ctx.beginPath();
   ctx.moveTo(150, 0);
   ctx.lineTo(200, 0);
-  ctx.lineTo(210, 80);  // Make them shorter
-  ctx.lineTo(160, 80);  // Make them shorter
+  ctx.lineTo(210, 80);
+  ctx.lineTo(160, 80);
   ctx.closePath();
   ctx.fill();
   
-  // Set high quality text rendering
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
+  // Setup canvas for text rendering
+  setupCanvas(ctx);
   
-  // Draw player number (on left leg) - smaller size and adjusted position
+  // Draw player number if enabled
   if (playerNumber !== undefined && pants_number_enabled) {
-    ctx.fillStyle = '#FFD700'; // Yellow number
-    const fontSize = 30; // Smaller font size (reduced from 35)
+    ctx.fillStyle = '#FFD700';
+    const fontSize = 30;
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    
-    // Position similar to the logo but on left leg
-    // Center x position of left leg is 125
-    const x = 125;
-    const y = 40; // Same vertical position as logo
-    
-    ctx.fillText(playerNumber.toString(), x, y);
-    console.log(`Drew player number: ${playerNumber} on pants with font: ${ctx.font} at position ${x},${y}`);
+    ctx.fillText(playerNumber.toString(), 125, 40);
   }
   
-  // Draw logo if provided (on middle right leg) - Updated position
-  if (logo && logo.image) {
-    try {
-      // Fixed logo dimensions - 40x40px
-      const logoWidth = 40;
-      const logoHeight = 40;
-      
-      // Updated fixed position - middle of right leg
-      const x = 185; // Center of right leg
-      const y = 40;  // Center height of pants
-      
-      // Draw the logo at fixed position with fixed size
-      ctx.drawImage(logo.image, x - logoWidth/2, y - logoHeight/2, logoWidth, logoHeight);
-      console.log(`Drew logo on pants at fixed position: ${x},${y} with fixed size: 40x40px`);
-    } catch (error) {
-      console.error("Error drawing logo on pants:", error);
-    }
+  // Draw logo if provided
+  if (logo?.image) {
+    const logoWidth = 40;
+    const logoHeight = 40;
+    const x = 185;
+    const y = 40;
+    
+    ctx.drawImage(
+      logo.image, 
+      x - logoWidth/2, 
+      y - logoHeight/2, 
+      logoWidth, 
+      logoHeight
+    );
   }
   
-  return null; // This component just draws on the canvas, doesn't return JSX
+  return null;
 };
