@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -7,7 +6,7 @@ export interface Player {
   printImage: boolean;
   imageFront?: string;
   imageBack?: string;
-  uniform_type: 'player' | 'goalkeeper';
+  uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
   line_2?: string;
   line_3?: string;

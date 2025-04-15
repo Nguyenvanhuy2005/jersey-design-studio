@@ -1,3 +1,4 @@
+
 import { Order, Player } from "@/types";
 
 // Define types for raw database models
@@ -33,22 +34,6 @@ export interface DbPlayer {
   number: number;
   print_image: boolean | null;
   design_image: string | null;
-  uniform_type: string | null;
-  line_1: string | null;
-  line_3: string | null;
-  chest_number: boolean | null;
-  pants_number: boolean | null;
-  logo_chest_left: boolean | null;
-  logo_chest_right: boolean | null;
-  logo_chest_center: boolean | null;
-  logo_sleeve_left: boolean | null;
-  logo_sleeve_right: boolean | null;
-  logo_pants: boolean | null;
-  note: string | null;
-  print_style: string | null;
-  pet_chest?: string | null; // Make pet_chest optional with '?'
-  chest_text?: string | null; // Also add chest_text as optional
-  line_2?: string | null; // Add line_2 as optional
 }
 
 export interface DbPrintConfig {
@@ -87,22 +72,6 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     number: String(dbPlayer.number),
     size: dbPlayer.size as 'S' | 'M' | 'L' | 'XL',
     printImage: dbPlayer.print_image || false,
-    uniform_type: (dbPlayer.uniform_type as 'player' | 'goalkeeper') || 'player',
-    line_1: dbPlayer.line_1 || undefined,
-    line_2: dbPlayer.line_2 || undefined, // Add line_2 mapping
-    line_3: dbPlayer.line_3 || undefined,
-    chest_number: dbPlayer.chest_number || undefined,
-    pants_number: dbPlayer.pants_number || undefined,
-    logo_chest_left: dbPlayer.logo_chest_left || undefined,
-    logo_chest_right: dbPlayer.logo_chest_right || undefined,
-    logo_chest_center: dbPlayer.logo_chest_center || undefined,
-    logo_sleeve_left: dbPlayer.logo_sleeve_left || undefined,
-    logo_sleeve_right: dbPlayer.logo_sleeve_right || undefined,
-    logo_pants: dbPlayer.logo_pants || undefined,
-    note: dbPlayer.note || undefined,
-    print_style: dbPlayer.print_style || undefined,
-    pet_chest: dbPlayer.pet_chest || undefined,
-    chest_text: dbPlayer.chest_text || undefined
   };
 }
 
@@ -189,23 +158,7 @@ export function dbOrderToOrder(
     name: player.name || "",
     number: String(player.number),
     size: player.size as 'S' | 'M' | 'L' | 'XL',
-    printImage: player.print_image || false,
-    uniform_type: (player.uniform_type as 'player' | 'goalkeeper') || 'player',
-    line_1: player.line_1 || undefined,
-    line_2: player.line_2 || undefined, // Add line_2 mapping
-    line_3: player.line_3 || undefined,
-    chest_number: player.chest_number || undefined,
-    pants_number: player.pants_number || undefined,
-    logo_chest_left: player.logo_chest_left || undefined,
-    logo_chest_right: player.logo_chest_right || undefined,
-    logo_chest_center: player.logo_chest_center || undefined,
-    logo_sleeve_left: player.logo_sleeve_left || undefined,
-    logo_sleeve_right: player.logo_sleeve_right || undefined,
-    logo_pants: player.logo_pants || undefined,
-    note: player.note || undefined,
-    print_style: player.print_style || undefined,
-    pet_chest: player.pet_chest || undefined,
-    chest_text: player.chest_text || undefined
+    printImage: player.print_image || false
   })) : [];
   
   // Process product lines

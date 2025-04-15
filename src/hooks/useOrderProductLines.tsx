@@ -30,9 +30,7 @@ export const useOrderProductLines = (
         uniqueConfigs.add("line_1");
       }
       
-      if (extPlayer.number) {
-        uniqueConfigs.add("line_2");
-      }
+      uniqueConfigs.add("line_2");
       
       if (extPlayer.line_3) {
         uniqueConfigs.add("line_3");
@@ -207,7 +205,7 @@ export const useOrderProductLines = (
       };
     }
     
-    if (players.some(p => p.number)) {
+    if (players.some(p => p.line_2)) {
       newDesignData.line_2 = {
         enabled: true,
         material: printStyle,
