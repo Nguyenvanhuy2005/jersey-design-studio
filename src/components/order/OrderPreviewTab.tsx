@@ -1,4 +1,3 @@
-
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { UniformPreview } from "@/components/ui/uniform-preview";
 import { formatCurrency } from "@/utils/format-utils";
 import { Player, Logo, PrintConfig, DesignData, ProductLine } from "@/types";
-
 interface OrderPreviewTabProps {
   players: Player[];
   logos: Logo[];
@@ -20,7 +18,6 @@ interface OrderPreviewTabProps {
   jerseyCanvasRef: React.RefObject<HTMLCanvasElement>;
   pantCanvasRef: React.RefObject<HTMLCanvasElement>;
 }
-
 export function OrderPreviewTab({
   players,
   logos,
@@ -35,49 +32,30 @@ export function OrderPreviewTab({
   pantCanvasRef
 }: OrderPreviewTabProps) {
   if (players.length === 0) {
-    return (
-      <Alert>
+    return <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Chưa có cầu thủ</AlertTitle>
         <AlertDescription>
           Vui lòng thêm ít nhất một cầu thủ vào danh sách để xem trước thiết kế.
         </AlertDescription>
-      </Alert>
-    );
+      </Alert>;
   }
 
   // Get team name from first player
   const currentPlayer = players[0];
-  const teamName = currentPlayer.line_3 || 
-                   currentPlayer.name?.split(' ')?.[0] || 
-                   "TEAM";
-
+  const teamName = currentPlayer.line_3 || currentPlayer.name?.split(' ')?.[0] || "TEAM";
   console.log("Preview player data:", {
     player: currentPlayer,
     teamName: teamName
   });
-
-  return (
-    <div className="space-y-6">
-      <UniformPreview
-        teamName={teamName}
-        players={players}
-        logos={logos}
-        printConfig={printConfig}
-        designData={designData}
-        jerseyCanvasRef={jerseyCanvasRef}
-        pantCanvasRef={pantCanvasRef}
-      />
+  return <div className="space-y-6">
+      <UniformPreview teamName={teamName} players={players} logos={logos} printConfig={printConfig} designData={designData} jerseyCanvasRef={jerseyCanvasRef} pantCanvasRef={pantCanvasRef} />
       
       <div className="text-center p-2 bg-blue-50 rounded-md">
-        <p className="text-sm text-blue-600">
-          Thiết kế hiển thị ở trên sử dụng vị trí in cố định cho tất cả các logo, số áo và tên. 
-          Khách hàng không thể chỉnh sửa vị trí in trên áo.
-        </p>
+        <p className="text-sm text-blue-600">Nhắn tin với nhân viên hỗ trợ để được lên demo chi tiết hơn nếu quý khách hàng muốn ạ!</p>
       </div>
       
-      {productLines.length > 0 && (
-        <div className="space-y-6">
+      {productLines.length > 0 && <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Chi phí ước tính</CardTitle>
@@ -94,17 +72,11 @@ export function OrderPreviewTab({
               </div>
             </CardContent>
             <CardFooter>
-              <Button 
-                onClick={onApproveDemo}
-                disabled={isGeneratingDesign}
-                className="w-full"
-              >
+              <Button onClick={onApproveDemo} disabled={isGeneratingDesign} className="w-full">
                 {isGeneratingDesign ? "Đang xử lý..." : isDemoApproved ? "Đã duyệt thiết kế" : "Duyệt thiết kế demo"}
               </Button>
             </CardFooter>
           </Card>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
