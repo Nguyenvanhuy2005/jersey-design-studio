@@ -17,6 +17,7 @@ export interface DbOrder {
   customer_id: string | null;
   total_cost: number;
   logo_url?: string | null;
+  customers?: any; // For joined customer data
   
   // The following fields are now expected to be part of the JSONB data in the database
   // They are optional in the type to handle both old and new data structures
@@ -113,6 +114,25 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
     legColor: "Đen"
   };
 
+  // Extract customer data if available
+  let customerName = undefined;
+  let customerEmail = undefined;
+  let customerPhone = undefined;
+  let customerAddress = undefined;
+
+  if (dbOrder.customers) {
+    customerName = dbOrder.customers.name;
+    customerEmail = dbOrder.customers.email;
+    customerPhone = dbOrder.customers.phone;
+    customerAddress = dbOrder.customers.address;
+  }
+
+  // Get team name from order data or design data
+  let teamName = dbOrder.team_name || '';
+  if (!teamName && dbOrder.design_data?.team_name) {
+    teamName = dbOrder.design_data.team_name;
+  }
+
   // Create a valid Order object
   return {
     id: dbOrder.id,
@@ -140,7 +160,10 @@ export function dbOrderToOrder(dbOrder: DbOrder): Order {
     referenceImages: refImages,
     designData: dbOrder.design_data,
     customerId: dbOrder.customer_id,
-    // Extract team name from design_data if available (for backward compatibility)
-    teamName: dbOrder.design_data?.team_name || ""
+    customerName: customerName,
+    customerEmail: customerEmail,
+    customerPhone: customerPhone,
+    customerAddress: customerAddress,
+    teamName: teamName || dbOrder.design_data?.team_name || ""
   };
 }

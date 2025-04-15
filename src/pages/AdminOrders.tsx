@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -100,7 +99,13 @@ const AdminOrders = () => {
     try {
       let query = supabase
         .from('orders')
-        .select('*, players(*), product_lines(*), print_configs(*), customers(name)');
+        .select(`
+          *,
+          players(*),
+          product_lines(*),
+          print_configs(*),
+          customers(name, email, phone, address)
+        `);
       
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -171,20 +176,34 @@ const AdminOrders = () => {
         });
         
         let customerName = "Không xác định";
-        if (order.customer_id) {
+        let customerEmail = undefined;
+        let customerPhone = undefined;
+        let customerAddress = undefined;
+        
+        if (order.customers) {
+          customerName = order.customers.name || "Không xác định";
+          customerEmail = order.customers.email;
+          customerPhone = order.customers.phone;
+          customerAddress = order.customers.address;
+        } else if (order.customer_id) {
           const { data: customerData } = await supabase
             .from('customers')
-            .select('name')
+            .select('name, email, phone, address')
             .eq('id', order.customer_id)
             .single();
             
           if (customerData) {
             customerName = customerData.name || "Không xác định";
+            customerEmail = customerData.email;
+            customerPhone = customerData.phone;
+            customerAddress = customerData.address;
           }
         }
 
         let teamName = '';
-        if (order.design_data && typeof order.design_data === 'object') {
+        if (order.team_name) {
+          teamName = order.team_name;
+        } else if (order.design_data && typeof order.design_data === 'object') {
           teamName = (order.design_data as any)?.team_name || '';
         }
         
@@ -200,6 +219,9 @@ const AdminOrders = () => {
           referenceImages: processedReferenceImages,
           customerName: customerName,
           customerId: order.customer_id,
+          customerEmail: customerEmail,
+          customerPhone: customerPhone,
+          customerAddress: customerAddress,
           teamName: teamName,
           players: order.players ? order.players.map((player: any) => ({
             id: player.id,
@@ -279,7 +301,6 @@ const AdminOrders = () => {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
       
-      // Fix the template literal issue - properly closing the string
       toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 

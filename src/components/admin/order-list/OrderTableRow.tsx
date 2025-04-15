@@ -29,7 +29,14 @@ export const OrderTableRow = ({
   return (
     <tr key={order.id} className="border-t border-muted">
       <td className="p-3">{order.id}</td>
-      <td className="p-3">{order.customerName || "Không xác định"}</td>
+      <td className="p-3">
+        <div>
+          <p className="font-medium">{order.customerName || "Không xác định"}</p>
+          {order.teamName && (
+            <p className="text-xs text-muted-foreground">Đội: {order.teamName}</p>
+          )}
+        </div>
+      </td>
       <td className="p-3">{order.players.length}</td>
       <td className="p-3">{order.totalCost.toLocaleString()} VNĐ</td>
       <td className="p-3">

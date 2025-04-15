@@ -28,12 +28,32 @@ export const OrderBasicInfo = ({ order }: OrderBasicInfoProps) => {
   return (
     <div>
       <h3 className="font-semibold">Thông tin cơ bản</h3>
-      <p><span className="text-muted-foreground">ID:</span> {order.id}</p>
-      <p><span className="text-muted-foreground">Tên đội:</span> {order.teamName || 'Không có tên'}</p>
-      <p><span className="text-muted-foreground">Số lượng áo:</span> {order.players.length}</p>
-      <p><span className="text-muted-foreground">Tổng chi phí:</span> {order.totalCost.toLocaleString()} VNĐ</p>
-      <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(order.status)}</p>
-      <p><span className="text-muted-foreground">Ngày tạo:</span> {formatDate(order.createdAt)}</p>
+      <div className="grid grid-cols-1 gap-1 mt-2">
+        <p><span className="text-muted-foreground">ID:</span> {order.id}</p>
+        <p><span className="text-muted-foreground">Tên đội:</span> {order.teamName || 'Không có tên'}</p>
+        <p><span className="text-muted-foreground">Số lượng áo:</span> {order.players.length}</p>
+        <p><span className="text-muted-foreground">Tổng chi phí:</span> {order.totalCost.toLocaleString()} VNĐ</p>
+        <p><span className="text-muted-foreground">Trạng thái:</span> {getStatusBadge(order.status)}</p>
+        <p><span className="text-muted-foreground">Ngày tạo:</span> {formatDate(order.createdAt)}</p>
+        
+        <div className="mt-2 pt-2 border-t">
+          <h4 className="font-medium mb-1">Thông tin khách hàng</h4>
+          <p><span className="text-muted-foreground">Tên khách hàng:</span> {order.customerName || 'Không xác định'}</p>
+          {order.customerEmail && (
+            <p><span className="text-muted-foreground">Email:</span> {order.customerEmail}</p>
+          )}
+          {order.customerPhone && (
+            <p><span className="text-muted-foreground">Số điện thoại:</span> {order.customerPhone}</p>
+          )}
+        </div>
+        
+        {order.notes && (
+          <div className="mt-2 pt-2 border-t">
+            <h4 className="font-medium">Ghi chú</h4>
+            <p className="text-sm whitespace-pre-wrap">{order.notes}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -211,6 +211,9 @@ export interface Order {
   referenceImages?: string[];
   customerName?: string;
   customerId?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerAddress?: string;
   designData?: any;
   user_id?: string;
   teamName?: string;
