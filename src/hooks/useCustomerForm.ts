@@ -46,13 +46,13 @@ export function useCustomerForm(initialCustomer?: Customer) {
       }
       
       if (data) {
-        const customerData = {
+        const customerData: Customer = {
           id: data.id,
           name: data.name || "",
           address: data.address || "",
           phone: data.phone || "",
           delivery_note: data.delivery_note || "",
-          created_at: data.created_at ? new Date(data.created_at) : undefined
+          created_at: data.created_at
         };
         
         setCustomerInfo(customerData);

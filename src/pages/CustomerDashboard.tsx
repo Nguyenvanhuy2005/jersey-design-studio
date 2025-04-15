@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
@@ -20,6 +19,7 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [customerInfo, setCustomerInfo] = useState<Customer>({
+    id: '',
     name: "",
     phone: "",
     address: "",
@@ -63,7 +63,7 @@ const CustomerDashboard = () => {
           address: data.address || "",
           phone: data.phone || "",
           delivery_note: data.delivery_note || "",
-          created_at: data.created_at ? new Date(data.created_at) : undefined
+          created_at: data.created_at
         });
       }
     } catch (error) {
@@ -80,10 +80,7 @@ const CustomerDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select(`
-          *,
-          players:players(*)
-        `)
+        .select("*")
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false });
         

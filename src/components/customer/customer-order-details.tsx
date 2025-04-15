@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order, Player } from "@/types";
@@ -20,7 +19,6 @@ export function CustomerOrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -51,29 +49,8 @@ export function CustomerOrderDetails() {
       
       if (orderData) {
         // Convert database order to application Order type
-        const convertedOrder = dbOrderToOrder({ ...orderData, players: [] });
+        const convertedOrder = dbOrderToOrder(orderData);
         setOrder(convertedOrder);
-        
-        // Fetch players for this order
-        const { data: playersData, error: playersError } = await supabase
-          .from("players")
-          .select("*")
-          .eq("order_id", orderId);
-          
-        if (playersError) {
-          console.error("Error fetching players:", playersError);
-          toast.error("Không thể tải danh sách cầu thủ");
-        } else if (playersData) {
-          // Convert database players to application Player type
-          const convertedPlayers = playersData.map(player => ({
-            id: player.id,
-            name: player.name || "",
-            number: String(player.number),
-            size: player.size as 'S' | 'M' | 'L' | 'XL',
-            printImage: player.print_image || false
-          }));
-          setPlayers(convertedPlayers);
-        }
       }
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -164,7 +141,7 @@ export function CustomerOrderDetails() {
                 <div className="space-y-1 text-sm">
                   <p><span className="text-muted-foreground">Mã đơn hàng:</span> {order.id}</p>
                   <p><span className="text-muted-foreground">Tên đội:</span> {order.teamName || "Không có"}</p>
-                  <p><span className="text-muted-foreground">Số lượng áo:</span> {players.length}</p>
+                  <p><span className="text-muted-foreground">Số lượng áo:</span> {order.players.length}</p>
                   <p><span className="text-muted-foreground">Tổng tiền:</span> {order.totalCost?.toLocaleString("vi-VN")} đ</p>
                 </div>
               </div>
@@ -192,8 +169,8 @@ export function CustomerOrderDetails() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {players.length > 0 ? (
-                      players.map((player, index) => (
+                    {order.players.length > 0 ? (
+                      order.players.map((player, index) => (
                         <TableRow key={player.id}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{player.name || "Không có tên"}</TableCell>
