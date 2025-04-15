@@ -67,28 +67,28 @@ export const JerseyBack = ({
   // Draw player name (top) - positioned at the upper part of jersey
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 90;
+    const fontSize = 120; // Increased from 90 to 120
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 80); // Centered horizontally (150), upper back (80)
+    ctx.fillText(playerNameDisplayed, 150, 80); // Kept same positioning
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
   // Draw player number (middle) - positioned in center of jersey
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 300;
+    const fontSize = 400; // Increased from 300 to 400
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(playerNumber, 150, 160); // Centered horizontally (150), middle of jersey (160)
+    ctx.fillText(playerNumber, 150, 160); // Kept same positioning
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
   // Draw team name (bottom) - positioned at lower back
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 90;
+    const fontSize = 120; // Increased from 90 to 120
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 150, 240); // Centered horizontally (150), lower back (240)
+    ctx.fillText(teamName, 150, 240); // Kept same positioning
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
