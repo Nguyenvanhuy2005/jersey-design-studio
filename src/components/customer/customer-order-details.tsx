@@ -5,10 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { parseDateSafely } from "@/utils/format-utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, LoaderCircle, MapPin, Phone, Printer, Shirt, Type, User } from "lucide-react";
+import { ArrowLeft, Calendar, LoaderCircle, MapPin, Phone, Shirt, User, Type } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Separator } from "@/components/ui/separator";
@@ -33,9 +33,24 @@ export function CustomerOrderDetails() {
 
   const fetchOrderDetails = async (orderId: string) => {
     try {
+      // Fetch order with all related data in a single query
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          players (
+            *
+          ),
+          print_configs (
+            *
+          ),
+          product_lines (
+            *
+          ),
+          customers (
+            *
+          )
+        `)
         .eq("id", orderId)
         .eq("customer_id", user?.id)
         .single();
@@ -52,53 +67,8 @@ export function CustomerOrderDetails() {
         return;
       }
       
-      const { data: playersData, error: playersError } = await supabase
-        .from("players")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (playersError) {
-        console.error("Error fetching players:", playersError);
-      }
-      
-      const { data: printConfigData, error: printConfigError } = await supabase
-        .from("print_configs")
-        .select("*")
-        .eq("order_id", orderId)
-        .single();
-        
-      if (printConfigError && printConfigError.code !== 'PGRST116') {
-        console.error("Error fetching print config:", printConfigError);
-      }
-      
-      const { data: productLinesData, error: productLinesError } = await supabase
-        .from("product_lines")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (productLinesError) {
-        console.error("Error fetching product lines:", productLinesError);
-      }
-      
-      const { data: logosData, error: logosError } = await supabase
-        .from("logos")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (logosError) {
-        console.error("Error fetching logos:", logosError);
-      }
-      
-      const completeOrder = {
-        ...orderData,
-        players: playersData || [],
-        printConfig: printConfigData || {},
-        productLines: productLinesData || [],
-        logos: logosData || []
-      };
-      
-      console.log("Complete order data:", completeOrder);
-      const convertedOrder = dbOrderToOrder(completeOrder as any);
+      console.log("Complete order data:", orderData);
+      const convertedOrder = dbOrderToOrder(orderData);
       setOrder(convertedOrder);
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -135,6 +105,13 @@ export function CustomerOrderDetails() {
   }
 
   const createdAt = parseDateSafely(order.createdAt);
+
+  const getPlayerTypeMaterial = (type: 'player' | 'goalkeeper') => {
+    if (!order?.printConfig) return 'Chưa cập nhật';
+    return type === 'player' ? 
+      order.printConfig.frontMaterial : 
+      (order.printConfig.backMaterial || 'Chưa cập nhật');
+  };
 
   return (
     <div className="container py-6 space-y-6">
@@ -185,15 +162,15 @@ export function CustomerOrderDetails() {
               <div className="grid gap-2 text-sm pl-7">
                 <div className="flex items-start gap-2">
                   <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <span>{order.customerName || "Không xác định"}</span>
+                  <span>{order?.customerName || "Không xác định"}</span>
                 </div>
-                {order.customerPhone && (
+                {order?.customerPhone && (
                   <div className="flex items-start gap-2">
                     <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <span>{order.customerPhone}</span>
                   </div>
                 )}
-                {order.customerAddress && (
+                {order?.customerAddress && (
                   <div className="flex items-start gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <span>{order.customerAddress}</span>
@@ -207,61 +184,19 @@ export function CustomerOrderDetails() {
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <Type className="h-5 w-5" />
-                Cấu hình in ấn
+                Thông tin chất liệu in
               </h3>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <Type className="h-4 w-4" />
-                    Font chữ và kiểu in
-                  </h4>
                   <Table>
                     <TableBody>
                       <TableRow>
-                        <TableCell className="font-medium">Font chữ/số</TableCell>
-                        <TableCell>{order.printConfig?.font || "Arial"}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <Shirt className="h-4 w-4" />
-                    Chất liệu và màu sắc
-                  </h4>
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">Chất liệu áo trước</TableCell>
-                        <TableCell>{order.printConfig?.frontMaterial}</TableCell>
+                        <TableCell className="font-medium">Chất liệu in áo cầu thủ</TableCell>
+                        <TableCell>{getPlayerTypeMaterial('player')}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell className="font-medium">Màu áo trước</TableCell>
-                        <TableCell>{order.printConfig?.frontColor}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Chất liệu áo sau</TableCell>
-                        <TableCell>{order.printConfig?.backMaterial}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Màu áo sau</TableCell>
-                        <TableCell>{order.printConfig?.backColor}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Chất liệu tay áo</TableCell>
-                        <TableCell>{order.printConfig?.sleeveMaterial}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Màu tay áo</TableCell>
-                        <TableCell>{order.printConfig?.sleeveColor}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Chất liệu quần</TableCell>
-                        <TableCell>{order.printConfig?.legMaterial}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Màu quần</TableCell>
-                        <TableCell>{order.printConfig?.legColor}</TableCell>
+                        <TableCell className="font-medium">Chất liệu in áo thủ môn</TableCell>
+                        <TableCell>{getPlayerTypeMaterial('goalkeeper')}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -271,56 +206,11 @@ export function CustomerOrderDetails() {
 
             <Separator />
 
-            {(order.designImageFront || order.designImage || order.designImageBack) && (
-              <div>
-                <h3 className="font-semibold mb-3">Thiết kế áo đấu</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {(order.designImageFront || order.designImage) && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Mặt trước</h4>
-                      <img
-                        src={order.designImageFront || order.designImage}
-                        alt="Thiết kế mặt trước"
-                        className="w-full rounded-md border aspect-[3/4] object-contain bg-muted"
-                      />
-                    </div>
-                  )}
-                  {order.designImageBack && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Mặt sau</h4>
-                      <img
-                        src={order.designImageBack}
-                        alt="Thiết kế mặt sau"
-                        className="w-full rounded-md border aspect-[3/4] object-contain bg-muted"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {order.referenceImages && order.referenceImages.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3">Hình ảnh tham khảo</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {order.referenceImages.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Tham khảo ${index + 1}`}
-                      className="w-full aspect-square object-cover rounded-md border"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Separator />
-
+            {/* Players List */}
             <div>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <Shirt className="h-5 w-5" />
-                Danh sách cầu thủ ({order.players.length})
+                Danh sách cầu thủ ({order?.players.length || 0})
               </h3>
               <div className="overflow-x-auto">
                 <Table>
@@ -334,7 +224,7 @@ export function CustomerOrderDetails() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {order.players.map((player, index) => (
+                    {order?.players.map((player, index) => (
                       <TableRow key={player.id || index}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>
@@ -356,37 +246,14 @@ export function CustomerOrderDetails() {
                         <TableCell>{player.size}</TableCell>
                         <TableCell>
                           <div className="space-y-1 text-sm">
-                            <div className="space-y-1">
-                              {player.chest_number && <p>• In số ngực</p>}
-                              {player.chest_text && <p>• In chữ ngực: {player.chest_text}</p>}
-                              {player.pants_number && <p>• In số quần</p>}
-                              {player.pet_chest && <p>• PET ngực: {player.pet_chest}</p>}
-                            </div>
-                            {(player.logo_chest_left || 
-                              player.logo_chest_right || 
-                              player.logo_chest_center || 
-                              player.logo_sleeve_left || 
-                              player.logo_sleeve_right || 
-                              player.logo_pants) && (
-                              <div className="mt-2">
-                                <p className="font-medium text-xs text-muted-foreground mb-1">Vị trí logo:</p>
-                                <div className="space-y-0.5 ml-2">
-                                  {player.logo_chest_left && <p>• Logo ngực trái</p>}
-                                  {player.logo_chest_right && <p>• Logo ngực phải</p>}
-                                  {player.logo_chest_center && <p>• Logo ngực giữa</p>}
-                                  {player.logo_sleeve_left && <p>• Logo tay trái</p>}
-                                  {player.logo_sleeve_right && <p>• Logo tay phải</p>}
-                                  {player.logo_pants && <p>• Logo quần</p>}
-                                </div>
-                              </div>
-                            )}
-                            <div className="mt-2">
-                              <p className="text-xs text-muted-foreground">Kiểu in: {player.print_style || "In chuyển nhiệt"}</p>
-                            </div>
-                            {player.note && (
-                              <div className="mt-2">
-                                <p className="text-xs text-muted-foreground">Ghi chú: {player.note}</p>
-                              </div>
+                            {player.chest_number && <p>• Số ngực</p>}
+                            {player.chest_text && <p>• Chữ ngực: {player.chest_text}</p>}
+                            {player.pants_number && <p>• Số quần</p>}
+                            {player.pet_chest && <p>• PET ngực: {player.pet_chest}</p>}
+                            {player.print_style && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Kiểu in: {player.print_style}
+                              </p>
                             )}
                           </div>
                         </TableCell>
@@ -399,68 +266,12 @@ export function CustomerOrderDetails() {
 
             <Separator />
 
-            {order.productLines && order.productLines.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Printer className="h-5 w-5" />
-                  Danh sách in ấn ({order.productLines.length} vị trí)
-                </h3>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>STT</TableHead>
-                        <TableHead>Sản phẩm</TableHead>
-                        <TableHead>Vị trí</TableHead>
-                        <TableHead>Chất liệu</TableHead>
-                        <TableHead>Kích thước</TableHead>
-                        <TableHead>Nội dung</TableHead>
-                        <TableHead>Điểm</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {order.productLines.map((line, index) => (
-                        <TableRow key={line.id || index}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{line.product}</TableCell>
-                          <TableCell>{line.position}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Printer className="h-4 w-4" />
-                              {line.material}
-                            </div>
-                          </TableCell>
-                          <TableCell>{line.size}</TableCell>
-                          <TableCell className="max-w-[200px] truncate">
-                            {line.content || "-"}
-                          </TableCell>
-                          <TableCell>{line.points}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-
-            {order.notes && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="font-semibold mb-2">Ghi chú đơn hàng</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {order.notes}
-                  </p>
-                </div>
-              </>
-            )}
-
-            <Separator />
+            {/* Total cost section */}
             <div className="pt-2">
               <div className="flex justify-end items-center gap-4">
                 <span className="font-medium">Tổng tiền:</span>
                 <span className="text-xl font-bold">
-                  {order.totalCost.toLocaleString("vi-VN")} đ
+                  {order?.totalCost.toLocaleString("vi-VN")} đ
                 </span>
               </div>
             </div>
