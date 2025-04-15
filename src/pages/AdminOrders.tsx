@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -349,9 +350,11 @@ const AdminOrders = () => {
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
         'Đã hoàn thành'
-      });
+      }`);
 
-      console.log(`Order ${orderId} status changed from ${orders.find(order => order.id === orderId)?.status} to ${newStatus}`);
+      // Fix the template literal syntax by using regular string concatenation
+      const oldStatus = orders.find(order => order.id === orderId)?.status || '';
+      console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Có lỗi khi cập nhật trạng thái đơn hàng");
