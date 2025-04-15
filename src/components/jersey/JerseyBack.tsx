@@ -24,39 +24,45 @@ export const JerseyBack = ({
   console.log(`JerseyBack data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
   console.log(`Using font family: ${fontFamily}`);
   
-  // Draw back jersey
+  // Draw back jersey - main body with angled shoulders
   ctx.fillStyle = '#FFD700'; // Yellow jersey
   ctx.beginPath();
-  ctx.moveTo(50, 0);
-  ctx.lineTo(250, 0);
-  ctx.lineTo(250, 300);
-  ctx.lineTo(50, 300);
+  ctx.moveTo(80, 0);  // Start at left shoulder
+  ctx.lineTo(220, 0); // Right shoulder
+  ctx.lineTo(250, 80); // Right armpit
+  ctx.lineTo(250, 300); // Right bottom
+  ctx.lineTo(50, 300); // Left bottom
+  ctx.lineTo(50, 80);  // Left armpit
   ctx.closePath();
   ctx.fill();
   
-  // Draw collar
-  ctx.fillStyle = '#1A1A1A'; // Black collar
+  // Draw collar (black V-neck)
+  ctx.fillStyle = '#1A1A1A';
   ctx.beginPath();
-  ctx.moveTo(125, 0);
-  ctx.lineTo(175, 0);
-  ctx.lineTo(175, 20);
-  ctx.lineTo(125, 20);
+  ctx.moveTo(120, 0);
+  ctx.lineTo(180, 0);
+  ctx.lineTo(180, 30);
+  ctx.arc(150, 30, 30, 0, Math.PI, true);
   ctx.closePath();
   ctx.fill();
   
-  // Draw sleeves
-  ctx.fillStyle = '#FFD700'; // Yellow sleeves
+  // Draw left sleeve
+  ctx.fillStyle = '#FFD700';
   ctx.beginPath();
-  ctx.moveTo(50, 0);
-  ctx.lineTo(20, 80);
+  ctx.moveTo(80, 0);
   ctx.lineTo(50, 80);
+  ctx.lineTo(0, 100);
+  ctx.lineTo(10, 50);
   ctx.closePath();
   ctx.fill();
   
+  // Draw right sleeve
   ctx.beginPath();
-  ctx.moveTo(250, 0);
-  ctx.lineTo(280, 80);
+  ctx.moveTo(220, 0);
   ctx.lineTo(250, 80);
+  ctx.lineTo(300, 100);
+  ctx.lineTo(290, 50);
+  ctx.lineTo(250, 20);
   ctx.closePath();
   ctx.fill();
   
@@ -67,28 +73,28 @@ export const JerseyBack = ({
   // Draw player name (top) - positioned at the upper part of jersey
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 120; // Increased from 90 to 120
+    const fontSize = 120;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 80); // Kept same positioning
+    ctx.fillText(playerNameDisplayed, 150, 80);
     console.log(`Drew player name: ${playerNameDisplayed} with font: ${ctx.font}`);
   }
   
   // Draw player number (middle) - positioned in center of jersey
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 400; // Increased from 300 to 400
+    const fontSize = 400;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(playerNumber, 150, 160); // Kept same positioning
+    ctx.fillText(playerNumber, 150, 160);
     console.log(`Drew player number: ${playerNumber} with font: ${ctx.font}`);
   }
   
   // Draw team name (bottom) - positioned at lower back
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 120; // Increased from 90 to 120
+    const fontSize = 120;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 150, 240); // Kept same positioning
+    ctx.fillText(teamName, 150, 240);
     console.log(`Drew team name: ${teamName} with font: ${ctx.font}`);
   }
   
