@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DesignData } from "@/types";
 
@@ -41,17 +40,17 @@ export function PrintPositionsForm({
     setPetChestText(designData.pet_chest?.content || "");
   }, [designData]);
   
-  const handleLogoChange = (position: string, enabled: boolean) => {
+  const handleLogoChange = (position: string, checked: boolean) => {
     const updatedDesignData = { ...designData };
     const logoKey = `logo_${position}` as keyof DesignData;
     
     if (!updatedDesignData[logoKey]) {
       updatedDesignData[logoKey] = {
-        enabled: enabled,
+        enabled: checked,
         material: printStyle
-      } as any;
+      };
     } else {
-      (updatedDesignData[logoKey] as any).enabled = enabled;
+      (updatedDesignData[logoKey] as any).enabled = checked;
     }
     
     onDesignDataChange(updatedDesignData);
@@ -59,38 +58,29 @@ export function PrintPositionsForm({
   
   const handleLineChange = (line: 'line_1' | 'line_3' | 'chest_text' | 'pet_chest', field: string, value: any) => {
     const updatedDesignData = { ...designData };
+    
     if (!updatedDesignData[line]) {
       updatedDesignData[line] = {
         enabled: true,
         content: '',
         color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
-        // Note: font field is added conditionally below
       };
     }
     
-    // Update the specified field with the provided value
     if (updatedDesignData[line]) {
       (updatedDesignData[line] as any)[field] = value;
-      
-      // Special handling for font selection - separate property
-      if (field === 'font') {
-        if (!updatedDesignData.font_text) {
-          updatedDesignData.font_text = { font: fontText };
-        }
-        updatedDesignData.font_text.font = value;
-      }
     }
     
     onDesignDataChange(updatedDesignData);
   };
 
-  const handleChestNumberChange = (enabled: boolean) => {
-    setIsChestNumberEnabled(enabled);
+  const handleChestNumberChange = (checked: boolean) => {
+    setIsChestNumberEnabled(checked);
     const updatedDesignData = {
       ...designData,
       chest_number: {
-        enabled: enabled,
+        enabled: checked,
         color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
       }
@@ -98,19 +88,19 @@ export function PrintPositionsForm({
     onDesignDataChange(updatedDesignData);
   };
 
-  const handlePantsNumberChange = (enabled: boolean) => {
-    setIsPantsNumberEnabled(enabled);
+  const handlePantsNumberChange = (checked: boolean) => {
+    setIsPantsNumberEnabled(checked);
     const updatedDesignData = {
       ...designData,
       pants_number: {
-        enabled: enabled,
+        enabled: checked,
         color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
       }
     };
     onDesignDataChange(updatedDesignData);
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -122,42 +112,42 @@ export function PrintPositionsForm({
             <Label>Logo ngực trái</Label>
             <Checkbox
               checked={designData.logo_chest_left?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('chest_left', checked)}
+              onCheckedChange={(checked) => handleLogoChange('chest_left', checked as boolean)}
             />
           </div>
           <div>
             <Label>Logo ngực phải</Label>
             <Checkbox
               checked={designData.logo_chest_right?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('chest_right', checked)}
+              onCheckedChange={(checked) => handleLogoChange('chest_right', checked as boolean)}
             />
           </div>
           <div>
             <Label>Logo ngực giữa</Label>
             <Checkbox
               checked={designData.logo_chest_center?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('chest_center', checked)}
+              onCheckedChange={(checked) => handleLogoChange('chest_center', checked as boolean)}
             />
           </div>
           <div>
             <Label>Logo tay trái</Label>
             <Checkbox
               checked={designData.logo_sleeve_left?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('sleeve_left', checked)}
+              onCheckedChange={(checked) => handleLogoChange('sleeve_left', checked as boolean)}
             />
           </div>
           <div>
             <Label>Logo tay phải</Label>
             <Checkbox
               checked={designData.logo_sleeve_right?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('sleeve_right', checked)}
+              onCheckedChange={(checked) => handleLogoChange('sleeve_right', checked as boolean)}
             />
           </div>
           <div>
             <Label>Logo quần</Label>
             <Checkbox
               checked={designData.logo_pants?.enabled || false}
-              onCheckedChange={(checked) => handleLogoChange('pants', checked)}
+              onCheckedChange={(checked) => handleLogoChange('pants', checked as boolean)}
             />
           </div>
         </div>
@@ -222,14 +212,14 @@ export function PrintPositionsForm({
             <Label>Số ngực</Label>
             <Checkbox
               checked={isChestNumberEnabled}
-              onCheckedChange={(checked) => handleChestNumberChange(checked)}
+              onCheckedChange={(checked) => handleChestNumberChange(checked as boolean)}
             />
           </div>
           <div>
             <Label>Số quần</Label>
             <Checkbox
               checked={isPantsNumberEnabled}
-              onCheckedChange={(checked) => handlePantsNumberChange(checked)}
+              onCheckedChange={(checked) => handlePantsNumberChange(checked as boolean)}
             />
           </div>
         </div>

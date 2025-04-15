@@ -339,7 +339,7 @@ const AdminOrders = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId);
-        
+      
       if (error) {
         console.error("Error updating order status:", error);
         toast.error("Không thể cập nhật trạng thái đơn hàng");
@@ -363,20 +363,8 @@ const AdminOrders = () => {
         'Đã hoàn thành'
       }`);
 
-      // Log action for audit trail - use a direct SQL execution approach instead
-      try {
-        await supabase.rpc('log_audit_action', {
-          user_id_param: user?.id,
-          action_param: 'update_status',
-          table_name_param: 'orders',
-          row_id_param: orderId,
-          old_value_param: orders.find(order => order.id === orderId)?.status,
-          new_value_param: newStatus
-        });
-      } catch (auditErr) {
-        console.error("Error logging audit trail:", auditErr);
-        // Don't block the main operation if audit logging fails
-      }
+      // For now, we'll just log the status change in the console
+      console.log(`Order ${orderId} status changed from ${orders.find(order => order.id === orderId)?.status} to ${newStatus}`);
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Có lỗi khi cập nhật trạng thái đơn hàng");
