@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 
@@ -27,28 +28,28 @@ export const JerseyBack = ({
   // Draw player name
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 120;
+    const fontSize = 30;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 80);
+    ctx.fillText(playerNameDisplayed, 150, 100);
     console.log(`Drew player name: ${playerNameDisplayed}`);
   }
   
   // Draw player number
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 400;
+    const fontSize = 120;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(playerNumber, 150, 160);
+    ctx.fillText(playerNumber, 150, 200);
     console.log(`Drew player number: ${playerNumber}`);
   }
   
   // Draw team name
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 120;
+    const fontSize = 30;
     ctx.font = `700 ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 150, 240);
+    ctx.fillText(teamName, 150, 280);
     console.log(`Drew team name: ${teamName}`);
   }
   
