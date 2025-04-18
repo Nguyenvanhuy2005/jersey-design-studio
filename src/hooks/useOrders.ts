@@ -66,7 +66,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
       }
 
       const transformedOrders: Order[] = await Promise.all(ordersData.map(async order => {
-        // Fetch customer data separately to avoid relationship ambiguity
         let customerName = "Không xác định";
         let customerEmail = undefined;
         let customerPhone = undefined;
@@ -86,14 +85,12 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           }
         }
         
-        // Fetch players data with complete player information
         const { data: playersData } = await supabase
           .from('players')
           .select('*')
           .eq('order_id', order.id);
           
         const players = playersData ? playersData.map(player => {
-          // Make sure all required properties exist
           return {
             id: player.id,
             name: player.name || "",
@@ -102,7 +99,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
             printImage: player.print_image || false,
             uniform_type: player.uniform_type as 'player' | 'goalkeeper' || 'player',
             line_1: player.line_1 || undefined,
-            line_2: String(player.number), // Ensure line_2 is set
+            line_2: String(player.number),
             line_3: player.line_3 || undefined,
             chest_text: player.chest_text || undefined,
             chest_number: player.chest_number || false,
@@ -119,7 +116,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           };
         }) : [];
         
-        // Fetch product lines data
         const { data: productLinesData } = await supabase
           .from('product_lines')
           .select('*')
@@ -135,14 +131,12 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           content: line.content || ''
         })) : [];
         
-        // Fetch print config data
         const { data: printConfigData } = await supabase
           .from('print_configs')
           .select('*')
           .eq('order_id', order.id)
           .single();
           
-        // Parse reference images
         let refImages: string[] = [];
         if (order.reference_images) {
           if (typeof order.reference_images === 'string') {
@@ -156,7 +150,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           }
         }
         
-        // Extract team name
         let teamName = '';
         if (order.team_name) {
           teamName = order.team_name;

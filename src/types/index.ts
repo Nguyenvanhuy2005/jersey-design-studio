@@ -213,3 +213,27 @@ export interface Order {
   user_id?: string;
   teamName?: string;
 }
+
+export interface DbPlayer {
+  id: string;
+  name: string | null;
+  size: string;
+  number: number;
+  print_image: boolean | null;
+  uniform_type: string | null;
+  line_1: string | null;
+  line_2: string | null;
+  line_3: string | null;
+  chest_text: string | null;
+  chest_number: boolean | null;
+  pants_number: boolean | null;
+  logo_chest_left: boolean | null;
+  logo_chest_right: boolean | null;
+  logo_chest_center: boolean | null;
+  logo_sleeve_left: boolean | null;
+  logo_sleeve_right: boolean | null;
+  logo_pants: boolean | null;
+  pet_chest: string | null;
+  note: string | null;
+  print_style: string | null;
+}
