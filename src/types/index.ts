@@ -192,6 +192,7 @@ export interface Order {
   designData?: any;
   user_id?: string;
   teamName?: string;
+  logo_url?: string;
 }
 
 export interface DbPlayer {

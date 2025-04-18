@@ -214,6 +214,7 @@ export function dbOrderToOrder(
     customerName: customer?.name || "Không xác định",
     customerPhone: customer?.phone || undefined,
     customerAddress: customer?.address || undefined,
-    teamName
+    teamName,
+    logo_url: dbOrder.logo_url || undefined
   };
 }
