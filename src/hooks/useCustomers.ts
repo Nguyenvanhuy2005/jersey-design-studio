@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,10 +49,26 @@ export function useCustomers() {
       }
 
       // Transform the data to match the expected format
-      const processedCustomers = (customersWithCounts || []).map(customer => ({
-        ...customer,
-        order_count: customer.order_count || 0
-      }));
+      const processedCustomers = (customersWithCounts || []).map(customer => {
+        // Extract the count properly from the nested array that Supabase returns
+        let orderCount = 0;
+        if (Array.isArray(customer.order_count) && customer.order_count.length > 0) {
+          orderCount = customer.order_count.length;
+        } else if (typeof customer.order_count === 'number') {
+          orderCount = customer.order_count;
+        }
+        
+        return {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+          delivery_note: customer.delivery_note,
+          created_at: customer.created_at,
+          order_count: orderCount
+        } as Customer;
+      });
 
       console.log("Processed customers with order counts:", processedCustomers);
       setCustomers(processedCustomers);
