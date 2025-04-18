@@ -68,7 +68,13 @@ export function useCustomers() {
     try {
       const { data, error } = await supabase
         .from("customers")
-        .insert([customerData])
+        .insert({
+          name: customerData.name,
+          email: customerData.email,
+          phone: customerData.phone,
+          address: customerData.address,
+          delivery_note: customerData.delivery_note
+        })
         .select()
         .single();
 
@@ -136,4 +142,3 @@ export function useCustomers() {
     resetPassword
   };
 }
-
