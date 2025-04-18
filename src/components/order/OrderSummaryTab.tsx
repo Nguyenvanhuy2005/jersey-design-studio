@@ -40,9 +40,6 @@ export function OrderSummaryTab({
   
   const calculatePrintCounts = () => {
     const counts = {
-      line_1: 0,
-      line_2: 0,
-      line_3: 0,
       chest_number: 0,
       pants_number: 0,
       logo_chest_left: 0,
@@ -56,9 +53,6 @@ export function OrderSummaryTab({
     };
     
     players.forEach(player => {
-      if (player.line_1) counts.line_1++;
-      if (player.number) counts.line_2++;
-      if (player.line_3) counts.line_3++;
       if (player.chest_number) counts.chest_number++;
       if (player.pants_number) counts.pants_number++;
       if (player.logo_chest_left) counts.logo_chest_left++;
@@ -215,15 +209,6 @@ export function OrderSummaryTab({
               <div>
                 <h3 className="font-medium mb-2">Vị trí in:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-muted-foreground">IN DÒNG 1 (trên số):</span> {printCounts.line_1}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">IN DÒNG 2 (số lưng):</span> {printCounts.line_2}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">IN DÒNG 3 (dưới số):</span> {printCounts.line_3}
-                  </div>
                   <div>
                     <span className="text-muted-foreground">IN SỐ NGỰC:</span> {printCounts.chest_number}
                   </div>

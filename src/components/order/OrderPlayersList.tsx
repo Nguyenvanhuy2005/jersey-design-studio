@@ -3,7 +3,6 @@ import { Player } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shirt, Printer } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 interface OrderPlayersListProps {
   players: Player[];
@@ -88,3 +87,4 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
     </Card>
   );
 }
+
