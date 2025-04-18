@@ -87,4 +87,3 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
     </Card>
   );
 }
-
