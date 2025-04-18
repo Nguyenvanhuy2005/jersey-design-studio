@@ -4,9 +4,7 @@ import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
-import { 
-  createStorageBucketsIfNeeded
-} from '@/utils/image-utils';
+import { createStorageBucketsIfNeeded } from '@/utils/image-utils';
 
 interface OrderSubmissionProps {
   user: any;
@@ -123,7 +121,6 @@ export const useOrderSubmission = ({
     setIsGeneratingDesign(true);
     
     try {
-      // Update customer info first
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -149,7 +146,6 @@ export const useOrderSubmission = ({
       
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
       
-      // Upload logos if any
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -181,7 +177,6 @@ export const useOrderSubmission = ({
         }
       }
       
-      // Calculate player types for uniform_type
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
       const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
@@ -206,7 +201,6 @@ export const useOrderSubmission = ({
         ? (players[0].line_3 || players[0].name?.split(' ')?.[0] || "Team") 
         : "Team";
 
-      // Create order first
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -226,17 +220,15 @@ export const useOrderSubmission = ({
         throw orderError;
       }
 
-      // Insert players with proper error handling
       if (players.length > 0) {
         const playersToInsert = players.map(p => ({
-          name: p.name,
-          number: parseInt(p.number, 10) || 0,
-          size: p.size,
-          print_image: p.printImage,
           order_id: orderId,
+          name: p.name || null,
+          number: parseInt(p.number) || 0,
+          size: p.size,
+          print_image: p.printImage || false,
           uniform_type: p.uniform_type || 'player',
           line_1: p.line_1 || null,
-          line_2: String(p.number),
           line_3: p.line_3 || null,
           chest_number: p.chest_number || false,
           pants_number: p.pants_number || false,
@@ -246,22 +238,23 @@ export const useOrderSubmission = ({
           logo_sleeve_left: p.logo_sleeve_left || false,
           logo_sleeve_right: p.logo_sleeve_right || false,
           logo_pants: p.logo_pants || false,
-          print_style: p.print_style || null,
-          note: p.note || null
+          note: p.note || null,
+          print_style: p.print_style || printStyle,
         }));
         
-        const { error: playersError } = await supabase
+        const { error: playersError, data: insertedPlayers } = await supabase
           .from('players')
-          .insert(playersToInsert);
+          .insert(playersToInsert)
+          .select();
           
         if (playersError) {
           console.error("Error inserting players:", playersError);
-          // Since order is already created, we'll show warning but continue
-          toast.warning("Có lỗi khi lưu thông tin cầu thủ, vui lòng kiểm tra lại");
+          throw new Error(`Error saving player data: ${playersError.message}`);
         }
+
+        console.log("Successfully inserted players:", insertedPlayers);
       }
       
-      // Insert product lines if any
       if (productLines.length > 0) {
         const productLinesToInsert = productLines.map(pl => ({
           ...pl,
@@ -278,7 +271,6 @@ export const useOrderSubmission = ({
         }
       }
       
-      // Update print config
       if (printStyle) {
         const { error: printConfigError } = await supabase
           .from('print_configs')
