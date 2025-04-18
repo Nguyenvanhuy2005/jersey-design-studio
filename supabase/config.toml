@@ -1,1 +1,5 @@
+
 project_id = "qovekbaewxxdzjzbcimc"
+
+[functions.create-customer]
+verify_jwt = false

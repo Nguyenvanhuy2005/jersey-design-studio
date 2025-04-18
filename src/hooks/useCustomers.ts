@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -54,38 +53,20 @@ export function useCustomers() {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
-      const { data: authUserData, error: authError } = await supabase.auth.admin.createUser({
-        email: customerData.email || '',
-        password: Math.random().toString(36).slice(-8), // Generate random password
-        email_confirm: true
+      const { data, error } = await supabase.functions.invoke('create-customer', {
+        body: { customerData }
       });
 
-      if (authError) {
-        throw authError;
+      if (error) {
+        throw error;
       }
 
-      if (!authUserData.user) {
-        throw new Error("Không thể tạo tài khoản người dùng");
-      }
-
-      const { data: customerRecord, error: customerError } = await supabase
-        .from("customers")
-        .insert({
-          id: authUserData.user.id,
-          name: customerData.name,
-          phone: customerData.phone,
-          address: customerData.address,
-          delivery_note: customerData.delivery_note
-        })
-        .select()
-        .single();
-
-      if (customerError) {
-        throw customerError;
+      if (!data?.customer) {
+        throw new Error("Không thể tạo khách hàng");
       }
 
       toast.success("Đã tạo khách hàng thành công");
-      return customerRecord;
+      return data.customer;
     } catch (err: any) {
       console.error("Error creating customer:", err);
       toast.error(`Không thể tạo khách hàng: ${err.message}`);
