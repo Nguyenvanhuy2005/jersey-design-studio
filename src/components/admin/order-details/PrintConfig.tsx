@@ -23,39 +23,12 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
     
     const checkFontPermission = async () => {
       try {
-        // Get font details
-        const { data: fontData, error: fontError } = await supabase
-          .from('fonts')
-          .select('user_id, is_public')
-          .eq('name', printConfig.font)
-          .maybeSingle();
-
-        if (fontError) throw new Error(fontError.message);
+        // For now, allow download for all users since we don't have permission structure
+        // This will be updated when the database is modified
+        setCanDownload(true);
         
-        // If font is not found, allow download (system font)
-        if (!fontData) {
-          setCanDownload(true);
-          return;
-        }
-        
-        // Check if user can download this font (is owner, font is public, or user is admin)
-        const canUserDownload = fontData.is_public || 
-          (user && (user.id === fontData.user_id || await checkIsAdmin()));
-        
-        setCanDownload(canUserDownload);
-        
-        // Get font owner's name if applicable
-        if (fontData.user_id) {
-          const { data: userData } = await supabase
-            .from('customers')
-            .select('name')
-            .eq('id', fontData.user_id)
-            .maybeSingle();
-          
-          if (userData?.name) {
-            setFontOwnerName(`Font được tải lên bởi: ${userData.name}`);
-          }
-        }
+        // TODO: Once the database is updated, implement proper permission checking
+        // and get font owner's name
       } catch (error) {
         console.error('Error checking font permission:', error);
       }

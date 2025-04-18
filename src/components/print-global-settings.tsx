@@ -5,9 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Globe, Lock, Upload } from "lucide-react";
 import { useFonts } from "@/hooks/useFonts";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface FontWithMetadata {
@@ -33,52 +32,27 @@ export function PrintGlobalSettings({
   fontNumber,
   onFontNumberChange,
 }: PrintGlobalSettingsProps) {
-  const { customFonts, uploadFont, isUploading, loadSavedFonts, toggleFontPublic } = useFonts();
+  const { 
+    customFonts, 
+    fontsWithMetadata,
+    uploadFont, 
+    isUploading, 
+    toggleFontPublic 
+  } = useFonts();
+  
   const [uploadType, setUploadType] = useState<'text' | 'number'>('text');
-  const [fontsWithMetadata, setFontsWithMetadata] = useState<FontWithMetadata[]>([]);
   const { user } = useAuth();
   
   const allTextFonts = [...new Set([...fontTextOptions, ...customFonts])];
   const allNumberFonts = [...new Set([...fontNumberOptions, ...customFonts])];
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchFontMetadata = async () => {
-      const { data, error } = await supabase
-        .from('fonts')
-        .select('name, is_public, user_id');
-      
-      if (error) {
-        console.error('Error loading font metadata:', error);
-        return;
-      }
-      
-      const fontMetadata = data.map(font => ({
-        name: font.name,
-        isPublic: font.is_public || false,
-        isOwner: font.user_id === user.id
-      }));
-      
-      setFontsWithMetadata(fontMetadata);
-    };
-    
-    fetchFontMetadata();
-  }, [customFonts, user]);
-  
   const handleToggleFontVisibility = async (fontName: string) => {
+    // Find font in metadata
     const fontData = fontsWithMetadata.find(f => f.name === fontName);
-    if (!fontData || !fontData.isOwner) return;
+    if (!fontData || !fontData.user_id || fontData.user_id !== user?.id) return;
     
-    const newIsPublic = !fontData.isPublic;
-    const success = await toggleFontPublic(fontName, newIsPublic);
-    
-    if (success) {
-      // Update local state
-      setFontsWithMetadata(prev => prev.map(f => 
-        f.name === fontName ? {...f, isPublic: newIsPublic} : f
-      ));
-    }
+    const newIsPublic = !(fontData.is_public ?? false);
+    await toggleFontPublic(fontName, newIsPublic);
   };
 
   // Fix: Use a direct approach for file upload rather than relying on the label+input combo
@@ -126,8 +100,8 @@ export function PrintGlobalSettings({
   const renderFontItem = (font: string) => {
     const fontData = fontsWithMetadata.find(f => f.name === font);
     const isCustomFont = fontData !== undefined;
-    const isOwner = fontData?.isOwner || false;
-    const isPublic = fontData?.isPublic || false;
+    const isOwner = fontData?.user_id === user?.id;
+    const isPublic = fontData?.is_public ?? true;
     
     return (
       <SelectItem key={font} value={font} className="flex items-center justify-between">

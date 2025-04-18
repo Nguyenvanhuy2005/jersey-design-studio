@@ -9,12 +9,16 @@ interface FontData {
   name: string;
   file_path: string;
   file_type: string;
-  user_id?: string;
+}
+
+interface FontWithPermissions extends FontData {
+  user_id?: string | null;
   is_public?: boolean;
 }
 
 export const useFonts = () => {
   const [customFonts, setCustomFonts] = useState<string[]>([]);
+  const [fontsWithMetadata, setFontsWithMetadata] = useState<FontWithPermissions[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { user, isAdmin } = useAuth();
 
@@ -25,17 +29,16 @@ export const useFonts = () => {
   const loadSavedFonts = async () => {
     if (!user) {
       setCustomFonts([]);
+      setFontsWithMetadata([]);
       return;
     }
 
-    // Build the query to get fonts - if admin, get all fonts, otherwise get only public fonts and user's fonts
-    let query = supabase.from('fonts').select('name, file_path');
-    
-    if (!isAdmin) {
-      query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
-    }
-
-    const { data: fonts, error } = await query;
+    // Build the query to get fonts - for now, get all fonts
+    // Once the database is updated with user_id and is_public columns,
+    // we'll filter by those
+    const { data: fonts, error } = await supabase
+      .from('fonts')
+      .select('name, file_path, file_type');
 
     if (error) {
       console.error('Error loading fonts:', error);
@@ -44,7 +47,16 @@ export const useFonts = () => {
     }
 
     if (fonts) {
+      // Convert to FontWithPermissions type
+      const enhancedFonts: FontWithPermissions[] = fonts.map(font => ({
+        ...font,
+        // Since these columns don't exist yet, we'll set default values
+        user_id: user.id, // Temporarily assign current user as owner
+        is_public: true    // Temporarily mark all fonts as public
+      }));
+      
       setCustomFonts(fonts.map(font => font.name));
+      setFontsWithMetadata(enhancedFonts);
       
       fonts.forEach(async (font) => {
         const { data: fontUrl } = supabase.storage
@@ -84,15 +96,13 @@ export const useFonts = () => {
 
       if (!fontUrl) throw new Error('Could not get font URL');
 
-      // Save font metadata to database with user_id
+      // Save font metadata to database (with existing columns only)
       const { error: dbError } = await supabase
         .from('fonts')
         .insert({
           name: fontName,
           file_path: filePath,
           file_type: fileExtension || 'ttf',
-          user_id: user.id,
-          is_public: false // Default to private font
         });
 
       if (dbError) throw new Error(dbError.message);
@@ -102,6 +112,17 @@ export const useFonts = () => {
       
       // Update local state
       setCustomFonts(prev => [...prev, fontName]);
+      
+      // Add to font metadata
+      const newFont: FontWithPermissions = {
+        name: fontName,
+        file_path: filePath,
+        file_type: fileExtension || 'ttf',
+        user_id: user.id,
+        is_public: false
+      };
+      
+      setFontsWithMetadata(prev => [...prev, newFont]);
 
       toast.success(`Đã tải lên phông chữ: ${fontName}`);
       return { success: true, fontName };
@@ -115,20 +136,22 @@ export const useFonts = () => {
     }
   };
 
-  // New function to toggle font visibility
+  // Placeholder for toggleFontPublic function - will be implemented after DB update
   const toggleFontPublic = async (fontName: string, isPublic: boolean) => {
     if (!user) return false;
     
     try {
-      const { error } = await supabase
-        .from('fonts')
-        .update({ is_public: isPublic })
-        .eq('name', fontName)
-        .eq('user_id', user.id);
-      
-      if (error) throw new Error(error.message);
+      // For now, just update the local state since the database doesn't have the column yet
+      setFontsWithMetadata(prev => 
+        prev.map(font => 
+          font.name === fontName && font.user_id === user.id 
+            ? { ...font, is_public: isPublic } 
+            : font
+        )
+      );
       
       toast.success(`Font "${fontName}" đã được đặt thành ${isPublic ? "công khai" : "riêng tư"}`);
+      toast.info("Chức năng này sẽ được kích hoạt đầy đủ sau khi cơ sở dữ liệu được cập nhật.");
       return true;
     } catch (error) {
       console.error('Error toggling font visibility:', error);
@@ -136,12 +159,24 @@ export const useFonts = () => {
       return false;
     }
   };
-
+  
+  // Function to check if user can access a specific font
+  const canUserAccessFont = (fontName: string): boolean => {
+    if (isAdmin) return true;
+    
+    const fontData = fontsWithMetadata.find(f => f.name === fontName);
+    if (!fontData) return true; // If we don't have metadata, allow access
+    
+    return fontData.is_public || (user && fontData.user_id === user.id);
+  };
+  
   return {
     customFonts,
+    fontsWithMetadata,
     isUploading,
     uploadFont,
     loadSavedFonts,
-    toggleFontPublic
+    toggleFontPublic,
+    canUserAccessFont
   };
 };
