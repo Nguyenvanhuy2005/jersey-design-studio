@@ -34,27 +34,18 @@ export function CustomerOrderDetails() {
 
   const fetchOrderDetails = async (orderId: string) => {
     try {
+      setLoading(true);
+      
+      // First fetch order with customer data
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select(`
           *,
-          customer:customers(
+          customer:customers!orders_customer_id_fkey(
             name,
             phone,
             address,
             delivery_note
-          ),
-          players(
-            *
-          ),
-          print_configs(
-            *
-          ),
-          product_lines(
-            *
-          ),
-          logos(
-            *
           )
         `)
         .eq("id", orderId)
@@ -73,14 +64,50 @@ export function CustomerOrderDetails() {
         return;
       }
 
-      console.log("Complete order data:", orderData);
+      // Fetch related players data
+      const { data: playersData, error: playersError } = await supabase
+        .from("players")
+        .select("*")
+        .eq("order_id", orderId);
+
+      if (playersError) {
+        console.error("Error fetching players:", playersError);
+      }
+
+      // Fetch product lines data
+      const { data: productLinesData, error: productLinesError } = await supabase
+        .from("product_lines")
+        .select("*")
+        .eq("order_id", orderId);
+
+      if (productLinesError) {
+        console.error("Error fetching product lines:", productLinesError);
+      }
+
+      // Fetch print config data
+      const { data: printConfigData, error: printConfigError } = await supabase
+        .from("print_configs")
+        .select("*")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (printConfigError) {
+        console.error("Error fetching print config:", printConfigError);
+      }
+
+      console.log("Complete order data:", {
+        order: orderData,
+        players: playersData,
+        productLines: productLinesData,
+        printConfig: printConfigData
+      });
       
       const convertedOrder = dbOrderToOrder(
         orderData,
         orderData.customer,
-        orderData.players,
-        orderData.product_lines,
-        orderData.print_configs?.[0]
+        playersData || [],
+        productLinesData || [],
+        printConfigData
       );
       
       setOrder(convertedOrder);
