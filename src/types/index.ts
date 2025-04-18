@@ -172,6 +172,7 @@ export interface Customer {
   address: string;
   delivery_note?: string;
   created_at?: string;
+  order_count?: number;
 }
 
 export interface Order {

@@ -1,34 +1,46 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Search, Mail, LogOut } from "lucide-react";
+import { Loader2, Search, Mail, LogOut, UserPlus, Edit, Eye, Key } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  created_at: string;
-  order_count: number;
-}
-
-interface CustomerWithOrderCount extends Customer {
-  order_count: number;
-}
+import { Customer } from "@/types";
+import { useCustomers } from "@/hooks/useCustomers";
+import { CustomerForm } from "@/components/admin/customer-management/CustomerForm";
+import { CustomerDetails } from "@/components/admin/customer-management/CustomerDetails";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AdminCustomers = () => {
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
-  const [customers, setCustomers] = useState<CustomerWithOrderCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    customers, 
+    loading, 
+    error, 
+    fetchCustomers, 
+    createCustomer,
+    updateCustomer,
+    resetPassword
+  } = useCustomers();
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { order_count?: number }) | null>(null);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   
   useEffect(() => {
     if (!isAdmin) {
@@ -37,58 +49,54 @@ const AdminCustomers = () => {
     }
     
     fetchCustomers();
-  }, [isAdmin, navigate]);
-  
-  const fetchCustomers = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { data: customersData, error: customersError } = await supabase
-        .from("customers")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (customersError) throw customersError;
-
-      if (customersData) {
-        const customersWithOrderCounts = await Promise.all(
-          customersData.map(async (customer) => {
-            const { count } = await supabase
-              .from("orders")
-              .select("id", { count: 'exact', head: true })
-              .eq("customer_id", customer.id);
-            
-            return {
-              id: customer.id,
-              name: customer.name || "",
-              email: "",
-              phone: customer.phone || "",
-              address: customer.address || "",
-              delivery_note: customer.delivery_note || "",
-              created_at: customer.created_at || new Date().toISOString(),
-              order_count: count || 0
-            } as CustomerWithOrderCount;
-          })
-        );
-
-        setCustomers(customersWithOrderCounts);
-      }
-    } catch (err: any) {
-      console.error("Error fetching customers:", err);
-      setError(err.message || "Error fetching customers data");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleContactCustomer = (customer: Customer) => {
-    toast.success(`Đã gửi email tới khách hàng: ${customer.name}`);
-  };
+  }, [isAdmin, navigate, fetchCustomers]);
   
   const handleSignOut = async () => {
     await signOut();
     navigate("/admin");
+  };
+
+  const handleAddCustomer = async (customerData: any) => {
+    await createCustomer(customerData);
+    fetchCustomers();
+  };
+
+  const handleEditCustomer = async (customerData: any) => {
+    if (selectedCustomer) {
+      await updateCustomer(selectedCustomer.id, customerData);
+      fetchCustomers();
+    }
+  };
+  
+  const openEditCustomer = (customer: Customer & { order_count?: number }) => {
+    setSelectedCustomer(customer);
+    setIsEditCustomerOpen(true);
+  };
+
+  const openViewDetails = (customer: Customer & { order_count?: number }) => {
+    setSelectedCustomer(customer);
+    setIsViewDetailsOpen(true);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (selectedCustomer?.email) {
+      try {
+        await resetPassword(selectedCustomer.email);
+      } catch (error) {
+        // Error handling is done in the hook
+      }
+      setIsResetPasswordDialogOpen(false);
+    } else {
+      toast.error("Khách hàng không có email");
+    }
+  };
+
+  const openResetPasswordDialog = () => {
+    setIsResetPasswordDialogOpen(true);
+  };
+  
+  const handleContactCustomer = (customer: Customer) => {
+    toast.success(`Đã gửi email tới khách hàng: ${customer.name}`);
   };
   
   const filteredCustomers = customers.filter(customer => {
@@ -129,6 +137,10 @@ const AdminCustomers = () => {
               />
             </div>
             <Button onClick={fetchCustomers}>Làm mới</Button>
+            <Button onClick={() => setIsAddCustomerOpen(true)} className="flex items-center gap-1">
+              <UserPlus className="h-4 w-4" />
+              Thêm khách hàng
+            </Button>
           </div>
         </div>
         
@@ -172,21 +184,41 @@ const AdminCustomers = () => {
                   filteredCustomers.map((customer) => (
                     <tr key={customer.id} className="border-t border-muted">
                       <td className="p-3 font-medium">{customer.name || "Không có tên"}</td>
-                      <td className="p-3">{customer.email}</td>
+                      <td className="p-3">{customer.email || "Không có email"}</td>
                       <td className="p-3">{customer.phone || "Không có SĐT"}</td>
                       <td className="p-3">{customer.address || "Không có địa chỉ"}</td>
                       <td className="p-3">{customer.order_count}</td>
                       <td className="p-3">
-                        {new Date(customer.created_at).toLocaleDateString('vi-VN')}
+                        {customer.created_at ? new Date(customer.created_at).toLocaleDateString('vi-VN') : "N/A"}
                       </td>
                       <td className="p-3 flex justify-center gap-2">
                         <Button 
                           variant="outline" 
-                          size="sm"
-                          onClick={() => handleContactCustomer(customer)}
+                          size="icon"
+                          title="Xem chi tiết"
+                          onClick={() => openViewDetails(customer)}
                         >
-                          <Mail className="h-4 w-4 mr-1" />
-                          Liên hệ
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          title="Chỉnh sửa"
+                          onClick={() => openEditCustomer(customer)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          title="Đặt lại mật khẩu"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            openResetPasswordDialog();
+                          }}
+                          disabled={!customer.email}
+                        >
+                          <Key className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="outline" 
@@ -204,6 +236,66 @@ const AdminCustomers = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Customer Dialog */}
+      <CustomerForm
+        open={isAddCustomerOpen}
+        onOpenChange={setIsAddCustomerOpen}
+        onSubmit={handleAddCustomer}
+        title="Thêm khách hàng mới"
+        submitLabel="Thêm khách hàng"
+        showEmailField={true}
+      />
+
+      {/* Edit Customer Dialog */}
+      {selectedCustomer && (
+        <CustomerForm
+          customer={selectedCustomer}
+          open={isEditCustomerOpen}
+          onOpenChange={setIsEditCustomerOpen}
+          onSubmit={handleEditCustomer}
+          title="Chỉnh sửa thông tin khách hàng"
+          submitLabel="Cập nhật"
+        />
+      )}
+
+      {/* View Customer Details */}
+      {selectedCustomer && (
+        <CustomerDetails
+          customer={selectedCustomer}
+          open={isViewDetailsOpen}
+          onOpenChange={setIsViewDetailsOpen}
+          onEdit={() => {
+            setIsViewDetailsOpen(false);
+            setIsEditCustomerOpen(true);
+          }}
+          onResetPassword={() => {
+            setIsViewDetailsOpen(false);
+            setIsResetPasswordDialogOpen(true);
+          }}
+        />
+      )}
+
+      {/* Reset Password Confirmation Dialog */}
+      <AlertDialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Đặt lại mật khẩu</AlertDialogTitle>
+            <AlertDialogDescription>
+              Gửi email đặt lại mật khẩu cho khách hàng {selectedCustomer?.name}?
+              {selectedCustomer?.email && (
+                <div className="mt-2 font-medium">{selectedCustomer.email}</div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPasswordConfirm}>
+              Gửi email đặt lại mật khẩu
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

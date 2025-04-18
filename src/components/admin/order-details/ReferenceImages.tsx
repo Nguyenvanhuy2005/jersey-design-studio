@@ -54,4 +54,4 @@ export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesPr
       )}
     </div>
   );
-};
+}
