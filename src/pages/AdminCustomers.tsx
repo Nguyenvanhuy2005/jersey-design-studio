@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { Loader2, Search, LogOut, Edit, Eye, Key } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -24,7 +22,7 @@ import {
 
 const AdminCustomers = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { 
     customers, 
     loading, 
@@ -41,13 +39,13 @@ const AdminCustomers = () => {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   
   useEffect(() => {
-    if (!isAdmin) {
+    if (!user) {
       navigate("/customer/dashboard");
       return;
     }
     
     fetchCustomers();
-  }, [isAdmin, navigate, fetchCustomers]);
+  }, [user, navigate, fetchCustomers]);
   
   const handleSignOut = async () => {
     await signOut();
