@@ -101,7 +101,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
             line_1: player.line_1 || undefined,
             line_2: String(player.number),
             line_3: player.line_3 || undefined,
-            chest_text: player.chest_text || undefined,
             chest_number: player.chest_number || false,
             pants_number: player.pants_number || false,
             logo_chest_left: player.logo_chest_left || false,
@@ -110,7 +109,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
             logo_sleeve_left: player.logo_sleeve_left || false,
             logo_sleeve_right: player.logo_sleeve_right || false,
             logo_pants: player.logo_pants || false,
-            pet_chest: player.pet_chest || undefined,
             note: player.note || undefined,
             print_style: player.print_style || undefined
           };
