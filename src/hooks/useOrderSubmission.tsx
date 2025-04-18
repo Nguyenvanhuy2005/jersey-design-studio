@@ -109,16 +109,6 @@ export const useOrderSubmission = ({
       return;
     }
     
-    if (players.length === 0) {
-      toast.error("Vui lòng thêm ít nhất một cầu thủ vào danh sách");
-      return;
-    }
-    
-    if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
-      toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
-      return;
-    }
-    
     setIsSubmitting(true);
     setIsGeneratingDesign(true);
     

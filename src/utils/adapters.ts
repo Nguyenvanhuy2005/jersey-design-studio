@@ -148,6 +148,18 @@ export function dbOrderToOrder(
   // Get team name
   const teamName = extractTeamName(dbOrder);
   
+  // Process players data with error handling
+  const processedPlayers = players ? players.map(player => {
+    try {
+      return dbPlayerToPlayer(player);
+    } catch (error) {
+      console.error("Error processing player data:", error, player);
+      return null;
+    }
+  }).filter(Boolean) : [];
+  
+  console.log("Processed players:", processedPlayers);
+  
   // Default print config if none provided
   const defaultPrintConfig = {
     id: dbOrder.id,
@@ -174,9 +186,6 @@ export function dbOrderToOrder(
     legMaterial: printConfig.leg_material || 'In chuyển nhiệt',
     legColor: printConfig.leg_color || 'Đen'
   } : defaultPrintConfig;
-  
-  // Process players data
-  const processedPlayers = players ? players.map(player => dbPlayerToPlayer(player)) : [];
   
   // Process product lines
   const processedProductLines = productLines ? productLines.map(line => ({
