@@ -25,7 +25,14 @@ export function useCustomers() {
         return;
       }
 
-      // Only proceed if user is authenticated
+      if (!isAdmin) {
+        setError("Bạn không có quyền xem danh sách khách hàng");
+        setCustomers([]);
+        setLoading(false);
+        return;
+      }
+
+      // Only proceed if user is authenticated and is admin
       const { data: customersData, error: customersError } = await supabase
         .from("customers")
         .select("*")
@@ -62,6 +69,7 @@ export function useCustomers() {
     } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(`Không thể tải dữ liệu khách hàng: ${err.message}`);
+      toast.error("Có lỗi khi tải dữ liệu khách hàng");
     } finally {
       setLoading(false);
     }
