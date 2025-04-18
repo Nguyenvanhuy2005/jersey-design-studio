@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -67,7 +68,7 @@ export function useCustomers() {
     try {
       const { data, error } = await supabase
         .from("customers")
-        .insert(customerData)
+        .insert([customerData])
         .select()
         .single();
 
@@ -135,3 +136,4 @@ export function useCustomers() {
     resetPassword
   };
 }
+
