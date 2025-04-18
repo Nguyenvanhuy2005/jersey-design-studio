@@ -1,97 +1,43 @@
 
-import { useState, useEffect } from "react";
-import { Order } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
-import { getReferenceImageUrls } from "@/utils/image-utils";
-import { Input } from "@/components/ui/input";
 
 interface ReferenceImagesProps {
-  referenceImages: Order['referenceImages'];
-  onViewImage: (imageUrl: string) => void;
+  referenceImages?: string[];
 }
 
-export const ReferenceImages = ({ referenceImages, onViewImage }: ReferenceImagesProps) => {
-  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
-  const [referenceImagesLoaded, setReferenceImagesLoaded] = useState<boolean[]>([]);
-  const [productNames, setProductNames] = useState<string[]>([]);
-  
-  useEffect(() => {
-    if (Array.isArray(referenceImages) && referenceImages.length > 0) {
-      const uniqueReferenceImages = [...new Set(referenceImages)];
-      const urls = getReferenceImageUrls(uniqueReferenceImages);
-      setReferenceImageUrls(urls);
-      setReferenceImagesLoaded(Array(urls.length).fill(false));
-      setProductNames(Array(urls.length).fill(""));
-      console.log(`Generated ${urls.length} unique reference image URLs from ${referenceImages.length} paths`);
-    }
-  }, [referenceImages]);
-  
-  const handleImageLoad = (index: number) => {
-    setReferenceImagesLoaded(prev => {
-      const newLoaded = [...prev];
-      newLoaded[index] = true;
-      return newLoaded;
-    });
-  };
-  
-  const handleImageError = (referenceImage: string, index: number) => {
-    console.error(`Failed to load reference image: ${referenceImage}`);
-    setReferenceImagesLoaded(prev => {
-      const newLoaded = [...prev];
-      newLoaded[index] = false;
-      return newLoaded;
-    });
-  };
-
-  const handleProductNameChange = (index: number, name: string) => {
-    setProductNames(prev => {
-      const newNames = [...prev];
-      newNames[index] = name;
-      return newNames;
-    });
-  };
-  
-  if (referenceImageUrls.length === 0) {
+export const ReferenceImages = ({ referenceImages }: ReferenceImagesProps) => {
+  if (!referenceImages || referenceImages.length === 0) {
     return null;
   }
-  
+
   return (
-    <div>
-      <h3 className="font-semibold mb-2">Sản phẩm cần in ({referenceImageUrls.length})</h3>
-      <div className="flex flex-wrap gap-4">
-        {referenceImageUrls.map((imageUrl, index) => (
-          <div key={index} className="space-y-2">
-            <div className="group relative h-16 w-16 overflow-hidden rounded border border-muted">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ImageIcon className="h-5 w-5" />
+          Hình ảnh tham khảo ({referenceImages.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {referenceImages.map((image, index) => (
+            <a 
+              key={index}
+              href={image} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="block border rounded overflow-hidden"
+            >
               <img
-                src={imageUrl}
-                alt={`Sản phẩm ${index + 1}`}
-                className="h-full w-full object-cover cursor-pointer transition-transform group-hover:scale-110"
-                onClick={() => onViewImage(imageUrl)}
-                onLoad={() => handleImageLoad(index)}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://via.placeholder.com/150?text=Error';
-                  handleImageError(Array.isArray(referenceImages) ? referenceImages[index] : '', index);
-                }}
+                src={image}
+                alt={`Tham khảo ${index + 1}`}
+                className="w-full h-40 object-cover"
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <ImageIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <Input
-              placeholder="Tên sản phẩm"
-              value={productNames[index]}
-              onChange={(e) => handleProductNameChange(index, e.target.value)}
-              className="w-full"
-            />
-          </div>
-        ))}
-      </div>
-      {referenceImagesLoaded.some(loaded => !loaded) && (
-        <p className="text-center text-sm text-red-500 mt-2">
-          Một số hình ảnh không thể tải. Vui lòng kiểm tra quyền truy cập.
-        </p>
-      )}
-    </div>
+            </a>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

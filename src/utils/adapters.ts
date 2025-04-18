@@ -10,9 +10,6 @@ export interface DbOrder {
   created_at: string;
   updated_at: string | null;
   design_data: any; // Using any here to accommodate various JSON structures
-  design_image: string | null;
-  design_image_front: string | null;
-  design_image_back: string | null;
   reference_images: string[] | any;
   customer_id: string | null;
   total_cost: number;
@@ -33,7 +30,22 @@ export interface DbPlayer {
   size: string;
   number: number;
   print_image: boolean | null;
-  design_image: string | null;
+  uniform_type: string | null;
+  line_1: string | null;
+  line_2: string | null;
+  line_3: string | null;
+  chest_text: string | null;
+  chest_number: boolean | null;
+  pants_number: boolean | null;
+  logo_chest_left: boolean | null;
+  logo_chest_right: boolean | null;
+  logo_chest_center: boolean | null;
+  logo_sleeve_left: boolean | null;
+  logo_sleeve_right: boolean | null;
+  logo_pants: boolean | null;
+  pet_chest: string | null;
+  note: string | null;
+  print_style: string | null;
 }
 
 export interface DbPrintConfig {
@@ -72,6 +84,22 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     number: String(dbPlayer.number),
     size: dbPlayer.size as 'S' | 'M' | 'L' | 'XL',
     printImage: dbPlayer.print_image || false,
+    uniform_type: dbPlayer.uniform_type as 'player' | 'goalkeeper' || 'player',
+    line_1: dbPlayer.line_1 || undefined,
+    line_2: dbPlayer.line_2 || undefined,
+    line_3: dbPlayer.line_3 || undefined,
+    chest_text: dbPlayer.chest_text || undefined,
+    chest_number: dbPlayer.chest_number || false,
+    pants_number: dbPlayer.pants_number || false,
+    logo_chest_left: dbPlayer.logo_chest_left || false,
+    logo_chest_right: dbPlayer.logo_chest_right || false,
+    logo_chest_center: dbPlayer.logo_chest_center || false,
+    logo_sleeve_left: dbPlayer.logo_sleeve_left || false,
+    logo_sleeve_right: dbPlayer.logo_sleeve_right || false,
+    logo_pants: dbPlayer.logo_pants || false,
+    pet_chest: dbPlayer.pet_chest || undefined,
+    note: dbPlayer.note || undefined,
+    print_style: dbPlayer.print_style || undefined
   };
 }
 
@@ -136,7 +164,7 @@ export function dbOrderToOrder(
     sleeveMaterial: 'In chuyển nhiệt',
     sleeveColor: 'Đen',
     legMaterial: 'In chuyển nhiệt',
-    legColor: 'Đen',
+    legColor: 'Đen'
   };
   
   const processedPrintConfig = printConfig ? {
@@ -152,14 +180,8 @@ export function dbOrderToOrder(
     legColor: printConfig.leg_color || 'Đen'
   } : defaultPrintConfig;
   
-  // Process players
-  const processedPlayers = players ? players.map(player => ({
-    id: player.id,
-    name: player.name || "",
-    number: String(player.number),
-    size: player.size as 'S' | 'M' | 'L' | 'XL',
-    printImage: player.print_image || false
-  })) : [];
+  // Process players with complete data
+  const processedPlayers = players ? players.map(player => dbPlayerToPlayer(player)) : [];
   
   // Process product lines
   const processedProductLines = productLines ? productLines.map(line => ({
@@ -182,9 +204,6 @@ export function dbOrderToOrder(
     status: dbOrder.status as 'new' | 'processing' | 'completed',
     createdAt: new Date(dbOrder.created_at),
     notes: dbOrder.notes || "",
-    designImage: dbOrder.design_image || undefined,
-    designImageFront: dbOrder.design_image_front || undefined,
-    designImageBack: dbOrder.design_image_back || undefined,
     referenceImages: refImages,
     designData: dbOrder.design_data,
     customerId: dbOrder.customer_id,

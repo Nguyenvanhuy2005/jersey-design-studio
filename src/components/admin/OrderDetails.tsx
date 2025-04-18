@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Order } from "@/types";
 import { OrderBasicInfo } from "./order-details/OrderBasicInfo";
 import { PrintConfig } from "./order-details/PrintConfig";
-import { DesignImages } from "./order-details/DesignImages";
 import { PlayersList } from "./order-details/PlayersList";
 import { ProductLinesList } from "./order-details/ProductLinesList";
 import { OrderActions } from "./order-details/OrderActions";
@@ -12,13 +11,11 @@ import { ReferenceImages } from "./order-details/ReferenceImages";
 
 interface OrderDetailsProps {
   order: Order;
-  onViewImage: (imageUrl: string) => void;
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
 }
 
 export const OrderDetails = ({ 
   order, 
-  onViewImage,
   onStatusChange
 }: OrderDetailsProps) => {
   return (
@@ -42,13 +39,10 @@ export const OrderDetails = ({
             <PrintConfig printConfig={order.printConfig} />
           </div>
           
-          <DesignImages order={order} onViewImage={onViewImage} />
-          
           <ProductLinesList productLines={order.productLines} />
           
           <ReferenceImages 
             referenceImages={order.referenceImages}
-            onViewImage={onViewImage}
           />
         </TabsContent>
         

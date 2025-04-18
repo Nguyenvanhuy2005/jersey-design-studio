@@ -9,7 +9,7 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, LoaderCircle, Printer, Shirt, Type } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Printer, Shirt, Type } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -195,7 +195,6 @@ export function CustomerOrderDetails() {
         <TabsList className="w-full">
           <TabsTrigger value="details" className="flex-1">Chi tiết đơn hàng</TabsTrigger>
           <TabsTrigger value="players" className="flex-1">Danh sách cầu thủ</TabsTrigger>
-          <TabsTrigger value="designs" className="flex-1">Thiết kế</TabsTrigger>
           <TabsTrigger value="printList" className="flex-1">Danh sách in ấn</TabsTrigger>
         </TabsList>
 
@@ -228,7 +227,7 @@ export function CustomerOrderDetails() {
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Shirt className="h-4 w-4" />
-                      Chất liệu và màu sắc
+                      Chất liệu in ấn
                     </h4>
                     <Table>
                       <TableBody>
@@ -237,16 +236,8 @@ export function CustomerOrderDetails() {
                           <TableCell>{order.printConfig?.frontMaterial}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell className="font-medium">Màu áo trước</TableCell>
-                          <TableCell>{order.printConfig?.frontColor}</TableCell>
-                        </TableRow>
-                        <TableRow>
                           <TableCell className="font-medium">Chất liệu áo sau</TableCell>
                           <TableCell>{order.printConfig?.backMaterial}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Màu áo sau</TableCell>
-                          <TableCell>{order.printConfig?.backColor}</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -352,64 +343,6 @@ export function CustomerOrderDetails() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="designs">
-          <div className="grid gap-6">
-            {/* Jersey and Pants Designs */}
-            {(order.designImageFront || order.designImage || order.designImageBack) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Thiết kế áo đấu</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {(order.designImageFront || order.designImage) && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Mặt trước</h4>
-                        <img
-                          src={order.designImageFront || order.designImage}
-                          alt="Thiết kế mặt trước"
-                          className="w-full rounded-md border"
-                        />
-                      </div>
-                    )}
-                    {order.designImageBack && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Mặt sau</h4>
-                        <img
-                          src={order.designImageBack}
-                          alt="Thiết kế mặt sau"
-                          className="w-full rounded-md border"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Reference Images */}
-            {order.referenceImages && order.referenceImages.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Hình ảnh tham khảo</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {order.referenceImages.map((image, index) => (
-                      <img
-                        key={index}
-                        src={image}
-                        alt={`Tham khảo ${index + 1}`}
-                        className="w-full aspect-square object-cover rounded-md border"
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
         <TabsContent value="printList">
           <Card>
             <CardHeader>
@@ -458,6 +391,27 @@ export function CustomerOrderDetails() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Reference Images */}
+          {order.referenceImages && order.referenceImages.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Hình ảnh tham khảo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {order.referenceImages.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Tham khảo ${index + 1}`}
+                      className="w-full aspect-square object-cover rounded-md border"
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -1,9 +1,8 @@
 
-import { AlertCircle, Camera } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { OrderSummary } from "@/components/order-summary";
 import { Player, Logo, ProductLine, Customer } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -20,8 +19,6 @@ interface OrderSummaryTabProps {
   isSubmitting: boolean;
   isGeneratingDesign: boolean;
   onSubmitOrder: () => void;
-  jerseyCanvasRef: React.RefObject<HTMLCanvasElement>;
-  pantCanvasRef: React.RefObject<HTMLCanvasElement>;
   referenceImagesPreview: string[];
 }
 
@@ -37,8 +34,6 @@ export function OrderSummaryTab({
   isSubmitting,
   isGeneratingDesign,
   onSubmitOrder,
-  jerseyCanvasRef,
-  pantCanvasRef,
   referenceImagesPreview
 }: OrderSummaryTabProps) {
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
@@ -85,13 +80,6 @@ export function OrderSummaryTab({
     });
     
     return counts;
-  };
-
-  const captureCanvas = (canvasRef: React.RefObject<HTMLCanvasElement>) => {
-    if (canvasRef.current) {
-      return canvasRef.current.toDataURL('image/png');
-    }
-    return '';
   };
 
   const printCounts = calculatePrintCounts();
@@ -151,44 +139,6 @@ export function OrderSummaryTab({
                   </div>
                   <div>
                     <span className="text-muted-foreground">Số lượng thủ môn:</span> {goalkeeperCount} bộ
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h3 className="font-medium mb-2">Hiển thị thiết kế:</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="border rounded p-2">
-                    <h4 className="text-sm font-medium mb-2 text-center">Mặt trước áo</h4>
-                    <div className="flex justify-center">
-                      <img 
-                        src={jerseyCanvasRef.current?.toDataURL()} 
-                        alt="Mặt trước áo"
-                        className="max-h-40 object-contain"
-                      />
-                    </div>
-                  </div>
-                  <div className="border rounded p-2">
-                    <h4 className="text-sm font-medium mb-2 text-center">Mặt sau áo</h4>
-                    <div className="flex justify-center">
-                      <img 
-                        src={jerseyCanvasRef.current?.toDataURL()} 
-                        alt="Mặt sau áo"
-                        className="max-h-40 object-contain"
-                      />
-                    </div>
-                  </div>
-                  <div className="border rounded p-2">
-                    <h4 className="text-sm font-medium mb-2 text-center">Quần</h4>
-                    <div className="flex justify-center">
-                      <img 
-                        src={pantCanvasRef.current?.toDataURL()} 
-                        alt="Quần"
-                        className="max-h-40 object-contain"
-                      />
-                    </div>
                   </div>
                 </div>
               </div>

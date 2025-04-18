@@ -145,37 +145,73 @@ export type Database = {
       }
       players: {
         Row: {
+          chest_number: boolean | null
           created_at: string | null
           design_image: string | null
           id: string
+          line_1: string | null
+          line_3: string | null
+          logo_chest_center: boolean | null
+          logo_chest_left: boolean | null
+          logo_chest_right: boolean | null
+          logo_pants: boolean | null
+          logo_sleeve_left: boolean | null
+          logo_sleeve_right: boolean | null
           name: string | null
+          note: string | null
           number: number
           order_id: string | null
+          pants_number: boolean | null
           print_image: boolean | null
           print_style: string
           size: string
+          uniform_type: string
         }
         Insert: {
+          chest_number?: boolean | null
           created_at?: string | null
           design_image?: string | null
           id?: string
+          line_1?: string | null
+          line_3?: string | null
+          logo_chest_center?: boolean | null
+          logo_chest_left?: boolean | null
+          logo_chest_right?: boolean | null
+          logo_pants?: boolean | null
+          logo_sleeve_left?: boolean | null
+          logo_sleeve_right?: boolean | null
           name?: string | null
+          note?: string | null
           number: number
           order_id?: string | null
+          pants_number?: boolean | null
           print_image?: boolean | null
           print_style?: string
           size: string
+          uniform_type?: string
         }
         Update: {
+          chest_number?: boolean | null
           created_at?: string | null
           design_image?: string | null
           id?: string
+          line_1?: string | null
+          line_3?: string | null
+          logo_chest_center?: boolean | null
+          logo_chest_left?: boolean | null
+          logo_chest_right?: boolean | null
+          logo_pants?: boolean | null
+          logo_sleeve_left?: boolean | null
+          logo_sleeve_right?: boolean | null
           name?: string | null
+          note?: string | null
           number?: number
           order_id?: string | null
+          pants_number?: boolean | null
           print_image?: boolean | null
           print_style?: string
           size?: string
+          uniform_type?: string
         }
         Relationships: [
           {

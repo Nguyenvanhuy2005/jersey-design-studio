@@ -1,11 +1,10 @@
+
 export interface Player {
   id: string;
   name: string;
   number: string;
   size: 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
   printImage: boolean;
-  imageFront?: string;
-  imageBack?: string;
   uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
   line_2?: string;
@@ -205,9 +204,6 @@ export interface Order {
   status: 'new' | 'processing' | 'completed';
   createdAt?: Date;
   notes?: string;
-  designImage?: string;
-  designImageFront?: string;
-  designImageBack?: string;
   referenceImages?: string[];
   customerName?: string;
   customerId?: string;

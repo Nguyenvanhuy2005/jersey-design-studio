@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { dbOrderToOrder } from '@/utils/adapters';
+import { dbOrderToOrder, dbPlayerToPlayer } from '@/utils/adapters';
 
 interface UseOrdersProps {
   statusFilter: string;
@@ -86,19 +87,13 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           }
         }
         
-        // Fetch players data
+        // Fetch players data with complete player information
         const { data: playersData } = await supabase
           .from('players')
           .select('*')
           .eq('order_id', order.id);
           
-        const players = playersData ? playersData.map(player => ({
-          id: player.id,
-          name: player.name || '',
-          number: String(player.number),
-          size: player.size as 'S' | 'M' | 'L' | 'XL',
-          printImage: player.print_image || false
-        })) : [];
+        const players = playersData ? playersData.map(player => dbPlayerToPlayer(player)) : [];
         
         // Fetch product lines data
         const { data: productLinesData } = await supabase
@@ -139,7 +134,9 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
         
         // Extract team name
         let teamName = '';
-        if (order.design_data && typeof order.design_data === 'object') {
+        if (order.team_name) {
+          teamName = order.team_name;
+        } else if (order.design_data && typeof order.design_data === 'object') {
           teamName = (order.design_data as any)?.team_name || '';
         }
         
@@ -149,9 +146,6 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           totalCost: order.total_cost,
           createdAt: new Date(order.created_at || ''),
           notes: order.notes || '',
-          designImage: order.design_image || '',
-          designImageFront: order.design_image_front || '',
-          designImageBack: order.design_image_back || '',
           referenceImages: refImages,
           customerName: customerName,
           customerId: order.customer_id,
@@ -182,7 +176,8 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
             sleeveColor: 'Đen',
             legMaterial: 'In chuyển nhiệt',
             legColor: 'Đen'
-          }
+          },
+          designData: order.design_data
         };
       }));
       
