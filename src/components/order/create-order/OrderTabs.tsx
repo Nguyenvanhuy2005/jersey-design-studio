@@ -1,9 +1,9 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OrderInfoTab } from "@/components/order/OrderInfoTab";
-import { OrderPreviewTab } from "@/components/order/OrderPreviewTab";
-import { OrderSummaryTab } from "@/components/order/OrderSummaryTab";
 import { Customer, Logo, Player, ProductLine } from "@/types";
+import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
+import { OrderPreviewTabContent } from "./tabs/OrderPreviewTabContent";
+import { OrderSummaryTabContent } from "./tabs/OrderSummaryTabContent";
 
 interface OrderTabsProps {
   activeTab: string;
@@ -89,7 +89,7 @@ export function OrderTabs({
       </TabsList>
       
       <TabsContent value="info">
-        <OrderInfoTab
+        <OrderInfoTabContent
           customerInfo={customerInfo}
           onCustomerInfoChange={onCustomerInfoChange}
           referenceImages={referenceImages}
@@ -115,7 +115,7 @@ export function OrderTabs({
       </TabsContent>
       
       <TabsContent value="preview">
-        <OrderPreviewTab 
+        <OrderPreviewTabContent
           players={players}
           logos={logos}
           printConfig={printConfig}
@@ -131,15 +131,13 @@ export function OrderTabs({
       </TabsContent>
       
       <TabsContent value="summary">
-        <OrderSummaryTab 
+        <OrderSummaryTabContent
           isDemoApproved={isDemoApproved}
           players={players}
-          logos={logos}
           productLines={productLines}
           customerInfo={customerInfo}
           calculateTotalCost={calculateTotalCost}
           getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
-          onProductLinesChange={() => {}}
           isSubmitting={isSubmitting}
           isGeneratingDesign={isGeneratingDesign}
           onSubmitOrder={onSubmitOrder}
