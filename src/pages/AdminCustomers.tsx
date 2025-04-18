@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Search, LogOut, Edit, Eye, Key } from "lucide-react";
+import { Loader2, Search, LogOut, Edit, Eye, Key, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Customer } from "@/types";
@@ -31,12 +30,14 @@ const AdminCustomers = () => {
     error, 
     fetchCustomers, 
     updateCustomer,
-    resetPassword
+    resetPassword,
+    createCustomer
   } = useCustomers();
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
   const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { order_count?: number }) | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   
@@ -54,6 +55,12 @@ const AdminCustomers = () => {
     navigate("/admin");
   };
 
+  const handleCreateCustomer = async (customerData: any) => {
+    await createCustomer(customerData);
+    setIsCreateCustomerOpen(false);
+    fetchCustomers();
+  };
+
   const handleEditCustomer = async (customerData: any) => {
     if (selectedCustomer) {
       await updateCustomer(selectedCustomer.id, customerData);
@@ -61,12 +68,12 @@ const AdminCustomers = () => {
     }
   };
   
-  const openEditCustomer = (customer: Customer & { order_count?: number }) => {
+  const openEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsEditCustomerOpen(true);
   };
 
-  const openViewDetails = (customer: Customer & { order_count?: number }) => {
+  const openViewDetails = (customer: Customer) => {
     setSelectedCustomer(customer);
     setIsViewDetailsOpen(true);
   };
@@ -105,7 +112,14 @@ const AdminCustomers = () => {
           <h1 className="text-2xl font-bold">Quản lý khách hàng</h1>
           
           <div className="flex gap-2 items-center">
-            {user && <div className="flex items-center mr-4">
+            <Button 
+              onClick={() => setIsCreateCustomerOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Thêm khách hàng
+            </Button>
+            {user && <div className="flex items-center">
               <span className="text-sm mr-2">{user.email}</span>
               <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-1">
                 <LogOut className="h-4 w-4" /> Đăng xuất
@@ -222,7 +236,17 @@ const AdminCustomers = () => {
         </div>
       </div>
 
-      {/* Edit Customer Dialog */}
+      {/* Create Customer Form */}
+      <CustomerForm
+        customer={{} as Customer}
+        open={isCreateCustomerOpen}
+        onOpenChange={setIsCreateCustomerOpen}
+        onSubmit={handleCreateCustomer}
+        title="Thêm khách hàng mới"
+        submitLabel="Tạo"
+      />
+
+      {/* Edit Customer Form */}
       {selectedCustomer && (
         <CustomerForm
           customer={selectedCustomer}

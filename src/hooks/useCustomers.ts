@@ -32,46 +32,19 @@ export function useCustomers() {
         return;
       }
 
-      // Fetch customers with order counts in a single query using a subquery
-      const { data: customersWithCounts, error: customersError } = await supabase
+      const { data: customersData, error: customersError } = await supabase
         .from('customers')
-        .select(`
-          *,
-          order_count:orders(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      console.log("Customers query result:", { customersWithCounts, customersError });
+      console.log("Customers query result:", { customersData, customersError });
 
       if (customersError) {
         console.error("Error fetching customers:", customersError);
         throw customersError;
       }
 
-      // Transform the data to match the expected format
-      const processedCustomers = (customersWithCounts || []).map(customer => {
-        // Extract the count properly from the nested array that Supabase returns
-        let orderCount = 0;
-        if (Array.isArray(customer.order_count) && customer.order_count.length > 0) {
-          orderCount = customer.order_count.length;
-        } else if (typeof customer.order_count === 'number') {
-          orderCount = customer.order_count;
-        }
-        
-        return {
-          id: customer.id,
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone,
-          address: customer.address,
-          delivery_note: customer.delivery_note,
-          created_at: customer.created_at,
-          order_count: orderCount
-        } as Customer;
-      });
-
-      console.log("Processed customers with order counts:", processedCustomers);
-      setCustomers(processedCustomers);
+      setCustomers(customersData || []);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(`Không thể tải dữ liệu khách hàng: ${err.message}`);
@@ -81,7 +54,6 @@ export function useCustomers() {
     }
   };
 
-  // Call fetchCustomers whenever user authentication state or admin status changes
   useEffect(() => {
     if (user) {
       console.log("User auth state changed, fetching customers...", { user, isAdmin });
@@ -91,6 +63,26 @@ export function useCustomers() {
       setLoading(false);
     }
   }, [user, isAdmin]);
+
+  const createCustomer = async (customerData: Partial<Customer>) => {
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .insert([customerData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Đã thêm khách hàng mới");
+      await fetchCustomers();
+      return data;
+    } catch (err: any) {
+      console.error("Error creating customer:", err);
+      toast.error(`Không thể tạo khách hàng: ${err.message}`);
+      throw err;
+    }
+  };
 
   const updateCustomer = async (id: string, customerData: Partial<Customer>) => {
     try {
@@ -106,9 +98,7 @@ export function useCustomers() {
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success("Đã cập nhật thông tin khách hàng");
       await fetchCustomers();
@@ -126,9 +116,7 @@ export function useCustomers() {
         redirectTo: `${window.location.origin}/customer/reset-password`,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success("Email đặt lại mật khẩu đã được gửi");
     } catch (err: any) {
@@ -143,6 +131,7 @@ export function useCustomers() {
     loading,
     error,
     fetchCustomers,
+    createCustomer,
     updateCustomer,
     resetPassword
   };
