@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -133,24 +134,31 @@ export function CustomerOrderDetails() {
   const getAssets = () => {
     const assets = [];
 
-    // Logo section
-    if (order?.logo_url) {
-      assets.push({
-        url: order.logo_url,
-        name: 'logo-doi.png',
-        type: 'image' as const
-      });
-    }
-
-    // Reference images section - add them after logo
+    // Process reference images to ensure we have full URLs
     if (order?.referenceImages && order.referenceImages.length > 0) {
+      // Convert reference image paths to public URLs
       const processedUrls = getReferenceImageUrls(order.referenceImages);
-      processedUrls.forEach((url, index) => {
-        assets.push({
+      
+      assets.push({
+        type: 'images' as const,
+        title: 'Mẫu cần in',
+        items: processedUrls.map((url, index) => ({
           url,
           name: `mau-in-${index + 1}.jpg`,
           type: 'image' as const
-        });
+        }))
+      });
+    }
+
+    if (order?.logo_url) {
+      assets.push({
+        type: 'logos' as const,
+        title: 'Logo',
+        items: [{
+          url: order.logo_url,
+          name: 'logo-doi.png',
+          type: 'image' as const
+        }]
       });
     }
 
@@ -278,15 +286,17 @@ export function CustomerOrderDetails() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <AssetViewer
-                  title="Mẫu cần in"
-                  assets={getAssets()}
-                  gridCols={4}
-                />
-              </CardContent>
-            </Card>
+            {getAssets().map((assetGroup, index) => (
+              <Card key={index}>
+                <CardContent className="pt-6">
+                  <AssetViewer
+                    title={assetGroup.title}
+                    assets={assetGroup.items}
+                    gridCols={assetGroup.type === 'images' ? 4 : 2}
+                  />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
