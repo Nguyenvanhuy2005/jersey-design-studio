@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -128,6 +127,16 @@ export function CustomerOrderDetails() {
         return <Badge variant="success" className="bg-green-500">Hoàn thành</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getUniformTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'goalkeeper':
+        return 'Thủ môn';
+      case 'player':
+      default:
+        return 'Cầu thủ';
     }
   };
 
@@ -315,6 +324,7 @@ export function CustomerOrderDetails() {
                       <TableHead>In dòng dưới số lưng</TableHead>
                       <TableHead>Số áo</TableHead>
                       <TableHead>Kích thước</TableHead>
+                      <TableHead>Loại quần áo</TableHead>
                       <TableHead>Chi tiết in ấn</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -331,6 +341,7 @@ export function CustomerOrderDetails() {
                             {player.size}
                           </div>
                         </TableCell>
+                        <TableCell>{getUniformTypeLabel(player.uniform_type)}</TableCell>
                         <TableCell>
                           <div className="space-y-1 text-sm">
                             {player.chest_number && (<p>- In số ngực</p>)}
@@ -364,7 +375,7 @@ export function CustomerOrderDetails() {
                     ))}
                     {(!order.players || order.players.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                           Không có cầu thủ nào trong danh sách
                         </TableCell>
                       </TableRow>

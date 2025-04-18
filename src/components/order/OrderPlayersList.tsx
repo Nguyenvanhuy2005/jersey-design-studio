@@ -11,6 +11,16 @@ interface OrderPlayersListProps {
 export function OrderPlayersList({ players }: OrderPlayersListProps) {
   if (!players?.length) return null;
 
+  const getUniformTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'goalkeeper':
+        return 'Thủ môn';
+      case 'player':
+      default:
+        return 'Cầu thủ';
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -29,6 +39,7 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                 <TableHead>In dòng dưới số lưng</TableHead>
                 <TableHead>Số áo</TableHead>
                 <TableHead>Kích thước</TableHead>
+                <TableHead>Loại quần áo</TableHead>
                 <TableHead>Chi tiết in ấn</TableHead>
               </TableRow>
             </TableHeader>
@@ -45,14 +56,11 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                       {player.size}
                     </div>
                   </TableCell>
+                  <TableCell>{getUniformTypeLabel(player.uniform_type)}</TableCell>
                   <TableCell>
                     <div className="space-y-1 text-sm">
-                      {player.chest_number && (
-                        <p>- In số ngực</p>
-                      )}
-                      {player.pants_number && (
-                        <p>- In số quần</p>
-                      )}
+                      {player.chest_number && <p>- In số ngực</p>}
+                      {player.pants_number && <p>- In số quần</p>}
                       {(player.logo_chest_left || 
                         player.logo_chest_right || 
                         player.logo_chest_center || 
