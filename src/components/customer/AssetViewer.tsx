@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Download, Eye, ImageOff } from "lucide-react";
 import { useState } from "react";
@@ -77,11 +76,11 @@ export const AssetViewer = ({
     <>
       <div className="space-y-4">
         <h3 className="text-lg font-medium">{title}</h3>
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${gridCols} gap-4`}>
+        <div className={`grid grid-cols-${gridCols} gap-4`}>
           {validAssets.map((asset, index) => (
             <div key={index} className="relative border rounded-md p-2 space-y-2">
               {asset.type === 'image' ? (
-                <div className="aspect-square relative">
+                <div className={`relative ${index === 0 ? 'w-32 h-32' : 'aspect-square'}`}>
                   {imageErrors[index] ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md">
                       <ImageOff className="h-8 w-8 text-muted-foreground mb-2" />
