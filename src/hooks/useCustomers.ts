@@ -44,7 +44,8 @@ export function useCustomers() {
         throw customersError;
       }
 
-      setCustomers(customersData || []);
+      // Cast the data to the expected Customer type
+      setCustomers(customersData as Customer[] || []);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(`Không thể tải dữ liệu khách hàng: ${err.message}`);
@@ -64,8 +65,9 @@ export function useCustomers() {
     }
   }, [user, isAdmin]);
 
-  const createCustomer = async (customerData: Partial<Customer>) => {
+  const createCustomer = async (customerData: Omit<Partial<Customer>, 'id'>) => {
     try {
+      // When creating a new customer, don't specify the ID - let Supabase generate it
       const { data, error } = await supabase
         .from("customers")
         .insert([customerData])
