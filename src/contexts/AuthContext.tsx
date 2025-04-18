@@ -34,13 +34,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
+      async (_event, currentSession) => {
+        console.log("Auth state changed:", _event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         // Check admin status if user is logged in
         if (currentSession?.user) {
-          checkAdminStatus(currentSession.user.id);
+          await checkAdminStatus(currentSession.user.id);
         } else {
           setIsAdmin(false);
         }
@@ -56,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         // Check admin status if user is logged in
         if (currentSession?.user) {
-          checkAdminStatus(currentSession.user.id);
+          await checkAdminStatus(currentSession.user.id);
         }
       } catch (error) {
         console.error('Error loading session:', error);
@@ -74,11 +75,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const checkAdminStatus = async (userId: string) => {
     try {
+      console.log("Checking admin status for user:", userId);
+      
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .eq('role', 'admin')
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking admin status:', error);
@@ -86,7 +90,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
-      setIsAdmin(data?.role === 'admin');
+      console.log("Admin role data:", data);
+      setIsAdmin(!!data); // Convert to boolean
     } catch (error) {
       console.error('Error in checkAdminStatus:', error);
       setIsAdmin(false);
