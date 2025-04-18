@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { dbOrderToOrder } from '@/utils/adapters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseOrdersProps {
   statusFilter: string;
@@ -14,6 +16,7 @@ interface UseOrdersProps {
 }
 
 export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrdersProps) => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchingData, setFetchingData] = useState(true);
@@ -24,6 +27,14 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
     console.log("Fetching orders data...");
     
     try {
+      if (!user) {
+        console.log("No authenticated user found");
+        setFetchError("Vui lòng đăng nhập để xem dữ liệu đơn hàng");
+        setOrders([]);
+        setFetchingData(false);
+        return;
+      }
+      
       let query = supabase
         .from('orders')
         .select(`
@@ -98,6 +109,13 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
       setFetchingData(false);
     }
   };
+
+  // Automatically fetch orders when user or filters change
+  useEffect(() => {
+    if (user) {
+      fetchOrders();
+    }
+  }, [user, statusFilter, customerFilter, dateRange.from, dateRange.to]);
 
   return {
     orders,

@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Customer } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useCustomers() {
+  const { user, isAdmin } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,14 +16,14 @@ export function useCustomers() {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+      if (!user) {
         setError("Vui lòng đăng nhập để xem danh sách khách hàng");
         setCustomers([]);
+        setLoading(false);
         return;
       }
 
+      // Only proceed if user is authenticated
       const { data: customersData, error: customersError } = await supabase
         .from("customers")
         .select("*")
@@ -59,6 +61,16 @@ export function useCustomers() {
       setLoading(false);
     }
   };
+
+  // Call fetchCustomers whenever user authentication state or admin status changes
+  useEffect(() => {
+    if (user) {
+      fetchCustomers();
+    } else {
+      setCustomers([]);
+      setLoading(false);
+    }
+  }, [user, isAdmin]);
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
