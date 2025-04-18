@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const CreateOrder = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pantCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const {
     activeTab,
@@ -205,6 +207,8 @@ const CreateOrder = () => {
                 isGeneratingDesign={isGeneratingDesign}
                 isDemoApproved={isDemoApproved}
                 onApproveDemo={approveDemo}
+                jerseyCanvasRef={jerseyCanvasRef}
+                pantCanvasRef={pantCanvasRef}
               />
             </TabsContent>
             

@@ -227,7 +227,6 @@ const AdminOrders = () => {
                   <th className="p-3 text-left">Tổng chi phí</th>
                   <th className="p-3 text-left">Trạng thái</th>
                   <th className="p-3 text-left">Ngày tạo</th>
-                  <th className="p-3 text-left">Thiết kế</th>
                   <th className="p-3 text-center">Hành động</th>
                 </tr>
               </thead>
@@ -246,7 +245,6 @@ const AdminOrders = () => {
                     orders={orders} 
                     statusFilter={statusFilter} 
                     onViewDetails={setSelectedOrder} 
-                    onViewImage={setSelectedImage} 
                     onStatusChange={handleStatusChange} 
                   />
                 )}
@@ -261,7 +259,6 @@ const AdminOrders = () => {
           {selectedOrder && (
             <OrderDetails 
               order={selectedOrder} 
-              onViewImage={setSelectedImage} 
               onStatusChange={handleStatusChange} 
             />
           )}

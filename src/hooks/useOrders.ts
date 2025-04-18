@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { dbOrderToOrder, dbPlayerToPlayer } from '@/utils/adapters';
+import { dbOrderToOrder } from '@/utils/adapters';
 
 interface UseOrdersProps {
   statusFilter: string;
@@ -93,7 +92,32 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           .select('*')
           .eq('order_id', order.id);
           
-        const players = playersData ? playersData.map(player => dbPlayerToPlayer(player)) : [];
+        const players = playersData ? playersData.map(player => {
+          // Make sure all required properties exist
+          return {
+            id: player.id,
+            name: player.name || "",
+            number: String(player.number),
+            size: player.size as 'S' | 'M' | 'L' | 'XL',
+            printImage: player.print_image || false,
+            uniform_type: player.uniform_type as 'player' | 'goalkeeper' || 'player',
+            line_1: player.line_1 || undefined,
+            line_2: String(player.number), // Ensure line_2 is set
+            line_3: player.line_3 || undefined,
+            chest_text: player.chest_text || undefined,
+            chest_number: player.chest_number || false,
+            pants_number: player.pants_number || false,
+            logo_chest_left: player.logo_chest_left || false,
+            logo_chest_right: player.logo_chest_right || false,
+            logo_chest_center: player.logo_chest_center || false,
+            logo_sleeve_left: player.logo_sleeve_left || false,
+            logo_sleeve_right: player.logo_sleeve_right || false,
+            logo_pants: player.logo_pants || false,
+            pet_chest: player.pet_chest || undefined,
+            note: player.note || undefined,
+            print_style: player.print_style || undefined
+          };
+        }) : [];
         
         // Fetch product lines data
         const { data: productLinesData } = await supabase

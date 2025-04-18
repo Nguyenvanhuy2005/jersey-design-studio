@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -11,20 +12,16 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import { getDesignImageUrl, getReferenceImageUrls } from "@/utils/image-utils";
+import { getReferenceImageUrls } from "@/utils/image-utils";
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const order = location.state?.order as Order | undefined;
-  const [designImageFrontUrl, setDesignImageFrontUrl] = useState<string | null>(null);
-  const [designImageBackUrl, setDesignImageBackUrl] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState({
-    frontDesign: false,
-    backDesign: false,
     references: [] as boolean[]
   });
   
@@ -33,19 +30,6 @@ const OrderConfirmation = () => {
   }
 
   useEffect(() => {
-    const frontDesignPath = order.designImageFront || order.designImage;
-    if (frontDesignPath) {
-      const url = getDesignImageUrl(frontDesignPath);
-      setDesignImageFrontUrl(url);
-      console.log("Front design image URL in OrderConfirmation:", url);
-    }
-    
-    if (order.designImageBack) {
-      const url = getDesignImageUrl(order.designImageBack);
-      setDesignImageBackUrl(url);
-      console.log("Back design image URL in OrderConfirmation:", url);
-    }
-
     if (Array.isArray(order.referenceImages) && order.referenceImages.length > 0) {
       const urls = getReferenceImageUrls(order.referenceImages);
       setReferenceImageUrls(urls);
@@ -55,19 +39,15 @@ const OrderConfirmation = () => {
       }));
       console.log("Reference image URLs in OrderConfirmation:", urls);
     }
-  }, [order.designImage, order.designImageFront, order.designImageBack, order.referenceImages]);
+  }, [order.referenceImages]);
 
   const openImageDialog = (imageUrl: string) => {
     setSelectedImageUrl(imageUrl);
     setIsImageDialogOpen(true);
   };
 
-  const handleImageLoad = (type: 'frontDesign' | 'backDesign' | 'reference', index?: number) => {
-    if (type === 'frontDesign') {
-      setImagesLoaded(prev => ({ ...prev, frontDesign: true }));
-    } else if (type === 'backDesign') {
-      setImagesLoaded(prev => ({ ...prev, backDesign: true }));
-    } else if (type === 'reference' && typeof index === 'number') {
+  const handleImageLoad = (type: 'reference', index?: number) => {
+    if (type === 'reference' && typeof index === 'number') {
       setImagesLoaded(prev => {
         const newReferences = [...prev.references];
         newReferences[index] = true;
@@ -76,13 +56,9 @@ const OrderConfirmation = () => {
     }
   };
 
-  const handleImageError = (type: 'frontDesign' | 'backDesign' | 'reference', imagePath?: string, index?: number) => {
+  const handleImageError = (type: 'reference', imagePath?: string, index?: number) => {
     console.error(`Failed to load ${type} image in OrderConfirmation:`, imagePath);
-    if (type === 'frontDesign') {
-      setImagesLoaded(prev => ({ ...prev, frontDesign: false }));
-    } else if (type === 'backDesign') {
-      setImagesLoaded(prev => ({ ...prev, backDesign: false }));
-    } else if (type === 'reference' && typeof index === 'number') {
+    if (type === 'reference' && typeof index === 'number') {
       setImagesLoaded(prev => {
         const newReferences = [...prev.references];
         newReferences[index] = false;
@@ -134,56 +110,6 @@ const OrderConfirmation = () => {
                 </p>
               </div>
             </div>
-
-            {(designImageFrontUrl || designImageBackUrl) && (
-              <div className="mt-6 pt-6 border-t">
-                <h3 className="font-semibold mb-3">Hình ảnh thiết kế</h3>
-                <div className="flex flex-wrap gap-4 justify-center">
-                  {designImageFrontUrl && (
-                    <div className="cursor-pointer" onClick={() => openImageDialog(designImageFrontUrl)}>
-                      <div className="text-center mb-1">
-                        <span className="text-sm font-medium">Mặt trước</span>
-                      </div>
-                      <img 
-                        src={designImageFrontUrl} 
-                        alt="Thiết kế áo mặt trước" 
-                        className="w-40 h-auto rounded-md border shadow-sm" 
-                        onLoad={() => handleImageLoad('frontDesign')}
-                        onError={() => handleImageError('frontDesign', order.designImageFront || order.designImage)}
-                      />
-                      {!imagesLoaded.frontDesign && (
-                        <p className="text-center text-xs text-red-500 mt-1">
-                          Không thể tải hình ảnh
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  
-                  {designImageBackUrl && (
-                    <div className="cursor-pointer" onClick={() => openImageDialog(designImageBackUrl)}>
-                      <div className="text-center mb-1">
-                        <span className="text-sm font-medium">Mặt sau</span>
-                      </div>
-                      <img 
-                        src={designImageBackUrl} 
-                        alt="Thiết kế áo mặt sau" 
-                        className="w-40 h-auto rounded-md border shadow-sm" 
-                        onLoad={() => handleImageLoad('backDesign')}
-                        onError={() => handleImageError('backDesign', order.designImageBack)}
-                      />
-                      {!imagesLoaded.backDesign && (
-                        <p className="text-center text-xs text-red-500 mt-1">
-                          Không thể tải hình ảnh
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="text-center text-xs text-muted-foreground mt-3">
-                  (Nhấp để xem kích thước đầy đủ)
-                </p>
-              </div>
-            )}
 
             {referenceImageUrls.length > 0 && (
               <div className="mt-6 pt-6 border-t">
