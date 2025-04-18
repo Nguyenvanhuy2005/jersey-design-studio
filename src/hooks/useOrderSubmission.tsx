@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -235,7 +234,6 @@ export const useOrderSubmission = ({
             line_1: p.line_1 || null,
             line_2: String(p.number),
             line_3: p.line_3 || null,
-            chest_text: p.chest_text || null,
             chest_number: p.chest_number || false,
             pants_number: p.pants_number || false,
             logo_chest_left: p.logo_chest_left || false,
@@ -244,7 +242,6 @@ export const useOrderSubmission = ({
             logo_sleeve_left: p.logo_sleeve_left || false,
             logo_sleeve_right: p.logo_sleeve_right || false,
             logo_pants: p.logo_pants || false,
-            pet_chest: p.pet_chest || null,
             print_style: p.print_style || null,
             note: p.note || null
           };

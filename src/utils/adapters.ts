@@ -33,7 +33,6 @@ export interface DbPlayer {
   line_1: string | null;
   line_2: string | null;
   line_3: string | null;
-  chest_text: string | null;
   chest_number: boolean | null;
   pants_number: boolean | null;
   logo_chest_left: boolean | null;
@@ -42,7 +41,6 @@ export interface DbPlayer {
   logo_sleeve_left: boolean | null;
   logo_sleeve_right: boolean | null;
   logo_pants: boolean | null;
-  pet_chest: string | null;
   note: string | null;
   print_style: string | null;
 }
@@ -87,7 +85,6 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     line_1: dbPlayer.line_1 || undefined,
     line_2: dbPlayer.line_2 || undefined,
     line_3: dbPlayer.line_3 || undefined,
-    chest_text: dbPlayer.chest_text || undefined,
     chest_number: dbPlayer.chest_number || false,
     pants_number: dbPlayer.pants_number || false,
     logo_chest_left: dbPlayer.logo_chest_left || false,
@@ -96,7 +93,6 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     logo_sleeve_left: dbPlayer.logo_sleeve_left || false,
     logo_sleeve_right: dbPlayer.logo_sleeve_right || false,
     logo_pants: dbPlayer.logo_pants || false,
-    pet_chest: dbPlayer.pet_chest || undefined,
     note: dbPlayer.note || undefined,
     print_style: dbPlayer.print_style || undefined
   };

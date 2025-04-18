@@ -51,7 +51,6 @@ export function UniformPreview({
         logo_pants: { enabled: false },
         chest_number: { enabled: false, color: "Đen" },
         pants_number: { enabled: false, color: "Đen" },
-        chest_text: { enabled: false, content: "", color: "Đen" },
         font_text: { font: "Arial" },
         font_number: { font: "Arial" }
       };
@@ -83,11 +82,6 @@ export function UniformPreview({
       },
       pants_number: { 
         enabled: currentPlayer.pants_number || false,
-        color: "Đen"
-      },
-      chest_text: { 
-        enabled: !!currentPlayer.chest_text,
-        content: currentPlayer.chest_text || "",
         color: "Đen"
       },
       line_1: { 

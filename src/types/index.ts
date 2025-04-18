@@ -171,12 +171,6 @@ export interface DesignData {
     color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
   };
-  pet_chest?: {
-    enabled: boolean;
-    content: string;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
-    material?: string;
-  };
   reference_images?: string[];
   print_style?: string;
   print_color?: string;
