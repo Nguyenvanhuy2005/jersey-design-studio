@@ -36,10 +36,6 @@ export const useOrderProductLines = (
         uniqueConfigs.add("line_3");
       }
       
-      if (extPlayer.chest_text) {
-        uniqueConfigs.add("chest_text");
-      }
-      
       if (extPlayer.chest_number) {
         uniqueConfigs.add("chest_number");
       }
@@ -54,10 +50,6 @@ export const useOrderProductLines = (
       if (extPlayer.logo_sleeve_left) uniqueConfigs.add("logo_sleeve_left");
       if (extPlayer.logo_sleeve_right) uniqueConfigs.add("logo_sleeve_right");
       if (extPlayer.logo_pants) uniqueConfigs.add("logo_pants");
-      
-      if (extPlayer.pet_chest) {
-        uniqueConfigs.add("pet_chest");
-      }
     });
     
     if (uniqueConfigs.has("line_1")) {
@@ -93,18 +85,6 @@ export const useOrderProductLines = (
         size: "Trung bình",
         points: 1,
         content: "Tên dưới số lưng"
-      });
-    }
-    
-    if (uniqueConfigs.has("chest_text")) {
-      newProductLines.push({
-        id: `product-chest-text-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In chữ ngực",
-        material: printStyle,
-        size: "Trung bình",
-        points: 1,
-        content: "Chữ ngực"
       });
     }
     
@@ -156,18 +136,6 @@ export const useOrderProductLines = (
         });
       }
     });
-    
-    if (uniqueConfigs.has("pet_chest")) {
-      newProductLines.push({
-        id: `product-pet-chest-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In PET ngực",
-        material: "In PET",
-        size: "Lớn",
-        points: 1,
-        content: "PET ngực"
-      });
-    }
     
     setProductLines(newProductLines);
     toast.success("Đã tạo danh sách sản phẩm in từ cấu hình cầu thủ");
@@ -223,15 +191,6 @@ export const useOrderProductLines = (
       };
     }
     
-    if (players.some(p => p.chest_text)) {
-      newDesignData.chest_text = {
-        enabled: true,
-        material: printStyle,
-        color: printColor as any,
-        content: firstPlayer.chest_text || ""
-      };
-    }
-    
     if (players.some(p => p.chest_number)) {
       newDesignData.chest_number = {
         enabled: true,
@@ -273,15 +232,6 @@ export const useOrderProductLines = (
         }
       }
     });
-    
-    if (players.some(p => p.pet_chest)) {
-      newDesignData.pet_chest = {
-        enabled: true,
-        material: "In PET",
-        color: "Trong suốt" as any,
-        content: firstPlayer.pet_chest || ""
-      };
-    }
     
     setDesignData(newDesignData);
   }, [players, logos, fontText, fontNumber, printStyle, printColor, setDesignData]);

@@ -1,4 +1,3 @@
-
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +42,6 @@ export function OrderSummaryTab({
       line_1: 0,
       line_2: 0,
       line_3: 0,
-      chest_text: 0,
       chest_number: 0,
       pants_number: 0,
       logo_chest_left: 0,
@@ -52,17 +50,14 @@ export function OrderSummaryTab({
       logo_sleeve_left: 0,
       logo_sleeve_right: 0,
       logo_pants: 0,
-      pet_chest: 0,
       heat_transfer: 0,
       decal: 0
     };
     
     players.forEach(player => {
-      // Use optional chaining to safely access properties that might not exist
       if (player.line_1) counts.line_1++;
       if (player.number) counts.line_2++;
       if (player.line_3) counts.line_3++;
-      if (player.chest_text) counts.chest_text++;
       if (player.chest_number) counts.chest_number++;
       if (player.pants_number) counts.pants_number++;
       if (player.logo_chest_left) counts.logo_chest_left++;
@@ -71,7 +66,6 @@ export function OrderSummaryTab({
       if (player.logo_sleeve_left) counts.logo_sleeve_left++;
       if (player.logo_sleeve_right) counts.logo_sleeve_right++;
       if (player.logo_pants) counts.logo_pants++;
-      if (player.pet_chest) counts.pet_chest++;
     });
     
     productLines.forEach(line => {
@@ -226,16 +220,10 @@ export function OrderSummaryTab({
                     <span className="text-muted-foreground">IN DÒNG 3 (dưới số):</span> {printCounts.line_3}
                   </div>
                   <div>
-                    <span className="text-muted-foreground">IN CHỮ NGỰC:</span> {printCounts.chest_text}
-                  </div>
-                  <div>
                     <span className="text-muted-foreground">IN SỐ NGỰC:</span> {printCounts.chest_number}
                   </div>
                   <div>
                     <span className="text-muted-foreground">IN SỐ QUẦN:</span> {printCounts.pants_number}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">IN PET NGỰC:</span> {printCounts.pet_chest}
                   </div>
                 </div>
               </div>

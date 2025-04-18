@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -34,7 +33,6 @@ export function CustomerOrderDetails() {
 
   const fetchOrderDetails = async (orderId: string) => {
     try {
-      // First, fetch the basic order information
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select("*")
@@ -54,7 +52,6 @@ export function CustomerOrderDetails() {
         return;
       }
       
-      // Fetch the associated players
       const { data: playersData, error: playersError } = await supabase
         .from("players")
         .select("*")
@@ -64,18 +61,16 @@ export function CustomerOrderDetails() {
         console.error("Error fetching players:", playersError);
       }
       
-      // Fetch print config
       const { data: printConfigData, error: printConfigError } = await supabase
         .from("print_configs")
         .select("*")
         .eq("order_id", orderId)
         .single();
         
-      if (printConfigError && printConfigError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (printConfigError && printConfigError.code !== 'PGRST116') {
         console.error("Error fetching print config:", printConfigError);
       }
       
-      // Fetch product lines
       const { data: productLinesData, error: productLinesError } = await supabase
         .from("product_lines")
         .select("*")
@@ -85,7 +80,6 @@ export function CustomerOrderDetails() {
         console.error("Error fetching product lines:", productLinesError);
       }
       
-      // Fetch logos
       const { data: logosData, error: logosError } = await supabase
         .from("logos")
         .select("*")
@@ -95,7 +89,6 @@ export function CustomerOrderDetails() {
         console.error("Error fetching logos:", logosError);
       }
       
-      // Combine all the data
       const completeOrder = {
         ...orderData,
         players: playersData || [],
@@ -208,7 +201,6 @@ export function CustomerOrderDetails() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Print Configuration */}
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -244,7 +236,6 @@ export function CustomerOrderDetails() {
                   </div>
                 </div>
 
-                {/* Total Cost */}
                 <div className="border-t pt-4">
                   <div className="text-right">
                     <span className="font-medium">Tổng tiền: </span>
@@ -287,6 +278,11 @@ export function CustomerOrderDetails() {
                                 Tên in: {player.line_1}
                               </p>
                             )}
+                            {player.line_3 && (
+                              <p className="text-xs text-muted-foreground">
+                                Tên đội: {player.line_3}
+                              </p>
+                            )}
                             {player.uniform_type === 'goalkeeper' && (
                               <Badge variant="outline" className="mt-1">Thủ môn</Badge>
                             )}
@@ -305,9 +301,6 @@ export function CustomerOrderDetails() {
                             {player.chest_number && (
                               <p>- In số ngực</p>
                             )}
-                            {player.chest_text && (
-                              <p>- In chữ ngực: {player.chest_text}</p>
-                            )}
                             {player.pants_number && (
                               <p>- In số quần</p>
                             )}
@@ -325,9 +318,6 @@ export function CustomerOrderDetails() {
                             {player.logo_sleeve_left && (<p>- Logo tay trái</p>)}
                             {player.logo_sleeve_right && (<p>- Logo tay phải</p>)}
                             {player.logo_pants && (<p>- Logo quần</p>)}
-                            {player.pet_chest && (
-                              <p>- PET ngực: {player.pet_chest}</p>
-                            )}
                             <p className="font-medium mt-1">Kiểu in: {player.print_style || "In chuyển nhiệt"}</p>
                             {player.note && (
                               <p className="text-muted-foreground mt-1">Ghi chú: {player.note}</p>
@@ -392,7 +382,6 @@ export function CustomerOrderDetails() {
             </CardContent>
           </Card>
 
-          {/* Reference Images */}
           {order.referenceImages && order.referenceImages.length > 0 && (
             <Card>
               <CardHeader>

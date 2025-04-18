@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,18 +27,14 @@ export function PrintPositionsForm({
 }: PrintPositionsFormProps) {
   const [isChestNumberEnabled, setIsChestNumberEnabled] = useState(designData.chest_number?.enabled || false);
   const [isPantsNumberEnabled, setIsPantsNumberEnabled] = useState(designData.pants_number?.enabled || false);
-  const [chestText, setChestText] = useState(designData.chest_text?.content || "");
   const [line1Text, setLine1Text] = useState(designData.line_1?.content || "");
   const [line3Text, setLine3Text] = useState(designData.line_3?.content || "");
-  const [petChestText, setPetChestText] = useState(designData.pet_chest?.content || "");
   
   useEffect(() => {
     setIsChestNumberEnabled(designData.chest_number?.enabled || false);
     setIsPantsNumberEnabled(designData.pants_number?.enabled || false);
-    setChestText(designData.chest_text?.content || "");
     setLine1Text(designData.line_1?.content || "");
     setLine3Text(designData.line_3?.content || "");
-    setPetChestText(designData.pet_chest?.content || "");
   }, [designData]);
   
   const handleLogoChange = (position: string, checked: boolean) => {
@@ -61,7 +58,7 @@ export function PrintPositionsForm({
     onDesignDataChange(updatedDesignData);
   };
   
-  const handleLineChange = (line: 'line_1' | 'line_3' | 'chest_text' | 'pet_chest', field: string, value: string) => {
+  const handleLineChange = (line: 'line_1' | 'line_3', value: string) => {
     const updatedDesignData = { ...designData };
     
     const lineConfig: PrintPositionConfig = {
@@ -162,7 +159,7 @@ export function PrintPositionsForm({
               value={line1Text}
               onChange={(e) => {
                 setLine1Text(e.target.value);
-                handleLineChange('line_1', 'content', e.target.value);
+                handleLineChange('line_1', e.target.value);
               }}
             />
           </div>
@@ -175,33 +172,7 @@ export function PrintPositionsForm({
               value={line3Text}
               onChange={(e) => {
                 setLine3Text(e.target.value);
-                handleLineChange('line_3', 'content', e.target.value);
-              }}
-            />
-          </div>
-          <div>
-            <Label htmlFor="chestText">Chữ ngực</Label>
-            <Input
-              id="chestText"
-              type="text"
-              placeholder="Nhập chữ ngực"
-              value={chestText}
-              onChange={(e) => {
-                setChestText(e.target.value);
-                handleLineChange('chest_text', 'content', e.target.value);
-              }}
-            />
-          </div>
-          <div>
-            <Label htmlFor="petChest">PET ngực</Label>
-            <Input
-              id="petChest"
-              type="text"
-              placeholder="Nhập PET ngực"
-              value={petChestText}
-              onChange={(e) => {
-                setPetChestText(e.target.value);
-                handleLineChange('pet_chest', 'content', e.target.value);
+                handleLineChange('line_3', e.target.value);
               }}
             />
           </div>
