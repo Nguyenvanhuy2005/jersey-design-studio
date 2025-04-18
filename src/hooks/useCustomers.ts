@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,7 +27,6 @@ export function useCustomers() {
         return;
       }
 
-      // Get orders count for each customer
       const customersWithOrderCounts = await Promise.all(
         customersData.map(async (customer) => {
           const { count } = await supabase
@@ -54,31 +52,40 @@ export function useCustomers() {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
-      console.log("Creating customer with data:", customerData);
+      console.log("Starting customer creation process with data:", customerData);
       
-      const { data, error } = await supabase.functions.invoke('create-customer', {
-        body: { customerData }
+      const { data: userData, error: authError } = await supabase.functions.invoke('create-auth-user', {
+        body: { userData: { email: customerData.email } }
       });
 
-      console.log("Edge function response:", data, error);
-
-      if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(`Không thể tạo khách hàng: ${error.message}`);
+      if (authError || !userData?.user) {
+        console.error("Auth user creation error:", authError);
+        throw new Error(`Không thể tạo tài khoản: ${authError?.message || 'Lỗi không xác định'}`);
       }
 
-      if (!data?.customer) {
-        const errorMsg = data?.error || "Không nhận được dữ liệu khách hàng";
-        console.error("Invalid response from edge function:", data);
-        throw new Error(`Lỗi máy chủ: ${errorMsg}`);
+      console.log("Auth user created successfully:", userData.user.id);
+
+      const { data: profileData, error: profileError } = await supabase.functions.invoke('create-customer-profile', {
+        body: { 
+          profileData: {
+            ...customerData,
+            id: userData.user.id
+          }
+        }
+      });
+
+      if (profileError || !profileData?.customer) {
+        console.error("Profile creation error:", profileError);
+        throw new Error(`Không thể tạo hồ sơ khách hàng: ${profileError?.message || 'Lỗi không xác định'}`);
       }
 
+      console.log("Customer profile created successfully");
       toast.success("Đã tạo khách hàng thành công");
       await fetchCustomers(); // Refresh the customers list
-      return data.customer;
+      return profileData.customer;
     } catch (err: any) {
-      console.error("Error creating customer:", err);
-      toast.error(`Không thể tạo khách hàng: ${err.message}`);
+      console.error("Error in customer creation process:", err);
+      toast.error(err.message || "Không thể tạo khách hàng");
       throw err;
     }
   };

@@ -8,22 +8,17 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Check for required environment variables
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing required environment variables:', {
-        hasUrl: !!SUPABASE_URL,
-        hasServiceRole: !!SUPABASE_SERVICE_ROLE_KEY
-      })
-      throw new Error('Server configuration error: Missing required environment variables')
+      console.error('Missing required environment variables')
+      throw new Error('Server configuration error')
     }
 
     const supabaseAdmin = createClient(
@@ -37,31 +32,23 @@ serve(async (req) => {
       }
     )
 
-    // Parse request body, with error handling for malformed JSON
-    let customerData
+    let userData
     try {
       const body = await req.json()
-      customerData = body.customerData
+      userData = body.userData
       
-      if (!customerData) {
-        throw new Error('Invalid request: Missing customerData')
+      if (!userData?.email) {
+        throw new Error('Missing required email')
       }
       
-      // Validate required fields
-      if (!customerData.email || !customerData.name || !customerData.phone || !customerData.address) {
-        throw new Error('Missing required customer information (email, name, phone, or address)')
-      }
-      
-      console.log('Received customer data:', JSON.stringify(customerData, null, 2))
+      console.log('Creating auth user with email:', userData.email)
     } catch (parseError) {
       console.error('Error parsing request body:', parseError)
       throw new Error('Invalid request format')
     }
 
-    // Create auth user with random password
-    console.log('Creating auth user with email:', customerData.email)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: customerData.email,
+      email: userData.email,
       password: Math.random().toString(36).slice(-8),
       email_confirm: true
     })
@@ -73,42 +60,20 @@ serve(async (req) => {
 
     if (!authData.user) {
       console.error('No user was created in auth')
-      throw new Error('No user was created')
+      throw new Error('Failed to create user')
     }
 
     console.log('Auth user created successfully with ID:', authData.user.id)
 
-    // Insert customer profile
-    console.log('Creating customer profile for user:', authData.user.id)
-    const { data: customerRecord, error: customerError } = await supabaseAdmin
-      .from('customers')
-      .insert({
-        id: authData.user.id,
-        name: customerData.name,
-        phone: customerData.phone,
-        address: customerData.address,
-        delivery_note: customerData.delivery_note,
-        email: customerData.email // Add email field
-      })
-      .select()
-      .single()
-
-    if (customerError) {
-      console.error('Error creating customer profile:', customerError)
-      throw customerError
-    }
-
-    console.log('Customer profile created successfully')
-
     return new Response(
-      JSON.stringify({ customer: customerRecord }),
+      JSON.stringify({ user: authData.user }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
   } catch (error) {
-    console.error('Error in create-customer function:', error)
+    console.error('Error in create-auth-user function:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message,
