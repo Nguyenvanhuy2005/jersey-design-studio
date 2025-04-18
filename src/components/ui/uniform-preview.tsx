@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
@@ -48,8 +49,8 @@ export function UniformPreview({
         logo_sleeve_left: { enabled: false },
         logo_sleeve_right: { enabled: false },
         logo_pants: { enabled: false },
-        chest_number: { enabled: false, color: "Đen" },
-        pants_number: { enabled: false, color: "Đen" },
+        chest_number: { enabled: false, material: printConfig?.backMaterial || "In chuyển nhiệt" },
+        pants_number: { enabled: false, material: printConfig?.legMaterial || "In chuyển nhiệt" },
         font_text: { font: "Arial" },
         font_number: { font: "Arial" }
       };
@@ -77,21 +78,21 @@ export function UniformPreview({
       },
       chest_number: { 
         enabled: currentPlayer.chest_number || false,
-        color: "Đen"
+        material: printConfig?.backMaterial || "In chuyển nhiệt"
       },
       pants_number: { 
         enabled: currentPlayer.pants_number || false,
-        color: "Đen"
+        material: printConfig?.legMaterial || "In chuyển nhiệt"
       },
       line_1: { 
         enabled: !!currentPlayer.line_1,
         content: currentPlayer.line_1 || "",
-        color: "Đen"
+        material: printConfig?.backMaterial || "In chuyển nhiệt"
       },
       line_3: { 
         enabled: !!currentPlayer.line_3,
         content: currentPlayer.line_3 || "",
-        color: "Đen"
+        material: printConfig?.backMaterial || "In chuyển nhiệt"
       },
       font_text: { 
         font: "Arial" 
