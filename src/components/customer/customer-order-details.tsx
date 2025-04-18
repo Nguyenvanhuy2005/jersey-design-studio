@@ -8,7 +8,7 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LoaderCircle, Printer, Shirt, Type } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Printer, Shirt, Type, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -135,7 +135,7 @@ export function CustomerOrderDetails() {
     if (order.referenceImages && order.referenceImages.length > 0) {
       assets.push({
         type: 'images' as const,
-        title: 'Hình ảnh tham khảo',
+        title: 'Mẫu cần in',
         items: order.referenceImages.map((url, index) => ({
           url,
           name: `reference-image-${index + 1}.jpg`,
@@ -156,19 +156,16 @@ export function CustomerOrderDetails() {
       });
     }
 
-    if (order.printConfig?.font) {
-      assets.push({
-        type: 'fonts' as const,
-        title: 'Font chữ/số',
-        items: [{
-          url: `/fonts/${order.printConfig.font}.ttf`,
-          name: `${order.printConfig.font}.ttf`,
-          type: 'font' as const
-        }]
-      });
-    }
-
     return assets;
+  };
+
+  const handleDownload = (url: string, name: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (loading) {
@@ -248,17 +245,6 @@ export function CustomerOrderDetails() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Type className="h-4 w-4" />
-                      Font chữ/số
-                    </h4>
-                    <div className="grid gap-2">
-                      <div className="text-sm">
-                        {order.printConfig?.font || "Arial"}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Shirt className="h-4 w-4" />
                       Chất liệu in ấn
                     </h4>
@@ -269,6 +255,18 @@ export function CustomerOrderDetails() {
                       </div>
                     </div>
                   </div>
+                  {order.printConfig?.font && (
+                    <div className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(`/fonts/${order.printConfig.font}.ttf`, `${order.printConfig.font}.ttf`)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Tải xuống font chữ
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t mt-6 pt-4">
