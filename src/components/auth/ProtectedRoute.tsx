@@ -1,5 +1,5 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -8,6 +8,16 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ requireAdmin = false }: ProtectedRouteProps) => {
   const { user, isLoading, isAdmin } = useAuth();
+  const location = useLocation();
+  
+  // Log for debugging
+  console.log("Protected Route Check:", { 
+    path: location.pathname,
+    requireAdmin, 
+    isAdmin, 
+    isAuthenticated: !!user,
+    isLoading 
+  });
   
   // While checking authentication status, show loading
   if (isLoading) {
@@ -25,6 +35,7 @@ export const ProtectedRoute = ({ requireAdmin = false }: ProtectedRouteProps) =>
   
   // If admin access is required but user is not admin
   if (requireAdmin && !isAdmin) {
+    console.warn("Admin access required but user is not admin");
     return <Navigate to="/customer/dashboard" replace />;
   }
   

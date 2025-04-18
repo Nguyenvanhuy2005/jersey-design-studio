@@ -34,14 +34,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, currentSession) => {
+      (_event, currentSession) => {
         console.log("Auth state changed:", _event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         // Check admin status if user is logged in
         if (currentSession?.user) {
-          await checkAdminStatus(currentSession.user.id);
+          // Use setTimeout to prevent potential deadlocks with Supabase auth
+          setTimeout(() => {
+            checkAdminStatus(currentSession.user.id);
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -51,6 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth...");
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -77,6 +81,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log("Checking admin status for user:", userId);
       
+      // First try with RLS function
+      const { data: functionData, error: functionError } = await supabase.rpc('is_admin');
+      
+      if (!functionError && typeof functionData === 'boolean') {
+        console.log("Admin status from RPC function:", functionData);
+        setIsAdmin(functionData);
+        return;
+      } else {
+        console.log("RPC function error or invalid result, falling back to direct query:", functionError);
+      }
+      
+      // Fallback: direct query to user_roles table
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')

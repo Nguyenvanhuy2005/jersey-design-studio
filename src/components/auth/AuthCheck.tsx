@@ -1,6 +1,6 @@
 
 import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,18 @@ interface AuthCheckProps {
 export const AuthCheck = ({ children, redirectTo = '/admin', requireAdmin = false }: AuthCheckProps) => {
   const { user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isLoading) {
+      // Log for debugging
+      console.log("AuthCheck Component:", { 
+        path: location.pathname,
+        requireAdmin, 
+        isAdmin, 
+        isAuthenticated: !!user
+      });
+      
       // If not logged in, redirect to login
       if (!user) {
         navigate(redirectTo, { replace: true });
@@ -25,10 +34,11 @@ export const AuthCheck = ({ children, redirectTo = '/admin', requireAdmin = fals
       
       // If admin access required but user is not admin
       if (requireAdmin && !isAdmin) {
+        console.warn("Admin access required but user is not admin");
         navigate('/customer/dashboard', { replace: true });
       }
     }
-  }, [user, isLoading, isAdmin, navigate, redirectTo, requireAdmin]);
+  }, [user, isLoading, isAdmin, navigate, redirectTo, requireAdmin, location.pathname]);
 
   if (isLoading) {
     return (
