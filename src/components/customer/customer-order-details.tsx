@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -13,6 +12,7 @@ import { ArrowLeft, LoaderCircle, Printer, Shirt, Type } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AssetViewer } from "./AssetViewer";
 
 export function CustomerOrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -36,7 +36,6 @@ export function CustomerOrderDetails() {
     try {
       setLoading(true);
       
-      // First fetch order with customer data
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select(`
@@ -64,7 +63,6 @@ export function CustomerOrderDetails() {
         return;
       }
 
-      // Fetch related players data
       const { data: playersData, error: playersError } = await supabase
         .from("players")
         .select("*")
@@ -74,7 +72,6 @@ export function CustomerOrderDetails() {
         console.error("Error fetching players:", playersError);
       }
 
-      // Fetch product lines data
       const { data: productLinesData, error: productLinesError } = await supabase
         .from("product_lines")
         .select("*")
@@ -84,7 +81,6 @@ export function CustomerOrderDetails() {
         console.error("Error fetching product lines:", productLinesError);
       }
 
-      // Fetch print config data
       const { data: printConfigData, error: printConfigError } = await supabase
         .from("print_configs")
         .select("*")
@@ -131,6 +127,48 @@ export function CustomerOrderDetails() {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const getAssets = () => {
+    const assets = [];
+
+    if (order.referenceImages && order.referenceImages.length > 0) {
+      assets.push({
+        type: 'images' as const,
+        title: 'Hình ảnh tham khảo',
+        items: order.referenceImages.map((url, index) => ({
+          url,
+          name: `reference-image-${index + 1}.jpg`,
+          type: 'image' as const
+        }))
+      });
+    }
+
+    if (order.logo_url) {
+      assets.push({
+        type: 'logos' as const,
+        title: 'Logo',
+        items: [{
+          url: order.logo_url,
+          name: 'team-logo.png',
+          type: 'image' as const
+        }]
+      });
+    }
+
+    if (order.printConfig?.font) {
+      assets.push({
+        type: 'fonts' as const,
+        title: 'Font chữ/số',
+        items: [{
+          url: `/fonts/${order.printConfig.font}.ttf`,
+          name: `${order.printConfig.font}.ttf`,
+          type: 'font' as const
+        }]
+      });
+    }
+
+    return assets;
   };
 
   if (loading) {
@@ -195,54 +233,67 @@ export function CustomerOrderDetails() {
         <TabsList>
           <TabsTrigger value="details" className="flex-1">Chi tiết đơn hàng</TabsTrigger>
           <TabsTrigger value="players" className="flex-1">Danh sách cầu thủ</TabsTrigger>
-          <TabsTrigger value="printList" className="flex-1">Danh sách in ấn</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Printer className="h-5 w-5" />
-                Cấu hình in ấn
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <Type className="h-4 w-4" />
-                    Font chữ/số
-                  </h4>
-                  <div className="grid gap-2">
-                    <div className="text-sm">
-                      {order.printConfig?.font || "Arial"}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Printer className="h-5 w-5" />
+                  Cấu hình in ấn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      Font chữ/số
+                    </h4>
+                    <div className="grid gap-2">
+                      <div className="text-sm">
+                        {order.printConfig?.font || "Arial"}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Shirt className="h-4 w-4" />
+                      Chất liệu in ấn
+                    </h4>
+                    <div className="grid gap-2">
+                      <div className="text-sm">
+                        <p>Áo trước: {order.printConfig?.frontMaterial || "In chuyển nhiệt"}</p>
+                        <p>Áo sau: {order.printConfig?.backMaterial || "In chuyển nhiệt"}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <Shirt className="h-4 w-4" />
-                    Chất liệu in ấn
-                  </h4>
-                  <div className="grid gap-2">
-                    <div className="text-sm">
-                      <p>Áo trước: {order.printConfig?.frontMaterial || "In chuyển nhiệt"}</p>
-                      <p>Áo sau: {order.printConfig?.backMaterial || "In chuyển nhiệt"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="border-t mt-6 pt-4">
-                <div className="text-right">
-                  <span className="font-medium">Tổng tiền: </span>
-                  <span className="text-lg font-bold">
-                    {order.totalCost?.toLocaleString("vi-VN")} đ
-                  </span>
+                <div className="border-t mt-6 pt-4">
+                  <div className="text-right">
+                    <span className="font-medium">Tổng tiền: </span>
+                    <span className="text-lg font-bold">
+                      {order.totalCost?.toLocaleString("vi-VN")} đ
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {getAssets().map((assetGroup, index) => (
+              <Card key={index}>
+                <CardContent className="pt-6">
+                  <AssetViewer
+                    title={assetGroup.title}
+                    assets={assetGroup.items}
+                    gridCols={assetGroup.type === 'images' ? 4 : 2}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         <TabsContent value="players">
@@ -319,76 +370,6 @@ export function CustomerOrderDetails() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="printList">
-          <Card>
-            <CardHeader>
-              <CardTitle>Danh sách in ấn ({order.productLines?.length || 0} vị trí)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Sản phẩm</TableHead>
-                      <TableHead>Vị trí</TableHead>
-                      <TableHead>Chất liệu</TableHead>
-                      <TableHead>Kích thước</TableHead>
-                      <TableHead>Nội dung</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {order.productLines?.map((line, index) => (
-                      <TableRow key={line.id || index}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{line.product}</TableCell>
-                        <TableCell>{line.position}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Printer className="h-4 w-4" />
-                            {line.material}
-                          </div>
-                        </TableCell>
-                        <TableCell>{line.size}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {line.content || "-"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {(!order.productLines || order.productLines.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                          Không có thông tin in ấn
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {order.referenceImages && order.referenceImages.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Hình ảnh tham khảo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {order.referenceImages.map((image, index) => (
-                    <img
-                      key={index}
-                      src={image}
-                      alt={`Tham khảo ${index + 1}`}
-                      className="w-full aspect-square object-cover rounded-md border"
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
       </Tabs>
     </div>
