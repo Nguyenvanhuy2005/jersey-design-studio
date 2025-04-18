@@ -193,8 +193,7 @@ export const useOrderSubmission = ({
         font_number: {
           font: fontNumber
         },
-        print_style: printStyle,
-        print_color: printColor
+        print_style: printStyle
       };
 
       const designDataJson = prepareDesignDataForStorage(finalDesignData);
@@ -259,19 +258,15 @@ export const useOrderSubmission = ({
         await supabase.from('product_lines').insert(productLinesToInsert);
       }
       
-      // Add print config if needed
+      // Update print config creation
       if (printStyle) {
         await supabase.from('print_configs').insert({
           order_id: orderId,
           font: fontText,
           back_material: printStyle,
-          back_color: printColor,
           front_material: printStyle,
-          front_color: printColor,
           sleeve_material: printStyle,
-          sleeve_color: printColor,
-          leg_material: printStyle,
-          leg_color: printColor
+          leg_material: printStyle
         });
       }
       

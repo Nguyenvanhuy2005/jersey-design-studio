@@ -36,13 +36,9 @@ export interface PrintConfig {
   id?: string;
   font: string;
   backMaterial: string;
-  backColor: string;
   frontMaterial: string;
-  frontColor: string;
   sleeveMaterial: string;
-  sleeveColor: string;
   legMaterial: string;
-  legColor: string;
   customFontFile?: File;
   customFontUrl?: string;
 }
@@ -192,7 +188,6 @@ export interface Order {
   customerId?: string;
   customerEmail?: string;
   customerPhone?: string;
-  customerAddress?: string;
   designData?: any;
   user_id?: string;
   teamName?: string;
