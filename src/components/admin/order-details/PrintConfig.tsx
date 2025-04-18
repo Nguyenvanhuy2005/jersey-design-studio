@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, Type } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PrintConfigProps {
   printConfig: Order['printConfig'];
@@ -12,13 +14,46 @@ interface PrintConfigProps {
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
   if (!printConfig) return null;
 
-  const handleDownload = (font: string) => {
-    const link = document.createElement('a');
-    link.href = `/fonts/${font}.ttf`;
-    link.download = `${font}.ttf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (font: string) => {
+    try {
+      // Get font file path from database
+      const { data: fontData, error: dbError } = await supabase
+        .from('fonts')
+        .select('file_path')
+        .eq('name', font)
+        .single();
+
+      if (dbError) {
+        throw new Error(dbError.message);
+      }
+
+      if (!fontData?.file_path) {
+        throw new Error('Font file not found');
+      }
+
+      // Get download URL from storage
+      const { data, error: storageError } = await supabase.storage
+        .from('fonts')
+        .download(fontData.file_path);
+
+      if (storageError) {
+        throw new Error(storageError.message);
+      }
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${font}.${fontData.file_path.split('.').pop()}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error downloading font:', error);
+      toast.error('Không thể tải xuống font chữ');
+    }
   };
   
   return (
@@ -42,7 +77,7 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                   Font chữ/số
                 </TableCell>
                 <TableCell className="flex items-center justify-between">
-                  <span>{printConfig.font}</span>
+                  <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
                   <Button
                     variant="outline"
                     size="sm"

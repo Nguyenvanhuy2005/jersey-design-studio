@@ -1,4 +1,3 @@
-
 export const loadCustomFont = async (fontUrl: string, fontName: string): Promise<FontFace | null> => {
   if (!fontUrl || !fontName) {
     console.warn('Missing fontUrl or fontName for loadCustomFont');

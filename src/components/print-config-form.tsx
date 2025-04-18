@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PrintConfig } from "@/types";
 import { toast } from "sonner";
 import { loadCustomFont } from "@/utils/font-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PrintConfigFormProps {
   printConfig: PrintConfig;
@@ -17,46 +18,39 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
   const [tempConfig, setTempConfig] = useState<PrintConfig>(printConfig);
   const [open, setOpen] = useState(false);
   const [customFonts, setCustomFonts] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (tempConfig.customFontFile && !customFonts.includes(tempConfig.customFontFile!.name.split('.')[0])) {
-      setCustomFonts(prev => [...prev, tempConfig.customFontFile!.name.split('.')[0]]);
+    const loadSavedFonts = async () => {
+      const { data: fonts, error } = await supabase
+        .from('fonts')
+        .select('name, file_path');
 
-      if (tempConfig.customFontUrl) {
-        loadCustomFont(tempConfig.customFontUrl, tempConfig.customFontFile.name.split('.')[0])
-          .then(font => {
-            if (font) {
-              toast.success(`Đã tải phông chữ: ${font.family}`);
-            }
-          })
-          .catch(err => {
-            console.error("Error loading font:", err);
-            toast.error("Không thể tải phông chữ tùy chỉnh");
-          });
+      if (error) {
+        console.error('Error loading fonts:', error);
+        toast.error('Không thể tải danh sách font chữ');
+        return;
       }
-    }
-  }, [tempConfig.customFontFile, tempConfig.customFontUrl]);
 
-  useEffect(() => {
-    if (printConfig.customFontFile && printConfig.customFontFile.name) {
-      const fontName = printConfig.customFontFile.name.split('.')[0];
-      if (!customFonts.includes(fontName)) {
-        setCustomFonts(prev => [...prev, fontName]);
+      if (fonts) {
+        setCustomFonts(fonts.map(font => font.name));
+        
+        fonts.forEach(async (font) => {
+          const { data: fontUrl } = supabase.storage
+            .from('fonts')
+            .getPublicUrl(font.file_path);
+
+          if (fontUrl) {
+            await loadCustomFont(fontUrl.publicUrl, font.name);
+          }
+        });
       }
-    }
+    };
+
+    loadSavedFonts();
   }, []);
 
-  const handleSave = () => {
-    onPrintConfigChange(tempConfig);
-    setOpen(false);
-  };
-
-  const handleCancel = () => {
-    setTempConfig(printConfig);
-    setOpen(false);
-  };
-
-  const handleCustomFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomFontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -67,21 +61,69 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
       return;
     }
 
-    const fontUrl = URL.createObjectURL(file);
-    const fontName = file.name.split('.')[0];
-    
-    setTempConfig(prev => ({
-      ...prev,
-      customFontFile: file,
-      customFontUrl: fontUrl,
-      font: fontName
-    }));
-    
-    if (!customFonts.includes(fontName)) {
-      setCustomFonts(prev => [...prev, fontName]);
-    }
+    setIsUploading(true);
+    try {
+      const fontName = file.name.split('.')[0];
+      const filePath = `${Date.now()}-${file.name}`;
 
-    toast.info(`Đã tải lên phông chữ: ${fontName}`);
+      const { error: uploadError } = await supabase.storage
+        .from('fonts')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw new Error(`Error uploading font: ${uploadError.message}`);
+      }
+
+      const { data: fontUrl } = supabase.storage
+        .from('fonts')
+        .getPublicUrl(filePath);
+
+      if (!fontUrl) {
+        throw new Error('Could not get font URL');
+      }
+
+      const { error: dbError } = await supabase
+        .from('fonts')
+        .insert({
+          name: fontName,
+          file_path: filePath,
+          file_type: fileExtension.replace('.', '')
+        });
+
+      if (dbError) {
+        throw new Error(`Error saving font metadata: ${dbError.message}`);
+      }
+
+      await loadCustomFont(fontUrl.publicUrl, fontName);
+      
+      setTempConfig(prev => ({
+        ...prev,
+        customFontFile: file,
+        customFontUrl: fontUrl.publicUrl,
+        font: fontName
+      }));
+      
+      if (!customFonts.includes(fontName)) {
+        setCustomFonts(prev => [...prev, fontName]);
+      }
+
+      toast.success(`Đã tải lên phông chữ: ${fontName}`);
+    } catch (error) {
+      console.error('Error handling font upload:', error);
+      toast.error(error instanceof Error ? error.message : 'Không thể tải lên phông chữ');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSave = () => {
+    onPrintConfigChange(tempConfig);
+    setOpen(false);
+  };
+
+  const handleCancel = () => {
+    setTempConfig(printConfig);
+    setOpen(false);
   };
 
   const materialOptions = [
@@ -142,6 +184,7 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
                   type="file" 
                   accept=".ttf,.otf" 
                   onChange={handleCustomFontUpload}
+                  disabled={isUploading}
                 />
               </div>
             </div>
