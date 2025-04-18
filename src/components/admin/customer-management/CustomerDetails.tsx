@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Customer } from "@/types";
-import { CalendarIcon, PhoneIcon, MapPinIcon, NoteIcon, Mail } from "lucide-react";
+import { CalendarIcon, PhoneIcon, MapPinIcon, FileTextIcon, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 
