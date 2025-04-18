@@ -38,6 +38,7 @@ serve(async (req) => {
       profileData = body.profileData
       
       if (!profileData?.id || !profileData?.name || !profileData?.phone || !profileData?.address) {
+        console.error('Missing required profile data:', profileData)
         throw new Error('Missing required profile information')
       }
       
@@ -45,6 +46,23 @@ serve(async (req) => {
     } catch (parseError) {
       console.error('Error parsing request body:', parseError)
       throw new Error('Invalid request format')
+    }
+
+    // First check if customer already exists
+    const { data: existingCustomer, error: checkError } = await supabaseAdmin
+      .from('customers')
+      .select('id')
+      .eq('id', profileData.id)
+      .single()
+
+    if (checkError && !checkError.message.includes('not found')) {
+      console.error('Error checking existing customer:', checkError)
+      throw checkError
+    }
+
+    if (existingCustomer) {
+      console.error('Customer already exists with ID:', profileData.id)
+      throw new Error('Khách hàng đã tồn tại')
     }
 
     const { data: customerRecord, error: customerError } = await supabaseAdmin
@@ -65,7 +83,7 @@ serve(async (req) => {
       throw customerError
     }
 
-    console.log('Customer profile created successfully')
+    console.log('Customer profile created successfully:', customerRecord)
 
     return new Response(
       JSON.stringify({ customer: customerRecord }),
@@ -78,12 +96,12 @@ serve(async (req) => {
     console.error('Error in create-customer-profile function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
         details: error.toString()
       }), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: error.message?.includes('tồn tại') ? 409 : 400 
       }
     )
   }

@@ -38,6 +38,7 @@ serve(async (req) => {
       userData = body.userData
       
       if (!userData?.email) {
+        console.error('Missing required email in request body')
         throw new Error('Missing required email')
       }
       
@@ -47,14 +48,20 @@ serve(async (req) => {
       throw new Error('Invalid request format')
     }
 
+    // Generate a random password and create user
+    const password = Math.random().toString(36).slice(-8)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: userData.email,
-      password: Math.random().toString(36).slice(-8),
+      password: password,
       email_confirm: true
     })
 
     if (authError) {
       console.error('Error creating auth user:', authError)
+      // Check for specific error cases
+      if (authError.message.includes('already been registered')) {
+        throw new Error('Email đã được đăng ký')
+      }
       throw authError
     }
 
@@ -76,12 +83,12 @@ serve(async (req) => {
     console.error('Error in create-auth-user function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
         details: error.toString()
       }), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: error.message?.includes('đăng ký') ? 409 : 400 
       }
     )
   }
