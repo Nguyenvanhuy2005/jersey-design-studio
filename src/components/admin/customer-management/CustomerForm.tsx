@@ -15,13 +15,12 @@ import { Customer } from "@/types";
 import { Loader2 } from "lucide-react";
 
 interface CustomerFormProps {
-  customer?: Customer;
+  customer: Customer;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (customerData: any) => Promise<void>;
   title: string;
   submitLabel: string;
-  showEmailField?: boolean;
 }
 
 export function CustomerForm({
@@ -30,15 +29,13 @@ export function CustomerForm({
   onOpenChange,
   onSubmit,
   title,
-  submitLabel,
-  showEmailField = false
+  submitLabel
 }: CustomerFormProps) {
   const [formData, setFormData] = useState<any>({
-    name: customer?.name || "",
-    email: customer?.email || "",
-    phone: customer?.phone || "",
-    address: customer?.address || "",
-    delivery_note: customer?.delivery_note || ""
+    name: customer.name || "",
+    phone: customer.phone || "",
+    address: customer.address || "",
+    delivery_note: customer.delivery_note || ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,20 +77,6 @@ export function CustomerForm({
                 required
               />
             </div>
-
-            {showEmailField && (
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required={showEmailField}
-                />
-              </div>
-            )}
 
             <div className="grid gap-2">
               <Label htmlFor="phone">Số điện thoại *</Label>

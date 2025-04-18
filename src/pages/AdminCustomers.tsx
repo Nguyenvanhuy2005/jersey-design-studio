@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Search, Mail, LogOut, UserPlus, Edit, Eye, Key } from "lucide-react";
+import { Loader2, Search, LogOut, Edit, Eye, Key } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Customer } from "@/types";
@@ -30,13 +30,11 @@ const AdminCustomers = () => {
     loading, 
     error, 
     fetchCustomers, 
-    createCustomer,
     updateCustomer,
     resetPassword
   } = useCustomers();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { order_count?: number }) | null>(null);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
@@ -54,11 +52,6 @@ const AdminCustomers = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/admin");
-  };
-
-  const handleAddCustomer = async (customerData: any) => {
-    await createCustomer(customerData);
-    fetchCustomers();
   };
 
   const handleEditCustomer = async (customerData: any) => {
@@ -93,10 +86,6 @@ const AdminCustomers = () => {
 
   const openResetPasswordDialog = () => {
     setIsResetPasswordDialogOpen(true);
-  };
-  
-  const handleContactCustomer = (customer: Customer) => {
-    toast.success(`Đã gửi email tới khách hàng: ${customer.name}`);
   };
   
   const filteredCustomers = customers.filter(customer => {
@@ -137,10 +126,6 @@ const AdminCustomers = () => {
               />
             </div>
             <Button onClick={fetchCustomers}>Làm mới</Button>
-            <Button onClick={() => setIsAddCustomerOpen(true)} className="flex items-center gap-1">
-              <UserPlus className="h-4 w-4" />
-              Thêm khách hàng
-            </Button>
           </div>
         </div>
         
@@ -236,16 +221,6 @@ const AdminCustomers = () => {
           </div>
         </div>
       </div>
-
-      {/* Add Customer Dialog */}
-      <CustomerForm
-        open={isAddCustomerOpen}
-        onOpenChange={setIsAddCustomerOpen}
-        onSubmit={handleAddCustomer}
-        title="Thêm khách hàng mới"
-        submitLabel="Thêm khách hàng"
-        showEmailField={true}
-      />
 
       {/* Edit Customer Dialog */}
       {selectedCustomer && (

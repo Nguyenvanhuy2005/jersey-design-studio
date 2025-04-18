@@ -72,46 +72,6 @@ export function useCustomers() {
     }
   }, [user, isAdmin]);
 
-  const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
-    try {
-      console.log("Starting customer creation process with data:", customerData);
-      
-      const { data: userData, error: authError } = await supabase.functions.invoke('create-auth-user', {
-        body: { userData: { email: customerData.email } }
-      });
-
-      if (authError || !userData?.user) {
-        console.error("Auth user creation error:", authError);
-        throw new Error(`Không thể tạo tài khoản: ${authError?.message || 'Lỗi không xác định'}`);
-      }
-
-      console.log("Auth user created successfully:", userData.user.id);
-
-      const { data: profileData, error: profileError } = await supabase.functions.invoke('create-customer-profile', {
-        body: { 
-          profileData: {
-            ...customerData,
-            id: userData.user.id
-          }
-        }
-      });
-
-      if (profileError || !profileData?.customer) {
-        console.error("Profile creation error:", profileError);
-        throw new Error(`Không thể tạo hồ sơ khách hàng: ${profileError?.message || 'Lỗi không xác định'}`);
-      }
-
-      console.log("Customer profile created successfully");
-      toast.success("Đã tạo khách hàng thành công");
-      await fetchCustomers(); // Refresh the customers list
-      return profileData.customer;
-    } catch (err: any) {
-      console.error("Error in customer creation process:", err);
-      toast.error(err.message || "Không thể tạo khách hàng");
-      throw err;
-    }
-  };
-
   const updateCustomer = async (id: string, customerData: Partial<Customer>) => {
     try {
       const { data, error } = await supabase
@@ -131,7 +91,7 @@ export function useCustomers() {
       }
 
       toast.success("Đã cập nhật thông tin khách hàng");
-      await fetchCustomers(); // Refresh the customers list
+      await fetchCustomers();
       return data;
     } catch (err: any) {
       console.error("Error updating customer:", err);
@@ -163,7 +123,6 @@ export function useCustomers() {
     loading,
     error,
     fetchCustomers,
-    createCustomer,
     updateCustomer,
     resetPassword
   };
