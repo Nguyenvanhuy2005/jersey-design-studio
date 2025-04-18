@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserCircle, ShoppingBag, Settings } from "lucide-react";
+import { LogOut, UserCircle, ShoppingBag, Settings, Users } from "lucide-react";
 
 export function Navbar() {
   const { user, signOut, isAdmin } = useAuth();
@@ -22,11 +22,18 @@ export function Navbar() {
           {user ? (
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <Button variant="outline" asChild className="text-secondary-foreground flex items-center gap-1">
-                  <Link to="/admin/orders">
-                    <Settings className="h-4 w-4" /> Quản trị
-                  </Link>
-                </Button>
+                <>
+                  <Button variant="outline" asChild className="text-secondary-foreground flex items-center gap-1">
+                    <Link to="/admin/orders">
+                      <Settings className="h-4 w-4" /> Quản trị
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild className="text-secondary-foreground flex items-center gap-1">
+                    <Link to="/admin/customers">
+                      <Users className="h-4 w-4" /> Khách hàng
+                    </Link>
+                  </Button>
+                </>
               )}
               <Button variant="outline" asChild>
                 <Link to="/customer/dashboard" className="text-secondary-foreground flex items-center gap-1">
