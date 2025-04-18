@@ -8,8 +8,7 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LoaderCircle, Printer, Shirt, Type } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -35,7 +34,27 @@ export function CustomerOrderDetails() {
     try {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          customer:customers(
+            name,
+            phone,
+            address,
+            delivery_note
+          ),
+          players(
+            *
+          ),
+          print_configs(
+            *
+          ),
+          product_lines(
+            *
+          ),
+          logos(
+            *
+          )
+        `)
         .eq("id", orderId)
         .eq("customer_id", user?.id)
         .single();
@@ -51,55 +70,19 @@ export function CustomerOrderDetails() {
         setLoading(false);
         return;
       }
+
+      console.log("Complete order data:", orderData);
       
-      const { data: playersData, error: playersError } = await supabase
-        .from("players")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (playersError) {
-        console.error("Error fetching players:", playersError);
-      }
+      const convertedOrder = dbOrderToOrder(
+        orderData,
+        orderData.customer,
+        orderData.players,
+        orderData.product_lines,
+        orderData.print_configs?.[0]
+      );
       
-      const { data: printConfigData, error: printConfigError } = await supabase
-        .from("print_configs")
-        .select("*")
-        .eq("order_id", orderId)
-        .single();
-        
-      if (printConfigError && printConfigError.code !== 'PGRST116') {
-        console.error("Error fetching print config:", printConfigError);
-      }
-      
-      const { data: productLinesData, error: productLinesError } = await supabase
-        .from("product_lines")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (productLinesError) {
-        console.error("Error fetching product lines:", productLinesError);
-      }
-      
-      const { data: logosData, error: logosError } = await supabase
-        .from("logos")
-        .select("*")
-        .eq("order_id", orderId);
-        
-      if (logosError) {
-        console.error("Error fetching logos:", logosError);
-      }
-      
-      const completeOrder = {
-        ...orderData,
-        players: playersData || [],
-        printConfig: printConfigData || {},
-        productLines: productLinesData || [],
-        logos: logosData || []
-      };
-      
-      console.log("Complete order data:", completeOrder);
-      const convertedOrder = dbOrderToOrder(completeOrder as any);
       setOrder(convertedOrder);
+      
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Có lỗi khi tải thông tin đơn hàng");

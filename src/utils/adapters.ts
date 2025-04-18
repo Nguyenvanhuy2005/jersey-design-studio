@@ -136,11 +136,11 @@ export function extractTeamName(order: DbOrder): string {
  * Converts a database order with related data to application Order model
  */
 export function dbOrderToOrder(
-  dbOrder: DbOrder, 
-  customer?: DbCustomer, 
-  players?: DbPlayer[], 
-  productLines?: DbProductLine[],
-  printConfig?: DbPrintConfig
+  dbOrder: any,
+  customer?: any,
+  players?: any[],
+  productLines?: any[],
+  printConfig?: any
 ): Order {
   // Parse reference images
   const refImages = parseReferenceImages(dbOrder.reference_images);
@@ -175,7 +175,7 @@ export function dbOrderToOrder(
     legColor: printConfig.leg_color || 'Đen'
   } : defaultPrintConfig;
   
-  // Process players with complete data
+  // Process players data
   const processedPlayers = players ? players.map(player => dbPlayerToPlayer(player)) : [];
   
   // Process product lines
@@ -189,7 +189,7 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
-  // Create a valid Order object
+  // Create the Order object
   return {
     id: dbOrder.id,
     players: processedPlayers,
