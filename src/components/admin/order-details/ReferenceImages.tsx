@@ -31,7 +31,33 @@ export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesPr
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <AssetViewer assets={assets} />
+        <div className="space-y-4">
+          {logo_url && (
+            <div>
+              <h4 className="font-medium mb-2">Logo đội</h4>
+              <AssetViewer 
+                title="Logo đội"
+                assets={[{ url: logo_url, name: 'Logo đội', type: 'image' as const }]} 
+                gridCols={2}
+              />
+            </div>
+          )}
+          
+          {referenceImages && referenceImages.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-2">Mẫu cần in</h4>
+              <AssetViewer 
+                title="Mẫu cần in"
+                assets={referenceImages.map((url, index) => ({
+                  url,
+                  name: `Mẫu ${index + 1}`,
+                  type: 'image' as const
+                }))}
+                gridCols={2}
+              />
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
