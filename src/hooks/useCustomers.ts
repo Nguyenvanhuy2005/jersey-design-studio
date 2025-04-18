@@ -16,6 +16,8 @@ export function useCustomers() {
     setError(null);
 
     try {
+      console.log("Fetching customers with auth state:", { user, isAdmin });
+
       if (!user) {
         setError("Vui lòng đăng nhập để xem danh sách khách hàng");
         setCustomers([]);
@@ -28,6 +30,8 @@ export function useCustomers() {
         .from("customers")
         .select("*")
         .order("created_at", { ascending: false });
+
+      console.log("Customers query result:", { customersData, customersError });
 
       if (customersError) {
         console.error("Error fetching customers:", customersError);
@@ -53,6 +57,7 @@ export function useCustomers() {
         })
       );
 
+      console.log("Processed customers with order counts:", customersWithOrderCounts);
       setCustomers(customersWithOrderCounts);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
@@ -65,6 +70,7 @@ export function useCustomers() {
   // Call fetchCustomers whenever user authentication state or admin status changes
   useEffect(() => {
     if (user) {
+      console.log("User auth state changed, fetching customers...", { user, isAdmin });
       fetchCustomers();
     } else {
       setCustomers([]);
