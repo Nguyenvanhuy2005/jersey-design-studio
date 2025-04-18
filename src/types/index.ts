@@ -188,6 +188,7 @@ export interface Order {
   customerId?: string;
   customerEmail?: string;
   customerPhone?: string;
+  customerAddress?: string;
   designData?: any;
   user_id?: string;
   teamName?: string;

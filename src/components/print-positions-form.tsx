@@ -63,7 +63,6 @@ export function PrintPositionsForm({
     const lineConfig: PrintPositionConfig = {
       enabled: true,
       content: value,
-      color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
       material: printStyle
     };
     

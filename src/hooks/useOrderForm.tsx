@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,13 +43,9 @@ export const useOrderForm = () => {
   const [printConfig, setPrintConfig] = useState<PrintConfig>({
     font: "Arial",
     backMaterial: "In chuyển nhiệt",
-    backColor: "Đen",
     frontMaterial: "In chuyển nhiệt",
-    frontColor: "Đen",
     sleeveMaterial: "In chuyển nhiệt",
-    sleeveColor: "Đen",
-    legMaterial: "In chuyển nhiệt",
-    legColor: "Đen"
+    legMaterial: "In chuyển nhiệt"
   });
   
   const [productLines, setProductLines] = useState<ProductLine[]>([]);

@@ -11,7 +11,6 @@ interface PrintConfigProps {
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
   if (!printConfig) return null;
   
-  // Group the print config fields for better organization
   const printFields = [
     {
       section: "Font",
@@ -24,32 +23,28 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
       section: "Mặt lưng",
       icon: <Printer className="h-4 w-4" />,
       fields: [
-        { label: "Chất liệu", value: printConfig.backMaterial },
-        { label: "Màu sắc", value: printConfig.backColor }
+        { label: "Chất liệu", value: printConfig.backMaterial }
       ]
     },
     {
       section: "Mặt trước",
       icon: <Printer className="h-4 w-4" />,
       fields: [
-        { label: "Chất liệu", value: printConfig.frontMaterial },
-        { label: "Màu sắc", value: printConfig.frontColor }
+        { label: "Chất liệu", value: printConfig.frontMaterial }
       ]
     },
     {
       section: "Tay áo",
       icon: <Printer className="h-4 w-4" />,
       fields: [
-        { label: "Chất liệu", value: printConfig.sleeveMaterial },
-        { label: "Màu sắc", value: printConfig.sleeveColor }
+        { label: "Chất liệu", value: printConfig.sleeveMaterial }
       ]
     },
     {
       section: "Quần",
       icon: <Printer className="h-4 w-4" />,
       fields: [
-        { label: "Chất liệu", value: printConfig.legMaterial },
-        { label: "Màu sắc", value: printConfig.legColor }
+        { label: "Chất liệu", value: printConfig.legMaterial }
       ]
     }
   ];
