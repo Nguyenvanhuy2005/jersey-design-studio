@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,40 +31,30 @@ export function useCustomers() {
         return;
       }
 
-      // Only proceed if user is authenticated and is admin
-      const { data: customersData, error: customersError } = await supabase
-        .from("customers")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Fetch customers with order counts in a single query using a subquery
+      const { data: customersWithCounts, error: customersError } = await supabase
+        .from('customers')
+        .select(`
+          *,
+          order_count:orders(count)
+        `)
+        .order('created_at', { ascending: false });
 
-      console.log("Customers query result:", { customersData, customersError });
+      console.log("Customers query result:", { customersWithCounts, customersError });
 
       if (customersError) {
         console.error("Error fetching customers:", customersError);
         throw customersError;
       }
 
-      if (!customersData) {
-        setCustomers([]);
-        return;
-      }
+      // Transform the data to match the expected format
+      const processedCustomers = (customersWithCounts || []).map(customer => ({
+        ...customer,
+        order_count: customer.order_count || 0
+      }));
 
-      const customersWithOrderCounts = await Promise.all(
-        customersData.map(async (customer) => {
-          const { count } = await supabase
-            .from("orders")
-            .select("id", { count: 'exact', head: true })
-            .eq("customer_id", customer.id);
-          
-          return {
-            ...customer,
-            order_count: count || 0
-          } as Customer & { order_count: number };
-        })
-      );
-
-      console.log("Processed customers with order counts:", customersWithOrderCounts);
-      setCustomers(customersWithOrderCounts);
+      console.log("Processed customers with order counts:", processedCustomers);
+      setCustomers(processedCustomers);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(`Không thể tải dữ liệu khách hàng: ${err.message}`);
