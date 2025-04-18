@@ -52,6 +52,7 @@ serve(async (req) => {
         phone: customerData.phone,
         address: customerData.address,
         delivery_note: customerData.delivery_note,
+        email: customerData.email // Add email field
       })
       .select()
       .single()
