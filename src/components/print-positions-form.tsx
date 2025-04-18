@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,7 +77,6 @@ export function PrintPositionsForm({
       ...designData,
       chest_number: {
         enabled: checked,
-        color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
       }
     };
@@ -91,7 +89,6 @@ export function PrintPositionsForm({
       ...designData,
       pants_number: {
         enabled: checked,
-        color: printColor as 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh',
         material: printStyle
       }
     };
