@@ -158,7 +158,6 @@ const AdminCustomers = () => {
                   <th className="p-3 text-left">Email</th>
                   <th className="p-3 text-left">Số điện thoại</th>
                   <th className="p-3 text-left">Địa chỉ</th>
-                  <th className="p-3 text-left">Số đơn hàng</th>
                   <th className="p-3 text-left">Ngày tạo</th>
                   <th className="p-3 text-center">Hành động</th>
                 </tr>
@@ -166,7 +165,7 @@ const AdminCustomers = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-4 text-center">
+                    <td colSpan={6} className="p-4 text-center">
                       <div className="flex justify-center items-center">
                         <Loader2 className="h-6 w-6 animate-spin mr-2" />
                         <span>Đang tải dữ liệu...</span>
@@ -175,7 +174,7 @@ const AdminCustomers = () => {
                   </tr>
                 ) : filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-4 text-center">
+                    <td colSpan={6} className="p-4 text-center">
                       {searchTerm ? "Không tìm thấy khách hàng phù hợp" : "Chưa có khách hàng nào"}
                     </td>
                   </tr>
@@ -186,7 +185,6 @@ const AdminCustomers = () => {
                       <td className="p-3">{customer.email || "Không có email"}</td>
                       <td className="p-3">{customer.phone || "Không có SĐT"}</td>
                       <td className="p-3">{customer.address || "Không có địa chỉ"}</td>
-                      <td className="p-3">{customer.order_count}</td>
                       <td className="p-3">
                         {customer.created_at ? new Date(customer.created_at).toLocaleDateString('vi-VN') : "N/A"}
                       </td>

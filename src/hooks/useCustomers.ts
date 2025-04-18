@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,7 +43,6 @@ export function useCustomers() {
         throw customersError;
       }
 
-      // Cast the data to the expected Customer type
       setCustomers(customersData as Customer[] || []);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
@@ -65,12 +63,11 @@ export function useCustomers() {
     }
   }, [user, isAdmin]);
 
-  const createCustomer = async (customerData: Omit<Partial<Customer>, 'id'>) => {
+  const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
-      // When creating a new customer, don't specify the ID - let Supabase generate it
       const { data, error } = await supabase
         .from("customers")
-        .insert([customerData])
+        .insert(customerData)
         .select()
         .single();
 
