@@ -43,6 +43,7 @@ export const OrderDetails = ({
           
           <ReferenceImages 
             referenceImages={order.referenceImages}
+            logo_url={order.logo_url}
           />
         </TabsContent>
         

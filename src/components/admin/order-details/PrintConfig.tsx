@@ -2,7 +2,8 @@
 import { Order } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Printer, Type } from "lucide-react";
+import { Download, Printer, Type } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PrintConfigProps {
   printConfig: Order['printConfig'];
@@ -10,10 +11,19 @@ interface PrintConfigProps {
 
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
   if (!printConfig) return null;
+
+  const handleDownload = (font: string) => {
+    const link = document.createElement('a');
+    link.href = `/fonts/${font}.ttf`;
+    link.download = `${font}.ttf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   
   const printFields = [
     {
-      section: "Font",
+      section: "Font chữ",
       icon: <Type className="h-4 w-4" />,
       fields: [
         { label: "Font chữ/số", value: printConfig.font }
@@ -71,7 +81,19 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                     <TableCell className="w-1/3 font-medium text-muted-foreground">
                       {field.label}
                     </TableCell>
-                    <TableCell>{field.value}</TableCell>
+                    <TableCell className="flex items-center justify-between">
+                      <span>{field.value}</span>
+                      {section.section === "Font chữ" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(field.value)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Tải xuống font
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
