@@ -3,7 +3,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderPlayersList } from "../../OrderPlayersList";
-import { OrderCostSummary } from "../../order-cost-summary";
+import { OrderCostSummary } from "@/components/order-cost-summary";
 import { Player, ProductLine, Customer } from "@/types";
 
 interface OrderSummaryTabContentProps {
