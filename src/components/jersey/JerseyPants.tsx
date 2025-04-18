@@ -46,7 +46,7 @@ export const JerseyPants = ({
   
   // Draw player number if enabled
   if (playerNumber !== undefined && pants_number_enabled) {
-    ctx.fillStyle = '#FFD700';
+    ctx.fillStyle = '#1A1A1A';
     const fontSize = 30;
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
     ctx.fillText(playerNumber.toString(), 125, 40);

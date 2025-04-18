@@ -168,7 +168,6 @@ export const useOrderProductLines = (
       newDesignData.line_1 = {
         enabled: true,
         material: printStyle,
-        color: printColor as any,
         content: firstPlayer.line_1 || ""
       };
     }
@@ -177,7 +176,6 @@ export const useOrderProductLines = (
       newDesignData.line_2 = {
         enabled: true,
         material: printStyle,
-        color: printColor as any,
         font: fontNumber
       };
     }
@@ -186,7 +184,6 @@ export const useOrderProductLines = (
       newDesignData.line_3 = {
         enabled: true,
         material: printStyle,
-        color: printColor as any,
         content: firstPlayer.line_3 || ""
       };
     }
@@ -194,16 +191,14 @@ export const useOrderProductLines = (
     if (players.some(p => p.chest_number)) {
       newDesignData.chest_number = {
         enabled: true,
-        material: printStyle,
-        color: printColor as any
+        material: printStyle
       };
     }
     
     if (players.some(p => p.pants_number)) {
       newDesignData.pants_number = {
         enabled: true,
-        material: printStyle,
-        color: printColor as any
+        material: printStyle
       };
     }
     
@@ -234,7 +229,7 @@ export const useOrderProductLines = (
     });
     
     setDesignData(newDesignData);
-  }, [players, logos, fontText, fontNumber, printStyle, printColor, setDesignData]);
+  }, [players, logos, fontText, fontNumber, printStyle, setDesignData]);
 
   return {
     generateProductLines,

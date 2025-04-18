@@ -67,28 +67,18 @@ export const JerseyFront = ({
   
   // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
-    ctx.fillStyle = designData.chest_number.color === 'Đen' ? '#1A1A1A' : 
-                    designData.chest_number.color === 'Trắng' ? '#FFFFFF' :
-                    designData.chest_number.color === 'Đỏ' ? '#FF0000' :
-                    designData.chest_number.color === 'Xanh' ? '#0000FF' : '#1A1A1A';
-    const fontSize = 50; // Fixed size of 5cm (50px in canvas)
+    ctx.fillStyle = '#1A1A1A'; // Default color
+    const fontSize = 50;
     ctx.font = numberFontFamily.replace(/\d+px/, `${fontSize}px`);
-    // Position 20px below chest center logo position
-    ctx.fillText(playerNumber.toString(), 150, 140); 
-    console.log(`Drew chest number: ${playerNumber} with font: ${ctx.font}`);
+    ctx.fillText(playerNumber.toString(), 150, 140);
   }
   
   // Draw chest text if enabled in designData
   if (designData?.chest_text?.enabled && designData.chest_text.content) {
-    ctx.fillStyle = designData.chest_text.color === 'Đen' ? '#1A1A1A' : 
-                    designData.chest_text.color === 'Trắng' ? '#FFFFFF' :
-                    designData.chest_text.color === 'Đỏ' ? '#FF0000' :
-                    designData.chest_text.color === 'Xanh' ? '#0000FF' : '#1A1A1A';
+    ctx.fillStyle = '#1A1A1A'; // Default color
     const fontSize = 24;
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    // Position at center chest, above number
     ctx.fillText(designData.chest_text.content, 150, 80, 180);
-    console.log(`Drew chest text: ${designData.chest_text.content} with font: ${ctx.font}`);
   }
   
   // Draw logos with fixed positions and sizes

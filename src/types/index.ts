@@ -59,7 +59,6 @@ export interface ProductLine {
 
 export interface PrintPositionConfig {
   enabled: boolean;
-  color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
   material?: string;
   content?: string;
   font?: string;
@@ -79,13 +78,11 @@ export interface DesignData {
   quantity?: number;
   chest_number: {
     enabled: boolean;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
   };
   chest_text: {
     enabled: boolean;
     content: string;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
     font?: string;
   };
@@ -148,32 +145,27 @@ export interface DesignData {
   line_1?: {
     enabled: boolean;
     content: string;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
     font?: string;
   };
   line_2?: {
     enabled: boolean;
     content?: string;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
     font?: string;
   };
   line_3?: {
     enabled: boolean;
     content: string;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
     font?: string;
   };
   pants_number?: {
     enabled: boolean;
-    color: 'Đen' | 'Trắng' | 'Đỏ' | 'Xanh';
     material?: string;
   };
   reference_images?: string[];
   print_style?: string;
-  print_color?: string;
 }
 
 export interface Customer {
