@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order } from "@/types";
@@ -8,11 +9,12 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LoaderCircle, Printer, Shirt, Type, Download } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Printer, Shirt, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetViewer } from "./AssetViewer";
+import { getReferenceImageUrls } from "@/utils/images/reference-image-utils";
 
 export function CustomerOrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -132,25 +134,29 @@ export function CustomerOrderDetails() {
   const getAssets = () => {
     const assets = [];
 
-    if (order.referenceImages && order.referenceImages.length > 0) {
+    // Process reference images to ensure we have full URLs
+    if (order?.referenceImages && order.referenceImages.length > 0) {
+      // Convert reference image paths to public URLs
+      const processedUrls = getReferenceImageUrls(order.referenceImages);
+      
       assets.push({
         type: 'images' as const,
         title: 'Mẫu cần in',
-        items: order.referenceImages.map((url, index) => ({
+        items: processedUrls.map((url, index) => ({
           url,
-          name: `reference-image-${index + 1}.jpg`,
+          name: `mau-in-${index + 1}.jpg`,
           type: 'image' as const
         }))
       });
     }
 
-    if (order.logo_url) {
+    if (order?.logo_url) {
       assets.push({
         type: 'logos' as const,
         title: 'Logo',
         items: [{
           url: order.logo_url,
-          name: 'team-logo.png',
+          name: 'logo-doi.png',
           type: 'image' as const
         }]
       });

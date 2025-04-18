@@ -1,9 +1,9 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, ImageOff } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getReferenceImageUrls } from "@/utils/images/reference-image-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AssetViewerProps {
   title?: string;
@@ -22,13 +22,34 @@ export const AssetViewer = ({
 }: AssetViewerProps) => {
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // Filter out invalid or empty URLs
   const validAssets = assets.filter(asset => asset.url && asset.url.trim() !== '');
 
+  // Process image URLs to ensure they use Supabase storage URLs
+  const processImageUrl = (url: string): string => {
+    // If it's already a full URL, return it
+    if (url.startsWith('http')) {
+      return url;
+    }
+    
+    // If it's a relative path in reference_images bucket
+    if (!url.includes('/')) {
+      return supabase.storage.from('reference_images').getPublicUrl(url).data.publicUrl;
+    }
+    
+    // If it has path structure like orderId/filename
+    const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+    return data.publicUrl;
+  };
+
   const handleDownload = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url);
+      // Process the URL to ensure it's a full URL
+      const processedUrl = url.startsWith('http') ? url : processImageUrl(url);
+      
+      const response = await fetch(processedUrl);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -41,6 +62,11 @@ export const AssetViewer = ({
     } catch (error) {
       console.error('Error downloading file:', error);
     }
+  };
+
+  const handleImageError = (index: number) => {
+    console.error(`Error loading image: ${assets[index].url}`);
+    setImageErrors(prev => ({ ...prev, [index]: true }));
   };
 
   if (validAssets.length === 0) {
@@ -56,16 +82,19 @@ export const AssetViewer = ({
             <div key={index} className="relative border rounded-md p-2 space-y-2">
               {asset.type === 'image' ? (
                 <div className="aspect-square relative">
-                  <img
-                    src={asset.url}
-                    alt={asset.name || `Asset ${index + 1}`}
-                    className="w-full h-full object-cover rounded-md"
-                    onError={(e) => {
-                      console.error(`Error loading image: ${asset.url}`);
-                      e.currentTarget.alt = 'Không thể tải hình ảnh';
-                      e.currentTarget.classList.add('opacity-50');
-                    }}
-                  />
+                  {imageErrors[index] ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md">
+                      <ImageOff className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Không thể tải hình ảnh</p>
+                    </div>
+                  ) : (
+                    <img
+                      src={asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url)}
+                      alt={asset.name || `Mẫu ${index + 1}`}
+                      className="w-full h-full object-cover rounded-md"
+                      onError={() => handleImageError(index)}
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="aspect-square flex items-center justify-center bg-muted rounded-md">
@@ -73,13 +102,13 @@ export const AssetViewer = ({
                 </div>
               )}
               <div className="flex items-center justify-between gap-2">
-                {asset.type === 'image' && (
+                {asset.type === 'image' && !imageErrors[index] && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="flex-1"
                     onClick={() => {
-                      setSelectedAsset(asset.url);
+                      setSelectedAsset(asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url));
                       setIsPreviewOpen(true);
                     }}
                   >
@@ -91,7 +120,8 @@ export const AssetViewer = ({
                   variant="outline"
                   size="sm"
                   className="flex-1"
-                  onClick={() => handleDownload(asset.url, asset.name || `asset-${index + 1}`)}
+                  onClick={() => handleDownload(asset.url, asset.name || `mau-${index + 1}`)}
+                  disabled={asset.type === 'image' && imageErrors[index]}
                 >
                   <Download className="h-4 w-4 mr-1" />
                   Tải xuống
