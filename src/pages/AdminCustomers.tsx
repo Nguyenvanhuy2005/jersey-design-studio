@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +11,7 @@ import { Customer } from "@/types";
 import { useCustomers } from "@/hooks/useCustomers";
 import { CustomerForm } from "@/components/admin/customer-management/CustomerForm";
 import { CustomerDetails } from "@/components/admin/customer-management/CustomerDetails";
+import { debounce } from "lodash";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +22,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AdminCustomers = () => {
   const navigate = useNavigate();
@@ -28,10 +55,18 @@ const AdminCustomers = () => {
     customers, 
     loading, 
     error, 
-    fetchCustomers, 
+    totalCount,
+    page,
+    pageSize,
+    hasMore,
+    fetchCustomers,
     updateCustomer,
     resetPassword,
-    createCustomer
+    createCustomer,
+    handleSearch,
+    handlePageChange,
+    handlePageSizeChange,
+    getCustomerWithOrdersCount
   } = useCustomers();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,15 +75,21 @@ const AdminCustomers = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [customerWithOrdersCount, setCustomerWithOrdersCount] = useState<Customer & { order_count: number } | null>(null);
   
+  // Set up a debounced search function
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      handleSearch(value);
+    }, 500),
+    [handleSearch]
+  );
+
   useEffect(() => {
     if (!user) {
       navigate("/customer/dashboard");
-      return;
     }
-    
-    fetchCustomers();
-  }, [user, navigate, fetchCustomers]);
+  }, [user, navigate]);
   
   const handleSignOut = async () => {
     await signOut();
@@ -58,13 +99,11 @@ const AdminCustomers = () => {
   const handleCreateCustomer = async (customerData: any) => {
     await createCustomer(customerData);
     setIsCreateCustomerOpen(false);
-    fetchCustomers();
   };
 
   const handleEditCustomer = async (customerData: any) => {
     if (selectedCustomer) {
       await updateCustomer(selectedCustomer.id, customerData);
-      fetchCustomers();
     }
   };
   
@@ -73,9 +112,15 @@ const AdminCustomers = () => {
     setIsEditCustomerOpen(true);
   };
 
-  const openViewDetails = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsViewDetailsOpen(true);
+  const openViewDetails = async (customer: Customer) => {
+    try {
+      const customerWithCount = await getCustomerWithOrdersCount(customer.id);
+      setCustomerWithOrdersCount(customerWithCount);
+      setSelectedCustomer(customer);
+      setIsViewDetailsOpen(true);
+    } catch (err) {
+      // Error is already handled in the hook
+    }
   };
 
   const handleResetPasswordConfirm = async () => {
@@ -95,15 +140,84 @@ const AdminCustomers = () => {
     setIsResetPasswordDialogOpen(true);
   };
   
-  const filteredCustomers = customers.filter(customer => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      customer.name?.toLowerCase().includes(searchLower) ||
-      customer.email?.toLowerCase().includes(searchLower) ||
-      customer.phone?.toLowerCase().includes(searchLower) ||
-      customer.address?.toLowerCase().includes(searchLower)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    debouncedSearch(e.target.value);
+  };
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
+  // Generate pagination items
+  const getPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 5;
+    
+    // Always show first page
+    items.push(
+      <PaginationItem key="first">
+        <PaginationLink 
+          isActive={page === 1} 
+          onClick={() => page !== 1 && handlePageChange(1)}
+        >
+          1
+        </PaginationLink>
+      </PaginationItem>
     );
-  });
+    
+    // Show ellipsis if needed
+    if (page > 3) {
+      items.push(
+        <PaginationItem key="ellipsis1">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+    
+    // Show middle pages
+    const startPage = Math.max(2, page - 1);
+    const endPage = Math.min(totalPages - 1, page + 1);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      if (i <= 1 || i >= totalPages) continue; // Skip first and last page as they're handled separately
+      
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            isActive={page === i} 
+            onClick={() => page !== i && handlePageChange(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Show ellipsis if needed
+    if (page < totalPages - 2) {
+      items.push(
+        <PaginationItem key="ellipsis2">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+    
+    // Always show last page if there's more than one page
+    if (totalPages > 1) {
+      items.push(
+        <PaginationItem key="last">
+          <PaginationLink 
+            isActive={page === totalPages} 
+            onClick={() => page !== totalPages && handlePageChange(totalPages)}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
+  };
   
   return (
     <Layout>
@@ -129,17 +243,34 @@ const AdminCustomers = () => {
         </div>
         
         <div className="mb-6">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm khách hàng..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="pl-8"
               />
             </div>
-            <Button onClick={fetchCustomers}>Làm mới</Button>
+            <Button onClick={() => fetchCustomers({ page, pageSize, forceRefresh: true })}>Làm mới</Button>
+            
+            <div className="flex items-center">
+              <span className="text-sm mr-2">Hiển thị:</span>
+              <Select value={pageSize.toString()} onValueChange={(value) => handlePageSizeChange(parseInt(value))}>
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue placeholder="10" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
@@ -150,88 +281,114 @@ const AdminCustomers = () => {
         )}
         
         <div className="bg-card rounded-md shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-3 text-left">Tên</th>
-                  <th className="p-3 text-left">Email</th>
-                  <th className="p-3 text-left">Số điện thoại</th>
-                  <th className="p-3 text-left">Địa chỉ</th>
-                  <th className="p-3 text-left">Ngày tạo</th>
-                  <th className="p-3 text-center">Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="p-4 text-center">
-                      <div className="flex justify-center items-center">
-                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                        <span>Đang tải dữ liệu...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredCustomers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-4 text-center">
-                      {searchTerm ? "Không tìm thấy khách hàng phù hợp" : "Chưa có khách hàng nào"}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="border-t border-muted">
-                      <td className="p-3 font-medium">{customer.name || "Không có tên"}</td>
-                      <td className="p-3">{customer.email || "Không có email"}</td>
-                      <td className="p-3">{customer.phone || "Không có SĐT"}</td>
-                      <td className="p-3">{customer.address || "Không có địa chỉ"}</td>
-                      <td className="p-3">
-                        {customer.created_at ? new Date(customer.created_at).toLocaleDateString('vi-VN') : "N/A"}
-                      </td>
-                      <td className="p-3 flex justify-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          title="Xem chi tiết"
-                          onClick={() => openViewDetails(customer)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          title="Chỉnh sửa"
-                          onClick={() => openEditCustomer(customer)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          title="Đặt lại mật khẩu"
-                          onClick={() => {
-                            setSelectedCustomer(customer);
-                            openResetPasswordDialog();
-                          }}
-                          disabled={!customer.email}
-                        >
-                          <Key className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate(`/admin/orders?customer=${customer.id}`)}
-                        >
-                          Xem đơn hàng
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tên</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Số điện thoại</TableHead>
+                <TableHead>Địa chỉ</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead className="text-center">Hành động</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center p-4">
+                    <div className="flex justify-center items-center">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>Đang tải dữ liệu...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : customers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center p-4">
+                    {searchTerm ? "Không tìm thấy khách hàng phù hợp" : "Chưa có khách hàng nào"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell className="font-medium">{customer.name || "Không có tên"}</TableCell>
+                    <TableCell>{customer.email || "Không có email"}</TableCell>
+                    <TableCell>{customer.phone || "Không có SĐT"}</TableCell>
+                    <TableCell>{customer.address || "Không có địa chỉ"}</TableCell>
+                    <TableCell>
+                      {customer.created_at ? new Date(customer.created_at).toLocaleDateString('vi-VN') : "N/A"}
+                    </TableCell>
+                    <TableCell className="flex justify-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        title="Xem chi tiết"
+                        onClick={() => openViewDetails(customer)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        title="Chỉnh sửa"
+                        onClick={() => openEditCustomer(customer)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        title="Đặt lại mật khẩu"
+                        onClick={() => {
+                          setSelectedCustomer(customer);
+                          openResetPasswordDialog();
+                        }}
+                        disabled={!customer.email}
+                      >
+                        <Key className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/admin/orders?customer=${customer.id}`)}
+                      >
+                        Xem đơn hàng
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
+        
+        {/* Pagination */}
+        {!loading && customers.length > 0 && (
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Hiển thị {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, totalCount)} trong số {totalCount} khách hàng
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => page > 1 && handlePageChange(page - 1)}
+                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {getPaginationItems()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => hasMore && handlePageChange(page + 1)}
+                    className={!hasMore ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       {/* Create Customer Form */}
@@ -257,9 +414,9 @@ const AdminCustomers = () => {
       )}
 
       {/* View Customer Details */}
-      {selectedCustomer && (
+      {selectedCustomer && customerWithOrdersCount && (
         <CustomerDetails
-          customer={selectedCustomer}
+          customer={customerWithOrdersCount}
           open={isViewDetailsOpen}
           onOpenChange={setIsViewDetailsOpen}
           onEdit={() => {

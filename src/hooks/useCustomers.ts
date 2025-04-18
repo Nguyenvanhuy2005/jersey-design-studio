@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Customer } from "@/types";
@@ -10,34 +10,60 @@ export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination state
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const fetchCustomers = async () => {
+  // This is needed to avoid refetching when component remounts but data hasn't changed
+  const [initialFetchDone, setInitialFetchDone] = useState<boolean>(false);
+
+  const fetchCustomers = useCallback(async ({
+    page = 1,
+    pageSize = 10,
+    search = "",
+    forceRefresh = false
+  } = {}) => {
+    if (!user || !isAdmin) {
+      if (!user) {
+        setError("Vui lòng đăng nhập để xem danh sách khách hàng");
+      } else if (!isAdmin) {
+        setError("Bạn không có quyền xem danh sách khách hàng");
+      }
+      setCustomers([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      console.log("Fetching customers with auth state:", { user, isAdmin });
-
-      if (!user) {
-        setError("Vui lòng đăng nhập để xem danh sách khách hàng");
-        setCustomers([]);
-        setLoading(false);
-        return;
-      }
-
-      if (!isAdmin) {
-        setError("Bạn không có quyền xem danh sách khách hàng");
-        setCustomers([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: customersData, error: customersError } = await supabase
+      console.log("Fetching customers with params:", { page, pageSize, search });
+      
+      // Calculate range for pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      // Build the query
+      let query = supabase
         .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+      
+      // Add search filter if provided
+      if (search && search.trim()) {
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,address.ilike.%${search}%`);
+      }
+      
+      // Execute the query with range
+      const { data: customersData, error: customersError, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
-      console.log("Customers query result:", { customersData, customersError });
+      console.log("Customers query result:", { customersData, customersError, count });
 
       if (customersError) {
         console.error("Error fetching customers:", customersError);
@@ -45,6 +71,14 @@ export function useCustomers() {
       }
 
       setCustomers(customersData as Customer[] || []);
+      
+      // Update total count and has more
+      if (count !== null) {
+        setTotalCount(count);
+        setHasMore(from + customersData.length < count);
+      }
+      
+      setInitialFetchDone(true);
     } catch (err: any) {
       console.error("Error fetching customers:", err);
       setError(`Không thể tải dữ liệu khách hàng: ${err.message}`);
@@ -52,17 +86,38 @@ export function useCustomers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isAdmin]);
 
   useEffect(() => {
-    if (user) {
-      console.log("User auth state changed, fetching customers...", { user, isAdmin });
-      fetchCustomers();
-    } else {
+    // Only fetch on initial mount or when auth state changes
+    if (user && !initialFetchDone) {
+      console.log("Initial fetch or auth state changed, fetching customers...");
+      fetchCustomers({ page, pageSize, search: searchTerm });
+    } else if (!user) {
       setCustomers([]);
       setLoading(false);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, fetchCustomers, initialFetchDone, page, pageSize, searchTerm]);
+
+  // Debounced search function
+  const handleSearch = useCallback((search: string) => {
+    setSearchTerm(search);
+    setPage(1); // Reset to first page when searching
+    fetchCustomers({ page: 1, pageSize, search });
+  }, [fetchCustomers, pageSize]);
+
+  // Page change handler
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    fetchCustomers({ page: newPage, pageSize, search: searchTerm });
+  }, [fetchCustomers, pageSize, searchTerm]);
+
+  // Page size change handler
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Reset to first page when changing page size
+    fetchCustomers({ page: 1, pageSize: newPageSize, search: searchTerm });
+  }, [fetchCustomers, searchTerm]);
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
@@ -85,7 +140,7 @@ export function useCustomers() {
       if (error) throw error;
 
       toast.success("Đã thêm khách hàng mới");
-      await fetchCustomers();
+      await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
       return data;
     } catch (err: any) {
       console.error("Error creating customer:", err);
@@ -111,7 +166,7 @@ export function useCustomers() {
       if (error) throw error;
 
       toast.success("Đã cập nhật thông tin khách hàng");
-      await fetchCustomers();
+      await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
       return data;
     } catch (err: any) {
       console.error("Error updating customer:", err);
@@ -136,13 +191,53 @@ export function useCustomers() {
     }
   };
 
+  // Get customer by ID with orders count
+  const getCustomerWithOrdersCount = async (id: string): Promise<Customer & { order_count: number }> => {
+    try {
+      // Get customer details
+      const { data: customer, error: customerError } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("id", id)
+        .single();
+        
+      if (customerError) throw customerError;
+      
+      // Get order count for this customer
+      const { count, error: countError } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("customer_id", id);
+        
+      if (countError) throw countError;
+      
+      return { 
+        ...customer, 
+        order_count: count || 0 
+      } as Customer & { order_count: number };
+    } catch (err: any) {
+      console.error("Error fetching customer with order count:", err);
+      toast.error(`Không thể tải thông tin khách hàng: ${err.message}`);
+      throw err;
+    }
+  };
+
   return {
     customers,
     loading,
     error,
+    totalCount,
+    page,
+    pageSize,
+    hasMore,
+    searchTerm,
     fetchCustomers,
     createCustomer,
     updateCustomer,
-    resetPassword
+    resetPassword,
+    handleSearch,
+    handlePageChange,
+    handlePageSizeChange,
+    getCustomerWithOrdersCount
   };
 }
