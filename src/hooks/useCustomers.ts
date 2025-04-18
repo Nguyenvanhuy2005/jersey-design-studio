@@ -66,9 +66,13 @@ export function useCustomers() {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
+      // Generate UUID for new customer
+      const customerUuid = crypto.randomUUID();
+      
       const { data, error } = await supabase
         .from("customers")
         .insert({
+          id: customerUuid,
           name: customerData.name,
           email: customerData.email,
           phone: customerData.phone,
