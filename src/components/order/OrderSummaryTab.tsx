@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Player, Logo, ProductLine, Customer } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { OrderPlayersList } from "./OrderPlayersList";
 
 interface OrderSummaryTabProps {
   isDemoApproved: boolean;
@@ -99,65 +100,69 @@ export function OrderSummaryTab({
         </TabsList>
         
         <TabsContent value="summary">
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin khách hàng</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-muted-foreground">Họ tên:</span> {customerInfo.name}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Số điện thoại:</span> {customerInfo.phone}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Địa chỉ:</span> {customerInfo.address}
-                </div>
-                {customerInfo.delivery_note && (
-                  <div>
-                    <span className="text-muted-foreground">Ghi chú giao hàng:</span> {customerInfo.delivery_note}
-                  </div>
-                )}
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h3 className="font-medium mb-2">Số lượng quần áo:</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-muted-foreground">Số lượng cầu thủ:</span> {playerCount} bộ
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Số lượng thủ môn:</span> {goalkeeperCount} bộ
-                  </div>
-                </div>
-              </div>
-              
-              {referenceImagesPreview.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-medium mb-2">Hình ảnh tham khảo:</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {referenceImagesPreview.map((url, index) => (
-                        <div key={index} className="border rounded overflow-hidden h-24">
-                          <img 
-                            src={url} 
-                            alt={`Tham khảo ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin khách hàng</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-muted-foreground">Họ tên:</span> {customerInfo.name}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Số điện thoại:</span> {customerInfo.phone}
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  <div>
+                    <span className="text-muted-foreground">Địa chỉ:</span> {customerInfo.address}
+                  </div>
+                  {customerInfo.delivery_note && (
+                    <div>
+                      <span className="text-muted-foreground">Ghi chú giao hàng:</span> {customerInfo.delivery_note}
+                    </div>
+                  )}
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h3 className="font-medium mb-2">Số lượng quần áo:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-muted-foreground">Số lượng cầu thủ:</span> {playerCount} bộ
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Số lượng thủ môn:</span> {goalkeeperCount} bộ
+                    </div>
+                  </div>
+                </div>
+                
+                {referenceImagesPreview.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-medium mb-2">Hình ảnh tham khảo:</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {referenceImagesPreview.map((url, index) => (
+                          <div key={index} className="border rounded overflow-hidden h-24">
+                            <img 
+                              src={url} 
+                              alt={`Tham khảo ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <OrderPlayersList players={players} />
+          </div>
         </TabsContent>
         
         <TabsContent value="print-details">
