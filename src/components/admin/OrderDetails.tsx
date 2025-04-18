@@ -14,10 +14,7 @@ interface OrderDetailsProps {
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
 }
 
-export const OrderDetails = ({ 
-  order, 
-  onStatusChange
-}: OrderDetailsProps) => {
+export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
   return (
     <>
       <DialogHeader className="mb-4">
@@ -48,7 +45,10 @@ export const OrderDetails = ({
         </TabsContent>
         
         <TabsContent value="players" className="space-y-4 my-4">
-          <PlayersList players={order.players} />
+          <PlayersList 
+            players={order.players} 
+            teamName={order.teamName || 'Không có tên'}
+          />
         </TabsContent>
       </Tabs>
       

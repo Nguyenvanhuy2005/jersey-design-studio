@@ -1,14 +1,15 @@
-
 import { Order } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shirt, Printer } from "lucide-react";
+import { ExcelExport } from "./ExcelExport";
 
 interface PlayersListProps {
   players: Order['players'];
+  teamName: string;
 }
 
-export const PlayersList = ({ players }: PlayersListProps) => {
+export const PlayersList = ({ players, teamName }: PlayersListProps) => {
   if (!players?.length) return null;
 
   const getUniformTypeLabel = (type?: string) => {
@@ -24,10 +25,13 @@ export const PlayersList = ({ players }: PlayersListProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Danh sách cầu thủ ({players.length})
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Danh sách cầu thủ ({players?.length || 0})
+          </CardTitle>
+          <ExcelExport players={players || []} teamName={teamName} />
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

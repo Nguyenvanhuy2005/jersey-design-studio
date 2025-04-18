@@ -1,0 +1,54 @@
+
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
+import { Player } from "@/types";
+import * as XLSX from 'xlsx';
+
+interface ExcelExportProps {
+  players: Player[];
+  teamName: string;
+}
+
+export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
+  const handleExport = () => {
+    const data = players.map((player, index) => ({
+      'STT': index + 1,
+      'Số áo': player.number,
+      'Loại quần áo': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
+      'Kích thước': player.size,
+      'In dòng trên số lưng': player.line_1 || '',
+      'In dòng dưới số lưng': player.line_3 || '',
+      'Chi tiết in ấn': [
+        player.chest_number ? 'In số ngực' : '',
+        player.pants_number ? 'In số quần' : '',
+        player.logo_chest_left ? 'Logo ngực trái' : '',
+        player.logo_chest_right ? 'Logo ngực phải' : '',
+        player.logo_chest_center ? 'Logo ngực giữa' : '',
+        player.logo_sleeve_left ? 'Logo tay trái' : '',
+        player.logo_sleeve_right ? 'Logo tay phải' : '',
+        player.logo_pants ? 'Logo quần' : '',
+      ].filter(Boolean).join(', '),
+      'Kiểu in': player.print_style || 'In chuyển nhiệt',
+      'Ghi chú': player.note || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Players");
+    
+    // Save the file
+    XLSX.writeFile(wb, `danh-sach-cau-thu-${teamName.toLowerCase().replace(/\s+/g, '-')}.xlsx`);
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleExport}
+      className="flex items-center gap-2"
+    >
+      <FileSpreadsheet className="h-4 w-4" />
+      Xuất danh sách Excel
+    </Button>
+  );
+};

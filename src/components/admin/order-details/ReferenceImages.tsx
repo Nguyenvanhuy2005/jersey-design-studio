@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
+import { AssetViewer } from "@/components/customer/AssetViewer";
 
 interface ReferenceImagesProps {
   referenceImages?: string[];
@@ -12,6 +13,15 @@ export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesPr
     return null;
   }
 
+  const assets = [
+    ...(logo_url ? [{ url: logo_url, name: 'Logo đội', type: 'image' as const }] : []),
+    ...(referenceImages?.map((url, index) => ({
+      url,
+      name: `Mẫu ${index + 1}`,
+      type: 'image' as const
+    })) || [])
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -20,44 +30,8 @@ export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesPr
           Tài nguyên hình ảnh
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {logo_url && (
-          <div>
-            <h3 className="text-sm font-medium mb-2">Logo đội</h3>
-            <div className="border rounded overflow-hidden w-32 h-32">
-              <img
-                src={logo_url}
-                alt="Logo đội"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        )}
-        
-        {referenceImages && referenceImages.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium mb-2">
-              Hình ảnh tham khảo ({referenceImages.length})
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {referenceImages.map((image, index) => (
-                <a 
-                  key={index}
-                  href={image} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="block border rounded overflow-hidden"
-                >
-                  <img
-                    src={image}
-                    alt={`Tham khảo ${index + 1}`}
-                    className="w-full h-40 object-cover"
-                  />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+      <CardContent>
+        <AssetViewer assets={assets} />
       </CardContent>
     </Card>
   );
