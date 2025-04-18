@@ -2,7 +2,7 @@
 import { Player } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Type, Shirt, Printer } from "lucide-react";
+import { Users, Shirt, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface OrderPlayersListProps {
@@ -26,7 +26,8 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>STT</TableHead>
-                <TableHead>Tên cầu thủ</TableHead>
+                <TableHead>In dòng trên số lưng</TableHead>
+                <TableHead>In dòng dưới số lưng</TableHead>
                 <TableHead>Số áo</TableHead>
                 <TableHead>Kích thước</TableHead>
                 <TableHead>Chi tiết in ấn</TableHead>
@@ -36,24 +37,8 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
               {players.map((player, index) => (
                 <TableRow key={player.id || index}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p>{player.name || "(Không có tên)"}</p>
-                      {player.line_1 && (
-                        <p className="text-xs text-muted-foreground">
-                          Tên in: {player.line_1}
-                        </p>
-                      )}
-                      {player.line_3 && (
-                        <p className="text-xs text-muted-foreground">
-                          Tên đội: {player.line_3}
-                        </p>
-                      )}
-                      {player.uniform_type === 'goalkeeper' && (
-                        <Badge variant="outline" className="mt-1">Thủ môn</Badge>
-                      )}
-                    </div>
-                  </TableCell>
+                  <TableCell>{player.line_1 || "-"}</TableCell>
+                  <TableCell>{player.line_3 || "-"}</TableCell>
                   <TableCell className="font-semibold">{player.number}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -63,12 +48,6 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1 text-sm">
-                      {player.line_1 && (
-                        <p>- In dòng trên số lưng: {player.line_1}</p>
-                      )}
-                      {player.line_3 && (
-                        <p>- In dòng dưới số lưng: {player.line_3}</p>
-                      )}
                       {player.chest_number && (
                         <p>- In số ngực</p>
                       )}
