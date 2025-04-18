@@ -26,7 +26,10 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
     try {
       let query = supabase
         .from('orders')
-        .select('*');
+        .select(`
+          *,
+          logo_url
+        `);
       
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
