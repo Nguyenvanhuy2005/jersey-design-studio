@@ -91,7 +91,7 @@ export const AssetViewer = ({
                     <img
                       src={asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url)}
                       alt={asset.name || `Mẫu ${index + 1}`}
-                      className="w-full h-full object-cover rounded-md"
+                      className="w-full h-full object-contain rounded-md" // Changed from object-cover to object-contain
                       onError={() => handleImageError(index)}
                     />
                   )}
