@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -53,19 +54,27 @@ export function useCustomers() {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
+      console.log("Creating customer with data:", customerData);
+      
       const { data, error } = await supabase.functions.invoke('create-customer', {
         body: { customerData }
       });
 
+      console.log("Edge function response:", data, error);
+
       if (error) {
-        throw error;
+        console.error("Edge function error:", error);
+        throw new Error(`Không thể tạo khách hàng: ${error.message}`);
       }
 
       if (!data?.customer) {
-        throw new Error("Không thể tạo khách hàng");
+        const errorMsg = data?.error || "Không nhận được dữ liệu khách hàng";
+        console.error("Invalid response from edge function:", data);
+        throw new Error(`Lỗi máy chủ: ${errorMsg}`);
       }
 
       toast.success("Đã tạo khách hàng thành công");
+      await fetchCustomers(); // Refresh the customers list
       return data.customer;
     } catch (err: any) {
       console.error("Error creating customer:", err);
@@ -93,6 +102,7 @@ export function useCustomers() {
       }
 
       toast.success("Đã cập nhật thông tin khách hàng");
+      await fetchCustomers(); // Refresh the customers list
       return data;
     } catch (err: any) {
       console.error("Error updating customer:", err);
