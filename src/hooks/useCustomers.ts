@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,12 +14,21 @@ export function useCustomers() {
     setError(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setError("Vui lòng đăng nhập để xem danh sách khách hàng");
+        setCustomers([]);
+        return;
+      }
+
       const { data: customersData, error: customersError } = await supabase
         .from("customers")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (customersError) {
+        console.error("Error fetching customers:", customersError);
         throw customersError;
       }
 
