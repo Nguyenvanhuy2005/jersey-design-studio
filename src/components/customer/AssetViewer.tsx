@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Download, Eye } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { getReferenceImageUrls } from "@/utils/images/reference-image-utils";
 
 interface AssetViewerProps {
-  title: string;
+  title?: string;
   assets: {
     url: string;
     name?: string;
@@ -14,9 +15,16 @@ interface AssetViewerProps {
   gridCols?: number;
 }
 
-export const AssetViewer = ({ title, assets, gridCols = 4 }: AssetViewerProps) => {
+export const AssetViewer = ({ 
+  title = 'Mẫu cần in', 
+  assets, 
+  gridCols = 4 
+}: AssetViewerProps) => {
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Filter out invalid or empty URLs
+  const validAssets = assets.filter(asset => asset.url && asset.url.trim() !== '');
 
   const handleDownload = async (url: string, filename: string) => {
     try {
@@ -35,12 +43,16 @@ export const AssetViewer = ({ title, assets, gridCols = 4 }: AssetViewerProps) =
     }
   };
 
+  if (validAssets.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <div className="space-y-4">
         <h3 className="text-lg font-medium">{title}</h3>
         <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${gridCols} gap-4`}>
-          {assets.map((asset, index) => (
+          {validAssets.map((asset, index) => (
             <div key={index} className="relative border rounded-md p-2 space-y-2">
               {asset.type === 'image' ? (
                 <div className="aspect-square relative">
@@ -48,6 +60,11 @@ export const AssetViewer = ({ title, assets, gridCols = 4 }: AssetViewerProps) =
                     src={asset.url}
                     alt={asset.name || `Asset ${index + 1}`}
                     className="w-full h-full object-cover rounded-md"
+                    onError={(e) => {
+                      console.error(`Error loading image: ${asset.url}`);
+                      e.currentTarget.alt = 'Không thể tải hình ảnh';
+                      e.currentTarget.classList.add('opacity-50');
+                    }}
                   />
                 </div>
               ) : (
@@ -95,6 +112,11 @@ export const AssetViewer = ({ title, assets, gridCols = 4 }: AssetViewerProps) =
               src={selectedAsset || ''}
               alt="Preview"
               className="w-full h-auto max-h-[70vh] object-contain"
+              onError={(e) => {
+                console.error(`Error loading preview image: ${selectedAsset}`);
+                e.currentTarget.alt = 'Không thể tải hình ảnh';
+                e.currentTarget.classList.add('opacity-50');
+              }}
             />
           </div>
         </DialogContent>
