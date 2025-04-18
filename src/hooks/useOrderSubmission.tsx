@@ -109,10 +109,21 @@ export const useOrderSubmission = ({
       return;
     }
     
+    if (players.length === 0) {
+      toast.error("Vui lòng thêm ít nhất một cầu thủ vào danh sách");
+      return;
+    }
+    
+    if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
+      toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
+      return;
+    }
+    
     setIsSubmitting(true);
     setIsGeneratingDesign(true);
     
     try {
+      // Update customer info first
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -138,6 +149,7 @@ export const useOrderSubmission = ({
       
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
       
+      // Upload logos if any
       if (logos.length > 0) {
         for (const logo of logos) {
           const fileExt = logo.file.name.split('.').pop();
@@ -151,6 +163,7 @@ export const useOrderSubmission = ({
             });
             
           if (uploadError) {
+            console.error("Error uploading logo:", uploadError);
             throw uploadError;
           }
           
@@ -168,8 +181,9 @@ export const useOrderSubmission = ({
         }
       }
       
-      const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
-      const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
+      // Calculate player types for uniform_type
+      const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
+      const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
       const finalDesignData: Partial<DesignData> = {
         ...designData,
@@ -192,6 +206,7 @@ export const useOrderSubmission = ({
         ? (players[0].line_3 || players[0].name?.split(' ')?.[0] || "Team") 
         : "Team";
 
+      // Create order first
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -203,7 +218,7 @@ export const useOrderSubmission = ({
           notes: notes,
           design_data: designDataJson,
           reference_images: referenceImagePaths,
-          customer_id: user.id  // Ensure we set the customer_id
+          customer_id: user.id
         });
         
       if (orderError) {
@@ -211,53 +226,75 @@ export const useOrderSubmission = ({
         throw orderError;
       }
 
+      // Insert players with proper error handling
       if (players.length > 0) {
-        const playersToInsert = players.map(p => {
-          return {
-            name: p.name,
-            number: parseInt(p.number, 10) || 0,
-            size: p.size,
-            print_image: p.printImage,
-            order_id: orderId,
-            uniform_type: p.uniform_type || 'player',
-            line_1: p.line_1 || null,
-            line_2: String(p.number),
-            line_3: p.line_3 || null,
-            chest_number: p.chest_number || false,
-            pants_number: p.pants_number || false,
-            logo_chest_left: p.logo_chest_left || false,
-            logo_chest_right: p.logo_chest_right || false,
-            logo_chest_center: p.logo_chest_center || false,
-            logo_sleeve_left: p.logo_sleeve_left || false,
-            logo_sleeve_right: p.logo_sleeve_right || false,
-            logo_pants: p.logo_pants || false,
-            print_style: p.print_style || null,
-            note: p.note || null
-          };
-        });
+        const playersToInsert = players.map(p => ({
+          name: p.name,
+          number: parseInt(p.number, 10) || 0,
+          size: p.size,
+          print_image: p.printImage,
+          order_id: orderId,
+          uniform_type: p.uniform_type || 'player',
+          line_1: p.line_1 || null,
+          line_2: String(p.number),
+          line_3: p.line_3 || null,
+          chest_number: p.chest_number || false,
+          pants_number: p.pants_number || false,
+          logo_chest_left: p.logo_chest_left || false,
+          logo_chest_right: p.logo_chest_right || false,
+          logo_chest_center: p.logo_chest_center || false,
+          logo_sleeve_left: p.logo_sleeve_left || false,
+          logo_sleeve_right: p.logo_sleeve_right || false,
+          logo_pants: p.logo_pants || false,
+          print_style: p.print_style || null,
+          note: p.note || null
+        }));
         
-        await supabase.from('players').insert(playersToInsert);
+        const { error: playersError } = await supabase
+          .from('players')
+          .insert(playersToInsert);
+          
+        if (playersError) {
+          console.error("Error inserting players:", playersError);
+          // Since order is already created, we'll show warning but continue
+          toast.warning("Có lỗi khi lưu thông tin cầu thủ, vui lòng kiểm tra lại");
+        }
       }
       
+      // Insert product lines if any
       if (productLines.length > 0) {
         const productLinesToInsert = productLines.map(pl => ({
           ...pl,
           order_id: orderId
         }));
         
-        await supabase.from('product_lines').insert(productLinesToInsert);
+        const { error: productLinesError } = await supabase
+          .from('product_lines')
+          .insert(productLinesToInsert);
+          
+        if (productLinesError) {
+          console.error("Error inserting product lines:", productLinesError);
+          toast.warning("Có lỗi khi lưu thông tin sản phẩm in, vui lòng kiểm tra lại");
+        }
       }
       
-      // Update print config creation
+      // Update print config
       if (printStyle) {
-        await supabase.from('print_configs').insert({
-          order_id: orderId,
-          font: fontText,
-          back_material: printStyle,
-          front_material: printStyle,
-          sleeve_material: printStyle,
-          leg_material: printStyle
-        });
+        const { error: printConfigError } = await supabase
+          .from('print_configs')
+          .insert({
+            order_id: orderId,
+            font: fontText,
+            back_material: printStyle,
+            front_material: printStyle,
+            sleeve_material: printStyle,
+            leg_material: printStyle
+          });
+          
+        if (printConfigError) {
+          console.error("Error inserting print config:", printConfigError);
+          toast.warning("Có lỗi khi lưu cấu hình in, vui lòng kiểm tra lại");
+        }
       }
       
       toast.success("Đơn hàng đã được tạo thành công!");
