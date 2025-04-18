@@ -158,12 +158,7 @@ export function CustomerOrderDetails() {
             Quay lại
           </Link>
         </Button>
-        <Badge>{
-          order.status === 'new' ? 'Đơn mới' :
-          order.status === 'processing' ? 'Đang xử lý' :
-          order.status === 'completed' ? 'Hoàn thành' :
-          order.status
-        }</Badge>
+        {formatStatus(order.status)}
       </div>
 
       <Card>
@@ -185,68 +180,57 @@ export function CustomerOrderDetails() {
       </Card>
 
       <Tabs defaultValue="details" className="space-y-6">
-        <TabsList className="w-full">
+        <TabsList>
           <TabsTrigger value="details" className="flex-1">Chi tiết đơn hàng</TabsTrigger>
           <TabsTrigger value="players" className="flex-1">Danh sách cầu thủ</TabsTrigger>
           <TabsTrigger value="printList" className="flex-1">Danh sách in ấn</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Printer className="h-5 w-5" />
-                  Cấu hình in ấn
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Type className="h-4 w-4" />
-                      Font chữ và kiểu in
-                    </h4>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">Font chữ/số</TableCell>
-                          <TableCell>{order.printConfig?.font || "Arial"}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Shirt className="h-4 w-4" />
-                      Chất liệu in ấn
-                    </h4>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">Chất liệu áo trước</TableCell>
-                          <TableCell>{order.printConfig?.frontMaterial}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Chất liệu áo sau</TableCell>
-                          <TableCell>{order.printConfig?.backMaterial}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Printer className="h-5 w-5" />
+                Cấu hình in ấn
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Type className="h-4 w-4" />
+                    Font chữ/số
+                  </h4>
+                  <div className="grid gap-2">
+                    <div className="text-sm">
+                      {order.printConfig?.font || "Arial"}
+                    </div>
                   </div>
                 </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Shirt className="h-4 w-4" />
+                    Chất liệu in ấn
+                  </h4>
+                  <div className="grid gap-2">
+                    <div className="text-sm">
+                      <p>Áo trước: {order.printConfig?.frontMaterial || "In chuyển nhiệt"}</p>
+                      <p>Áo sau: {order.printConfig?.backMaterial || "In chuyển nhiệt"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div className="border-t pt-4">
-                  <div className="text-right">
-                    <span className="font-medium">Tổng tiền: </span>
-                    <span className="text-lg font-bold">
-                      {order.totalCost?.toLocaleString("vi-VN")} đ
-                    </span>
-                  </div>
+              <div className="border-t mt-6 pt-4">
+                <div className="text-right">
+                  <span className="font-medium">Tổng tiền: </span>
+                  <span className="text-lg font-bold">
+                    {order.totalCost?.toLocaleString("vi-VN")} đ
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="players">
@@ -260,7 +244,8 @@ export function CustomerOrderDetails() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>STT</TableHead>
-                      <TableHead>Tên cầu thủ</TableHead>
+                      <TableHead>In dòng trên số lưng</TableHead>
+                      <TableHead>In dòng dưới số lưng</TableHead>
                       <TableHead>Số áo</TableHead>
                       <TableHead>Kích thước</TableHead>
                       <TableHead>Chi tiết in ấn</TableHead>
@@ -270,40 +255,19 @@ export function CustomerOrderDetails() {
                     {order.players?.map((player, index) => (
                       <TableRow key={player.id || index}>
                         <TableCell>{index + 1}</TableCell>
+                        <TableCell>{player.line_1 || "-"}</TableCell>
+                        <TableCell>{player.line_3 || "-"}</TableCell>
+                        <TableCell className="font-semibold">{player.number}</TableCell>
                         <TableCell>
-                          <div>
-                            <p>{player.name || "(Không có tên)"}</p>
-                            {player.line_1 && (
-                              <p className="text-xs text-muted-foreground">
-                                Tên in: {player.line_1}
-                              </p>
-                            )}
-                            {player.line_3 && (
-                              <p className="text-xs text-muted-foreground">
-                                Tên đội: {player.line_3}
-                              </p>
-                            )}
-                            {player.uniform_type === 'goalkeeper' && (
-                              <Badge variant="outline" className="mt-1">Thủ môn</Badge>
-                            )}
+                          <div className="flex items-center gap-1">
+                            <Shirt className="h-4 w-4" />
+                            {player.size}
                           </div>
                         </TableCell>
-                        <TableCell>{player.number}</TableCell>
-                        <TableCell>{player.size}</TableCell>
                         <TableCell>
                           <div className="space-y-1 text-sm">
-                            {player.line_1 && (
-                              <p>- In dòng trên số lưng: {player.line_1}</p>
-                            )}
-                            {player.line_3 && (
-                              <p>- In dòng dưới số lưng: {player.line_3}</p>
-                            )}
-                            {player.chest_number && (
-                              <p>- In số ngực</p>
-                            )}
-                            {player.pants_number && (
-                              <p>- In số quần</p>
-                            )}
+                            {player.chest_number && (<p>- In số ngực</p>)}
+                            {player.pants_number && (<p>- In số quần</p>)}
                             {(player.logo_chest_left || 
                               player.logo_chest_right || 
                               player.logo_chest_center || 
@@ -318,7 +282,12 @@ export function CustomerOrderDetails() {
                             {player.logo_sleeve_left && (<p>- Logo tay trái</p>)}
                             {player.logo_sleeve_right && (<p>- Logo tay phải</p>)}
                             {player.logo_pants && (<p>- Logo quần</p>)}
-                            <p className="font-medium mt-1">Kiểu in: {player.print_style || "In chuyển nhiệt"}</p>
+                            <p className="font-medium mt-1">
+                              <span className="inline-flex items-center gap-1">
+                                <Printer className="h-4 w-4" />
+                                Kiểu in: {player.print_style || "In chuyển nhiệt"}
+                              </span>
+                            </p>
                             {player.note && (
                               <p className="text-muted-foreground mt-1">Ghi chú: {player.note}</p>
                             )}
@@ -326,6 +295,13 @@ export function CustomerOrderDetails() {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {(!order.players || order.players.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          Không có cầu thủ nào trong danh sách
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -369,7 +345,7 @@ export function CustomerOrderDetails() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {order.productLines?.length === 0 && (
+                    {(!order.productLines || order.productLines.length === 0) && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                           Không có thông tin in ấn
@@ -383,7 +359,7 @@ export function CustomerOrderDetails() {
           </Card>
 
           {order.referenceImages && order.referenceImages.length > 0 && (
-            <Card>
+            <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Hình ảnh tham khảo</CardTitle>
               </CardHeader>
