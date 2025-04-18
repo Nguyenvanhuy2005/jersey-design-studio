@@ -43,15 +43,36 @@ export function OrderSummaryTabContent({
     );
   }
 
+  const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
+  const totalCost = calculateTotalCost();
+  
+  // Calculate printing positions count based on player data
+  const calculatePrintPositionsCount = () => {
+    let count = 0;
+    players.forEach(player => {
+      if (player.chest_number) count++;
+      if (player.pants_number) count++;
+      if (player.logo_chest_left) count++;
+      if (player.logo_chest_right) count++;
+      if (player.logo_chest_center) count++;
+      if (player.logo_sleeve_left) count++;
+      if (player.logo_sleeve_right) count++;
+      if (player.logo_pants) count++;
+    });
+    return count;
+  };
+
   return (
     <div className="space-y-6">
       <OrderCostSummary 
-        customerInfo={customerInfo}
-        players={players}
-        productLines={productLines}
-        calculateTotalCost={calculateTotalCost}
-        getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
-        referenceImagesPreview={referenceImagesPreview}
+        uniformCount={players.length}
+        jerseyUnitPrice={120000} 
+        goalkeeperUnitPrice={150000}
+        playerCount={playerCount}
+        goalkeeperCount={goalkeeperCount}
+        printPositionsCount={calculatePrintPositionsCount()}
+        printUnitPrice={20000}
+        totalCost={totalCost}
       />
 
       <OrderPlayersList players={players} />
