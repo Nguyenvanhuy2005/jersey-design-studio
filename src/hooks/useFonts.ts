@@ -3,25 +3,39 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { loadCustomFont } from "@/utils/font-utils";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FontData {
   name: string;
   file_path: string;
   file_type: string;
+  user_id?: string;
+  is_public?: boolean;
 }
 
 export const useFonts = () => {
   const [customFonts, setCustomFonts] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     loadSavedFonts();
-  }, []);
+  }, [user?.id]);
 
   const loadSavedFonts = async () => {
-    const { data: fonts, error } = await supabase
-      .from('fonts')
-      .select('name, file_path');
+    if (!user) {
+      setCustomFonts([]);
+      return;
+    }
+
+    // Build the query to get fonts - if admin, get all fonts, otherwise get only public fonts and user's fonts
+    let query = supabase.from('fonts').select('name, file_path');
+    
+    if (!isAdmin) {
+      query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
+    }
+
+    const { data: fonts, error } = await query;
 
     if (error) {
       console.error('Error loading fonts:', error);
@@ -45,11 +59,16 @@ export const useFonts = () => {
   };
 
   const uploadFont = async (file: File): Promise<{success: boolean, fontName: string}> => {
+    if (!user) {
+      toast.error("Bạn cần đăng nhập để tải lên font chữ");
+      return { success: false, fontName: '' };
+    }
+
     setIsUploading(true);
     try {
       const fontName = file.name.split('.')[0];
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      const filePath = `${Date.now()}-${file.name}`;
+      const filePath = `${user.id}/${Date.now()}-${file.name}`;
 
       // Upload font file to storage
       const { error: uploadError } = await supabase.storage
@@ -65,13 +84,15 @@ export const useFonts = () => {
 
       if (!fontUrl) throw new Error('Could not get font URL');
 
-      // Save font metadata to database
+      // Save font metadata to database with user_id
       const { error: dbError } = await supabase
         .from('fonts')
         .insert({
           name: fontName,
           file_path: filePath,
-          file_type: fileExtension || 'ttf'
+          file_type: fileExtension || 'ttf',
+          user_id: user.id,
+          is_public: false // Default to private font
         });
 
       if (dbError) throw new Error(dbError.message);
@@ -94,10 +115,33 @@ export const useFonts = () => {
     }
   };
 
+  // New function to toggle font visibility
+  const toggleFontPublic = async (fontName: string, isPublic: boolean) => {
+    if (!user) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('fonts')
+        .update({ is_public: isPublic })
+        .eq('name', fontName)
+        .eq('user_id', user.id);
+      
+      if (error) throw new Error(error.message);
+      
+      toast.success(`Font "${fontName}" đã được đặt thành ${isPublic ? "công khai" : "riêng tư"}`);
+      return true;
+    } catch (error) {
+      console.error('Error toggling font visibility:', error);
+      toast.error('Không thể cập nhật trạng thái của font');
+      return false;
+    }
+  };
+
   return {
     customFonts,
     isUploading,
     uploadFont,
-    loadSavedFonts
+    loadSavedFonts,
+    toggleFontPublic
   };
 };

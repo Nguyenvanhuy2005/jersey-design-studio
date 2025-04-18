@@ -6,13 +6,72 @@ import { Button } from "@/components/ui/button";
 import { Download, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PrintConfigProps {
   printConfig: Order['printConfig'];
 }
 
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
-  if (!printConfig) return null;
+  const { user } = useAuth();
+  const [fontOwnerName, setFontOwnerName] = useState<string>("");
+  const [canDownload, setCanDownload] = useState<boolean>(false);
+  
+  useEffect(() => {
+    if (!printConfig?.font) return;
+    
+    const checkFontPermission = async () => {
+      try {
+        // Get font details
+        const { data: fontData, error: fontError } = await supabase
+          .from('fonts')
+          .select('user_id, is_public')
+          .eq('name', printConfig.font)
+          .maybeSingle();
+
+        if (fontError) throw new Error(fontError.message);
+        
+        // If font is not found, allow download (system font)
+        if (!fontData) {
+          setCanDownload(true);
+          return;
+        }
+        
+        // Check if user can download this font (is owner, font is public, or user is admin)
+        const canUserDownload = fontData.is_public || 
+          (user && (user.id === fontData.user_id || await checkIsAdmin()));
+        
+        setCanDownload(canUserDownload);
+        
+        // Get font owner's name if applicable
+        if (fontData.user_id) {
+          const { data: userData } = await supabase
+            .from('customers')
+            .select('name')
+            .eq('id', fontData.user_id)
+            .maybeSingle();
+          
+          if (userData?.name) {
+            setFontOwnerName(`Font được tải lên bởi: ${userData.name}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking font permission:', error);
+      }
+    };
+    
+    checkFontPermission();
+  }, [printConfig?.font, user]);
+  
+  const checkIsAdmin = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('is_admin');
+      return !error && !!data;
+    } catch {
+      return false;
+    }
+  };
 
   const handleDownload = async (fontName: string) => {
     try {
@@ -49,6 +108,8 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
     }
   };
   
+  if (!printConfig) return null;
+  
   return (
     <Card>
       <CardHeader>
@@ -69,16 +130,23 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                 <TableCell className="w-1/3 font-medium text-muted-foreground">
                   Font chữ/số
                 </TableCell>
-                <TableCell className="flex items-center justify-between">
-                  <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownload(printConfig.font)}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Tải xuống font
-                  </Button>
+                <TableCell className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
+                    {canDownload && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(printConfig.font)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Tải xuống font
+                      </Button>
+                    )}
+                  </div>
+                  {fontOwnerName && (
+                    <p className="text-xs text-muted-foreground">{fontOwnerName}</p>
+                  )}
                 </TableCell>
               </TableRow>
             </TableBody>

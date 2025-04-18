@@ -3,11 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Upload } from "lucide-react";
+import { Globe, Lock, Upload } from "lucide-react";
 import { useFonts } from "@/hooks/useFonts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface FontWithMetadata {
+  name: string;
+  isPublic: boolean;
+  isOwner: boolean;
+}
 
 interface PrintGlobalSettingsProps {
   fontTextOptions: string[];
@@ -26,11 +33,53 @@ export function PrintGlobalSettings({
   fontNumber,
   onFontNumberChange,
 }: PrintGlobalSettingsProps) {
-  const { customFonts, uploadFont, isUploading, loadSavedFonts } = useFonts();
+  const { customFonts, uploadFont, isUploading, loadSavedFonts, toggleFontPublic } = useFonts();
   const [uploadType, setUploadType] = useState<'text' | 'number'>('text');
+  const [fontsWithMetadata, setFontsWithMetadata] = useState<FontWithMetadata[]>([]);
+  const { user } = useAuth();
   
   const allTextFonts = [...new Set([...fontTextOptions, ...customFonts])];
   const allNumberFonts = [...new Set([...fontNumberOptions, ...customFonts])];
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchFontMetadata = async () => {
+      const { data, error } = await supabase
+        .from('fonts')
+        .select('name, is_public, user_id');
+      
+      if (error) {
+        console.error('Error loading font metadata:', error);
+        return;
+      }
+      
+      const fontMetadata = data.map(font => ({
+        name: font.name,
+        isPublic: font.is_public || false,
+        isOwner: font.user_id === user.id
+      }));
+      
+      setFontsWithMetadata(fontMetadata);
+    };
+    
+    fetchFontMetadata();
+  }, [customFonts, user]);
+  
+  const handleToggleFontVisibility = async (fontName: string) => {
+    const fontData = fontsWithMetadata.find(f => f.name === fontName);
+    if (!fontData || !fontData.isOwner) return;
+    
+    const newIsPublic = !fontData.isPublic;
+    const success = await toggleFontPublic(fontName, newIsPublic);
+    
+    if (success) {
+      // Update local state
+      setFontsWithMetadata(prev => prev.map(f => 
+        f.name === fontName ? {...f, isPublic: newIsPublic} : f
+      ));
+    }
+  };
 
   // Fix: Use a direct approach for file upload rather than relying on the label+input combo
   const handleUploadFont = (type: 'text' | 'number') => {
@@ -73,6 +122,44 @@ export function PrintGlobalSettings({
     fileInput.click();
   };
 
+  // Function to render font item with visibility toggle if user is owner
+  const renderFontItem = (font: string) => {
+    const fontData = fontsWithMetadata.find(f => f.name === font);
+    const isCustomFont = fontData !== undefined;
+    const isOwner = fontData?.isOwner || false;
+    const isPublic = fontData?.isPublic || false;
+    
+    return (
+      <SelectItem key={font} value={font} className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span style={{ fontFamily: font }}>{font}</span>
+          {isCustomFont && (
+            <span className="ml-2">
+              {isPublic 
+                ? <Globe className="h-3 w-3 text-blue-500" /> 
+                : <Lock className="h-3 w-3 text-gray-500" />}
+            </span>
+          )}
+        </div>
+        {isOwner && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-2 h-6 px-2"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleToggleFontVisibility(font);
+            }}
+          >
+            {isPublic ? "Đặt riêng tư" : "Đặt công khai"}
+          </Button>
+        )}
+      </SelectItem>
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -87,11 +174,7 @@ export function PrintGlobalSettings({
                 <SelectValue placeholder="Chọn font chữ" />
               </SelectTrigger>
               <SelectContent>
-                {allTextFonts.map(font => (
-                  <SelectItem key={font} value={font}>
-                    <span style={{ fontFamily: font }}>{font}</span>
-                  </SelectItem>
-                ))}
+                {allTextFonts.map(font => renderFontItem(font))}
               </SelectContent>
             </Select>
             <Button
@@ -113,11 +196,7 @@ export function PrintGlobalSettings({
                 <SelectValue placeholder="Chọn font số" />
               </SelectTrigger>
               <SelectContent>
-                {allNumberFonts.map(font => (
-                  <SelectItem key={font} value={font}>
-                    <span style={{ fontFamily: font }}>{font}</span>
-                  </SelectItem>
-                ))}
+                {allNumberFonts.map(font => renderFontItem(font))}
               </SelectContent>
             </Select>
             <Button
