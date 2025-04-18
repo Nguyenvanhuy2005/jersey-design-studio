@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +17,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
   const [orders, setOrders] = useState<Order[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchingData, setFetchingData] = useState(true);
-
+  
   const fetchOrders = async () => {
     setFetchingData(true);
     setFetchError(null);
@@ -29,7 +28,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
         .from('orders')
         .select(`
           *,
-          customers (
+          customers!orders_customer_id_fkey (
             id,
             name,
             phone,
@@ -77,6 +76,8 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
         return;
       }
 
+      console.log("Raw orders data:", ordersData);
+
       const transformedOrders: Order[] = ordersData.map(order => {
         return dbOrderToOrder(
           order,
@@ -87,6 +88,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
         );
       });
       
+      console.log("Transformed orders:", transformedOrders);
       setOrders(transformedOrders);
     } catch (e) {
       console.error("Exception in fetchOrders:", e);
