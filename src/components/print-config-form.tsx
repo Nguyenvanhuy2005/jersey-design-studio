@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PrintConfig } from "@/types";
+import { useFonts } from "@/hooks/useFonts";
 import { toast } from "sonner";
-import { loadCustomFont } from "@/utils/font-utils";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PrintConfigFormProps {
   printConfig: PrintConfig;
@@ -17,38 +16,7 @@ interface PrintConfigFormProps {
 export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfigFormProps) {
   const [tempConfig, setTempConfig] = useState<PrintConfig>(printConfig);
   const [open, setOpen] = useState(false);
-  const [customFonts, setCustomFonts] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-
-  useEffect(() => {
-    const loadSavedFonts = async () => {
-      const { data: fonts, error } = await supabase
-        .from('fonts')
-        .select('name, file_path');
-
-      if (error) {
-        console.error('Error loading fonts:', error);
-        toast.error('Không thể tải danh sách font chữ');
-        return;
-      }
-
-      if (fonts) {
-        setCustomFonts(fonts.map(font => font.name));
-        
-        fonts.forEach(async (font) => {
-          const { data: fontUrl } = supabase.storage
-            .from('fonts')
-            .getPublicUrl(font.file_path);
-
-          if (fontUrl) {
-            await loadCustomFont(fontUrl.publicUrl, font.name);
-          }
-        });
-      }
-    };
-
-    loadSavedFonts();
-  }, []);
+  const { customFonts, isUploading, uploadFont } = useFonts();
 
   const handleCustomFontUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,58 +29,12 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
       return;
     }
 
-    setIsUploading(true);
-    try {
-      const fontName = file.name.split('.')[0];
-      const filePath = `${Date.now()}-${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('fonts')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw new Error(`Error uploading font: ${uploadError.message}`);
-      }
-
-      const { data: fontUrl } = supabase.storage
-        .from('fonts')
-        .getPublicUrl(filePath);
-
-      if (!fontUrl) {
-        throw new Error('Could not get font URL');
-      }
-
-      const { error: dbError } = await supabase
-        .from('fonts')
-        .insert({
-          name: fontName,
-          file_path: filePath,
-          file_type: fileExtension.replace('.', '')
-        });
-
-      if (dbError) {
-        throw new Error(`Error saving font metadata: ${dbError.message}`);
-      }
-
-      await loadCustomFont(fontUrl.publicUrl, fontName);
-      
+    const { success, fontName } = await uploadFont(file);
+    if (success && fontName) {
       setTempConfig(prev => ({
         ...prev,
-        customFontFile: file,
-        customFontUrl: fontUrl.publicUrl,
         font: fontName
       }));
-      
-      if (!customFonts.includes(fontName)) {
-        setCustomFonts(prev => [...prev, fontName]);
-      }
-
-      toast.success(`Đã tải lên phông chữ: ${fontName}`);
-    } catch (error) {
-      console.error('Error handling font upload:', error);
-      toast.error(error instanceof Error ? error.message : 'Không thể tải lên phông chữ');
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -178,7 +100,9 @@ export function PrintConfigForm({ printConfig, onPrintConfigChange }: PrintConfi
               </div>
               
               <div className="flex-1">
-                <Label htmlFor="customFont" className="mb-2 block">Tải lên font tùy chỉnh (.ttf/.otf)</Label>
+                <Label htmlFor="customFont" className="mb-2 block">
+                  Tải lên font tùy chỉnh (.ttf/.otf)
+                </Label>
                 <Input 
                   id="customFont" 
                   type="file" 

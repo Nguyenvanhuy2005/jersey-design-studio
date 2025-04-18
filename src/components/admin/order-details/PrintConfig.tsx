@@ -14,37 +14,30 @@ interface PrintConfigProps {
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
   if (!printConfig) return null;
 
-  const handleDownload = async (font: string) => {
+  const handleDownload = async (fontName: string) => {
     try {
       // Get font file path from database
       const { data: fontData, error: dbError } = await supabase
         .from('fonts')
-        .select('file_path')
-        .eq('name', font)
-        .single();
+        .select('file_path, file_type')
+        .eq('name', fontName)
+        .maybeSingle();
 
-      if (dbError) {
-        throw new Error(dbError.message);
-      }
-
-      if (!fontData?.file_path) {
-        throw new Error('Font file not found');
-      }
+      if (dbError) throw new Error(dbError.message);
+      if (!fontData) throw new Error('Font not found');
 
       // Get download URL from storage
       const { data, error: storageError } = await supabase.storage
         .from('fonts')
         .download(fontData.file_path);
 
-      if (storageError) {
-        throw new Error(storageError.message);
-      }
+      if (storageError) throw new Error(storageError.message);
 
       // Create download link
       const url = URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${font}.${fontData.file_path.split('.').pop()}`;
+      link.download = `${fontName}.${fontData.file_type}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

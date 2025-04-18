@@ -39,6 +39,30 @@ export type Database = {
         }
         Relationships: []
       }
+      fonts: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_type: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_type: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_type?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       logos: {
         Row: {
           created_at: string | null
