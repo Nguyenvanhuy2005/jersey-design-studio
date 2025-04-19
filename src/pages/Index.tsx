@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 
 const Index = () => {
   const { user } = useAuth();
+  const [imageError, setImageError] = useState(false);
 
   return (
     <Layout>
@@ -53,11 +54,21 @@ const Index = () => {
             </div>
             <div className="flex justify-center">
               <div className="relative w-full max-w-md">
-                <img
-                  src="https://images.unsplash.com/photo-1577212017308-55f2257055dc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
-                  alt="Soccer jersey"
-                  className="rounded-xl shadow-lg border"
-                />
+                {imageError ? (
+                  <div className="rounded-xl shadow-lg border bg-muted flex items-center justify-center aspect-[4/3]">
+                    <div className="text-center p-4">
+                      <Shirt className="mx-auto h-16 w-16 text-muted-foreground" />
+                      <p className="mt-2 text-muted-foreground">Jersey Design Studio</p>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src="/placeholder.svg"
+                    alt="Soccer jersey"
+                    className="rounded-xl shadow-lg border w-full object-cover aspect-[4/3]"
+                    onError={() => setImageError(true)}
+                  />
+                )}
               </div>
             </div>
           </div>
