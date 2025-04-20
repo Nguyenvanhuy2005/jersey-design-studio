@@ -1,19 +1,16 @@
-
-import { useState, useCallback } from "react";
+import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Player, Logo, UniformSize } from "@/types";
+import { Player, Logo } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { toast } from "sonner";
-import * as XLSX from 'xlsx';
 import { PlayerCard } from "./player-card";
-import { Plus, Download } from "lucide-react";
+import { usePlayerForm } from "@/hooks/usePlayerForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+import * as XLSX from 'xlsx';
+import { PlayerFormFields } from "./player/PlayerFormFields";
 
 interface PlayerFormProps {
   players: Player[];
@@ -28,181 +25,28 @@ interface PlayerFormProps {
   logos?: Logo[];
 }
 
-const SIZES = {
-  adult: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const,
-  kids: ['1', '3', '5', '7', '9', '11', '13', '15'] as const
-};
-
-interface ExtendedPlayer extends Player {
-  uniform_type?: 'player' | 'goalkeeper';
-  line_1?: string;
-  line_2?: string;
-  line_3?: string;
-  chest_text?: string;
-  chest_number?: boolean;
-  pants_number?: boolean;
-  logo_chest_left?: boolean;
-  logo_chest_right?: boolean;
-  logo_chest_center?: boolean;
-  logo_sleeve_left?: boolean;
-  logo_sleeve_right?: boolean;
-  logo_pants?: boolean;
-  pet_chest?: string;
-  note?: string;
-  print_style?: string;
-}
-
-export function PlayerForm({ 
+export const PlayerForm = memo(({ 
   players, 
   onPlayersChange, 
-  className, 
-  fontSize = "Arial", 
-  fontNumber = "Arial",
+  className,
   printStyleOptions,
   printStyle,
-  printColorOptions,
-  printColor,
-  logos
-}: PlayerFormProps) {
-  const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
-    id: `temp-${Date.now()}`,
-    name: "",
-    number: "",
-    size: "M",
-    printImage: true,
-    uniform_type: "player",
-    line_1: "",
-    line_3: "",
-    chest_number: false,
-    pants_number: false,
-    logo_chest_left: false,
-    logo_chest_right: false,
-    logo_chest_center: false,
-    logo_sleeve_left: false,
-    logo_sleeve_right: false,
-    logo_pants: false,
-    print_style: printStyle
-  });
-  
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editingPlayerIndex, setEditingPlayerIndex] = useState<number | null>(null);
+}: PlayerFormProps) => {
+  const {
+    newPlayer,
+    isEditing,
+    editingPlayerIndex,
+    handleInputChange,
+    addOrUpdatePlayer,
+    editPlayer,
+    removePlayer,
+    cancelEdit
+  } = usePlayerForm({ onPlayersChange, players, printStyle });
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const addOrUpdatePlayer = useCallback(() => {
-    if (!newPlayer.number || newPlayer.number === "0") {
-      toast.error("Vui lòng nhập số áo hợp lệ");
-      return;
-    }
-    
-    const updatedPlayers = [...players];
-    
-    if (isEditing && editingPlayerIndex !== null) {
-      updatedPlayers[editingPlayerIndex] = { 
-        ...newPlayer, 
-        id: players[editingPlayerIndex].id 
-      };
-      
-      onPlayersChange(updatedPlayers);
-      toast.success("Cập nhật thông tin cầu thủ thành công");
-      
-      setIsEditing(false);
-      setEditingPlayerIndex(null);
-    } else {
-      updatedPlayers.push({ ...newPlayer, id: `player-${Date.now()}` });
-      onPlayersChange(updatedPlayers);
-      toast.success("Thêm cầu thủ thành công");
-    }
-    
-    setNewPlayer({
-      id: `temp-${Date.now()}`,
-      name: "",
-      number: "",
-      size: "M",
-      printImage: true,
-      uniform_type: "player",
-      line_1: "",
-      line_3: "",
-      chest_number: false,
-      pants_number: false,
-      logo_chest_left: false,
-      logo_chest_right: false,
-      logo_chest_center: false,
-      logo_sleeve_left: false,
-      logo_sleeve_right: false,
-      logo_pants: false,
-      print_style: printStyle
-    });
-  }, [newPlayer, players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
-
-  const removePlayer = useCallback((index: number) => {
-    const updatedPlayers = [...players];
-    updatedPlayers.splice(index, 1);
-    onPlayersChange(updatedPlayers);
-    
-    if (isEditing && editingPlayerIndex === index) {
-      setIsEditing(false);
-      setEditingPlayerIndex(null);
-      
-      setNewPlayer({
-        id: `temp-${Date.now()}`,
-        name: "",
-        number: "",
-        size: "M",
-        printImage: true,
-        uniform_type: "player",
-        line_1: "",
-        line_3: "",
-        chest_number: false,
-        pants_number: false,
-        logo_chest_left: false,
-        logo_chest_right: false,
-        logo_chest_center: false,
-        logo_sleeve_left: false,
-        logo_sleeve_right: false,
-        logo_pants: false,
-        print_style: printStyle
-      });
-    }
-  }, [players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
-  
-  const editPlayer = useCallback((index: number) => {
-    const playerToEdit = players[index] as ExtendedPlayer;
-    setNewPlayer({
-      ...playerToEdit,
-      line_1: playerToEdit.line_1 || playerToEdit.name || "",
-      line_3: playerToEdit.line_3 || "",
-    });
-    setIsEditing(true);
-    setEditingPlayerIndex(index);
-  }, [players]);
-  
-  const cancelEdit = useCallback(() => {
-    setIsEditing(false);
-    setEditingPlayerIndex(null);
-    
-    setNewPlayer({
-      id: `temp-${Date.now()}`,
-      name: "",
-      number: "",
-      size: "M",
-      printImage: true,
-      uniform_type: "player",
-      line_1: "",
-      line_3: "",
-      chest_number: false,
-      pants_number: false,
-      logo_chest_left: false,
-      logo_chest_right: false,
-      logo_chest_center: false,
-      logo_sleeve_left: false,
-      logo_sleeve_right: false,
-      logo_pants: false,
-      print_style: printStyle
-    });
-  }, [printStyle]);
-
-  const downloadExcelTemplate = useCallback(() => {
+  const downloadExcelTemplate = () => {
     const template = [
       {
         "STT": 1,
@@ -230,9 +74,9 @@ export function PlayerForm({
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     
     XLSX.writeFile(wb, "danh_sach_cau_thu_template.xlsx");
-  }, []);
+  };
 
-  const handleExcelUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -247,7 +91,7 @@ export function PlayerForm({
         
         const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
         
-        const newPlayers: ExtendedPlayer[] = jsonData.map((row, index) => {
+        const newPlayers: Player[] = jsonData.map((row, index) => {
           let playerNumber = row["SỐ"] !== undefined ? String(row["SỐ"]) : 
                              row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
           
@@ -305,232 +149,7 @@ export function PlayerForm({
     reader.readAsArrayBuffer(file);
     
     e.target.value = "";
-  }, [players, onPlayersChange, printStyle]);
-
-  const handleInputChange = useCallback((field: keyof ExtendedPlayer, value: any) => {
-    setNewPlayer(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  const PlayerFormFields = () => (
-    <div className={cn("grid grid-cols-1 md:grid-cols-7 gap-4", isMobile ? "p-4" : "")}>
-      <div className="md:col-span-2">
-        <Label htmlFor="playerNumber">Số áo</Label>
-        <Input 
-          id="playerNumber"
-          type="text"
-          value={newPlayer.number || ""}
-          onChange={(e) => handleInputChange("number", e.target.value)}
-          placeholder="Số áo"
-        />
-      </div>
-      
-      <div className="md:col-span-2">
-        <Label htmlFor="line1">Tên trên số</Label>
-        <Input 
-          id="line1"
-          value={newPlayer.line_1 || ""}
-          onChange={(e) => handleInputChange("line_1", e.target.value)}
-          placeholder="Tên trên số lưng"
-        />
-      </div>
-      
-      <div className="md:col-span-2">
-        <Label htmlFor="line3">Tên dưới số</Label>
-        <Input 
-          id="line3"
-          value={newPlayer.line_3 || ""}
-          onChange={(e) => handleInputChange("line_3", e.target.value)}
-          placeholder="Tên đội bóng"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="playerSize">Size</Label>
-        <Select 
-          value={newPlayer.size}
-          onValueChange={(value) => handleInputChange("size", value as UniformSize)}
-        >
-          <SelectTrigger id="playerSize">
-            <SelectValue placeholder="Size" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Người lớn</SelectLabel>
-              {SIZES.adult.map((size) => (
-                <SelectItem key={size} value={size}>{size}</SelectItem>
-              ))}
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel>Trẻ em</SelectLabel>
-              {SIZES.kids.map((size) => (
-                <SelectItem key={size} value={size}>{size}</SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="md:col-span-2">
-        <Label htmlFor="uniformType">Loại quần áo</Label>
-        <Select 
-          value={newPlayer.uniform_type || "player"}
-          onValueChange={(value) => handleInputChange("uniform_type", value as 'player' | 'goalkeeper')}
-        >
-          <SelectTrigger id="uniformType">
-            <SelectValue placeholder="Loại" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="player">Cầu thủ</SelectItem>
-            <SelectItem value="goalkeeper">Thủ môn</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="md:col-span-2">
-        <Label htmlFor="printStyle">Kiểu in</Label>
-        <Select 
-          value={newPlayer.print_style}
-          onValueChange={(value) => handleInputChange("print_style", value)}
-        >
-          <SelectTrigger id="printStyle">
-            <SelectValue placeholder="Chọn kiểu in" />
-          </SelectTrigger>
-          <SelectContent>
-            {printStyleOptions.map(style => (
-              <SelectItem key={style} value={style}>{style}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="md:col-span-4 space-y-4">
-        <div>
-          <Label className="mb-2 inline-block">In số</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="chestNumber"
-                checked={newPlayer.chest_number || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("chest_number", checked === true)
-                }
-              />
-              <Label htmlFor="chestNumber">In số ngực</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="pantsNumber"
-                checked={newPlayer.pants_number || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("pants_number", checked === true)
-                }
-              />
-              <Label htmlFor="pantsNumber">In số quần</Label>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <Label className="mb-2 inline-block">Logo áo</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoChestLeft"
-                checked={newPlayer.logo_chest_left || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_chest_left", checked === true)
-                }
-              />
-              <Label htmlFor="logoChestLeft">Logo ngực trái</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoChestRight"
-                checked={newPlayer.logo_chest_right || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_chest_right", checked === true)
-                }
-              />
-              <Label htmlFor="logoChestRight">Logo ngực phải</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoChestCenter"
-                checked={newPlayer.logo_chest_center || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_chest_center", checked === true)
-                }
-              />
-              <Label htmlFor="logoChestCenter">Logo ngực giữa</Label>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <Label className="mb-2 inline-block">Logo tay & quần</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoSleeveLeft"
-                checked={newPlayer.logo_sleeve_left || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_sleeve_left", checked === true)
-                }
-              />
-              <Label htmlFor="logoSleeveLeft">Logo tay trái</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoSleeveRight"
-                checked={newPlayer.logo_sleeve_right || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_sleeve_right", checked === true)
-                }
-              />
-              <Label htmlFor="logoSleeveRight">Logo tay phải</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="logoPants"
-                checked={newPlayer.logo_pants || false}
-                onCheckedChange={(checked) => 
-                  handleInputChange("logo_pants", checked === true)
-                }
-              />
-              <Label htmlFor="logoPants">Logo quần</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="md:col-span-3">
-        <Label htmlFor="playerNote">Ghi chú</Label>
-        <Input 
-          id="playerNote"
-          value={newPlayer.note || ""}
-          onChange={(e) => handleInputChange("note", e.target.value)}
-          placeholder="Ghi chú đặc biệt cho cầu thủ"
-        />
-      </div>
-      
-      <div className="md:col-span-2 flex space-x-2">
-        {isEditing ? (
-          <>
-            <Button onClick={addOrUpdatePlayer} className="flex-1 bg-blue-600 hover:bg-blue-700">
-              Cập nhật
-            </Button>
-            <Button variant="outline" onClick={cancelEdit} className="flex-1">
-              Hủy
-            </Button>
-          </>
-        ) : (
-          <Button onClick={addOrUpdatePlayer} className="w-full">
-            <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
-          </Button>
-        )}
-      </div>
-    </div>
-  );
+  };
 
   return (
     <Card className={className}>
@@ -568,7 +187,16 @@ export function PlayerForm({
           </div>
         )}
         
-        {!isMobile && <PlayerFormFields />}
+        {!isMobile && (
+          <PlayerFormFields
+            newPlayer={newPlayer}
+            isEditing={isEditing}
+            printStyleOptions={printStyleOptions}
+            onInputChange={handleInputChange}
+            onAddOrUpdate={addOrUpdatePlayer}
+            onCancel={cancelEdit}
+          />
+        )}
       </CardContent>
       
       <CardFooter className="bg-muted/30 p-4 rounded-md">
@@ -603,11 +231,20 @@ export function PlayerForm({
               <SheetTitle>{isEditing ? 'Sửa thông tin cầu thủ' : 'Thêm cầu thủ mới'}</SheetTitle>
             </SheetHeader>
             <div className="overflow-y-auto h-full pb-20">
-              <PlayerFormFields />
+              <PlayerFormFields
+                newPlayer={newPlayer}
+                isEditing={isEditing}
+                printStyleOptions={printStyleOptions}
+                onInputChange={handleInputChange}
+                onAddOrUpdate={addOrUpdatePlayer}
+                onCancel={cancelEdit}
+              />
             </div>
           </SheetContent>
         </Sheet>
       )}
     </Card>
   );
-}
+});
+
+PlayerForm.displayName = "PlayerForm";
