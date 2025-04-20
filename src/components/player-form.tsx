@@ -12,6 +12,7 @@ import { PlayerCard } from "./player-card";
 import { Plus, Download } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface PlayerFormProps {
   players: Player[];
