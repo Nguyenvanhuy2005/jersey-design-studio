@@ -1,10 +1,11 @@
 // Common utility functions for jersey drawing
 export const drawBasicJersey = (
   ctx: CanvasRenderingContext2D,
-  color: string = '#FFD700'
+  color: string = '#FFD700',
+  scale: number = 1
 ) => {
-  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
-  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  const canvasWidth = (ctx.canvas.width / window.devicePixelRatio) * scale;
+  const canvasHeight = (ctx.canvas.height / window.devicePixelRatio) * scale;
   
   // Calculate proportional measurements
   const shoulderWidth = canvasWidth * 0.7;
@@ -108,10 +109,11 @@ export const setupCanvas = (ctx: CanvasRenderingContext2D) => {
 // New utility function for drawing pants with white stripes
 export const drawPants = (
   ctx: CanvasRenderingContext2D,
-  color: string = '#FFD700'
+  color: string = '#FFD700',
+  scale: number = 1
 ) => {
-  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
-  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  const canvasWidth = (ctx.canvas.width / window.devicePixelRatio) * scale;
+  const canvasHeight = (ctx.canvas.height / window.devicePixelRatio) * scale;
   
   const centerX = canvasWidth / 2;
   const pantsWidth = canvasWidth * 0.6;

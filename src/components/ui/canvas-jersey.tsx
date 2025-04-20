@@ -14,7 +14,6 @@ interface CanvasJerseyProps {
   playerName?: string;
   playerNumber?: string;
   logos?: Logo[];
-  view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
   designData?: Partial<DesignData>;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -25,7 +24,6 @@ export function CanvasJersey({
   playerName, 
   playerNumber, 
   logos = [], 
-  view,
   printConfig,
   designData,
   canvasRef: externalCanvasRef
@@ -44,11 +42,11 @@ export function CanvasJersey({
   const getBaseCanvasSize = () => {
     const viewportWidth = window.innerWidth;
     if (viewportWidth <= 640) {
-      return 260; // Small screens
+      return { width: 520, height: 600 }; // Small screens
     } else if (viewportWidth <= 1024) {
-      return 300; // Medium screens
+      return { width: 600, height: 700 }; // Medium screens
     } else {
-      return 320; // Large screens
+      return { width: 640, height: 800 }; // Large screens
     }
   };
 
@@ -243,13 +241,13 @@ export function CanvasJersey({
       return;
     }
 
-    const baseSize = getBaseCanvasSize();
+    const { width: baseWidth, height: baseHeight } = getBaseCanvasSize();
     
-    canvas.width = baseSize * pixelRatio;
-    canvas.height = baseSize * pixelRatio;
+    canvas.width = baseWidth * pixelRatio;
+    canvas.height = baseHeight * pixelRatio;
     
     canvas.style.width = '100%';
-    canvas.style.maxWidth = `${baseSize}px`;
+    canvas.style.maxWidth = `${baseWidth}px`;
     canvas.style.height = 'auto';
 
     const ctx = canvas.getContext('2d');
@@ -259,19 +257,11 @@ export function CanvasJersey({
     }
 
     ctx.scale(pixelRatio, pixelRatio);
-    ctx.clearRect(0, 0, baseSize, baseSize);
+    ctx.clearRect(0, 0, baseWidth, baseHeight);
 
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) {
       (ctx as any).imageSmoothingQuality = 'high';
-    }
-
-    if ((printConfig?.customFontUrl && !loadedFont) && 
-        !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
-      setTimeout(() => {
-        setLoadedFont(prev => !prev);
-      }, 100);
-      return;
     }
 
     const fontToUse = designData?.font_text?.font 
@@ -282,56 +272,72 @@ export function CanvasJersey({
       ? `"${designData.font_number.font}", sans-serif` 
       : fontToUse;
 
-    if (view === 'front') {
-      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
-      
-      JerseyFront({
-        ctx,
-        playerNumber: numericPlayerNumber,
-        loadedLogos,
-        logoPositions,
-        logos: logos || [],
-        fontFamily: fontToUse,
-        numberFontFamily: numberFontToUse,
-        highQuality: true,
-        selectedLogo: isInteractionDisabled ? null : selectedLogo,
-        onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
-        onLogoResize: isInteractionDisabled ? undefined : handleLogoResize,
-        onLogoDelete: isInteractionDisabled ? undefined : handleLogoDelete,
-        designData
-      });
-    } else if (view === 'back') {
-      JerseyBack({
-        ctx,
-        teamName: designData?.line_3?.content || teamName,
-        playerName: designData?.line_1?.content || playerName,
-        playerNumber,
-        fontFamily: numberFontToUse
-      });
-    } else if (view === 'pants') {
-      const pantsLogo = logos.find(logo => logo.position === 'pants');
-      let logoImage;
-      let logoPosition;
+    // Calculate dimensions for the three sections
+    const jerseyWidth = baseWidth * 0.5;  // Each jersey takes half width
+    const jerseyHeight = baseHeight * 0.6; // Jerseys take 60% of height
+    const pantsHeight = baseHeight * 0.4;  // Pants take 40% of height
 
-      if (pantsLogo && pantsLogo.id && loadedLogos.has(pantsLogo.id)) {
-        logoImage = loadedLogos.get(pantsLogo.id);
-        logoPosition = logoPositions.get(pantsLogo.id);
-      }
+    // Draw front jersey (left side)
+    ctx.save();
+    ctx.translate(0, 0);
+    const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
+    
+    ctx.scale(0.5, 0.5); // Scale down to fit in the left half
+    JerseyFront({
+      ctx,
+      playerNumber: numericPlayerNumber,
+      loadedLogos,
+      logoPositions,
+      logos,
+      fontFamily: fontToUse,
+      numberFontFamily: numberFontToUse,
+      highQuality: true,
+      selectedLogo: null,
+      designData
+    });
+    ctx.restore();
 
-      const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
+    // Draw back jersey (right side)
+    ctx.save();
+    ctx.translate(jerseyWidth, 0);
+    ctx.scale(0.5, 0.5); // Scale down to fit in the right half
+    JerseyBack({
+      ctx,
+      teamName,
+      playerName: designData?.line_1?.content || playerName,
+      playerNumber,
+      fontFamily: numberFontToUse
+    });
+    ctx.restore();
 
-      JerseyPants({
-        ctx,
-        playerNumber,
-        fontFamily: numberFontToUse,
-        pants_number_enabled: pantsNumberEnabled,
-        logo: logoImage && logoPosition ? {
-          image: logoImage,
-          position: logoPosition
-        } : undefined
-      });
+    // Draw pants (bottom)
+    ctx.save();
+    ctx.translate(baseWidth * 0.25, jerseyHeight); // Center the pants
+    ctx.scale(0.5, 0.5); // Scale down to fit below
+    const pantsLogo = logos.find(logo => logo.position === 'pants');
+    let logoImage, logoPosition;
+
+    if (pantsLogo?.id && loadedLogos.has(pantsLogo.id)) {
+      logoImage = loadedLogos.get(pantsLogo.id);
+      logoPosition = logoPositions.get(pantsLogo.id);
     }
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled]);
+
+    JerseyPants({
+      ctx,
+      playerNumber,
+      fontFamily: numberFontToUse,
+      pants_number_enabled: designData?.pants_number?.enabled ?? false,
+      logo: logoImage && logoPosition ? {
+        image: logoImage,
+        position: logoPosition
+      } : undefined
+    });
+    ctx.restore();
+
+  }, [
+    teamName, playerName, playerNumber, loadedLogos, logos, 
+    printConfig, designData, loadedFont, pixelRatio, logoPositions
+  ]);
 
   function isValidUUID(id: string) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -345,7 +351,7 @@ export function CanvasJersey({
         className="jersey-canvas"
         id="jersey-design-canvas"
       />
-      {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
+      {logos && logos.length > 0 && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
             Xem trước thiết kế áo với vị trí in cố định
