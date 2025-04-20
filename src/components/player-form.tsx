@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -88,7 +89,7 @@ export function PlayerForm({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const addOrUpdatePlayer = () => {
+  const addOrUpdatePlayer = useCallback(() => {
     if (!newPlayer.number || newPlayer.number === "0") {
       toast.error("Vui lòng nhập số áo hợp lệ");
       return;
@@ -132,9 +133,9 @@ export function PlayerForm({
       logo_pants: false,
       print_style: printStyle
     });
-  };
+  }, [newPlayer, players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
 
-  const removePlayer = (index: number) => {
+  const removePlayer = useCallback((index: number) => {
     const updatedPlayers = [...players];
     updatedPlayers.splice(index, 1);
     onPlayersChange(updatedPlayers);
@@ -163,9 +164,9 @@ export function PlayerForm({
         print_style: printStyle
       });
     }
-  };
+  }, [players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
   
-  const editPlayer = (index: number) => {
+  const editPlayer = useCallback((index: number) => {
     const playerToEdit = players[index] as ExtendedPlayer;
     setNewPlayer({
       ...playerToEdit,
@@ -174,9 +175,9 @@ export function PlayerForm({
     });
     setIsEditing(true);
     setEditingPlayerIndex(index);
-  };
+  }, [players]);
   
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setIsEditing(false);
     setEditingPlayerIndex(null);
     
@@ -199,9 +200,9 @@ export function PlayerForm({
       logo_pants: false,
       print_style: printStyle
     });
-  };
+  }, [printStyle]);
 
-  const downloadExcelTemplate = () => {
+  const downloadExcelTemplate = useCallback(() => {
     const template = [
       {
         "STT": 1,
@@ -229,9 +230,9 @@ export function PlayerForm({
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     
     XLSX.writeFile(wb, "danh_sach_cau_thu_template.xlsx");
-  };
+  }, []);
 
-  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExcelUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -304,7 +305,11 @@ export function PlayerForm({
     reader.readAsArrayBuffer(file);
     
     e.target.value = "";
-  };
+  }, [players, onPlayersChange, printStyle]);
+
+  const handleInputChange = useCallback((field: keyof ExtendedPlayer, value: any) => {
+    setNewPlayer(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const PlayerFormFields = () => (
     <div className={cn("grid grid-cols-1 md:grid-cols-7 gap-4", isMobile ? "p-4" : "")}>
@@ -314,7 +319,7 @@ export function PlayerForm({
           id="playerNumber"
           type="text"
           value={newPlayer.number || ""}
-          onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
+          onChange={(e) => handleInputChange("number", e.target.value)}
           placeholder="Số áo"
         />
       </div>
@@ -324,7 +329,7 @@ export function PlayerForm({
         <Input 
           id="line1"
           value={newPlayer.line_1 || ""}
-          onChange={(e) => setNewPlayer(prev => ({ ...prev, line_1: e.target.value }))}
+          onChange={(e) => handleInputChange("line_1", e.target.value)}
           placeholder="Tên trên số lưng"
         />
       </div>
@@ -334,7 +339,7 @@ export function PlayerForm({
         <Input 
           id="line3"
           value={newPlayer.line_3 || ""}
-          onChange={(e) => setNewPlayer(prev => ({ ...prev, line_3: e.target.value }))}
+          onChange={(e) => handleInputChange("line_3", e.target.value)}
           placeholder="Tên đội bóng"
         />
       </div>
@@ -343,7 +348,7 @@ export function PlayerForm({
         <Label htmlFor="playerSize">Size</Label>
         <Select 
           value={newPlayer.size}
-          onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as UniformSize }))}
+          onValueChange={(value) => handleInputChange("size", value as UniformSize)}
         >
           <SelectTrigger id="playerSize">
             <SelectValue placeholder="Size" />
@@ -369,10 +374,7 @@ export function PlayerForm({
         <Label htmlFor="uniformType">Loại quần áo</Label>
         <Select 
           value={newPlayer.uniform_type || "player"}
-          onValueChange={(value) => setNewPlayer(prev => ({ 
-            ...prev, 
-            uniform_type: value as 'player' | 'goalkeeper' 
-          }))}
+          onValueChange={(value) => handleInputChange("uniform_type", value as 'player' | 'goalkeeper')}
         >
           <SelectTrigger id="uniformType">
             <SelectValue placeholder="Loại" />
@@ -388,7 +390,7 @@ export function PlayerForm({
         <Label htmlFor="printStyle">Kiểu in</Label>
         <Select 
           value={newPlayer.print_style}
-          onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
+          onValueChange={(value) => handleInputChange("print_style", value)}
         >
           <SelectTrigger id="printStyle">
             <SelectValue placeholder="Chọn kiểu in" />
@@ -410,7 +412,7 @@ export function PlayerForm({
                 id="chestNumber"
                 checked={newPlayer.chest_number || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, chest_number: checked === true }))
+                  handleInputChange("chest_number", checked === true)
                 }
               />
               <Label htmlFor="chestNumber">In số ngực</Label>
@@ -420,7 +422,7 @@ export function PlayerForm({
                 id="pantsNumber"
                 checked={newPlayer.pants_number || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, pants_number: checked === true }))
+                  handleInputChange("pants_number", checked === true)
                 }
               />
               <Label htmlFor="pantsNumber">In số quần</Label>
@@ -436,7 +438,7 @@ export function PlayerForm({
                 id="logoChestLeft"
                 checked={newPlayer.logo_chest_left || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_chest_left: checked === true }))
+                  handleInputChange("logo_chest_left", checked === true)
                 }
               />
               <Label htmlFor="logoChestLeft">Logo ngực trái</Label>
@@ -446,7 +448,7 @@ export function PlayerForm({
                 id="logoChestRight"
                 checked={newPlayer.logo_chest_right || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_chest_right: checked === true }))
+                  handleInputChange("logo_chest_right", checked === true)
                 }
               />
               <Label htmlFor="logoChestRight">Logo ngực phải</Label>
@@ -456,7 +458,7 @@ export function PlayerForm({
                 id="logoChestCenter"
                 checked={newPlayer.logo_chest_center || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_chest_center: checked === true }))
+                  handleInputChange("logo_chest_center", checked === true)
                 }
               />
               <Label htmlFor="logoChestCenter">Logo ngực giữa</Label>
@@ -472,7 +474,7 @@ export function PlayerForm({
                 id="logoSleeveLeft"
                 checked={newPlayer.logo_sleeve_left || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_sleeve_left: checked === true }))
+                  handleInputChange("logo_sleeve_left", checked === true)
                 }
               />
               <Label htmlFor="logoSleeveLeft">Logo tay trái</Label>
@@ -482,7 +484,7 @@ export function PlayerForm({
                 id="logoSleeveRight"
                 checked={newPlayer.logo_sleeve_right || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_sleeve_right: checked === true }))
+                  handleInputChange("logo_sleeve_right", checked === true)
                 }
               />
               <Label htmlFor="logoSleeveRight">Logo tay phải</Label>
@@ -492,7 +494,7 @@ export function PlayerForm({
                 id="logoPants"
                 checked={newPlayer.logo_pants || false}
                 onCheckedChange={(checked) => 
-                  setNewPlayer(prev => ({ ...prev, logo_pants: checked === true }))
+                  handleInputChange("logo_pants", checked === true)
                 }
               />
               <Label htmlFor="logoPants">Logo quần</Label>
@@ -506,7 +508,7 @@ export function PlayerForm({
         <Input 
           id="playerNote"
           value={newPlayer.note || ""}
-          onChange={(e) => setNewPlayer(prev => ({ ...prev, note: e.target.value }))}
+          onChange={(e) => handleInputChange("note", e.target.value)}
           placeholder="Ghi chú đặc biệt cho cầu thủ"
         />
       </div>

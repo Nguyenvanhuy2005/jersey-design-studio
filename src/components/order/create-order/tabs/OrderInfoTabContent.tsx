@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { memo } from "react";
 
 interface OrderInfoTabContentProps {
   customerInfo: Customer;
@@ -34,7 +35,7 @@ interface OrderInfoTabContentProps {
   onGenerateProductLines: () => void;
 }
 
-export function OrderInfoTabContent({
+export const OrderInfoTabContent = memo(({
   customerInfo,
   onCustomerInfoChange,
   referenceImages,
@@ -56,7 +57,7 @@ export function OrderInfoTabContent({
   notes,
   onNotesChange,
   onGenerateProductLines
-}: OrderInfoTabContentProps) {
+}: OrderInfoTabContentProps) => {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
@@ -182,4 +183,6 @@ export function OrderInfoTabContent({
       </Card>
     </div>
   );
-}
+});
+
+OrderInfoTabContent.displayName = "OrderInfoTabContent";

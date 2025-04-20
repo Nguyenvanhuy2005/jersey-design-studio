@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { memo } from "react";
 
 interface OrderActionButtonsProps {
   activeTab: string;
@@ -12,7 +13,7 @@ interface OrderActionButtonsProps {
   onSubmitOrder: () => void;
 }
 
-export function OrderActionButtons({
+export const OrderActionButtons = memo(({
   activeTab,
   isDemoApproved,
   isSubmitting,
@@ -20,7 +21,7 @@ export function OrderActionButtons({
   onViewDemo,
   onApproveDemo,
   onSubmitOrder
-}: OrderActionButtonsProps) {
+}: OrderActionButtonsProps) => {
   const navigate = useNavigate();
 
   return (
@@ -55,4 +56,6 @@ export function OrderActionButtons({
       )}
     </div>
   );
-}
+});
+
+OrderActionButtons.displayName = "OrderActionButtons";
