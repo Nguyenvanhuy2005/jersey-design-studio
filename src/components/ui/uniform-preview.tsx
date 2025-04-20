@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
@@ -31,10 +30,8 @@ export function UniformPreview({
 }: UniformPreviewProps) {
   const [activeView, setActiveView] = useState<"front" | "back" | "pants">("front");
   
-  // Use first player from array if no specific player is provided
   const currentPlayer = player || (players.length > 0 ? players[0] : undefined);
   
-  // Create default design data if not provided
   const getDefaultDesignData = (): Partial<DesignData> => {
     if (designData && Object.keys(designData).length > 0) {
       return designData;
@@ -139,7 +136,7 @@ export function UniformPreview({
             Quần
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="front" className="focus:outline-none">
+        <TabsContent value="front" className="focus:outline-none px-2">
           <CanvasJersey
             teamName={teamName}
             playerName={currentPlayer?.name}
@@ -151,7 +148,7 @@ export function UniformPreview({
             canvasRef={jerseyCanvasRef}
           />
         </TabsContent>
-        <TabsContent value="back" className="focus:outline-none">
+        <TabsContent value="back" className="focus:outline-none px-2">
           <CanvasJersey
             teamName={teamName}
             playerName={currentPlayer?.name}
@@ -163,7 +160,7 @@ export function UniformPreview({
             canvasRef={jerseyCanvasRef}
           />
         </TabsContent>
-        <TabsContent value="pants" className="focus:outline-none">
+        <TabsContent value="pants" className="focus:outline-none px-2">
           <CanvasJersey
             teamName={teamName}
             playerNumber={currentPlayer?.number}

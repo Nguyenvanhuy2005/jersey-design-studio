@@ -89,7 +89,7 @@
   background-color: transparent;
   border: 1px solid #ccc;
   width: 100%;
-  max-width: 250px;
+  max-width: 200px;
   height: auto;
   display: block;
   margin: 0 auto;
@@ -98,6 +98,6 @@
 
 @media (min-width: 768px) {
   .jersey-canvas {
-    max-width: 300px;
+    max-width: 250px;
   }
 }

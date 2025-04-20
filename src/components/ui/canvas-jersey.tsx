@@ -44,7 +44,8 @@ export function CanvasJersey({
 
   const getBaseCanvasSize = () => {
     const isMobile = window.innerWidth <= 768;
-    return isMobile ? Math.min(250, window.innerWidth - 32) : 300;
+    const mobileSize = Math.min(200, window.innerWidth - 48);
+    return isMobile ? mobileSize : 250;
   };
 
   const { 
@@ -250,7 +251,7 @@ export function CanvasJersey({
     
     canvas.width = baseSize * pixelRatio;
     canvas.height = baseSize * pixelRatio;
-
+    
     canvas.style.width = '100%';
     canvas.style.maxWidth = `${baseSize}px`;
     canvas.style.height = 'auto';
@@ -350,7 +351,7 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full p-4">
       <canvas 
         ref={canvasRef} 
         className="jersey-canvas"
