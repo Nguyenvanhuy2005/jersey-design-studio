@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { PlayerCard } from "./player-card";
 import { usePlayerForm } from "@/hooks/usePlayerForm";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Download, Plus, Edit } from "lucide-react";
 import { toast } from "sonner";
@@ -148,16 +148,16 @@ export const PlayerForm = memo(({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle>Danh sách cầu thủ ({players.length})</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {players.length > 0 && (
-              <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
+              <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)} className="flex-1 md:flex-none">
                 <Edit className="h-4 w-4 mr-1" /> Cập nhật hàng loạt
               </Button>
             )}
             {isMobile && (
-              <Button onClick={() => setIsFormOpen(true)}>
+              <Button onClick={() => setIsFormOpen(true)} className="flex-1 md:flex-none">
                 <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
               </Button>
             )}
@@ -167,7 +167,7 @@ export const PlayerForm = memo(({
       
       <CardContent className="space-y-4">
         {players.length > 0 ? (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {players.map((player, index) => (
               <PlayerCard
                 key={player.id || index}
@@ -200,8 +200,8 @@ export const PlayerForm = memo(({
         )}
       </CardContent>
       
-      <CardFooter className="bg-muted/30 p-4 rounded-md">
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardFooter className="flex flex-col p-4 space-y-4 bg-muted/30 rounded-md">
+        <div className="w-full grid grid-cols-1 gap-4">
           <div>
             <p className="text-sm font-medium mb-2">Nhập danh sách cầu thủ từ Excel:</p>
             <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export const PlayerForm = memo(({
               </Button>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-muted-foreground">
             <p className="mb-1">Format file Excel bao gồm các cột:</p>
             <p>STT, TÊN IN TRÊN SỐ, SỐ, TÊN IN DƯỚI SỐ, SIZE, GHI CHÚ, LOẠI QUẦN ÁO (CẦU THỦ/THỦ MÔN), 
               IN SỐ NGỰC (YES/NO), IN SỐ QUẦN (YES/NO), LOGO NGỰC TRÁI (YES/NO), LOGO NGỰC PHẢI (YES/NO), 
@@ -227,18 +227,24 @@ export const PlayerForm = memo(({
 
       {isMobile && (
         <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <SheetContent side="bottom" className="h-[85vh]">
-            <SheetHeader>
+          <SheetContent side="bottom" className="h-[90vh] px-0">
+            <SheetHeader className="px-4 mb-4">
               <SheetTitle>{isEditing ? 'Sửa thông tin cầu thủ' : 'Thêm cầu thủ mới'}</SheetTitle>
             </SheetHeader>
-            <div className="overflow-y-auto h-full pb-20">
+            <div className="overflow-y-auto h-full pb-20 px-4">
               <PlayerFormFields
                 newPlayer={newPlayer}
                 isEditing={isEditing}
                 printStyleOptions={printStyleOptions}
                 onInputChange={handleInputChange}
-                onAddOrUpdate={addOrUpdatePlayer}
-                onCancel={cancelEdit}
+                onAddOrUpdate={(e) => {
+                  addOrUpdatePlayer();
+                  setIsFormOpen(false);
+                }}
+                onCancel={() => {
+                  cancelEdit();
+                  setIsFormOpen(false);
+                }}
               />
             </div>
           </SheetContent>
