@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Player, Logo } from '@/types';
 
@@ -36,11 +35,7 @@ export const usePlayerForm = ({ onPlayersChange, players, printStyle }: UsePlaye
     setNewPlayer(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const addOrUpdatePlayer = useCallback(() => {
-    if (!newPlayer.number || newPlayer.number === "0") {
-      return;
-    }
-    
+  const addOrUpdatePlayer = useCallback(() => {    
     const updatedPlayers = [...players];
     
     if (isEditing && editingPlayerIndex !== null) {

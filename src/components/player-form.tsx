@@ -1,4 +1,3 @@
-
 import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player, Logo } from "@/types";
@@ -94,7 +93,7 @@ export const PlayerForm = memo(({
         
         const newPlayers: Player[] = jsonData.map((row, index) => {
           let playerNumber = row["SỐ"] !== undefined ? String(row["SỐ"]) : 
-                             row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
+                           row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
           
           return {
             id: `player-${Date.now()}-${index}`,
@@ -103,8 +102,8 @@ export const PlayerForm = memo(({
             size: row["KÍCH THƯỚC"] || "M",
             printImage: row["IN HÌNH"] === "YES" || row["IN HÌNH"] === true,
             uniform_type: (row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thủ môn" || 
-                          row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? 
-                          "goalkeeper" : "player",
+                         row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? 
+                         "goalkeeper" : "player",
             line_1: row["TÊN IN TRÊN SỐ"] || "",
             line_2: playerNumber || "",
             line_3: row["TÊN IN DƯỚI SỐ"] || "",
@@ -123,24 +122,10 @@ export const PlayerForm = memo(({
           };
         });
         
-        const validPlayers = newPlayers.filter(p => p.number && p.number !== "");
-        
-        if (validPlayers.length === 0) {
-          toast.error("Không tìm thấy dữ liệu cầu thủ hợp lệ trong file Excel");
-          return;
-        }
-        
-        const numbers = validPlayers.map(p => p.number);
-        const duplicateNumbers = numbers.filter((num, idx) => numbers.indexOf(num) !== idx);
-        
-        if (duplicateNumbers.length > 0) {
-          toast.warning(`Các số áo ${duplicateNumbers.join(', ')} bị trùng lặp trong file. Vui lòng kiểm tra lại.`);
-        }
-        
-        const updatedPlayers = [...players, ...validPlayers];
+        const updatedPlayers = [...players, ...newPlayers];
         onPlayersChange(updatedPlayers);
         
-        toast.success(`Đã nhập ${validPlayers.length} cầu thủ từ file Excel`);
+        toast.success(`Đã nhập ${newPlayers.length} cầu thủ từ file Excel`);
       } catch (error) {
         console.error("Error parsing Excel file:", error);
         toast.error("Có lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng file.");
