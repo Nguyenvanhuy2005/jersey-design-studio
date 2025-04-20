@@ -1,15 +1,16 @@
+
+import { Customer, Logo, Player } from "@/types";
+import { CustomerForm } from "@/components/customer-form";
+import { PrintGlobalSettings } from "@/components/print-global-settings";
+import { LogoUpload } from "@/components/logo-upload";
+import { PlayerForm } from "@/components/player-form";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { CustomerForm } from "@/components/customer-form";
-import { PrintGlobalSettings } from "@/components/print-global-settings";
-import { LogoUpload } from "@/components/logo-upload";
-import { PlayerForm } from "@/components/player-form";
-import { Customer, Logo, Player } from "@/types";
 
-interface OrderInfoTabProps {
+interface OrderInfoTabContentProps {
   customerInfo: Customer;
   onCustomerInfoChange: (customer: Customer) => void;
   referenceImages: File[];
@@ -33,7 +34,7 @@ interface OrderInfoTabProps {
   onGenerateProductLines: () => void;
 }
 
-export function OrderInfoTab({
+export function OrderInfoTabContent({
   customerInfo,
   onCustomerInfoChange,
   referenceImages,
@@ -55,7 +56,7 @@ export function OrderInfoTab({
   notes,
   onNotesChange,
   onGenerateProductLines
-}: OrderInfoTabProps) {
+}: OrderInfoTabContentProps) {
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
@@ -136,8 +137,17 @@ export function OrderInfoTab({
       </div>
       
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Thông tin in ấn</CardTitle>
+          {players.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onGenerateProductLines}
+            >
+              Tạo danh sách sản phẩm in
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <PlayerForm

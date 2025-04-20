@@ -1,24 +1,15 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  ArrowRight,
-  ClipboardList,
-  LayoutDashboard,
-  LogIn, 
-  ShoppingBag, 
-  Shirt,
-  UserCircle
-} from "lucide-react";
-
+import { ArrowRight, ClipboardList, LayoutDashboard, LogIn, ShoppingBag, Shirt, UserCircle } from "lucide-react";
 const Index = () => {
-  const { user } = useAuth();
-
-  return (
-    <Layout>
+  const {
+    user
+  } = useAuth();
+  const [imageError, setImageError] = useState(false);
+  return <Layout>
       {/* Hero Section */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-background to-secondary/20">
         <div className="container px-4 md:px-6">
@@ -36,28 +27,25 @@ const Index = () => {
                     Bắt đầu thiết kế <ShoppingBag className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                {!user ? (
-                  <Button asChild variant="outline" size="lg">
+                {!user ? <Button asChild variant="outline" size="lg">
                     <Link to="/customer/auth">
                       Đăng nhập <LogIn className="ml-2 h-5 w-5" />
                     </Link>
-                  </Button>
-                ) : (
-                  <Button asChild variant="outline" size="lg">
+                  </Button> : <Button asChild variant="outline" size="lg">
                     <Link to="/customer/dashboard">
                       Tài khoản <UserCircle className="ml-2 h-5 w-5" />
                     </Link>
-                  </Button>
-                )}
+                  </Button>}
               </div>
             </div>
             <div className="flex justify-center">
               <div className="relative w-full max-w-md">
-                <img
-                  src="https://images.unsplash.com/photo-1577212017308-55f2257055dc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
-                  alt="Soccer jersey"
-                  className="rounded-xl shadow-lg border"
-                />
+                {imageError ? <div className="rounded-xl shadow-lg border bg-muted flex items-center justify-center aspect-[4/3]">
+                    <div className="text-center p-4">
+                      <Shirt className="mx-auto h-16 w-16 text-muted-foreground" />
+                      <p className="mt-2 text-muted-foreground">Jersey Design Studio</p>
+                    </div>
+                  </div> : <img alt="Soccer jersey" className="rounded-xl shadow-lg border w-full object-cover aspect-[4/3]" onError={() => setImageError(true)} src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fthanhnien.vn%2Fchan-dung-26-hao-thu-doi-tuyen-viet-nam-quyet-lay-ngoi-vuong-aff-cup-2024-185241206125211907.htm&psig=AOvVaw3we_MQUhLz1R--K--ejna7&ust=1745134792072000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOiUyO_L44wDFQAAAAAdAAAAABAE" />}
               </div>
             </div>
           </div>
@@ -144,8 +132,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;

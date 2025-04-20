@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Player, Logo, UniformSize } from "@/types";
-import { X, Plus, Upload, Download, Edit } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
-import { formatNumberWithCommas } from "@/utils/format-utils";
+import { PlayerCard } from "./player-card";
+import { Plus, Download } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 interface PlayerFormProps {
   players: Player[];
@@ -62,7 +64,7 @@ export function PlayerForm({
   logos
 }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
-    id: `temp-${Date.now()}`, // Add a temporary ID to fix the type errors
+    id: `temp-${Date.now()}`,
     name: "",
     number: "",
     size: "M",
@@ -83,6 +85,8 @@ export function PlayerForm({
   
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editingPlayerIndex, setEditingPlayerIndex] = useState<number | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const addOrUpdatePlayer = () => {
     if (!newPlayer.number || newPlayer.number === "0") {
@@ -93,15 +97,6 @@ export function PlayerForm({
     const updatedPlayers = [...players];
     
     if (isEditing && editingPlayerIndex !== null) {
-      const isDuplicateNumber = players.some((p, idx) => 
-        idx !== editingPlayerIndex && p.number === newPlayer.number
-      );
-      
-      if (isDuplicateNumber) {
-        toast.error(`Số áo ${newPlayer.number} đã được sử dụng bởi cầu thủ khác`);
-        return;
-      }
-      
       updatedPlayers[editingPlayerIndex] = { 
         ...newPlayer, 
         id: players[editingPlayerIndex].id 
@@ -113,18 +108,13 @@ export function PlayerForm({
       setIsEditing(false);
       setEditingPlayerIndex(null);
     } else {
-      if (players.some(p => p.number === newPlayer.number)) {
-        toast.error(`Số áo ${newPlayer.number} đã được sử dụng`);
-        return;
-      }
-      
       updatedPlayers.push({ ...newPlayer, id: `player-${Date.now()}` });
       onPlayersChange(updatedPlayers);
       toast.success("Thêm cầu thủ thành công");
     }
     
     setNewPlayer({
-      id: `temp-${Date.now()}`, // Add ID here to fix TS error
+      id: `temp-${Date.now()}`,
       name: "",
       number: "",
       size: "M",
@@ -154,7 +144,7 @@ export function PlayerForm({
       setEditingPlayerIndex(null);
       
       setNewPlayer({
-        id: `temp-${Date.now()}`, // Add ID here to fix TS error
+        id: `temp-${Date.now()}`,
         name: "",
         number: "",
         size: "M",
@@ -191,7 +181,7 @@ export function PlayerForm({
     setEditingPlayerIndex(null);
     
     setNewPlayer({
-      id: `temp-${Date.now()}`, // Add ID here to fix TS error
+      id: `temp-${Date.now()}`,
       name: "",
       number: "",
       size: "M",
@@ -316,229 +306,105 @@ export function PlayerForm({
     e.target.value = "";
   };
 
-  return (
-    <Card className={cn(className)}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Danh sách cầu thủ</CardTitle>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            {players.length > 0 ? `${players.length} cầu thủ` : "Chưa có cầu thủ"}
-          </div>
-          {players.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Select
-                value={printStyle}
-                onValueChange={(value) => {
-                  const updatedPlayers = players.map(player => ({
-                    ...player,
-                    print_style: value
-                  }));
-                  onPlayersChange(updatedPlayers);
-                  toast.success("Đã cập nhật kiểu in cho tất cả cầu thủ");
-                }}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Chọn kiểu in" />
-                </SelectTrigger>
-                <SelectContent>
-                  {printStyleOptions.map(style => (
-                    <SelectItem key={style} value={style}>{style}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      </CardHeader>
+  const PlayerFormFields = () => (
+    <div className={cn("grid grid-cols-1 md:grid-cols-7 gap-4", isMobile ? "p-4" : "")}>
+      <div className="md:col-span-2">
+        <Label htmlFor="playerNumber">Số áo</Label>
+        <Input 
+          id="playerNumber"
+          type="text"
+          value={newPlayer.number || ""}
+          onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
+          placeholder="Số áo"
+        />
+      </div>
       
-      <CardContent className="space-y-4">
-        {players.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="p-2 text-left">Số</th>
-                  <th className="p-2 text-left">Tên trên số</th>
-                  <th className="p-2 text-left">Tên dưới số</th>
-                  <th className="p-2 text-left">Size</th>
-                  <th className="p-2 text-left">Loại</th>
-                  <th className="p-2 text-left">Kiểu in</th>
-                  <th className="p-2 text-center">Số ngực</th>
-                  <th className="p-2 text-center">Số quần</th>
-                  <th className="p-2 text-center">Logo ngực</th>
-                  <th className="p-2 text-center">Logo tay</th>
-                  <th className="p-2 text-left">Ghi chú</th>
-                  <th className="p-2 text-left">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {players.map((player, index) => {
-                  const extendedPlayer = player as ExtendedPlayer;
-                  return (
-                    <tr key={player.id || index} className={`border-b border-muted ${editingPlayerIndex === index ? 'bg-blue-50' : ''}`}>
-                      <td className="p-2">{player.number}</td>
-                      <td className="p-2">{extendedPlayer.line_1 || "-"}</td>
-                      <td className="p-2">{extendedPlayer.line_3 || "-"}</td>
-                      <td className="p-2">{player.size}</td>
-                      <td className="p-2">{extendedPlayer.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ'}</td>
-                      <td className="p-2">
-                        <Select
-                          value={player.print_style}
-                          onValueChange={(value) => {
-                            const updatedPlayers = [...players];
-                            updatedPlayers[index] = {
-                              ...player,
-                              print_style: value
-                            };
-                            onPlayersChange(updatedPlayers);
-                          }}
-                        >
-                          <SelectTrigger className="w-[160px]">
-                            <SelectValue placeholder="Chọn kiểu in" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {printStyleOptions.map(style => (
-                              <SelectItem key={style} value={style}>{style}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="p-2 text-center">{extendedPlayer.chest_number ? '✓' : '-'}</td>
-                      <td className="p-2 text-center">{extendedPlayer.pants_number ? '✓' : '-'}</td>
-                      <td className="p-2 text-center">
-                        {(extendedPlayer.logo_chest_left || extendedPlayer.logo_chest_right || extendedPlayer.logo_chest_center) ? '✓' : '-'}
-                      </td>
-                      <td className="p-2 text-center">
-                        {(extendedPlayer.logo_sleeve_left || extendedPlayer.logo_sleeve_right) ? '✓' : '-'}
-                      </td>
-                      <td className="p-2">{extendedPlayer.note || "-"}</td>
-                      <td className="p-2">
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => editPlayer(index)}
-                            title="Sửa thông tin cầu thủ"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => removePlayer(index)}
-                            title="Xóa cầu thủ"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center p-4 bg-muted/30 rounded-md">
-            <p className="text-muted-foreground">Chưa có cầu thủ nào trong danh sách</p>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-4 items-end">
-          <div>
-            <Label htmlFor="playerNumber">Số áo</Label>
-            <Input 
-              id="playerNumber"
-              type="text"
-              value={newPlayer.number || ""}
-              onChange={(e) => setNewPlayer(prev => ({ ...prev, number: e.target.value }))}
-              placeholder="Số áo"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="line1">Tên trên số</Label>
-            <Input 
-              id="line1"
-              value={newPlayer.line_1 || ""}
-              onChange={(e) => setNewPlayer(prev => ({ ...prev, line_1: e.target.value }))}
-              placeholder="Tên trên số lưng"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="line3">Tên dưới số</Label>
-            <Input 
-              id="line3"
-              value={newPlayer.line_3 || ""}
-              onChange={(e) => setNewPlayer(prev => ({ ...prev, line_3: e.target.value }))}
-              placeholder="Tên đội bóng"
-            />
-          </div>
+      <div className="md:col-span-2">
+        <Label htmlFor="line1">Tên trên số</Label>
+        <Input 
+          id="line1"
+          value={newPlayer.line_1 || ""}
+          onChange={(e) => setNewPlayer(prev => ({ ...prev, line_1: e.target.value }))}
+          placeholder="Tên trên số lưng"
+        />
+      </div>
+      
+      <div className="md:col-span-2">
+        <Label htmlFor="line3">Tên dưới số</Label>
+        <Input 
+          id="line3"
+          value={newPlayer.line_3 || ""}
+          onChange={(e) => setNewPlayer(prev => ({ ...prev, line_3: e.target.value }))}
+          placeholder="Tên đội bóng"
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="playerSize">Kích thước</Label>
-            <Select 
-              value={newPlayer.size}
-              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as UniformSize }))}
-            >
-              <SelectTrigger id="playerSize">
-                <SelectValue placeholder="Size" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Người lớn</SelectLabel>
-                  {SIZES.adult.map((size) => (
-                    <SelectItem key={size} value={size}>{size}</SelectItem>
-                  ))}
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>Trẻ em</SelectLabel>
-                  {SIZES.kids.map((size) => (
-                    <SelectItem key={size} value={size}>{size}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+      <div>
+        <Label htmlFor="playerSize">Size</Label>
+        <Select 
+          value={newPlayer.size}
+          onValueChange={(value) => setNewPlayer(prev => ({ ...prev, size: value as UniformSize }))}
+        >
+          <SelectTrigger id="playerSize">
+            <SelectValue placeholder="Size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Người lớn</SelectLabel>
+              {SIZES.adult.map((size) => (
+                <SelectItem key={size} value={size}>{size}</SelectItem>
+              ))}
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel>Trẻ em</SelectLabel>
+              {SIZES.kids.map((size) => (
+                <SelectItem key={size} value={size}>{size}</SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div>
-            <Label htmlFor="uniformType">Loại quần áo</Label>
-            <Select 
-              value={newPlayer.uniform_type || "player"}
-              onValueChange={(value) => setNewPlayer(prev => ({ 
-                ...prev, 
-                uniform_type: value as 'player' | 'goalkeeper' 
-              }))}
-            >
-              <SelectTrigger id="uniformType">
-                <SelectValue placeholder="Loại" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="player">Cầu thủ</SelectItem>
-                <SelectItem value="goalkeeper">Thủ môn</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="md:col-span-2">
+        <Label htmlFor="uniformType">Loại quần áo</Label>
+        <Select 
+          value={newPlayer.uniform_type || "player"}
+          onValueChange={(value) => setNewPlayer(prev => ({ 
+            ...prev, 
+            uniform_type: value as 'player' | 'goalkeeper' 
+          }))}
+        >
+          <SelectTrigger id="uniformType">
+            <SelectValue placeholder="Loại" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="player">Cầu thủ</SelectItem>
+            <SelectItem value="goalkeeper">Thủ môn</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div>
-            <Label htmlFor="printStyle">Kiểu in</Label>
-            <Select 
-              value={newPlayer.print_style}
-              onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
-            >
-              <SelectTrigger id="printStyle">
-                <SelectValue placeholder="Chọn kiểu in" />
-              </SelectTrigger>
-              <SelectContent>
-                {printStyleOptions.map(style => (
-                  <SelectItem key={style} value={style}>{style}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-1 md:col-span-2">
+      <div className="md:col-span-2">
+        <Label htmlFor="printStyle">Kiểu in</Label>
+        <Select 
+          value={newPlayer.print_style}
+          onValueChange={(value) => setNewPlayer(prev => ({ ...prev, print_style: value }))}
+        >
+          <SelectTrigger id="printStyle">
+            <SelectValue placeholder="Chọn kiểu in" />
+          </SelectTrigger>
+          <SelectContent>
+            {printStyleOptions.map(style => (
+              <SelectItem key={style} value={style}>{style}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="md:col-span-4 space-y-4">
+        <div>
+          <Label className="mb-2 inline-block">In số</Label>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="chestNumber"
@@ -547,7 +413,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, chest_number: checked === true }))
                 }
               />
-              <Label htmlFor="chestNumber" className="text-xs">In số ngực</Label>
+              <Label htmlFor="chestNumber">In số ngực</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -557,11 +423,14 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, pants_number: checked === true }))
                 }
               />
-              <Label htmlFor="pantsNumber" className="text-xs">In số quần</Label>
+              <Label htmlFor="pantsNumber">In số quần</Label>
             </div>
           </div>
-          
-          <div className="grid grid-cols-3 gap-1 md:col-span-3">
+        </div>
+
+        <div>
+          <Label className="mb-2 inline-block">Logo áo</Label>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="logoChestLeft"
@@ -570,7 +439,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_chest_left: checked === true }))
                 }
               />
-              <Label htmlFor="logoChestLeft" className="text-xs">Logo ngực trái</Label>
+              <Label htmlFor="logoChestLeft">Logo ngực trái</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -580,7 +449,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_chest_right: checked === true }))
                 }
               />
-              <Label htmlFor="logoChestRight" className="text-xs">Logo ngực phải</Label>
+              <Label htmlFor="logoChestRight">Logo ngực phải</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -590,11 +459,14 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_chest_center: checked === true }))
                 }
               />
-              <Label htmlFor="logoChestCenter" className="text-xs">Logo ngực giữa</Label>
+              <Label htmlFor="logoChestCenter">Logo ngực giữa</Label>
             </div>
           </div>
-          
-          <div className="grid grid-cols-3 gap-1 md:col-span-2">
+        </div>
+
+        <div>
+          <Label className="mb-2 inline-block">Logo tay & quần</Label>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="logoSleeveLeft"
@@ -603,7 +475,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_sleeve_left: checked === true }))
                 }
               />
-              <Label htmlFor="logoSleeveLeft" className="text-xs">Logo tay trái</Label>
+              <Label htmlFor="logoSleeveLeft">Logo tay trái</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -613,7 +485,7 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_sleeve_right: checked === true }))
                 }
               />
-              <Label htmlFor="logoSleeveRight" className="text-xs">Logo tay phải</Label>
+              <Label htmlFor="logoSleeveRight">Logo tay phải</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
@@ -623,37 +495,78 @@ export function PlayerForm({
                   setNewPlayer(prev => ({ ...prev, logo_pants: checked === true }))
                 }
               />
-              <Label htmlFor="logoPants" className="text-xs">Logo quần</Label>
+              <Label htmlFor="logoPants">Logo quần</Label>
             </div>
           </div>
-          
-          <div className="md:col-span-6">
-            <Label htmlFor="playerNote">Ghi chú</Label>
-            <Input 
-              id="playerNote"
-              value={newPlayer.note || ""}
-              onChange={(e) => setNewPlayer(prev => ({ ...prev, note: e.target.value }))}
-              placeholder="Ghi chú đặc biệt cho cầu thủ"
-            />
-          </div>
-          
-          <div className="md:col-span-2 flex space-x-2">
-            {isEditing ? (
-              <>
-                <Button onClick={addOrUpdatePlayer} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                  Cập nhật cầu thủ
-                </Button>
-                <Button variant="outline" onClick={cancelEdit} className="flex-1">
-                  Hủy
-                </Button>
-              </>
-            ) : (
-              <Button onClick={addOrUpdatePlayer} className="w-full">
-                <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
-              </Button>
-            )}
-          </div>
         </div>
+      </div>
+      
+      <div className="md:col-span-3">
+        <Label htmlFor="playerNote">Ghi chú</Label>
+        <Input 
+          id="playerNote"
+          value={newPlayer.note || ""}
+          onChange={(e) => setNewPlayer(prev => ({ ...prev, note: e.target.value }))}
+          placeholder="Ghi chú đặc biệt cho cầu thủ"
+        />
+      </div>
+      
+      <div className="md:col-span-2 flex space-x-2">
+        {isEditing ? (
+          <>
+            <Button onClick={addOrUpdatePlayer} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              Cập nhật
+            </Button>
+            <Button variant="outline" onClick={cancelEdit} className="flex-1">
+              Hủy
+            </Button>
+          </>
+        ) : (
+          <Button onClick={addOrUpdatePlayer} className="w-full">
+            <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Danh sách cầu thủ ({players.length})</CardTitle>
+          {isMobile && (
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {players.length > 0 ? (
+          <div className="grid gap-4">
+            {players.map((player, index) => (
+              <PlayerCard
+                key={player.id || index}
+                player={player}
+                onEdit={() => {
+                  if (isMobile) {
+                    setIsFormOpen(true);
+                  }
+                  editPlayer(index);
+                }}
+                onRemove={() => removePlayer(index)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-4 bg-muted/30 rounded-md">
+            <p className="text-muted-foreground">Chưa có cầu thủ nào trong danh sách</p>
+          </div>
+        )}
+        
+        {!isMobile && <PlayerFormFields />}
       </CardContent>
       
       <CardFooter className="bg-muted/30 p-4 rounded-md">
@@ -680,6 +593,19 @@ export function PlayerForm({
           </div>
         </div>
       </CardFooter>
+
+      {isMobile && (
+        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <SheetContent side="bottom" className="h-[85vh]">
+            <SheetHeader>
+              <SheetTitle>{isEditing ? 'Sửa thông tin cầu thủ' : 'Thêm cầu thủ mới'}</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto h-full pb-20">
+              <PlayerFormFields />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </Card>
   );
 }
