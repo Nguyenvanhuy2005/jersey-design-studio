@@ -67,12 +67,22 @@ export const JerseyFront = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw chest number if enabled in designData
+  // Draw chest number if enabled in designData - Fix for chest number
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A'; // Default color
-    const fontSize = Math.min(50, canvasWidth * 0.18); // Responsive font size
-    ctx.font = numberFontFamily.replace(/\d+px/, `${fontSize}px`);
-    ctx.fillText(playerNumber.toString(), canvasWidth * 0.5, canvasHeight * 0.45);
+    
+    // Calculate responsive font size but make it larger
+    const fontSize = Math.min(60, canvasWidth * 0.20); 
+    
+    // Use the number font family specifically
+    ctx.font = `bold ${fontSize}px ${numberFontFamily}`;
+    
+    // Adjust position to center of jersey - slightly higher than before
+    ctx.fillText(
+      playerNumber.toString(), 
+      canvasWidth * 0.5,  // Center horizontally
+      canvasHeight * 0.42  // Position vertically
+    );
   }
   
   // Draw chest text if enabled in designData

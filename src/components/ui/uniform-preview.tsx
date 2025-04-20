@@ -30,11 +30,11 @@ export function UniformPreview({
   
   const effectiveDesignData: Partial<DesignData> = {
     chest_number: { 
-      enabled: currentPlayer?.chest_number || false,
+      enabled: currentPlayer?.chest_number ?? true, // Enable by default
       material: printConfig?.backMaterial
     },
     pants_number: { 
-      enabled: currentPlayer?.pants_number || false,
+      enabled: currentPlayer?.pants_number ?? false,
       material: printConfig?.legMaterial
     },
     line_1: currentPlayer?.line_1 ? {

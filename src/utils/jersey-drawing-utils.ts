@@ -1,3 +1,4 @@
+
 // Common utility functions for jersey drawing
 export const drawBasicJersey = (
   ctx: CanvasRenderingContext2D,
@@ -56,13 +57,13 @@ export const drawBasicJersey = (
   ctx.lineTo(centerX + shoulderWidth * 0.15, canvasHeight * 0.15);
   ctx.stroke();
   
-  // Draw left sleeve with white trim
+  // Draw left sleeve with improved style (straight lines)
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(startX, canvasHeight * 0.15);
-  ctx.lineTo(centerX - bodyWidth/2, canvasHeight * 0.3);
-  ctx.lineTo(canvasWidth * 0.12, canvasHeight * 0.35);
-  ctx.lineTo(canvasWidth * 0.15, canvasHeight * 0.2);
+  ctx.moveTo(startX, canvasHeight * 0.15); // Connection point with body
+  ctx.lineTo(centerX - bodyWidth/2, canvasHeight * 0.3); // Bottom of sleeve connection
+  ctx.lineTo(canvasWidth * 0.05, canvasHeight * 0.4); // Bottom edge of sleeve
+  ctx.lineTo(canvasWidth * 0.08, canvasHeight * 0.15); // Top edge of sleeve
   ctx.closePath();
   ctx.fill();
 
@@ -70,17 +71,17 @@ export const drawBasicJersey = (
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(canvasWidth * 0.12, canvasHeight * 0.35);
-  ctx.lineTo(canvasWidth * 0.15, canvasHeight * 0.2);
+  ctx.moveTo(canvasWidth * 0.05, canvasHeight * 0.4);
+  ctx.lineTo(canvasWidth * 0.08, canvasHeight * 0.15);
   ctx.stroke();
   
-  // Draw right sleeve with white trim
+  // Draw right sleeve with improved style (straight lines)
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(endX, canvasHeight * 0.15);
-  ctx.lineTo(centerX + bodyWidth/2, canvasHeight * 0.3);
-  ctx.lineTo(canvasWidth * 0.88, canvasHeight * 0.35);
-  ctx.lineTo(canvasWidth * 0.85, canvasHeight * 0.2);
+  ctx.moveTo(endX, canvasHeight * 0.15); // Connection point with body
+  ctx.lineTo(centerX + bodyWidth/2, canvasHeight * 0.3); // Bottom of sleeve connection
+  ctx.lineTo(canvasWidth * 0.95, canvasHeight * 0.4); // Bottom edge of sleeve
+  ctx.lineTo(canvasWidth * 0.92, canvasHeight * 0.15); // Top edge of sleeve
   ctx.closePath();
   ctx.fill();
 
@@ -88,8 +89,8 @@ export const drawBasicJersey = (
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(canvasWidth * 0.88, canvasHeight * 0.35);
-  ctx.lineTo(canvasWidth * 0.85, canvasHeight * 0.2);
+  ctx.moveTo(canvasWidth * 0.95, canvasHeight * 0.4);
+  ctx.lineTo(canvasWidth * 0.92, canvasHeight * 0.15);
   ctx.stroke();
 
   // Add subtle shadow effect
@@ -106,7 +107,7 @@ export const setupCanvas = (ctx: CanvasRenderingContext2D) => {
   ctx.textAlign = 'center';
 };
 
-// New utility function for drawing pants with white stripes
+// Improved pants drawing function with tapered design
 export const drawPants = (
   ctx: CanvasRenderingContext2D,
   color: string = '#FFD700',
@@ -116,25 +117,47 @@ export const drawPants = (
   const canvasHeight = (ctx.canvas.height / window.devicePixelRatio) * scale;
   
   const centerX = canvasWidth / 2;
-  const pantsWidth = canvasWidth * 0.6;
+  
+  // Improved pants dimensions
+  const waistWidth = canvasWidth * 0.5; // Narrower waist
+  const bottomWidth = canvasWidth * 0.6; // Wider at bottom for tapered look
   const pantsHeight = canvasHeight * 0.7;
   
-  // Draw main pants shape
+  // Draw improved pants shape - more tapered
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(centerX - pantsWidth/4, canvasHeight * 0.2);
-  ctx.lineTo(centerX + pantsWidth/4, canvasHeight * 0.2);
-  ctx.lineTo(centerX + pantsWidth/2, canvasHeight * 0.85);
-  ctx.lineTo(centerX - pantsWidth/2, canvasHeight * 0.85);
+  
+  // Draw left leg
+  ctx.moveTo(centerX - waistWidth/2, canvasHeight * 0.2); // Waist left
+  ctx.lineTo(centerX - bottomWidth/2, canvasHeight * 0.85); // Bottom left
+  ctx.lineTo(centerX - waistWidth/8, canvasHeight * 0.85); // Bottom inner left
+  ctx.lineTo(centerX - waistWidth/6, canvasHeight * 0.2); // Inseam top left
+  ctx.closePath();
+  ctx.fill();
+  
+  // Draw right leg
+  ctx.beginPath();
+  ctx.moveTo(centerX + waistWidth/2, canvasHeight * 0.2); // Waist right
+  ctx.lineTo(centerX + bottomWidth/2, canvasHeight * 0.85); // Bottom right
+  ctx.lineTo(centerX + waistWidth/8, canvasHeight * 0.85); // Bottom inner right
+  ctx.lineTo(centerX + waistWidth/6, canvasHeight * 0.2); // Inseam top right
   ctx.closePath();
   ctx.fill();
 
-  // Add white trim at bottom
+  // Add white trim at bottom of each leg
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2;
+  
+  // Left leg trim
   ctx.beginPath();
-  ctx.moveTo(centerX - pantsWidth/2, canvasHeight * 0.85);
-  ctx.lineTo(centerX + pantsWidth/2, canvasHeight * 0.85);
+  ctx.moveTo(centerX - bottomWidth/2, canvasHeight * 0.85);
+  ctx.lineTo(centerX - waistWidth/8, canvasHeight * 0.85);
+  ctx.stroke();
+  
+  // Right leg trim
+  ctx.beginPath();
+  ctx.moveTo(centerX + waistWidth/8, canvasHeight * 0.85);
+  ctx.lineTo(centerX + bottomWidth/2, canvasHeight * 0.85);
   ctx.stroke();
 
   // Add white stripes on sides
@@ -143,14 +166,14 @@ export const drawPants = (
   
   // Left stripe
   ctx.beginPath();
-  ctx.moveTo(centerX - pantsWidth/4, canvasHeight * 0.25);
-  ctx.lineTo(centerX - pantsWidth/3, canvasHeight * 0.85);
+  ctx.moveTo(centerX - waistWidth/3, canvasHeight * 0.25);
+  ctx.lineTo(centerX - bottomWidth/3, canvasHeight * 0.85);
   ctx.stroke();
   
   // Right stripe
   ctx.beginPath();
-  ctx.moveTo(centerX + pantsWidth/4, canvasHeight * 0.25);
-  ctx.lineTo(centerX + pantsWidth/3, canvasHeight * 0.85);
+  ctx.moveTo(centerX + waistWidth/3, canvasHeight * 0.25);
+  ctx.lineTo(centerX + bottomWidth/3, canvasHeight * 0.85);
   ctx.stroke();
 
   // Add subtle shadow effect
