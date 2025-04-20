@@ -1,3 +1,4 @@
+
 import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player, Logo } from "@/types";
@@ -16,17 +17,27 @@ import { BatchUpdateDialog } from "./player/BatchUpdateDialog";
 interface PlayerFormProps {
   players: Player[];
   onPlayersChange: (players: Player[]) => void;
-  className?: string;
+  logos?: Logo[];
+  fontSize?: string;
+  fontNumber?: string;
   printStyleOptions: string[];
+  printColorOptions?: string[];
   printStyle: string;
+  printColor?: string;
+  className?: string;
 }
 
 export const PlayerForm = memo(({ 
   players, 
-  onPlayersChange, 
-  className,
+  onPlayersChange,
+  logos = [],
+  fontSize,
+  fontNumber,
   printStyleOptions,
+  printColorOptions,
   printStyle,
+  printColor,
+  className,
 }: PlayerFormProps) => {
   const {
     newPlayer,
