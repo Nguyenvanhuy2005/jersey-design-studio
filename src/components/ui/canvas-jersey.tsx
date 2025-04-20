@@ -1,7 +1,3 @@
-
-// Fix for the "Expected 2 arguments, but got 1" error on line 70
-// We need to modify the function call that's causing the issue
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -71,7 +67,7 @@ export function CanvasJersey({
   useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
-      loadCustomFont(customFontUrl, 'Custom Font') // Fix: Adding the second parameter 'Custom Font' as font name
+      loadCustomFont(customFontUrl, 'Custom Font')
         .then(fontFace => {
           setFontFace(fontFace);
           setLoadedFont(true);
@@ -280,17 +276,9 @@ export function CanvasJersey({
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    const fontToUse = designData?.font_text?.font 
-      ? `bold 20px "${designData.font_text.font}", sans-serif` 
-      : getFont(printConfig);
-      
-    const numberFontToUse = designData?.font_number?.font 
-      ? `bold 20px "${designData.font_number.font}", sans-serif` 
-      : fontToUse;
-
+    
     if (view === 'front') {
-      console.log('Rendering front jersey view');
+      console.log('Rendering front jersey view with design data:', designData);
       const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
       
       JerseyFront({
@@ -299,8 +287,8 @@ export function CanvasJersey({
         loadedLogos,
         logoPositions,
         logos: logos || [],
-        fontFamily: fontToUse,
-        numberFontFamily: numberFontToUse,
+        fontFamily: getFont(printConfig),
+        numberFontFamily: designData?.font_number?.font || getFont(printConfig),
         highQuality: true,
         selectedLogo: isInteractionDisabled ? null : selectedLogo,
         onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
@@ -309,13 +297,14 @@ export function CanvasJersey({
         designData
       });
     } else if (view === 'back') {
-      console.log('Rendering back jersey view');
+      console.log('Rendering back jersey view with design data:', designData);
       JerseyBack({
         ctx,
         teamName: designData?.line_3?.content || teamName,
         playerName: designData?.line_1?.content || playerName,
         playerNumber,
-        fontFamily: fontToUse
+        fontFamily: getFont(printConfig),
+        designData
       });
     } else if (view === 'pants') {
       console.log('Rendering pants view');
@@ -334,7 +323,7 @@ export function CanvasJersey({
       JerseyPants({
         ctx,
         playerNumber,
-        fontFamily: numberFontToUse,
+        fontFamily: designData?.font_number?.font || getFont(printConfig),
         pants_number_enabled: pantsNumberEnabled,
         logo: logoImage && logoPosition ? {
           image: logoImage,

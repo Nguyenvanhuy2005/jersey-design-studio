@@ -137,25 +137,35 @@ export const useOrderForm = () => {
   }, []);
 
   const updateFontText = (newFont: string) => {
+    console.log('Updating font text to:', newFont);
     setFontText(newFont);
-    setDesignData(prev => ({
-      ...prev,
-      font_text: {
-        ...prev.font_text,
-        font: newFont
-      }
-    }));
+    setDesignData(prev => {
+      const updated = {
+        ...prev,
+        font_text: {
+          ...prev.font_text,
+          font: newFont
+        }
+      };
+      console.log('Updated design data with new text font:', updated);
+      return updated;
+    });
   };
 
   const updateFontNumber = (newFont: string) => {
+    console.log('Updating font number to:', newFont);
     setFontNumber(newFont);
-    setDesignData(prev => ({
-      ...prev,
-      font_number: {
-        ...prev.font_number,
-        font: newFont
-      }
-    }));
+    setDesignData(prev => {
+      const updated = {
+        ...prev,
+        font_number: {
+          ...prev.font_number,
+          font: newFont
+        }
+      };
+      console.log('Updated design data with new number font:', updated);
+      return updated;
+    });
   };
 
   return {

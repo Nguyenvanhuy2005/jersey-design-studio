@@ -67,18 +67,22 @@ export const JerseyFront = ({
   
   // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
-    ctx.fillStyle = '#1A1A1A'; // Default color
+    ctx.fillStyle = '#1A1A1A';
     const fontSize = 50;
-    ctx.font = numberFontFamily.replace(/\d+px/, `${fontSize}px`);
+    const font = designData?.font_number?.font || numberFontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(playerNumber.toString(), 150, 140);
+    console.log(`Drew chest number with font: ${font}`);
   }
   
   // Draw chest text if enabled in designData
   if (designData?.chest_text?.enabled && designData.chest_text.content) {
-    ctx.fillStyle = '#1A1A1A'; // Default color
+    ctx.fillStyle = '#1A1A1A';
     const fontSize = 24;
-    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
+    const font = designData?.font_text?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(designData.chest_text.content, 150, 80, 180);
+    console.log(`Drew chest text with font: ${font}`);
   }
   
   // Draw logos with fixed positions and sizes
