@@ -247,13 +247,15 @@ export function CanvasJersey({
       return;
     }
 
-    console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
+    // Calculate responsive canvas size based on viewport
+    const containerWidth = canvas.parentElement?.clientWidth || 300;
+    const baseSize = Math.min(300, containerWidth);
+    
+    canvas.width = baseSize * pixelRatio;
+    canvas.height = baseSize * pixelRatio;
 
-    canvas.width = canvasWidth * pixelRatio;
-    canvas.height = canvasHeight * pixelRatio;
-
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
+    canvas.style.width = `${baseSize}px`;
+    canvas.style.height = `${baseSize}px`;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -279,14 +281,15 @@ export function CanvasJersey({
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
 
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.clearRect(0, 0, baseSize, baseSize);
 
+    // Use the configured fonts from designData
     const fontToUse = designData?.font_text?.font 
-      ? `bold 20px "${designData.font_text.font}", sans-serif` 
+      ? `"${designData.font_text.font}", sans-serif` 
       : getFont(printConfig);
       
     const numberFontToUse = designData?.font_number?.font 
-      ? `bold 20px "${designData.font_number.font}", sans-serif` 
+      ? `"${designData.font_number.font}", sans-serif` 
       : fontToUse;
 
     if (view === 'front') {
@@ -309,13 +312,13 @@ export function CanvasJersey({
         designData
       });
     } else if (view === 'back') {
-      console.log('Rendering back jersey view');
+      console.log('Rendering back jersey view with font:', numberFontToUse);
       JerseyBack({
         ctx,
         teamName: designData?.line_3?.content || teamName,
         playerName: designData?.line_1?.content || playerName,
         playerNumber,
-        fontFamily: fontToUse
+        fontFamily: numberFontToUse
       });
     } else if (view === 'pants') {
       console.log('Rendering pants view');

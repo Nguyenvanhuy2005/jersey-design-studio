@@ -17,42 +17,40 @@ export const JerseyBack = ({
   playerNumber,
   fontFamily
 }: JerseyBackProps) => {
-  console.log(`Rendering JerseyBack with data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
-  
   // Draw the basic jersey shape using utility function
   drawBasicJersey(ctx);
   
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw player name
+  // Calculate canvas dimensions for responsive sizing
+  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
+  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  
+  // Draw player name (line 1)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 35;
+    const fontSize = Math.min(35, canvasWidth * 0.12); // Responsive font size
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
-    ctx.fillText(playerNameDisplayed, 150, 80);
-    console.log(`Drew player name: ${playerNameDisplayed}`);
+    ctx.fillText(playerNameDisplayed, canvasWidth / 2, canvasHeight * 0.25);
   }
   
-  // Draw player number
+  // Draw player number (line 2)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 140;
+    const fontSize = Math.min(140, canvasWidth * 0.4); // Responsive font size
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
-    ctx.fillText(playerNumber, 150, 180);
-    console.log(`Drew player number: ${playerNumber}`);
+    ctx.fillText(playerNumber, canvasWidth / 2, canvasHeight * 0.5);
   }
   
-  // Draw team name
+  // Draw team name (line 3)
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 35;
+    const fontSize = Math.min(35, canvasWidth * 0.12); // Responsive font size
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
-    ctx.fillText(teamName, 150, 260);
-    console.log(`Drew team name: ${teamName}`);
+    ctx.fillText(teamName, canvasWidth / 2, canvasHeight * 0.75);
   }
   
   return null;
 };
-
