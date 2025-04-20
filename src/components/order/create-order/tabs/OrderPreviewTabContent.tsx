@@ -1,4 +1,3 @@
-
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UniformPreview } from "@/components/ui/uniform-preview";
 import { formatCurrency } from "@/utils/format-utils";
 import { Player, Logo, PrintConfig, DesignData, ProductLine } from "@/types";
+import { StickyFooter } from "../StickyFooter";
 
 interface OrderPreviewTabContentProps {
   players: Player[];
@@ -17,6 +17,7 @@ interface OrderPreviewTabContentProps {
   isGeneratingDesign: boolean;
   isDemoApproved: boolean;
   onApproveDemo: () => void;
+  onApproveAndContinue: () => void;
   jerseyCanvasRef?: React.RefObject<HTMLCanvasElement>;
   pantCanvasRef?: React.RefObject<HTMLCanvasElement>;
 }
@@ -31,6 +32,7 @@ export function OrderPreviewTabContent({
   isGeneratingDesign,
   isDemoApproved,
   onApproveDemo,
+  onApproveAndContinue,
   jerseyCanvasRef,
   pantCanvasRef
 }: OrderPreviewTabContentProps) {
@@ -52,7 +54,7 @@ export function OrderPreviewTabContent({
                    "TEAM";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6">
       <UniformPreview 
         teamName={teamName} 
         players={players} 
@@ -96,6 +98,16 @@ export function OrderPreviewTabContent({
           </CardFooter>
         </Card>
       )}
+      
+      <StickyFooter>
+        <Button
+          size="lg"
+          onClick={onApproveAndContinue}
+          disabled={isGeneratingDesign}
+        >
+          {isDemoApproved ? "Đã duyệt thiết kế - Tiếp tục" : "Duyệt thiết kế và tiếp tục"}
+        </Button>
+      </StickyFooter>
     </div>
   );
 }

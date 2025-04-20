@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { StickyFooter } from "../StickyFooter";
+import { validateOrderForm } from "@/components/order/OrderFormValidation";
+
 interface OrderInfoTabContentProps {
   customerInfo: Customer;
   onCustomerInfoChange: (customer: Customer) => void;
@@ -30,7 +33,9 @@ interface OrderInfoTabContentProps {
   notes: string;
   onNotesChange: (notes: string) => void;
   onGenerateProductLines: () => void;
+  onViewDemo: () => void;
 }
+
 export function OrderInfoTabContent({
   customerInfo,
   onCustomerInfoChange,
@@ -52,9 +57,17 @@ export function OrderInfoTabContent({
   onPlayersChange,
   notes,
   onNotesChange,
-  onGenerateProductLines
+  onGenerateProductLines,
+  onViewDemo
 }: OrderInfoTabContentProps) {
-  return <div className="space-y-6">
+  const handleViewDemo = () => {
+    if (!validateOrderForm({ players, customerInfo })) return;
+    onGenerateProductLines();
+    onViewDemo();
+  };
+
+  return (
+    <div className="space-y-6 px-6">
       <div className="grid md:grid-cols-2 gap-6">
         <CustomerForm initialCustomer={customerInfo} onCustomerInfoChange={onCustomerInfoChange} />
         
@@ -120,5 +133,12 @@ export function OrderInfoTabContent({
           </div>
         </CardContent>
       </Card>
-    </div>;
+      
+      <StickyFooter>
+        <Button size="lg" onClick={handleViewDemo}>
+          Xem thiết kế demo
+        </Button>
+      </StickyFooter>
+    </div>
+  );
 }

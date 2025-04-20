@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, Logo, Player, ProductLine } from "@/types";
 import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
@@ -80,6 +79,16 @@ export function OrderTabs({
   isSubmitting,
   getPlayerAndGoalkeeperCounts
 }: OrderTabsProps) {
+  const handleViewDemo = () => {
+    onGenerateProductLines();
+    setActiveTab("preview");
+  };
+
+  const handleApproveAndContinue = () => {
+    onApproveDemo();
+    setActiveTab("summary");
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
@@ -111,6 +120,7 @@ export function OrderTabs({
           notes={notes}
           onNotesChange={onNotesChange}
           onGenerateProductLines={onGenerateProductLines}
+          onViewDemo={handleViewDemo}
         />
       </TabsContent>
       
@@ -127,6 +137,7 @@ export function OrderTabs({
           onApproveDemo={onApproveDemo}
           jerseyCanvasRef={jerseyCanvasRef}
           pantCanvasRef={pantCanvasRef}
+          onApproveAndContinue={handleApproveAndContinue}
         />
       </TabsContent>
       
