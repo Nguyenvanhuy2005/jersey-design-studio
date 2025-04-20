@@ -1,3 +1,4 @@
+
 import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player, Logo } from "@/types";
@@ -7,7 +8,7 @@ import { usePlayerForm } from "@/hooks/usePlayerForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Download } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { PlayerFormFields } from "./player/PlayerFormFields";
