@@ -15,27 +15,36 @@ export const drawBasicJersey = (
   
   // Center the jersey
   const centerX = canvasWidth / 2;
+  const startX = centerX - shoulderWidth / 2;
+  const endX = centerX + shoulderWidth / 2;
   
-  // Draw main body
+  // Draw main body with slight curve on sides
   ctx.fillStyle = color;
   ctx.beginPath();
-  
-  // Start from left shoulder
-  ctx.moveTo(centerX - shoulderWidth/2, canvasHeight * 0.15);
-  
-  // Left side - straight line
-  ctx.lineTo(centerX - bodyWidth/2, canvasHeight * 0.3);
-  ctx.lineTo(centerX - bodyWidth/2, jerseyBottom);
-  
-  // Bottom - straight line
-  ctx.lineTo(centerX + bodyWidth/2, jerseyBottom);
-  
-  // Right side - straight line
-  ctx.lineTo(centerX + bodyWidth/2, canvasHeight * 0.3);
-  ctx.lineTo(centerX + shoulderWidth/2, canvasHeight * 0.15);
-  
+  ctx.moveTo(startX, canvasHeight * 0.15);
+  ctx.lineTo(endX, canvasHeight * 0.15);
+  // Right side with slight curve
+  ctx.quadraticCurveTo(
+    centerX + bodyWidth / 2 + 10, canvasHeight * 0.5,
+    centerX + bodyWidth / 2, jerseyBottom
+  );
+  // Bottom
+  ctx.lineTo(centerX - bodyWidth / 2, jerseyBottom);
+  // Left side with slight curve
+  ctx.quadraticCurveTo(
+    centerX - bodyWidth / 2 - 10, canvasHeight * 0.5,
+    startX, canvasHeight * 0.15
+  );
   ctx.closePath();
   ctx.fill();
+
+  // Draw white trim on bottom
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(centerX - bodyWidth / 2, jerseyBottom);
+  ctx.lineTo(centerX + bodyWidth / 2, jerseyBottom);
+  ctx.stroke();
 
   // Draw collar based on front/back
   if (isFront) {
@@ -44,8 +53,26 @@ export const drawBasicJersey = (
     drawBackCollar(ctx, centerX, canvasHeight);
   }
   
-  // Draw sleeves
+  // Draw sleeves with white trim and shoulder detail
   drawSleeves(ctx, centerX, canvasHeight, shoulderWidth);
+
+  // Add white shoulder detail (diagonal stripe)
+  ctx.fillStyle = '#FFFFFF';
+  // Left shoulder
+  ctx.beginPath();
+  ctx.moveTo(startX, canvasHeight * 0.15);
+  ctx.lineTo(startX + shoulderWidth * 0.2, canvasHeight * 0.15);
+  ctx.lineTo(centerX - bodyWidth / 2, canvasHeight * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right shoulder
+  ctx.beginPath();
+  ctx.moveTo(endX - shoulderWidth * 0.2, canvasHeight * 0.15);
+  ctx.lineTo(endX, canvasHeight * 0.15);
+  ctx.lineTo(centerX + bodyWidth / 2, canvasHeight * 0.3);
+  ctx.closePath();
+  ctx.fill();
 };
 
 const drawFrontCollar = (
@@ -64,6 +91,15 @@ const drawFrontCollar = (
   ctx.lineTo(centerX + neckWidth, canvasHeight * 0.15);
   ctx.closePath();
   ctx.fill();
+
+  // Add white trim to V-neck
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - neckWidth, canvasHeight * 0.15);
+  ctx.lineTo(centerX, neckDepth);
+  ctx.lineTo(centerX + neckWidth, canvasHeight * 0.15);
+  ctx.stroke();
 };
 
 const drawBackCollar = (
@@ -71,18 +107,26 @@ const drawBackCollar = (
   centerX: number,
   canvasHeight: number
 ) => {
-  // Round neck for back
-  const neckWidth = 40;
+  // V-neck collar for back (same as front for consistency with design)
+  const neckWidth = 45;
+  const neckDepth = canvasHeight * 0.22;
   
   ctx.fillStyle = '#1A1A1A';
   ctx.beginPath();
   ctx.moveTo(centerX - neckWidth, canvasHeight * 0.15);
-  ctx.quadraticCurveTo(
-    centerX, canvasHeight * 0.17,
-    centerX + neckWidth, canvasHeight * 0.15
-  );
+  ctx.lineTo(centerX, neckDepth);
+  ctx.lineTo(centerX + neckWidth, canvasHeight * 0.15);
   ctx.closePath();
   ctx.fill();
+
+  // Add white trim to V-neck
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - neckWidth, canvasHeight * 0.15);
+  ctx.lineTo(centerX, neckDepth);
+  ctx.lineTo(centerX + neckWidth, canvasHeight * 0.15);
+  ctx.stroke();
 };
 
 const drawSleeves = (
@@ -102,6 +146,14 @@ const drawSleeves = (
   ctx.closePath();
   ctx.fill();
   
+  // Add white trim to left sleeve
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - shoulderWidth/2 - sleeveWidth, canvasHeight * 0.15 + sleeveLength);
+  ctx.lineTo(centerX - shoulderWidth/2 + sleeveWidth, canvasHeight * 0.15 + sleeveLength);
+  ctx.stroke();
+  
   // Right sleeve
   ctx.beginPath();
   ctx.moveTo(centerX + shoulderWidth/2, canvasHeight * 0.15);
@@ -109,6 +161,14 @@ const drawSleeves = (
   ctx.lineTo(centerX + shoulderWidth/2 - sleeveWidth, canvasHeight * 0.15 + sleeveLength);
   ctx.closePath();
   ctx.fill();
+  
+  // Add white trim to right sleeve
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX + shoulderWidth/2 + sleeveWidth, canvasHeight * 0.15 + sleeveLength);
+  ctx.lineTo(centerX + shoulderWidth/2 - sleeveWidth, canvasHeight * 0.15 + sleeveLength);
+  ctx.stroke();
 };
 
 export const setupCanvas = (ctx: CanvasRenderingContext2D) => {
@@ -170,4 +230,28 @@ export const drawPants = (
     waistWidth,
     5
   );
+
+  // Add white trim at bottom
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - waistWidth/2, shortsTop + shortsLength);
+  ctx.lineTo(centerX + waistWidth/2, shortsTop + shortsLength);
+  ctx.stroke();
+
+  // Add white stripes on sides
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 3;
+  
+  // Left stripe
+  ctx.beginPath();
+  ctx.moveTo(centerX - waistWidth/4, shortsTop + 5);
+  ctx.lineTo(centerX - waistWidth/3, shortsTop + shortsLength);
+  ctx.stroke();
+  
+  // Right stripe
+  ctx.beginPath();
+  ctx.moveTo(centerX + waistWidth/4, shortsTop + 5);
+  ctx.lineTo(centerX + waistWidth/3, shortsTop + shortsLength);
+  ctx.stroke();
 };
