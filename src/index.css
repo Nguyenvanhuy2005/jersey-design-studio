@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,15 +90,17 @@
   background-color: transparent;
   border: 1px solid #ccc;
   width: 100%;
-  max-width: 200px;
+  max-width: 280px;
   height: auto;
   display: block;
   margin: 0 auto;
   aspect-ratio: 1;
+  padding: 10px;
+  box-sizing: content-box;
 }
 
 @media (min-width: 768px) {
   .jersey-canvas {
-    max-width: 250px;
+    max-width: 300px;
   }
 }

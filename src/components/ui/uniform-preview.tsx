@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
@@ -136,7 +137,7 @@ export function UniformPreview({
             Quần
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="front" className="focus:outline-none px-2">
+        <TabsContent value="front" className="focus:outline-none pt-4">
           <CanvasJersey
             teamName={teamName}
             playerName={currentPlayer?.name}
@@ -148,7 +149,7 @@ export function UniformPreview({
             canvasRef={jerseyCanvasRef}
           />
         </TabsContent>
-        <TabsContent value="back" className="focus:outline-none px-2">
+        <TabsContent value="back" className="focus:outline-none pt-4">
           <CanvasJersey
             teamName={teamName}
             playerName={currentPlayer?.name}
@@ -160,7 +161,7 @@ export function UniformPreview({
             canvasRef={jerseyCanvasRef}
           />
         </TabsContent>
-        <TabsContent value="pants" className="focus:outline-none px-2">
+        <TabsContent value="pants" className="focus:outline-none pt-4">
           <CanvasJersey
             teamName={teamName}
             playerNumber={currentPlayer?.number}

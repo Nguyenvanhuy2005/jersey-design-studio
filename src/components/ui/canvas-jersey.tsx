@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -44,8 +45,9 @@ export function CanvasJersey({
 
   const getBaseCanvasSize = () => {
     const isMobile = window.innerWidth <= 768;
-    const mobileSize = Math.min(200, window.innerWidth - 48);
-    return isMobile ? mobileSize : 250;
+    // Tăng kích thước canvas mặc định
+    const mobileSize = Math.min(280, window.innerWidth - 32);
+    return isMobile ? mobileSize : 300;
   };
 
   const { 
@@ -249,12 +251,15 @@ export function CanvasJersey({
 
     const baseSize = getBaseCanvasSize();
     
+    // Tăng kích thước canvas để có thêm không gian cho áo
     canvas.width = baseSize * pixelRatio;
     canvas.height = baseSize * pixelRatio;
     
+    // Đảm bảo canvas luôn được căn giữa và tương thích với màn hình
     canvas.style.width = '100%';
     canvas.style.maxWidth = `${baseSize}px`;
     canvas.style.height = 'auto';
+    canvas.style.margin = '0 auto'; // Căn giữa canvas
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -263,6 +268,7 @@ export function CanvasJersey({
     }
 
     ctx.scale(pixelRatio, pixelRatio);
+    ctx.clearRect(0, 0, baseSize, baseSize);
 
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) {
@@ -279,8 +285,6 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
-
-    ctx.clearRect(0, 0, baseSize, baseSize);
 
     const fontToUse = designData?.font_text?.font 
       ? `"${designData.font_text.font}", sans-serif` 
@@ -351,13 +355,14 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative w-full p-4">
+    <div className="relative w-full p-2">
       <canvas 
         ref={canvasRef} 
         className="jersey-canvas"
         id="jersey-design-canvas"
         style={{
-          cursor: 'default'
+          cursor: 'default',
+          padding: '10px', // Thêm padding để tránh áo bị cắt ở rìa
         }}
       />
       {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
