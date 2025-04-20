@@ -17,11 +17,11 @@ export const JerseyBack = ({
   playerNumber,
   fontFamily
 }: JerseyBackProps) => {
-  // Lấy kích thước canvas thực tế để đảm bảo tỉ lệ đúng
+  // Get actual canvas dimensions accounting for device pixel ratio
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
-  // Xóa canvas trước khi vẽ
+  // Clear canvas before drawing
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
   // Draw the basic jersey shape using utility function
@@ -30,27 +30,27 @@ export const JerseyBack = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw player name (line 1)
+  // Draw player name (line 1) - positioned at 25% from top
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(35, canvasWidth * 0.11); // Giảm font size
+    const fontSize = Math.min(35, canvasWidth * 0.11); // Responsive font size
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, canvasWidth / 2, canvasHeight * 0.25);
   }
   
-  // Draw player number (line 2)
+  // Draw player number (line 2) - positioned at center (50% from top)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(120, canvasWidth * 0.35); // Giảm kích thước số để phù hợp
+    const fontSize = Math.min(120, canvasWidth * 0.35); // Responsive larger font size for number
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
     ctx.fillText(playerNumber, canvasWidth / 2, canvasHeight * 0.5);
   }
   
-  // Draw team name (line 3)
+  // Draw team name (line 3) - positioned at 75% from top
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(35, canvasWidth * 0.11); // Giảm font size
+    const fontSize = Math.min(35, canvasWidth * 0.11); // Responsive font size
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
     ctx.fillText(teamName, canvasWidth / 2, canvasHeight * 0.75);
   }

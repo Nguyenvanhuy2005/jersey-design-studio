@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -8,7 +7,6 @@ import { JerseyFront } from '@/components/jersey/JerseyFront';
 import { JerseyBack } from '@/components/jersey/JerseyBack';
 import { JerseyPants } from '@/components/jersey/JerseyPants';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CanvasJerseyProps {
@@ -44,10 +42,14 @@ export function CanvasJersey({
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
   const getBaseCanvasSize = () => {
-    const isMobile = window.innerWidth <= 768;
-    // Tăng kích thước canvas mặc định
-    const mobileSize = Math.min(280, window.innerWidth - 32);
-    return isMobile ? mobileSize : 300;
+    const viewportWidth = window.innerWidth;
+    if (viewportWidth <= 640) {
+      return 260; // Small screens
+    } else if (viewportWidth <= 1024) {
+      return 300; // Medium screens
+    } else {
+      return 320; // Large screens
+    }
   };
 
   const { 
@@ -66,11 +68,6 @@ export function CanvasJersey({
   });
 
   useEffect(() => {
-    console.log('Current logos prop:', logos);
-    console.log('Current design data:', designData);
-  }, [logos, designData]);
-
-  useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
       loadCustomFont(customFontUrl, 'Custom Font')
@@ -87,8 +84,6 @@ export function CanvasJersey({
 
   useEffect(() => {
     if (logos && logos.length > 0) {
-      console.log("Attempting to load logos:", logos.length);
-
       const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
 
       const positionKeysMap: Record<string, string> = {
@@ -245,21 +240,17 @@ export function CanvasJersey({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      console.log('Canvas ref not available');
       return;
     }
 
     const baseSize = getBaseCanvasSize();
     
-    // Tăng kích thước canvas để có thêm không gian cho áo
     canvas.width = baseSize * pixelRatio;
     canvas.height = baseSize * pixelRatio;
     
-    // Đảm bảo canvas luôn được căn giữa và tương thích với màn hình
     canvas.style.width = '100%';
     canvas.style.maxWidth = `${baseSize}px`;
     canvas.style.height = 'auto';
-    canvas.style.margin = '0 auto'; // Căn giữa canvas
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -277,14 +268,11 @@ export function CanvasJersey({
 
     if ((printConfig?.customFontUrl && !loadedFont) && 
         !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
-      console.log('Waiting for custom font to load...');
       setTimeout(() => {
         setLoadedFont(prev => !prev);
       }, 100);
       return;
     }
-
-    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
 
     const fontToUse = designData?.font_text?.font 
       ? `"${designData.font_text.font}", sans-serif` 
@@ -295,7 +283,6 @@ export function CanvasJersey({
       : fontToUse;
 
     if (view === 'front') {
-      console.log('Rendering front jersey view');
       const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
       
       JerseyFront({
@@ -314,7 +301,6 @@ export function CanvasJersey({
         designData
       });
     } else if (view === 'back') {
-      console.log('Rendering back jersey view with font:', numberFontToUse);
       JerseyBack({
         ctx,
         teamName: designData?.line_3?.content || teamName,
@@ -323,7 +309,6 @@ export function CanvasJersey({
         fontFamily: numberFontToUse
       });
     } else if (view === 'pants') {
-      console.log('Rendering pants view');
       const pantsLogo = logos.find(logo => logo.position === 'pants');
       let logoImage;
       let logoPosition;
@@ -334,7 +319,6 @@ export function CanvasJersey({
       }
 
       const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
-      console.log('Pants number enabled:', pantsNumberEnabled);
 
       JerseyPants({
         ctx,
@@ -355,15 +339,11 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative w-full p-2">
+    <div className="relative w-full jersey-canvas-container">
       <canvas 
         ref={canvasRef} 
         className="jersey-canvas"
         id="jersey-design-canvas"
-        style={{
-          cursor: 'default',
-          padding: '10px', // Thêm padding để tránh áo bị cắt ở rìa
-        }}
       />
       {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">

@@ -86,21 +86,38 @@
   }
 }
 
+/* Updated jersey canvas styling */
 .jersey-canvas {
   background-color: transparent;
   border: 1px solid #ccc;
   width: 100%;
-  max-width: 280px;
+  max-width: 300px;
   height: auto;
+  aspect-ratio: 1;
   display: block;
   margin: 0 auto;
-  aspect-ratio: 1;
-  padding: 10px;
+  padding: 0;
   box-sizing: content-box;
+  border-radius: 4px;
+}
+
+/* Container for jersey canvas with padding */
+.jersey-canvas-container {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .jersey-canvas {
+    max-width: 260px;
+  }
 }
 
 @media (min-width: 768px) {
   .jersey-canvas {
-    max-width: 300px;
+    max-width: 320px;
   }
 }
