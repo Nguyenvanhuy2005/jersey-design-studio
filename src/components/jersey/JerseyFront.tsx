@@ -4,7 +4,7 @@ import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: number;  // Keep as number for backward compatibility
+  playerNumber?: number;
   loadedLogos: Map<string, HTMLImageElement>;
   logoPositions: Map<string, { x: number, y: number, scale: number }>;
   logos: Logo[];
@@ -46,9 +46,6 @@ export const JerseyFront = ({
   numberFontFamily,
   highQuality = false,
   selectedLogo,
-  onLogoMove,
-  onLogoResize,
-  onLogoDelete,
   designData
 }: JerseyFrontProps) => {
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
@@ -57,8 +54,8 @@ export const JerseyFront = ({
   // Clear canvas
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
-  // Draw the basic jersey shape
-  drawBasicJersey(ctx, designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700');
+  // Draw jersey with front collar
+  drawBasicJersey(ctx, designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700', 1, true);
   
   // Setup canvas for text rendering
   setupCanvas(ctx);
@@ -66,27 +63,26 @@ export const JerseyFront = ({
   // Draw chest number with improved positioning
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
-    
-    // Calculate responsive font size (larger than before)
     const fontSize = Math.min(80, canvasWidth * 0.25);
-    
-    // Use specific number font
     ctx.font = `bold ${fontSize}px ${numberFontFamily}`;
-    
-    // Center the number both horizontally and vertically
     ctx.fillText(
       playerNumber.toString(),
-      canvasWidth * 0.5, // Centered horizontally
-      canvasHeight * 0.45  // Positioned lower on chest
+      canvasWidth * 0.5,
+      canvasHeight * 0.45
     );
   }
   
-  // Draw chest text if enabled in designData
+  // Draw chest text if enabled
   if (designData?.chest_text?.enabled && designData.chest_text.content) {
-    ctx.fillStyle = '#1A1A1A'; // Default color
-    const fontSize = Math.min(24, canvasWidth * 0.08); // Responsive font size
+    ctx.fillStyle = '#1A1A1A';
+    const fontSize = Math.min(24, canvasWidth * 0.08);
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    ctx.fillText(designData.chest_text.content, canvasWidth * 0.5, canvasHeight * 0.3, canvasWidth * 0.6);
+    ctx.fillText(
+      designData.chest_text.content,
+      canvasWidth * 0.5,
+      canvasHeight * 0.3,
+      canvasWidth * 0.6
+    );
   }
   
   // Draw logos with fixed positions and sizes

@@ -20,11 +20,11 @@ export const JerseyBack = ({
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
-  // Clear canvas before drawing
+  // Clear canvas
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
-  // Draw the basic jersey shape with new design
-  drawBasicJersey(ctx);
+  // Draw the basic jersey shape with back collar
+  drawBasicJersey(ctx, '#FFD700', 1, false);
   
   // Setup canvas for text rendering
   setupCanvas(ctx);

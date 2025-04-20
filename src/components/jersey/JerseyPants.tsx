@@ -28,31 +28,31 @@ export const JerseyPants = ({
   
   // Draw improved shorts design
   drawPants(ctx);
-
+  
   // Setup canvas for text
   setupCanvas(ctx);
   
-  // Draw player number if enabled (on the side of shorts)
+  // Draw player number if enabled (on right leg)
   if (playerNumber !== undefined && pants_number_enabled) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = Math.min(40, canvasWidth * 0.15);
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
     
-    // Position number on the side of shorts
+    // Position number on right leg
     ctx.fillText(
-      playerNumber.toString(), 
-      canvasWidth * 0.75, // Right side placement
-      canvasHeight * 0.4  // Middle of shorts height
+      playerNumber.toString(),
+      canvasWidth * 0.75,
+      canvasHeight * 0.35
     );
   }
   
-  // Draw logo if provided
+  // Draw logo if provided (on left leg)
   if (logo?.image) {
-    const logoWidth = canvasWidth * 0.15; // Smaller logo size
+    const logoWidth = canvasWidth * 0.15;
     const logoHeight = logoWidth;
     
-    const x = canvasWidth * 0.8;  // Right side placement
-    const y = canvasHeight * 0.3; // Upper portion of shorts
+    const x = canvasWidth * 0.25; // Left leg placement
+    const y = canvasHeight * 0.35; // Upper portion of shorts
     
     ctx.drawImage(
       logo.image,
