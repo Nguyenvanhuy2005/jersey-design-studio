@@ -295,7 +295,7 @@ export function CanvasJersey({
     if (view === 'front') {
       JerseyFront({
         ctx,
-        playerNumber: numericPlayerNumber,
+        playerNumber: playerNumber,
         loadedLogos,
         logoPositions,
         logos: logos || [],
