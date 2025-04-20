@@ -1,4 +1,3 @@
-
 import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player, Logo } from "@/types";
@@ -237,7 +236,7 @@ export const PlayerForm = memo(({
                 isEditing={isEditing}
                 printStyleOptions={printStyleOptions}
                 onInputChange={handleInputChange}
-                onAddOrUpdate={(e) => {
+                onAddOrUpdate={() => {
                   addOrUpdatePlayer();
                   setIsFormOpen(false);
                 }}
