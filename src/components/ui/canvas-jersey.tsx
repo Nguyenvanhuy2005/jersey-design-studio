@@ -1,7 +1,3 @@
-
-// Fix for the "Expected 2 arguments, but got 1" error on line 70
-// We need to modify the function call that's causing the issue
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -45,8 +41,11 @@ export function CanvasJersey({
 
   const isInteractionDisabled = true;
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const canvasWidth = 300;
-  const canvasHeight = 300;
+
+  const getBaseCanvasSize = () => {
+    const isMobile = window.innerWidth <= 768;
+    return isMobile ? Math.min(250, window.innerWidth - 32) : 300;
+  };
 
   const { 
     selectedLogo,
@@ -71,7 +70,7 @@ export function CanvasJersey({
   useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
-      loadCustomFont(customFontUrl, 'Custom Font') // Fix: Adding the second parameter 'Custom Font' as font name
+      loadCustomFont(customFontUrl, 'Custom Font')
         .then(fontFace => {
           setFontFace(fontFace);
           setLoadedFont(true);
@@ -247,15 +246,14 @@ export function CanvasJersey({
       return;
     }
 
-    // Calculate responsive canvas size based on viewport
-    const containerWidth = canvas.parentElement?.clientWidth || 300;
-    const baseSize = Math.min(300, containerWidth);
+    const baseSize = getBaseCanvasSize();
     
     canvas.width = baseSize * pixelRatio;
     canvas.height = baseSize * pixelRatio;
 
-    canvas.style.width = `${baseSize}px`;
-    canvas.style.height = `${baseSize}px`;
+    canvas.style.width = '100%';
+    canvas.style.maxWidth = `${baseSize}px`;
+    canvas.style.height = 'auto';
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -283,7 +281,6 @@ export function CanvasJersey({
 
     ctx.clearRect(0, 0, baseSize, baseSize);
 
-    // Use the configured fonts from designData
     const fontToUse = designData?.font_text?.font 
       ? `"${designData.font_text.font}", sans-serif` 
       : getFont(printConfig);
@@ -353,16 +350,12 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <canvas 
         ref={canvasRef} 
-        width={canvasWidth * pixelRatio} 
-        height={canvasHeight * pixelRatio} 
-        className="jersey-canvas mx-auto"
+        className="jersey-canvas"
         id="jersey-design-canvas"
         style={{
-          width: `${canvasWidth}px`,
-          height: `${canvasHeight}px`,
           cursor: 'default'
         }}
       />
