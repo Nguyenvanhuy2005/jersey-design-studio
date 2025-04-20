@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 import { DesignData } from '@/types';
@@ -32,18 +31,18 @@ export const JerseyBack = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw player name
+  // Draw player name - reduced size to 23px (35% reduction)
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 35;
+    const fontSize = 23; // Reduced from 35px
     const textFont = designData?.font_text?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${textFont}"`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 80);
-    console.log(`Drew player name with font: ${textFont}`);
+    console.log(`Drew player name with font: ${textFont}, size: ${fontSize}`);
   }
   
-  // Draw player number
+  // Draw player number (unchanged)
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 140;
@@ -53,14 +52,14 @@ export const JerseyBack = ({
     console.log(`Drew player number with font: ${numberFont}`);
   }
   
-  // Draw team name
+  // Draw team name - reduced size to 23px (35% reduction)
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 35;
+    const fontSize = 23; // Reduced from 35px
     const textFont = designData?.font_text?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${textFont}"`;
     ctx.fillText(teamName, 150, 260);
-    console.log(`Drew team name with font: ${textFont}`);
+    console.log(`Drew team name with font: ${textFont}, size: ${fontSize}`);
   }
   
   return null;

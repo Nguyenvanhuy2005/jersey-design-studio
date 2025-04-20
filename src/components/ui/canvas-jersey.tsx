@@ -277,10 +277,22 @@ export function CanvasJersey({
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     
+    const effectiveDesignData: Partial<DesignData> = {
+      ...designData,
+      font_text: {
+        font: designData?.font_text?.font || designData?.font_text?.font_file || printConfig?.font || 'Arial'
+      },
+      font_number: {
+        font: designData?.font_number?.font || designData?.font_number?.font_file || printConfig?.font || 'Arial'
+      }
+    };
+
+    console.log('Effective Design Data for Jersey:', {
+      designData: effectiveDesignData,
+      view: view
+    });
+
     if (view === 'front') {
-      console.log('Rendering front jersey view with design data:', designData);
-      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
-      
       JerseyFront({
         ctx,
         playerNumber: numericPlayerNumber,
@@ -294,17 +306,16 @@ export function CanvasJersey({
         onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
         onLogoResize: isInteractionDisabled ? undefined : handleLogoResize,
         onLogoDelete: isInteractionDisabled ? undefined : handleLogoDelete,
-        designData
+        designData: effectiveDesignData
       });
     } else if (view === 'back') {
-      console.log('Rendering back jersey view with design data:', designData);
       JerseyBack({
         ctx,
         teamName: designData?.line_3?.content || teamName,
         playerName: designData?.line_1?.content || playerName,
         playerNumber,
         fontFamily: getFont(printConfig),
-        designData
+        designData: effectiveDesignData
       });
     } else if (view === 'pants') {
       console.log('Rendering pants view');
