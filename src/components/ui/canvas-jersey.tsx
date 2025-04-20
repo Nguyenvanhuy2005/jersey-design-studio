@@ -237,9 +237,7 @@ export function CanvasJersey({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     const { width: baseWidth, height: baseHeight } = getBaseCanvasSize();
     
@@ -251,18 +249,10 @@ export function CanvasJersey({
     canvas.style.height = 'auto';
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get canvas context');
-      return;
-    }
+    if (!ctx) return;
 
     ctx.scale(pixelRatio, pixelRatio);
     ctx.clearRect(0, 0, baseWidth, baseHeight);
-
-    ctx.imageSmoothingEnabled = true;
-    if ('imageSmoothingQuality' in ctx) {
-      (ctx as any).imageSmoothingQuality = 'high';
-    }
 
     const fontToUse = designData?.font_text?.font 
       ? `"${designData.font_text.font}", sans-serif` 
@@ -273,16 +263,16 @@ export function CanvasJersey({
       : fontToUse;
 
     // Calculate dimensions for the three sections
-    const jerseyWidth = baseWidth * 0.5;  // Each jersey takes half width
-    const jerseyHeight = baseHeight * 0.6; // Jerseys take 60% of height
-    const pantsHeight = baseHeight * 0.4;  // Pants take 40% of height
+    const jerseyWidth = baseWidth * 0.5;
+    const jerseyHeight = baseHeight * 0.6;
+    const pantsHeight = baseHeight * 0.4;
 
     // Draw front jersey (left side)
     ctx.save();
     ctx.translate(0, 0);
     const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
     
-    ctx.scale(0.5, 0.5); // Scale down to fit in the left half
+    ctx.scale(0.5, 0.5);
     JerseyFront({
       ctx,
       playerNumber: numericPlayerNumber,
@@ -295,12 +285,17 @@ export function CanvasJersey({
       selectedLogo: null,
       designData
     });
+
+    // Add "Mặt trước" label
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('Mặt trước', baseWidth * 0.25, 30);
     ctx.restore();
 
     // Draw back jersey (right side)
     ctx.save();
     ctx.translate(jerseyWidth, 0);
-    ctx.scale(0.5, 0.5); // Scale down to fit in the right half
+    ctx.scale(0.5, 0.5);
     JerseyBack({
       ctx,
       teamName,
@@ -308,12 +303,18 @@ export function CanvasJersey({
       playerNumber,
       fontFamily: numberFontToUse
     });
+
+    // Add "Mặt sau" label
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('Mặt sau', baseWidth * 0.75, 30);
     ctx.restore();
 
     // Draw pants (bottom)
     ctx.save();
-    ctx.translate(baseWidth * 0.25, jerseyHeight); // Center the pants
-    ctx.scale(0.5, 0.5); // Scale down to fit below
+    ctx.translate(baseWidth * 0.25, jerseyHeight);
+    ctx.scale(0.5, 0.5);
+
     const pantsLogo = logos.find(logo => logo.position === 'pants');
     let logoImage, logoPosition;
 
@@ -332,6 +333,11 @@ export function CanvasJersey({
         position: logoPosition
       } : undefined
     });
+
+    // Add "Quần" label
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText('Quần', baseWidth * 0.5, -20);
     ctx.restore();
 
   }, [
