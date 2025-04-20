@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: number;  // Keep as number for backward compatibility
+  playerNumber?: string;  // Changed from number to string
   loadedLogos: Map<string, HTMLImageElement>;
   logoPositions: Map<string, { x: number, y: number, scale: number }>;
   logos: Logo[];
