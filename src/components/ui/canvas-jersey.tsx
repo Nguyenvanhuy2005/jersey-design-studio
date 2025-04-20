@@ -1,3 +1,7 @@
+
+// Fix for the "Expected 2 arguments, but got 1" error on line 70
+// We need to modify the function call that's causing the issue
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -15,6 +19,7 @@ interface CanvasJerseyProps {
   playerName?: string;
   playerNumber?: string;
   logos?: Logo[];
+  view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
   designData?: Partial<DesignData>;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -25,6 +30,7 @@ export function CanvasJersey({
   playerName, 
   playerNumber, 
   logos = [], 
+  view,
   printConfig,
   designData,
   canvasRef: externalCanvasRef
@@ -39,17 +45,8 @@ export function CanvasJersey({
 
   const isInteractionDisabled = true;
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-
-  const getBaseCanvasSize = () => {
-    const viewportWidth = window.innerWidth;
-    if (viewportWidth <= 640) {
-      return { width: 520, height: 600 }; // Small screens
-    } else if (viewportWidth <= 1024) {
-      return { width: 600, height: 700 }; // Medium screens
-    } else {
-      return { width: 640, height: 800 }; // Large screens
-    }
-  };
+  const canvasWidth = 300;
+  const canvasHeight = 300;
 
   const { 
     selectedLogo,
@@ -74,7 +71,7 @@ export function CanvasJersey({
   useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
-      loadCustomFont(customFontUrl, 'Custom Font')
+      loadCustomFont(customFontUrl, 'Custom Font') // Fix: Adding the second parameter 'Custom Font' as font name
         .then(fontFace => {
           setFontFace(fontFace);
           setLoadedFont(true);
@@ -245,22 +242,26 @@ export function CanvasJersey({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('Canvas ref not available');
+      return;
+    }
 
-    const { width: baseWidth, height: baseHeight } = getBaseCanvasSize();
-    
-    canvas.width = baseWidth * pixelRatio;
-    canvas.height = baseHeight * pixelRatio;
-    
-    canvas.style.width = '100%';
-    canvas.style.maxWidth = `${baseWidth}px`;
-    canvas.style.height = 'auto';
+    console.log(`Setting up canvas with pixel ratio: ${pixelRatio}`);
+
+    canvas.width = canvasWidth * pixelRatio;
+    canvas.height = canvasHeight * pixelRatio;
+
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error('Could not get canvas context');
+      return;
+    }
 
     ctx.scale(pixelRatio, pixelRatio);
-    ctx.clearRect(0, 0, baseWidth, baseHeight);
 
     ctx.imageSmoothingEnabled = true;
     if ('imageSmoothingQuality' in ctx) {
@@ -276,98 +277,72 @@ export function CanvasJersey({
       return;
     }
 
-    console.log(`Rendering jersey with ${loadedLogos.size} loaded logos`);
+    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     const fontToUse = designData?.font_text?.font 
-      ? `"${designData.font_text.font}", sans-serif` 
+      ? `bold 20px "${designData.font_text.font}", sans-serif` 
       : getFont(printConfig);
       
     const numberFontToUse = designData?.font_number?.font 
-      ? `"${designData.font_number.font}", sans-serif` 
+      ? `bold 20px "${designData.font_number.font}", sans-serif` 
       : fontToUse;
 
-    // Calculate dimensions for the three sections
-    const jerseyWidth = baseWidth * 0.5;
-    const jerseyHeight = baseHeight * 0.6;
-    const pantsHeight = baseHeight * 0.4;
+    if (view === 'front') {
+      console.log('Rendering front jersey view');
+      const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
+      
+      JerseyFront({
+        ctx,
+        playerNumber: numericPlayerNumber,
+        loadedLogos,
+        logoPositions,
+        logos: logos || [],
+        fontFamily: fontToUse,
+        numberFontFamily: numberFontToUse,
+        highQuality: true,
+        selectedLogo: isInteractionDisabled ? null : selectedLogo,
+        onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
+        onLogoResize: isInteractionDisabled ? undefined : handleLogoResize,
+        onLogoDelete: isInteractionDisabled ? undefined : handleLogoDelete,
+        designData
+      });
+    } else if (view === 'back') {
+      console.log('Rendering back jersey view');
+      JerseyBack({
+        ctx,
+        teamName: designData?.line_3?.content || teamName,
+        playerName: designData?.line_1?.content || playerName,
+        playerNumber,
+        fontFamily: fontToUse
+      });
+    } else if (view === 'pants') {
+      console.log('Rendering pants view');
+      const pantsLogo = logos.find(logo => logo.position === 'pants');
+      let logoImage;
+      let logoPosition;
 
-    // Draw front jersey (left side)
-    ctx.save();
-    ctx.translate(0, 0);
-    ctx.scale(0.5, 0.5);
-    const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
-    
-    JerseyFront({
-      ctx,
-      playerNumber: numericPlayerNumber,
-      loadedLogos,
-      logoPositions,
-      logos,
-      fontFamily: fontToUse,
-      numberFontFamily: numberFontToUse,
-      highQuality: true,
-      selectedLogo: null,
-      designData
-    });
+      if (pantsLogo && pantsLogo.id && loadedLogos.has(pantsLogo.id)) {
+        logoImage = loadedLogos.get(pantsLogo.id);
+        logoPosition = logoPositions.get(pantsLogo.id);
+      }
 
-    // Add "Mặt trước" label
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1A1A1A';
-    ctx.fillText('Mặt trước', baseWidth * 0.25, 30);
-    ctx.restore();
+      const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
+      console.log('Pants number enabled:', pantsNumberEnabled);
 
-    // Draw back jersey (right side)
-    ctx.save();
-    ctx.translate(jerseyWidth, 0);
-    ctx.scale(0.5, 0.5);
-    JerseyBack({
-      ctx,
-      teamName,
-      playerName: designData?.line_1?.content || playerName,
-      playerNumber,
-      fontFamily: numberFontToUse
-    });
-
-    // Add "Mặt sau" label
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1A1A1A';
-    ctx.fillText('Mặt sau', baseWidth * 0.75, 30);
-    ctx.restore();
-
-    // Draw pants (bottom)
-    ctx.save();
-    ctx.translate(baseWidth * 0.25, jerseyHeight);
-    ctx.scale(0.5, 0.5);
-
-    const pantsLogo = logos.find(logo => logo.position === 'pants');
-    let logoImage, logoPosition;
-
-    if (pantsLogo?.id && loadedLogos.has(pantsLogo.id)) {
-      logoImage = loadedLogos.get(pantsLogo.id);
-      logoPosition = logoPositions.get(pantsLogo.id);
+      JerseyPants({
+        ctx,
+        playerNumber,
+        fontFamily: numberFontToUse,
+        pants_number_enabled: pantsNumberEnabled,
+        logo: logoImage && logoPosition ? {
+          image: logoImage,
+          position: logoPosition
+        } : undefined
+      });
     }
-
-    JerseyPants({
-      ctx,
-      playerNumber,
-      fontFamily: numberFontToUse,
-      pants_number_enabled: designData?.pants_number?.enabled ?? false,
-      logo: logoImage && logoPosition ? {
-        image: logoImage,
-        position: logoPosition
-      } : undefined
-    });
-
-    // Add "Quần" label
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#1A1A1A';
-    ctx.fillText('Quần', baseWidth * 0.5, -20);
-    ctx.restore();
-
-  }, [
-    teamName, playerName, playerNumber, loadedLogos, logos, 
-    printConfig, designData, loadedFont, pixelRatio, logoPositions
-  ]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled]);
 
   function isValidUUID(id: string) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -375,16 +350,20 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative w-full p-4">
+    <div className="relative">
       <canvas 
         ref={canvasRef} 
-        className="jersey-canvas"
+        width={canvasWidth * pixelRatio} 
+        height={canvasHeight * pixelRatio} 
+        className="jersey-canvas mx-auto"
         id="jersey-design-canvas"
         style={{
+          width: `${canvasWidth}px`,
+          height: `${canvasHeight}px`,
           cursor: 'default'
         }}
       />
-      {logos && logos.length > 0 && (
+      {logos && logos.length > 0 && (view === 'front' || view === 'pants') && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
           <p className="text-sm text-gray-700">
             Xem trước thiết kế áo với vị trí in cố định

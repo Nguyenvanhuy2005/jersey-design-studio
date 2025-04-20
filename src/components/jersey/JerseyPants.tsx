@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { setupCanvas, drawPants } from '@/utils/jersey-drawing-utils';
+import { setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyPantsProps {
   ctx: CanvasRenderingContext2D;
@@ -20,45 +20,50 @@ export const JerseyPants = ({
   pants_number_enabled = true,
   logo
 }: JerseyPantsProps) => {
-  const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
-  const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
+  // Draw short pants
+  ctx.fillStyle = '#1A1A1A';
   
-  // Clear canvas
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  // Left side
+  ctx.beginPath();
+  ctx.moveTo(100, 0);
+  ctx.lineTo(150, 0);
+  ctx.lineTo(160, 80);
+  ctx.lineTo(90, 80);
+  ctx.closePath();
+  ctx.fill();
   
-  // Draw improved shorts design
-  drawPants(ctx);
+  // Right side
+  ctx.beginPath();
+  ctx.moveTo(150, 0);
+  ctx.lineTo(200, 0);
+  ctx.lineTo(210, 80);
+  ctx.lineTo(160, 80);
+  ctx.closePath();
+  ctx.fill();
   
-  // Setup canvas for text
+  // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw player number if enabled (on right leg)
+  // Draw player number if enabled
   if (playerNumber !== undefined && pants_number_enabled) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(40, canvasWidth * 0.15);
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
-    
-    // Position number on right leg
-    ctx.fillText(
-      playerNumber.toString(),
-      canvasWidth * 0.75,
-      canvasHeight * 0.35
-    );
+    const fontSize = 30;
+    ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
+    ctx.fillText(playerNumber.toString(), 125, 40);
   }
   
-  // Draw logo if provided (on left leg)
+  // Draw logo if provided
   if (logo?.image) {
-    const logoWidth = canvasWidth * 0.15;
-    const logoHeight = logoWidth;
-    
-    const x = canvasWidth * 0.25; // Left leg placement
-    const y = canvasHeight * 0.35; // Upper portion of shorts
+    const logoWidth = 40;
+    const logoHeight = 40;
+    const x = 185;
+    const y = 40;
     
     ctx.drawImage(
-      logo.image,
-      x - logoWidth/2,
-      y - logoHeight/2,
-      logoWidth,
+      logo.image, 
+      x - logoWidth/2, 
+      y - logoHeight/2, 
+      logoWidth, 
       logoHeight
     );
   }

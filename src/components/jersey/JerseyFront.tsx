@@ -4,7 +4,7 @@ import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
 
 interface JerseyFrontProps {
   ctx: CanvasRenderingContext2D;
-  playerNumber?: number;
+  playerNumber?: number;  // Keep as number for backward compatibility
   loadedLogos: Map<string, HTMLImageElement>;
   logoPositions: Map<string, { x: number, y: number, scale: number }>;
   logos: Logo[];
@@ -18,13 +18,13 @@ interface JerseyFrontProps {
   designData?: Partial<DesignData>;
 }
 
-// Define proper positioning based on percentage of canvas
+// Fixed positions for logos (in canvas coordinates)
 const FIXED_POSITIONS = {
-  'chest_left': { x: 0.25, y: 0.25, scale: 0.7 },   // Left chest logo (25% from left)
-  'chest_right': { x: 0.75, y: 0.25, scale: 0.7 },  // Right chest logo (75% from left)
-  'chest_center': { x: 0.5, y: 0.35, scale: 1.0 },  // Center chest logo (centered)
-  'sleeve_left': { x: 0.1, y: 0.25, scale: 0.5 },   // Left sleeve logo
-  'sleeve_right': { x: 0.9, y: 0.25, scale: 0.5 }   // Right sleeve logo
+  'chest_left': { x: 80, y: 50, scale: 0.7 },   // Left chest logo
+  'chest_right': { x: 220, y: 50, scale: 0.7 }, // Right chest logo
+  'chest_center': { x: 150, y: 100, scale: 1.0 }, // Center chest logo
+  'sleeve_left': { x: 30, y: 50, scale: 0.5 },  // Left sleeve logo
+  'sleeve_right': { x: 270, y: 50, scale: 0.5 } // Right sleeve logo
 };
 
 // Fixed sizes for logos (relative to base size)
@@ -46,47 +46,45 @@ export const JerseyFront = ({
   numberFontFamily,
   highQuality = false,
   selectedLogo,
+  onLogoMove,
+  onLogoResize,
+  onLogoDelete,
   designData
 }: JerseyFrontProps) => {
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
-  // Clear canvas
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+  // Choose jersey color based on uniform type from designData
+  let jerseyColor = designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700';
   
-  // Draw jersey with front collar
-  drawBasicJersey(ctx, designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700', 1, true);
+  console.log(`Rendering JerseyFront on canvas ${canvasWidth}x${canvasHeight} with ${loadedLogos.size} logos`);
+  
+  // Draw the basic jersey shape using utility function
+  drawBasicJersey(ctx, jerseyColor);
   
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw chest number with improved positioning
+  // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
-    ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(80, canvasWidth * 0.25);
-    ctx.font = `bold ${fontSize}px ${numberFontFamily}`;
-    ctx.fillText(
-      playerNumber.toString(),
-      canvasWidth * 0.5,
-      canvasHeight * 0.45
-    );
+    ctx.fillStyle = '#1A1A1A'; // Default color
+    const fontSize = 50;
+    ctx.font = numberFontFamily.replace(/\d+px/, `${fontSize}px`);
+    ctx.fillText(playerNumber.toString(), 150, 140);
   }
   
-  // Draw chest text if enabled
+  // Draw chest text if enabled in designData
   if (designData?.chest_text?.enabled && designData.chest_text.content) {
-    ctx.fillStyle = '#1A1A1A';
-    const fontSize = Math.min(24, canvasWidth * 0.08);
+    ctx.fillStyle = '#1A1A1A'; // Default color
+    const fontSize = 24;
     ctx.font = fontFamily.replace(/\d+px/, `${fontSize}px`);
-    ctx.fillText(
-      designData.chest_text.content,
-      canvasWidth * 0.5,
-      canvasHeight * 0.3,
-      canvasWidth * 0.6
-    );
+    ctx.fillText(designData.chest_text.content, 150, 80, 180);
   }
   
   // Draw logos with fixed positions and sizes
   if (loadedLogos.size > 0) {
+    console.log(`Drawing ${loadedLogos.size} logos on jersey`);
+    
     logos.forEach(logo => {
       if (!logo.id) {
         console.warn(`Logo missing ID:`, logo);
@@ -99,19 +97,22 @@ export const JerseyFront = ({
       // Check if this logo's position is enabled in designData
       const positionKey = `logo_${logo.position}` as keyof DesignData;
       if (designData && designData[positionKey] && !(designData[positionKey] as any)?.enabled) {
+        console.log(`Logo ${logo.id} position ${logo.position} is disabled in designData`);
         return;
       }
       
       const img = loadedLogos.get(logo.id);
       
       if (!img) {
+        console.warn(`Image not found for logo ID ${logo.id}`);
         return;
       }
       
       try {
-        // Get fixed position for this logo type as percentage of canvas
+        // Get fixed position for this logo type
         const fixedPosition = FIXED_POSITIONS[logo.position as keyof typeof FIXED_POSITIONS];
         if (!fixedPosition) {
+          console.warn(`No fixed position defined for logo position: ${logo.position}`);
           return;
         }
 
@@ -119,7 +120,7 @@ export const JerseyFront = ({
         const scale = LOGO_SCALES[logo.position as keyof typeof LOGO_SCALES] || 1.0;
         
         // Calculate logo dimensions with fixed scale
-        const baseSize = canvasWidth * 0.30; // Base size for logos (30% of canvas width)
+        const baseSize = 100; // Base size for logos (100px = 10cm)
         const logoWidth = baseSize * scale;
         const logoHeight = baseSize * scale;
         
@@ -136,23 +137,23 @@ export const JerseyFront = ({
           drawWidth = drawHeight * aspectRatio;
         }
         
-        // Calculate position based on percentages of canvas dimensions
-        const xPos = canvasWidth * fixedPosition.x;
-        const yPos = canvasHeight * fixedPosition.y;
-        
         // Draw the logo at fixed position with fixed size
         ctx.drawImage(
           img, 
-          xPos - drawWidth/2,  // Center horizontally
-          yPos - drawHeight/2, // Center vertically
+          fixedPosition.x - drawWidth/2,  // Center horizontally
+          fixedPosition.y - drawHeight/2, // Center vertically
           drawWidth, 
           drawHeight
         );
+        
+        console.log(`Drew logo ${logo.id} at fixed position (${fixedPosition.x},${fixedPosition.y}) with scale ${scale}`);
       } catch (error) {
         console.error(`Error drawing logo ${logo.id}:`, error);
       }
     });
   }
+  
+  console.log("JerseyFront rendering complete");
   
   return null;
 };

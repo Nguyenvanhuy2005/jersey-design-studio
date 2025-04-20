@@ -6,45 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Download, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface PrintConfigProps {
   printConfig: Order['printConfig'];
 }
 
 export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
-  const { user } = useAuth();
-  const [fontOwnerName, setFontOwnerName] = useState<string>("");
-  const [canDownload, setCanDownload] = useState<boolean>(false);
-  
-  useEffect(() => {
-    if (!printConfig?.font) return;
-    
-    const checkFontPermission = async () => {
-      try {
-        // For now, allow download for all users since we don't have permission structure
-        // This will be updated when the database is modified
-        setCanDownload(true);
-        
-        // TODO: Once the database is updated, implement proper permission checking
-        // and get font owner's name
-      } catch (error) {
-        console.error('Error checking font permission:', error);
-      }
-    };
-    
-    checkFontPermission();
-  }, [printConfig?.font, user]);
-  
-  const checkIsAdmin = async (): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.rpc('is_admin');
-      return !error && !!data;
-    } catch {
-      return false;
-    }
-  };
+  if (!printConfig) return null;
 
   const handleDownload = async (fontName: string) => {
     try {
@@ -81,8 +49,6 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
     }
   };
   
-  if (!printConfig) return null;
-  
   return (
     <Card>
       <CardHeader>
@@ -103,23 +69,16 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                 <TableCell className="w-1/3 font-medium text-muted-foreground">
                   Font chữ/số
                 </TableCell>
-                <TableCell className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
-                    {canDownload && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(printConfig.font)}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Tải xuống font
-                      </Button>
-                    )}
-                  </div>
-                  {fontOwnerName && (
-                    <p className="text-xs text-muted-foreground">{fontOwnerName}</p>
-                  )}
+                <TableCell className="flex items-center justify-between">
+                  <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload(printConfig.font)}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Tải xuống font
+                  </Button>
                 </TableCell>
               </TableRow>
             </TableBody>
