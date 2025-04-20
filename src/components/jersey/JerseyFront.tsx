@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
@@ -55,33 +54,30 @@ export const JerseyFront = ({
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
-  // Choose jersey color based on uniform type from designData
-  let jerseyColor = designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700';
-  
-  // Clear the canvas before drawing
+  // Clear canvas
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   
-  // Draw the basic jersey shape using utility function
-  drawBasicJersey(ctx, jerseyColor);
+  // Draw the basic jersey shape
+  drawBasicJersey(ctx, designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700');
   
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw chest number if enabled in designData - Fix for chest number
+  // Draw chest number with improved positioning
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
-    ctx.fillStyle = '#1A1A1A'; // Default color
+    ctx.fillStyle = '#1A1A1A';
     
-    // Calculate responsive font size but make it larger
-    const fontSize = Math.min(60, canvasWidth * 0.20); 
+    // Calculate responsive font size (larger than before)
+    const fontSize = Math.min(80, canvasWidth * 0.25);
     
-    // Use the number font family specifically
+    // Use specific number font
     ctx.font = `bold ${fontSize}px ${numberFontFamily}`;
     
-    // Adjust position to center of jersey - slightly higher than before
+    // Center the number both horizontally and vertically
     ctx.fillText(
-      playerNumber.toString(), 
-      canvasWidth * 0.5,  // Center horizontally
-      canvasHeight * 0.42  // Position vertically
+      playerNumber.toString(),
+      canvasWidth * 0.5, // Centered horizontally
+      canvasHeight * 0.45  // Positioned lower on chest
     );
   }
   

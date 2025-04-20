@@ -1,4 +1,3 @@
-
 // Common utility functions for jersey drawing
 export const drawBasicJersey = (
   ctx: CanvasRenderingContext2D,
@@ -9,94 +8,89 @@ export const drawBasicJersey = (
   const canvasHeight = (ctx.canvas.height / window.devicePixelRatio) * scale;
   
   // Calculate proportional measurements
-  const shoulderWidth = canvasWidth * 0.7;
-  const bodyWidth = canvasWidth * 0.8;
-  const jerseyHeight = canvasHeight * 0.85;
-  const neckDepth = canvasHeight * 0.18;
+  const shoulderWidth = canvasWidth * 0.8;
+  const bodyWidth = canvasWidth * 0.7;
+  const neckWidth = shoulderWidth * 0.2;
+  const neckDepth = canvasHeight * 0.15;
+  const jerseyBottom = canvasHeight * 0.85;
   
-  // Center the jersey horizontally
+  // Center the jersey
   const centerX = canvasWidth / 2;
-  const startX = centerX - shoulderWidth / 2;
-  const endX = centerX + shoulderWidth / 2;
   
-  // Draw main body
+  // Draw main body with curved sides
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(startX, canvasHeight * 0.15);
-  ctx.lineTo(endX, canvasHeight * 0.15);
-  ctx.lineTo(centerX + bodyWidth/2, canvasHeight * 0.3);
-  ctx.lineTo(centerX + bodyWidth/2, jerseyHeight);
-  ctx.lineTo(centerX - bodyWidth/2, jerseyHeight);
-  ctx.lineTo(centerX - bodyWidth/2, canvasHeight * 0.3);
+  
+  // Start from left shoulder
+  ctx.moveTo(centerX - shoulderWidth/2, canvasHeight * 0.15);
+  
+  // Draw left side with curve
+  ctx.bezierCurveTo(
+    centerX - shoulderWidth/2, canvasHeight * 0.3,
+    centerX - bodyWidth/2, canvasHeight * 0.4,
+    centerX - bodyWidth/2, jerseyBottom
+  );
+  
+  // Draw bottom
+  ctx.lineTo(centerX + bodyWidth/2, jerseyBottom);
+  
+  // Draw right side with curve
+  ctx.bezierCurveTo(
+    centerX + bodyWidth/2, canvasHeight * 0.4,
+    centerX + shoulderWidth/2, canvasHeight * 0.3,
+    centerX + shoulderWidth/2, canvasHeight * 0.15
+  );
+  
   ctx.closePath();
   ctx.fill();
 
-  // Draw white trim on bottom
-  ctx.strokeStyle = '#FFFFFF';
+  // Draw V-neck collar
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(centerX - neckWidth, canvasHeight * 0.15);
+  ctx.lineTo(centerX, neckDepth);
+  ctx.lineTo(centerX + neckWidth, canvasHeight * 0.15);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Add collar trim
+  ctx.strokeStyle = '#1A1A1A';
   ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(centerX - bodyWidth/2, jerseyHeight);
-  ctx.lineTo(centerX + bodyWidth/2, jerseyHeight);
   ctx.stroke();
-  
-  // Draw V-neck collar with white trim
-  ctx.fillStyle = '#1A1A1A';
-  ctx.beginPath();
-  ctx.moveTo(centerX - shoulderWidth * 0.15, canvasHeight * 0.15);
-  ctx.lineTo(centerX, neckDepth);
-  ctx.lineTo(centerX + shoulderWidth * 0.15, canvasHeight * 0.15);
-  ctx.closePath();
-  ctx.fill();
 
-  // Add white trim to V-neck
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(centerX - shoulderWidth * 0.15, canvasHeight * 0.15);
-  ctx.lineTo(centerX, neckDepth);
-  ctx.lineTo(centerX + shoulderWidth * 0.15, canvasHeight * 0.15);
-  ctx.stroke();
-  
-  // Draw left sleeve with improved style (straight lines)
+  // Draw sleeves with rounded curves
   ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(startX, canvasHeight * 0.15); // Connection point with body
-  ctx.lineTo(centerX - bodyWidth/2, canvasHeight * 0.3); // Bottom of sleeve connection
-  ctx.lineTo(canvasWidth * 0.05, canvasHeight * 0.4); // Bottom edge of sleeve
-  ctx.lineTo(canvasWidth * 0.08, canvasHeight * 0.15); // Top edge of sleeve
-  ctx.closePath();
-  ctx.fill();
-
-  // Add white trim to left sleeve
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(canvasWidth * 0.05, canvasHeight * 0.4);
-  ctx.lineTo(canvasWidth * 0.08, canvasHeight * 0.15);
-  ctx.stroke();
   
-  // Draw right sleeve with improved style (straight lines)
-  ctx.fillStyle = color;
+  // Left sleeve
   ctx.beginPath();
-  ctx.moveTo(endX, canvasHeight * 0.15); // Connection point with body
-  ctx.lineTo(centerX + bodyWidth/2, canvasHeight * 0.3); // Bottom of sleeve connection
-  ctx.lineTo(canvasWidth * 0.95, canvasHeight * 0.4); // Bottom edge of sleeve
-  ctx.lineTo(canvasWidth * 0.92, canvasHeight * 0.15); // Top edge of sleeve
-  ctx.closePath();
+  ctx.moveTo(centerX - shoulderWidth/2, canvasHeight * 0.15);
+  ctx.quadraticCurveTo(
+    centerX - shoulderWidth/1.5, canvasHeight * 0.25,
+    centerX - shoulderWidth/1.3, canvasHeight * 0.35
+  );
+  ctx.quadraticCurveTo(
+    centerX - shoulderWidth/1.8, canvasHeight * 0.3,
+    centerX - shoulderWidth/2, canvasHeight * 0.15
+  );
+  ctx.fill();
+  
+  // Right sleeve
+  ctx.beginPath();
+  ctx.moveTo(centerX + shoulderWidth/2, canvasHeight * 0.15);
+  ctx.quadraticCurveTo(
+    centerX + shoulderWidth/1.5, canvasHeight * 0.25,
+    centerX + shoulderWidth/1.3, canvasHeight * 0.35
+  );
+  ctx.quadraticCurveTo(
+    centerX + shoulderWidth/1.8, canvasHeight * 0.3,
+    centerX + shoulderWidth/2, canvasHeight * 0.15
+  );
   ctx.fill();
 
-  // Add white trim to right sleeve
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(canvasWidth * 0.95, canvasHeight * 0.4);
-  ctx.lineTo(canvasWidth * 0.92, canvasHeight * 0.15);
-  ctx.stroke();
-
-  // Add subtle shadow effect
-  const gradient = ctx.createLinearGradient(0, 0, 0, jerseyHeight);
+  // Add shadow effect
+  const gradient = ctx.createLinearGradient(0, 0, 0, jerseyBottom);
   gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
   
   ctx.fillStyle = gradient;
   ctx.fill();
@@ -118,68 +112,57 @@ export const drawPants = (
   
   const centerX = canvasWidth / 2;
   
-  // Improved pants dimensions
-  const waistWidth = canvasWidth * 0.5; // Narrower waist
-  const bottomWidth = canvasWidth * 0.6; // Wider at bottom for tapered look
-  const pantsHeight = canvasHeight * 0.7;
+  // Athletic shorts dimensions
+  const waistWidth = canvasWidth * 0.5;
+  const shortsLength = canvasHeight * 0.5; // Shorter length for athletic shorts
+  const bottomWidth = waistWidth * 1.1; // Slightly wider at bottom
   
-  // Draw improved pants shape - more tapered
+  // Draw improved shorts shape
   ctx.fillStyle = color;
+  
+  // Main shorts shape
   ctx.beginPath();
   
-  // Draw left leg
-  ctx.moveTo(centerX - waistWidth/2, canvasHeight * 0.2); // Waist left
-  ctx.lineTo(centerX - bottomWidth/2, canvasHeight * 0.85); // Bottom left
-  ctx.lineTo(centerX - waistWidth/8, canvasHeight * 0.85); // Bottom inner left
-  ctx.lineTo(centerX - waistWidth/6, canvasHeight * 0.2); // Inseam top left
+  // Start from left waist
+  ctx.moveTo(centerX - waistWidth/2, canvasHeight * 0.2);
+  
+  // Left side curve
+  ctx.bezierCurveTo(
+    centerX - waistWidth/2, canvasHeight * 0.3,
+    centerX - bottomWidth/2, canvasHeight * 0.4,
+    centerX - bottomWidth/2, canvasHeight * 0.2 + shortsLength
+  );
+  
+  // Bottom curve
+  ctx.quadraticCurveTo(
+    centerX, canvasHeight * 0.2 + shortsLength + 10,
+    centerX + bottomWidth/2, canvasHeight * 0.2 + shortsLength
+  );
+  
+  // Right side curve
+  ctx.bezierCurveTo(
+    centerX + bottomWidth/2, canvasHeight * 0.4,
+    centerX + waistWidth/2, canvasHeight * 0.3,
+    centerX + waistWidth/2, canvasHeight * 0.2
+  );
+  
+  // Close the path
   ctx.closePath();
   ctx.fill();
-  
-  // Draw right leg
-  ctx.beginPath();
-  ctx.moveTo(centerX + waistWidth/2, canvasHeight * 0.2); // Waist right
-  ctx.lineTo(centerX + bottomWidth/2, canvasHeight * 0.85); // Bottom right
-  ctx.lineTo(centerX + waistWidth/8, canvasHeight * 0.85); // Bottom inner right
-  ctx.lineTo(centerX + waistWidth/6, canvasHeight * 0.2); // Inseam top right
-  ctx.closePath();
-  ctx.fill();
 
-  // Add white trim at bottom of each leg
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2;
-  
-  // Left leg trim
-  ctx.beginPath();
-  ctx.moveTo(centerX - bottomWidth/2, canvasHeight * 0.85);
-  ctx.lineTo(centerX - waistWidth/8, canvasHeight * 0.85);
-  ctx.stroke();
-  
-  // Right leg trim
-  ctx.beginPath();
-  ctx.moveTo(centerX + waistWidth/8, canvasHeight * 0.85);
-  ctx.lineTo(centerX + bottomWidth/2, canvasHeight * 0.85);
-  ctx.stroke();
+  // Add waistband
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(
+    centerX - waistWidth/2,
+    canvasHeight * 0.2,
+    waistWidth,
+    5
+  );
 
-  // Add white stripes on sides
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3;
-  
-  // Left stripe
-  ctx.beginPath();
-  ctx.moveTo(centerX - waistWidth/3, canvasHeight * 0.25);
-  ctx.lineTo(centerX - bottomWidth/3, canvasHeight * 0.85);
-  ctx.stroke();
-  
-  // Right stripe
-  ctx.beginPath();
-  ctx.moveTo(centerX + waistWidth/3, canvasHeight * 0.25);
-  ctx.lineTo(centerX + bottomWidth/3, canvasHeight * 0.85);
-  ctx.stroke();
-
-  // Add subtle shadow effect
-  const gradient = ctx.createLinearGradient(0, 0, 0, pantsHeight);
+  // Add shadow effect for depth
+  const gradient = ctx.createLinearGradient(0, canvasHeight * 0.2, 0, canvasHeight * 0.2 + shortsLength);
   gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
   
   ctx.fillStyle = gradient;
   ctx.fill();
