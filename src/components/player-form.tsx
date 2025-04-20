@@ -7,22 +7,18 @@ import { usePlayerForm } from "@/hooks/usePlayerForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Edit } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { PlayerFormFields } from "./player/PlayerFormFields";
+import { BatchUpdateDialog } from "./player/BatchUpdateDialog";
 
 interface PlayerFormProps {
   players: Player[];
   onPlayersChange: (players: Player[]) => void;
   className?: string;
-  fontSize?: string;
-  fontNumber?: string;
   printStyleOptions: string[];
   printStyle: string;
-  printColorOptions: string[];
-  printColor: string;
-  logos?: Logo[];
 }
 
 export const PlayerForm = memo(({ 
@@ -44,6 +40,7 @@ export const PlayerForm = memo(({
   } = usePlayerForm({ onPlayersChange, players, printStyle });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const downloadExcelTemplate = () => {
@@ -142,11 +139,18 @@ export const PlayerForm = memo(({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Danh sách cầu thủ ({players.length})</CardTitle>
-          {isMobile && (
-            <Button onClick={() => setIsFormOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {players.length > 0 && (
+              <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
+                <Edit className="h-4 w-4 mr-1" /> Cập nhật hàng loạt
+              </Button>
+            )}
+            {isMobile && (
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       
@@ -228,6 +232,17 @@ export const PlayerForm = memo(({
             </div>
           </SheetContent>
         </Sheet>
+      )}
+
+      {isBatchDialogOpen && (
+        <BatchUpdateDialog
+          open={isBatchDialogOpen}
+          onOpenChange={setIsBatchDialogOpen}
+          players={players}
+          onPlayersChange={onPlayersChange}
+          printStyleOptions={printStyleOptions}
+          printStyle={printStyle}
+        />
       )}
     </Card>
   );
