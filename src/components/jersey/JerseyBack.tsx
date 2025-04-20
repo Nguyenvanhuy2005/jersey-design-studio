@@ -1,13 +1,15 @@
 
 import React from 'react';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
+import { DesignData } from '@/types';
 
 interface JerseyBackProps {
   ctx: CanvasRenderingContext2D;
   teamName?: string;
   playerName?: string;
   playerNumber?: string;
-  fontFamily: string;
+  fontFamily?: string;
+  designData?: Partial<DesignData>;
 }
 
 export const JerseyBack = ({ 
@@ -15,9 +17,14 @@ export const JerseyBack = ({
   teamName, 
   playerName, 
   playerNumber,
-  fontFamily
+  fontFamily,
+  designData
 }: JerseyBackProps) => {
-  console.log(`Rendering JerseyBack with data: teamName=${teamName}, playerName=${playerName}, playerNumber=${playerNumber}`);
+  console.log(`Rendering JerseyBack with fonts:`, {
+    textFont: designData?.font_text?.font,
+    numberFont: designData?.font_number?.font,
+    fallbackFont: fontFamily
+  });
   
   // Draw the basic jersey shape using utility function
   drawBasicJersey(ctx);
@@ -29,30 +36,32 @@ export const JerseyBack = ({
   if (playerName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 35;
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    const textFont = designData?.font_text?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${textFont}"`;
     const playerNameDisplayed = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
     ctx.fillText(playerNameDisplayed, 150, 80);
-    console.log(`Drew player name: ${playerNameDisplayed}`);
+    console.log(`Drew player name with font: ${textFont}`);
   }
   
   // Draw player number
   if (playerNumber) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 140;
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    const numberFont = designData?.font_number?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${numberFont}"`;
     ctx.fillText(playerNumber, 150, 180);
-    console.log(`Drew player number: ${playerNumber}`);
+    console.log(`Drew player number with font: ${numberFont}`);
   }
   
   // Draw team name
   if (teamName) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 35;
-    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    const textFont = designData?.font_text?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${textFont}"`;
     ctx.fillText(teamName, 150, 260);
-    console.log(`Drew team name: ${teamName}`);
+    console.log(`Drew team name with font: ${textFont}`);
   }
   
   return null;
 };
-

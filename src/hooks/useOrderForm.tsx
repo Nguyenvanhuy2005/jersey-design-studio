@@ -33,10 +33,10 @@ export const useOrderForm = () => {
   const [designData, setDesignData] = useState<Partial<DesignData>>({
     uniform_type: 'player',
     font_text: {
-      font: "Arial"
+      font: fontText
     },
     font_number: {
-      font: "Arial"
+      font: fontNumber
     }
   });
   
@@ -136,6 +136,28 @@ export const useOrderForm = () => {
     };
   }, []);
 
+  const updateFontText = (newFont: string) => {
+    setFontText(newFont);
+    setDesignData(prev => ({
+      ...prev,
+      font_text: {
+        ...prev.font_text,
+        font: newFont
+      }
+    }));
+  };
+
+  const updateFontNumber = (newFont: string) => {
+    setFontNumber(newFont);
+    setDesignData(prev => ({
+      ...prev,
+      font_number: {
+        ...prev.font_number,
+        font: newFont
+      }
+    }));
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -158,9 +180,9 @@ export const useOrderForm = () => {
     customerInfo,
     setCustomerInfo,
     fontText,
-    setFontText,
+    setFontText: updateFontText,
     fontNumber,
-    setFontNumber,
+    setFontNumber: updateFontNumber,
     printStyle,
     setPrintStyle,
     printColor,

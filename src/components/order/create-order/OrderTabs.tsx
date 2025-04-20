@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, Logo, Player, ProductLine } from "@/types";
 import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
@@ -100,8 +99,14 @@ export function OrderTabs({
           fontNumber={fontNumber}
           printStyle={printStyle}
           printColor={printColor}
-          onFontTextChange={onFontTextChange}
-          onFontNumberChange={onFontNumberChange}
+          onFontTextChange={(value) => {
+            onFontTextChange(value);
+            console.log('Font text updated:', value);
+          }}
+          onFontNumberChange={(value) => {
+            onFontNumberChange(value);
+            console.log('Font number updated:', value);
+          }}
           onPrintStyleChange={onPrintStyleChange}
           onPrintColorChange={onPrintColorChange}
           logos={logos}
