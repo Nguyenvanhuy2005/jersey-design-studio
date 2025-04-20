@@ -62,7 +62,7 @@ export function PlayerForm({
   logos
 }: PlayerFormProps) {
   const [newPlayer, setNewPlayer] = useState<ExtendedPlayer>({
-    id: `temp-${Date.now()}`, // Add a temporary ID to fix the type errors
+    id: `temp-${Date.now()}`,
     name: "",
     number: "",
     size: "M",
@@ -93,15 +93,6 @@ export function PlayerForm({
     const updatedPlayers = [...players];
     
     if (isEditing && editingPlayerIndex !== null) {
-      const isDuplicateNumber = players.some((p, idx) => 
-        idx !== editingPlayerIndex && p.number === newPlayer.number
-      );
-      
-      if (isDuplicateNumber) {
-        toast.error(`Số áo ${newPlayer.number} đã được sử dụng bởi cầu thủ khác`);
-        return;
-      }
-      
       updatedPlayers[editingPlayerIndex] = { 
         ...newPlayer, 
         id: players[editingPlayerIndex].id 
@@ -113,18 +104,13 @@ export function PlayerForm({
       setIsEditing(false);
       setEditingPlayerIndex(null);
     } else {
-      if (players.some(p => p.number === newPlayer.number)) {
-        toast.error(`Số áo ${newPlayer.number} đã được sử dụng`);
-        return;
-      }
-      
       updatedPlayers.push({ ...newPlayer, id: `player-${Date.now()}` });
       onPlayersChange(updatedPlayers);
       toast.success("Thêm cầu thủ thành công");
     }
     
     setNewPlayer({
-      id: `temp-${Date.now()}`, // Add ID here to fix TS error
+      id: `temp-${Date.now()}`,
       name: "",
       number: "",
       size: "M",
@@ -154,7 +140,7 @@ export function PlayerForm({
       setEditingPlayerIndex(null);
       
       setNewPlayer({
-        id: `temp-${Date.now()}`, // Add ID here to fix TS error
+        id: `temp-${Date.now()}`,
         name: "",
         number: "",
         size: "M",
@@ -191,7 +177,7 @@ export function PlayerForm({
     setEditingPlayerIndex(null);
     
     setNewPlayer({
-      id: `temp-${Date.now()}`, // Add ID here to fix TS error
+      id: `temp-${Date.now()}`,
       name: "",
       number: "",
       size: "M",

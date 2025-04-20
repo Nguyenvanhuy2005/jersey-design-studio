@@ -136,17 +136,8 @@ export function OrderInfoTab({
       </div>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Thông tin in ấn</CardTitle>
-          {players.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onGenerateProductLines}
-            >
-              Tạo danh sách sản phẩm in
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           <PlayerForm
