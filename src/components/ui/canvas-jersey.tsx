@@ -7,6 +7,7 @@ import { JerseyFront } from '@/components/jersey/JerseyFront';
 import { JerseyBack } from '@/components/jersey/JerseyBack';
 import { JerseyPants } from '@/components/jersey/JerseyPants';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CanvasJerseyProps {
@@ -66,6 +67,11 @@ export function CanvasJersey({
   });
 
   useEffect(() => {
+    console.log('Current logos prop:', logos);
+    console.log('Current design data:', designData);
+  }, [logos, designData]);
+
+  useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
     if (customFontUrl) {
       loadCustomFont(customFontUrl, 'Custom Font')
@@ -82,6 +88,8 @@ export function CanvasJersey({
 
   useEffect(() => {
     if (logos && logos.length > 0) {
+      console.log("Attempting to load logos:", logos.length);
+
       const initialPositions = new Map<string, { x: number, y: number, scale: number }>();
 
       const positionKeysMap: Record<string, string> = {
@@ -254,6 +262,22 @@ export function CanvasJersey({
     ctx.scale(pixelRatio, pixelRatio);
     ctx.clearRect(0, 0, baseWidth, baseHeight);
 
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) {
+      (ctx as any).imageSmoothingQuality = 'high';
+    }
+
+    if ((printConfig?.customFontUrl && !loadedFont) && 
+        !['Arial', 'Times New Roman', 'Helvetica', 'Roboto', 'Open Sans'].includes(printConfig?.font || 'Arial')) {
+      console.log('Waiting for custom font to load...');
+      setTimeout(() => {
+        setLoadedFont(prev => !prev);
+      }, 100);
+      return;
+    }
+
+    console.log(`Rendering jersey with ${loadedLogos.size} loaded logos`);
+
     const fontToUse = designData?.font_text?.font 
       ? `"${designData.font_text.font}", sans-serif` 
       : getFont(printConfig);
@@ -270,9 +294,9 @@ export function CanvasJersey({
     // Draw front jersey (left side)
     ctx.save();
     ctx.translate(0, 0);
+    ctx.scale(0.5, 0.5);
     const numericPlayerNumber = playerNumber ? parseInt(playerNumber, 10) : undefined;
     
-    ctx.scale(0.5, 0.5);
     JerseyFront({
       ctx,
       playerNumber: numericPlayerNumber,
@@ -351,11 +375,14 @@ export function CanvasJersey({
   }
 
   return (
-    <div className="relative w-full jersey-canvas-container">
+    <div className="relative w-full p-4">
       <canvas 
         ref={canvasRef} 
         className="jersey-canvas"
         id="jersey-design-canvas"
+        style={{
+          cursor: 'default'
+        }}
       />
       {logos && logos.length > 0 && (
         <div className="mt-2 text-center bg-yellow-50 p-2 rounded">
