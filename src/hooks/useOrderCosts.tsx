@@ -20,15 +20,16 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
   const calculateTotalCost = useCallback(() => {
     if (!players.length) return 0;
 
-    let totalCost = 0;
-    const basePlayerUniformPrice = 120000;
-    const baseGoalkeeperUniformPrice = 150000;
+    // Uniforms cost is NO LONGER COUNTED
+    // let totalCost = 0;
+    // const basePlayerUniformPrice = 120000;
+    // const baseGoalkeeperUniformPrice = 150000;
 
-    const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
-    const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
+    // const playerCount = players.filter(p => (p as any).uniform_type !== 'goalkeeper').length;
+    // const goalkeeperCount = players.filter(p => (p as any).uniform_type === 'goalkeeper').length;
 
-    const uniformsCost = (playerCount * basePlayerUniformPrice) +
-      (goalkeeperCount * baseGoalkeeperUniformPrice);
+    // const uniformsCost = (playerCount * basePlayerUniformPrice) +
+    //   (goalkeeperCount * baseGoalkeeperUniformPrice);
 
     // Print cost calculation
     let printingCost = 0;
@@ -99,7 +100,8 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       }
     });
 
-    totalCost = uniformsCost + printingCost;
+    // Uniforms cost REMOVED, only printingCost is the final cost
+    const totalCost = printingCost;
     return totalCost;
   }, [players, productLines]);
 
