@@ -21,7 +21,7 @@ export const JerseyPants = ({
   logo
 }: JerseyPantsProps) => {
   // Draw short pants
-  ctx.fillStyle = '#1A1A1A';
+  ctx.fillStyle = '#FFD700';
   
   // Left side
   ctx.beginPath();
