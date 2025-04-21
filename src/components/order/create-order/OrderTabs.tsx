@@ -43,6 +43,12 @@ interface OrderTabsProps {
   onSubmitOrder: () => void;
   isSubmitting: boolean;
   getPlayerAndGoalkeeperCounts: () => { playerCount: number; goalkeeperCount: number };
+  getPrintCostBreakdown: () => {
+    label: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }[];
 }
 
 const TAB_ORDER = ["info", "preview", "summary"] as const;
@@ -82,7 +88,8 @@ export function OrderTabs({
   pantCanvasRef,
   onSubmitOrder,
   isSubmitting,
-  getPlayerAndGoalkeeperCounts
+  getPlayerAndGoalkeeperCounts,
+  getPrintCostBreakdown
 }: OrderTabsProps) {
   // Determine the active tab index for navigation logic
   const tabIndex = TAB_ORDER.indexOf(activeTab as typeof TAB_ORDER[number]);
@@ -192,6 +199,7 @@ export function OrderTabs({
               isGeneratingDesign={isGeneratingDesign}
               onSubmitOrder={onSubmitOrder}
               referenceImagesPreview={referenceImagesPreview}
+              getPrintCostBreakdown={getPrintCostBreakdown}
             />
           </div>
           {/* Navigation bottom bar */}
@@ -205,4 +213,3 @@ export function OrderTabs({
     </Tabs>
   );
 }
-
