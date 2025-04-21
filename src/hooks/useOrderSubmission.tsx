@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -155,16 +156,21 @@ export const useOrderSubmission = ({
           const fileExt = logo.file.name.split('.').pop();
           const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
           
-          const { error: uploadError } = await supabase.storage
+          const { data, error: uploadError } = await supabase.storage
             .from('logos')
             .upload(filePath, logo.file, {
               cacheControl: '3600',
               upsert: false
             });
             
-          if (uploadError || !data) {
-            console.error("Error uploading logo:", uploadError || "No data returned");
+          if (uploadError) {
+            console.error("Error uploading logo:", uploadError);
             throw uploadError;
+          }
+
+          if (!data) {
+            console.error("No data returned from logo upload");
+            continue;
           }
 
           logoStorageEntries.push({
@@ -189,7 +195,8 @@ export const useOrderSubmission = ({
         }
       }
 
-      const logoUrls: string[] = [];
+      // Fix: Don't use reassignment for const variable
+      let logoUrls: string[] = [];
       if (logoStorageEntries.length > 0) {
         logoUrls = logoStorageEntries.map(item => {
           const { data: urlData } = supabase.storage
