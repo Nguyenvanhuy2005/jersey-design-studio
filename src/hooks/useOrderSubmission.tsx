@@ -195,7 +195,7 @@ export const useOrderSubmission = ({
         }
       }
 
-      // Fix: Don't use reassignment for const variable
+      // Define logoUrls as let instead of const since we'll reassign it
       let logoUrls: string[] = [];
       if (logoStorageEntries.length > 0) {
         logoUrls = logoStorageEntries.map(item => {
