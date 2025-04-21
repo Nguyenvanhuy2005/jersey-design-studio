@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
@@ -7,13 +6,11 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
    * Helper to count number of print lines (for decal logic).
    */
   const countBackLines = () => {
-    // Typical productLines for back lines will include "In trên số lưng", "In số lưng", "In dưới số lưng"
-    // Let's count unique positions related to back/shoulder lines in productLines (except chest/pants number, logos)
     const backLinePositions = [
       "In trên số lưng",
       "In số lưng",
       "In dưới số lưng",
-      "mặt lưng", // In case "mặt lưng" naming is used
+      "mặt lưng",
     ];
     return productLines.filter(line =>
       backLinePositions.some(pos => line.position.includes(pos))
@@ -36,10 +33,10 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     // Print cost calculation
     let printingCost = 0;
 
-    // Identify how many back print lines in decal
+    // 1. Decal mặt lưng: tính theo số dòng (1 dòng 10k, 2 dòng 15k, 3 dòng 20k)
     const decalBackLines = productLines.filter(
       line =>
-        (line.material.includes("decal") || line.material.includes("Decal")) &&
+        (line.material.toLowerCase().includes("decal")) &&
         (
           line.position.includes("In trên số lưng") ||
           line.position.includes("In số lưng") ||
@@ -48,9 +45,8 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
         )
     );
 
-    // For decal lines, group by player (if possible) for correct pricing. If not, just count lines.
+    let decalBackLineCount = decalBackLines.length;
     let decalBackPrice = 0;
-    const decalBackLineCount = decalBackLines.length;
     if (decalBackLineCount === 1) {
       decalBackPrice = 10000;
     } else if (decalBackLineCount === 2) {
@@ -60,10 +56,10 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     }
     printingCost += decalBackPrice;
 
-    // For heat transfer back print (regardless of line count, only one charge if present)
+    // 2. Chuyển nhiệt mặt lưng: luôn 10k nếu có bất kỳ dòng nào
     const htBackLineExists = productLines.some(
       line =>
-        (line.material.includes("chuyển nhiệt") || line.material.includes("Chuyển nhiệt")) &&
+        (line.material.toLowerCase().includes("chuyển nhiệt")) &&
         (
           line.position.includes("In trên số lưng") ||
           line.position.includes("In số lưng") ||
@@ -75,34 +71,35 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       printingCost += 10000;
     }
 
-    // In số ngực (Chest number)
+    // 3. Số ngực (decal & chuyển nhiệt): mỗi 5k/1 vị trí (không cộng dồn decal & chuyển nhiệt trên cùng vị trí)
+    // 4. Số quần (decal & chuyển nhiệt): mỗi 5k/1 vị trí (tương tự)
+    // Sử dụng Set để tránh cộng dồn khi có cả decal và chuyển nhiệt cùng vị trí
+    const chestNumberPositions = new Set<string>();
+    const pantsNumberPositions = new Set<string>();
+
     productLines.forEach(line => {
-      // Chest number
+      // Số ngực
       if (line.position.toLowerCase().includes("số ngực")) {
-        if (line.material.includes("decal") || line.material.includes("Decal")) {
-          printingCost += 5000;
-        } else if (line.material.includes("chuyển nhiệt") || line.material.includes("Chuyển nhiệt")) {
-          printingCost += 5000;
-        }
+        // Đánh dấu đã có số ngực cho vị trí này
+        chestNumberPositions.add(line.position.toLowerCase());
       }
-      // Pants number
+      // Số quần
       if (line.position.toLowerCase().includes("số quần")) {
-        if (line.material.includes("decal") || line.material.includes("Decal")) {
-          printingCost += 5000;
-        } else if (line.material.includes("chuyển nhiệt") || line.material.includes("Chuyển nhiệt")) {
-          printingCost += 5000;
-        }
+        pantsNumberPositions.add(line.position.toLowerCase());
       }
-      // Logo (any logo position!)
-      if (
-        line.position.toLowerCase().includes("logo")
-      ) {
+    });
+
+    printingCost += chestNumberPositions.size * 5000;
+    printingCost += pantsNumberPositions.size * 5000;
+
+    // 5. Các loại logo ở mọi vị trí: 10k/vị trí/lần xuất hiện
+    productLines.forEach(line => {
+      if (line.position.toLowerCase().includes("logo")) {
         printingCost += 10000;
       }
     });
 
     totalCost = uniformsCost + printingCost;
-
     return totalCost;
   }, [players, productLines]);
 
@@ -117,4 +114,3 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     getPlayerAndGoalkeeperCounts
   };
 };
-
