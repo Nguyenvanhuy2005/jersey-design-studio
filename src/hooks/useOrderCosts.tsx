@@ -29,6 +29,28 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       total: number;
     }[] = [];
 
+    // Determine the materials used on back print lines
+    const hasDecalBack = productLines.some(
+      line =>
+        line.material.toLowerCase().includes("decal") &&
+        (
+          line.position.includes("In trên số lưng") ||
+          line.position.includes("In số lưng") ||
+          line.position.includes("In dưới số lưng") ||
+          line.position.toLowerCase().includes("mặt lưng")
+        )
+    );
+    const hasHTBack = productLines.some(
+      line =>
+        line.material.toLowerCase().includes("chuyển nhiệt") &&
+        (
+          line.position.includes("In trên số lưng") ||
+          line.position.includes("In số lưng") ||
+          line.position.includes("In dưới số lưng") ||
+          line.position.toLowerCase().includes("mặt lưng")
+        )
+    );
+
     // 1. Decal mặt lưng (LINE BACK)
     const decalBackLines = productLines.filter(
       line =>
@@ -59,17 +81,8 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     }
 
     // 2. Chuyển nhiệt mặt lưng
-    const htBackLineExists = productLines.some(
-      line =>
-        line.material.toLowerCase().includes("chuyển nhiệt") &&
-        (
-          line.position.includes("In trên số lưng") ||
-          line.position.includes("In số lưng") ||
-          line.position.includes("In dưới số lưng") ||
-          line.position.toLowerCase().includes("mặt lưng")
-        )
-    );
-    if (htBackLineExists) {
+    // Only show if any heat transfer lines are present
+    if (hasHTBack) {
       costItems.push({
         label: "Chuyển nhiệt mặt lưng",
         quantity: 1,
@@ -193,7 +206,8 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     printingCost += decalBackPrice;
 
     // 2. Chuyển nhiệt mặt lưng: luôn 10k nếu có bất kỳ dòng nào
-    const htBackLineExists = productLines.some(
+    // Only add if there are chuyển nhiệt back lines
+    const hasHTBack = productLines.some(
       line =>
         line.material.toLowerCase().includes("chuyển nhiệt") &&
         (
@@ -203,31 +217,28 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
           line.position.toLowerCase().includes("mặt lưng")
         )
     );
-    if (htBackLineExists) {
+    if (hasHTBack) {
       printingCost += 10000;
     }
 
-    // 3. Số ngực (decal & chuyển nhiệt): mỗi 5k/1 vị trí (không cộng dồn decal & chuyển nhiệt trên cùng vị trí)
-    // 4. Số quần (decal & chuyển nhiệt): mỗi 5k/1 vị trí (tương tự)
-    // Sử dụng Set để tránh cộng dồn khi có cả decal và chuyển nhiệt cùng vị trí
-    const chestNumberPositions = new Set<string>();
-    const pantsNumberPositions = new Set<string>();
-
+    // 3. Số ngực & số quần (decal & chuyển nhiệt): mỗi 5k/1 vị trí
+    let chestNumberDecal = 0, chestNumberHT = 0, pantsNumberDecal = 0, pantsNumberHT = 0;
     productLines.forEach(line => {
-      // Số ngực
       if (line.position.toLowerCase().includes("số ngực")) {
-        chestNumberPositions.add(line.position.toLowerCase());
+        if (line.material.toLowerCase().includes("decal")) chestNumberDecal++;
+        if (line.material.toLowerCase().includes("chuyển nhiệt")) chestNumberHT++;
       }
-      // Số quần
       if (line.position.toLowerCase().includes("số quần")) {
-        pantsNumberPositions.add(line.position.toLowerCase());
+        if (line.material.toLowerCase().includes("decal")) pantsNumberDecal++;
+        if (line.material.toLowerCase().includes("chuyển nhiệt")) pantsNumberHT++;
       }
     });
+    printingCost += chestNumberDecal * 5000;
+    printingCost += chestNumberHT * 5000;
+    printingCost += pantsNumberDecal * 5000;
+    printingCost += pantsNumberHT * 5000;
 
-    printingCost += chestNumberPositions.size * 5000;
-    printingCost += pantsNumberPositions.size * 5000;
-
-    // 5. Các loại logo ở mọi vị trí: 10k/vị trí/lần xuất hiện
+    // 4. Logo positions 10k/vị trí/lần xuất hiện (chia theo vật liệu)
     productLines.forEach(line => {
       if (line.position.toLowerCase().includes("logo")) {
         printingCost += 10000;
