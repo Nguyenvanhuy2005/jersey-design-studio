@@ -137,13 +137,20 @@ export function extractTeamName(order: DbOrder): string {
  */
 export function processLogos(dbLogos: any[] | null): Logo[] {
   if (!dbLogos || !Array.isArray(dbLogos)) return [];
-  
-  return dbLogos.map(logo => ({
-    id: logo.id,
-    position: logo.position as LogoPosition,
-    url: logo.file_path ? getPublicUrl(logo.file_path) : undefined,
-    previewUrl: logo.file_path ? getPublicUrl(logo.file_path) : undefined
-  }));
+
+  return dbLogos.map(logo => {
+    // file_path always comes from storage, even if publicUrl exists, always prefer public bucket link
+    let previewUrl: string | undefined = undefined;
+    if (logo.file_path && typeof logo.file_path === "string") {
+      previewUrl = getPublicUrl(logo.file_path);
+    }
+    return {
+      id: logo.id,
+      position: logo.position as LogoPosition,
+      url: previewUrl,
+      previewUrl: previewUrl
+    };
+  });
 }
 
 /**
@@ -152,7 +159,10 @@ export function processLogos(dbLogos: any[] | null): Logo[] {
 function getPublicUrl(storagePath: string): string {
   const baseUrl = "https://vvfxqlqcfibxstnjciha.supabase.co/storage/v1/object/public";
   const bucket = "logos";
-  return `${baseUrl}/${bucket}/${storagePath.replace(`${bucket}/`, '')}`;
+  // Remove leading slash or "logos/" if present
+  let cleanPath = storagePath.replace(/^logos\//, "");
+  if (cleanPath.startsWith("/")) cleanPath = cleanPath.slice(1);
+  return `${baseUrl}/${bucket}/${cleanPath}`;
 }
 
 /**

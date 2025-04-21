@@ -142,12 +142,16 @@ export const useOrderSubmission = ({
       await createStorageBucketsIfNeeded();
       
       const orderId = uuidv4();
-      const logoUrls: string[] = [];
-      
+      const logoStorageEntries: {
+        file_path: string;
+        position: string;
+      }[] = [];
+
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
       
       if (logos.length > 0) {
         for (const logo of logos) {
+          if (!logo.file) continue;
           const fileExt = logo.file.name.split('.').pop();
           const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
           
@@ -158,25 +162,43 @@ export const useOrderSubmission = ({
               upsert: false
             });
             
-          if (uploadError) {
-            console.error("Error uploading logo:", uploadError);
+          if (uploadError || !data) {
+            console.error("Error uploading logo:", uploadError || "No data returned");
             throw uploadError;
           }
 
-          await supabase.from('logos').insert({
+          logoStorageEntries.push({
             file_path: filePath,
-            order_id: orderId,
             position: logo.position
           });
+        }
 
-          const { data: { publicUrl } } = supabase.storage
-            .from('logos')
-            .getPublicUrl(filePath);
-
-          logoUrls.push(publicUrl);
+        const { error: insertLogosError } = await supabase
+          .from('logos')
+          .insert(
+            logoStorageEntries.map(item => ({
+              file_path: item.file_path,
+              order_id: orderId,
+              position: item.position
+            }))
+          );
+          
+        if (insertLogosError) {
+          console.error("Error inserting logo records:", insertLogosError);
+          toast.error("Không thể lưu thông tin logo vào đơn hàng");
         }
       }
-      
+
+      const logoUrls: string[] = [];
+      if (logoStorageEntries.length > 0) {
+        logoUrls = logoStorageEntries.map(item => {
+          const { data: urlData } = supabase.storage
+            .from('logos')
+            .getPublicUrl(item.file_path);
+          return urlData.publicUrl;
+        });
+      }
+
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
       const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
