@@ -1,3 +1,4 @@
+
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Order } from "@/types";
@@ -33,7 +34,7 @@ export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
         <TabsContent value="info" className="space-y-4 my-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <OrderBasicInfo order={order} />
-            <PrintConfig printConfig={order.printConfig} />
+            <PrintConfig printConfig={order.printConfig} designData={order.designData} />
           </div>
           
           <ProductLinesList productLines={order.productLines} />

@@ -1,4 +1,4 @@
-import { Order, Player, Logo } from "@/types";
+import { Order, Player, Logo, LogoPosition } from "@/types";
 
 // Define types for raw database models
 export interface DbOrder {
