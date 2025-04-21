@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, Logo, Player, ProductLine } from "@/types";
 import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
@@ -91,10 +90,8 @@ export function OrderTabs({
   getPlayerAndGoalkeeperCounts,
   getPrintCostBreakdown
 }: OrderTabsProps) {
-  // Determine the active tab index for navigation logic
   const tabIndex = TAB_ORDER.indexOf(activeTab as typeof TAB_ORDER[number]);
 
-  // Handlers for navigation buttons
   const goPrev = () => {
     if (tabIndex > 0) {
       setActiveTab(TAB_ORDER[tabIndex - 1]);
@@ -105,6 +102,17 @@ export function OrderTabs({
       setActiveTab(TAB_ORDER[tabIndex + 1]);
     }
   };
+
+  useEffect(() => {
+    console.log("[OrderTabs] activeTab:", activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "preview") {
+      console.log("[OrderTabs] ĐÃ chuyển sang tab preview. Gọi onGenerateProductLines");
+      onGenerateProductLines();
+    }
+  }, [activeTab]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -147,7 +155,6 @@ export function OrderTabs({
               onGenerateProductLines={onGenerateProductLines}
             />
           </div>
-          {/* Navigation bottom bar */}
           <div className="w-full flex justify-end gap-2 mt-8">
             <Button onClick={goNext} variant="default" size="lg" className="ml-auto flex items-center gap-2">
               Tiếp theo <ChevronRight className="w-4 h-4" />
@@ -173,7 +180,6 @@ export function OrderTabs({
               pantCanvasRef={pantCanvasRef}
             />
           </div>
-          {/* Navigation bottom bar */}
           <div className="w-full flex justify-between gap-2 mt-8">
             <Button onClick={goPrev} variant="outline" size="lg" className="flex items-center gap-2">
               <ChevronLeft className="w-4 h-4" /> Quay lại
@@ -202,7 +208,6 @@ export function OrderTabs({
               getPrintCostBreakdown={getPrintCostBreakdown}
             />
           </div>
-          {/* Navigation bottom bar */}
           <div className="w-full flex justify-start gap-2 mt-8">
             <Button onClick={goPrev} variant="outline" size="lg" className="flex items-center gap-2">
               <ChevronLeft className="w-4 h-4" /> Quay lại

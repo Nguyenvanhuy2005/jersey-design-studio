@@ -95,6 +95,11 @@ export const useOrderForm = () => {
     fetchCustomerInfo();
   }, [user]);
   
+  useEffect(() => {
+    console.log("[useOrderForm] players:", players);
+    console.log("[useOrderForm] productLines:", productLines);
+  }, [players, productLines]);
+  
   const handleReferenceImagesUpload = (fileList: FileList | null) => {
     if (!fileList) return;
     

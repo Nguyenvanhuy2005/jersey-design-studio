@@ -3,18 +3,22 @@ import { Player, Logo, ProductLine, DesignData } from "@/types";
 import { toast } from "sonner";
 
 export const useOrderProductLines = (
-  players: Player[],
-  logos: Logo[],
-  printStyle: string,
-  fontText: string,
-  fontNumber: string,
-  printColor: string,
-  setDesignData: React.Dispatch<React.SetStateAction<Partial<DesignData>>>,
-  setProductLines: React.Dispatch<React.SetStateAction<ProductLine[]>>
+  players,
+  logos,
+  printStyle,
+  fontText,
+  fontNumber,
+  printColor,
+  setDesignData,
+  setProductLines
 ) => {
-  
+  console.log("[useOrderProductLines] players on hook mount/update:", players);
+  console.log("[useOrderProductLines] logos on hook mount/update:", logos);
+
   const generateProductLines = useCallback(() => {
+    console.log("[generateProductLines] called");
     if (players.length === 0) {
+      console.log("[generateProductLines] players EMPTY !");
       toast.error("Chưa có cầu thủ nào trong danh sách. Vui lòng thêm ít nhất một cầu thủ.");
       return;
     }
@@ -138,6 +142,7 @@ export const useOrderProductLines = (
     });
     
     setProductLines(newProductLines);
+    console.log("[generateProductLines] SET productLines:", newProductLines);
     toast.success("Đã tạo danh sách sản phẩm in từ cấu hình cầu thủ");
     
     updateDesignDataFromPlayers();
