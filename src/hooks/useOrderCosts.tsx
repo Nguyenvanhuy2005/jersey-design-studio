@@ -29,7 +29,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       total: number;
     }[] = [];
 
-    // 1. Decal mặt lưng: tính theo số dòng (1 dòng 10k, 2 dòng 15k, 3 dòng 20k)
+    // 1. Decal mặt lưng
     const decalBackLines = productLines.filter(
       line =>
         (line.material.toLowerCase().includes("decal")) &&
@@ -78,37 +78,68 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       });
     }
 
-    // 3. Số ngực (decal & chuyển nhiệt): mỗi 5k/1 vị trí (không cộng dồn decal & chuyển nhiệt trên cùng vị trí)
-    // 4. Số quần (decal & chuyển nhiệt): mỗi 5k/1 vị trí (tương tự)
-    // Sử dụng Set để tránh cộng dồn khi có cả decal và chuyển nhiệt cùng vị trí
-    const chestNumberPositions = new Set<string>();
-    const pantsNumberPositions = new Set<string>();
+    // Tách riêng "Số ngực in decal" và "Số ngực in chuyển nhiệt"
+    const chestNumberDecalPositions = new Set<string>();
+    const chestNumberHTPositions = new Set<string>();
+    // ... tương tự cho pants:
+    const pantsNumberDecalPositions = new Set<string>();
+    const pantsNumberHTPositions = new Set<string>();
 
     productLines.forEach(line => {
       // Số ngực
       if (line.position.toLowerCase().includes("số ngực")) {
-        chestNumberPositions.add(line.position.toLowerCase());
+        if (line.material.toLowerCase().includes("decal")) {
+          chestNumberDecalPositions.add(line.position.toLowerCase());
+        }
+        if (line.material.toLowerCase().includes("chuyển nhiệt")) {
+          chestNumberHTPositions.add(line.position.toLowerCase());
+        }
       }
       // Số quần
       if (line.position.toLowerCase().includes("số quần")) {
-        pantsNumberPositions.add(line.position.toLowerCase());
+        if (line.material.toLowerCase().includes("decal")) {
+          pantsNumberDecalPositions.add(line.position.toLowerCase());
+        }
+        if (line.material.toLowerCase().includes("chuyển nhiệt")) {
+          pantsNumberHTPositions.add(line.position.toLowerCase());
+        }
       }
     });
 
-    if (chestNumberPositions.size > 0) {
+    // "Số ngực in decal"
+    if (chestNumberDecalPositions.size > 0) {
       costItems.push({
-        label: "Số ngực",
-        quantity: chestNumberPositions.size,
+        label: "Số ngực (in decal)",
+        quantity: chestNumberDecalPositions.size,
         unitPrice: 5000,
-        total: chestNumberPositions.size * 5000
+        total: chestNumberDecalPositions.size * 5000
       });
     }
-    if (pantsNumberPositions.size > 0) {
+    // "Số ngực in chuyển nhiệt"
+    if (chestNumberHTPositions.size > 0) {
       costItems.push({
-        label: "Số quần",
-        quantity: pantsNumberPositions.size,
+        label: "Số ngực (chuyển nhiệt)",
+        quantity: chestNumberHTPositions.size,
         unitPrice: 5000,
-        total: pantsNumberPositions.size * 5000
+        total: chestNumberHTPositions.size * 5000
+      });
+    }
+    // "Số quần in decal"
+    if (pantsNumberDecalPositions.size > 0) {
+      costItems.push({
+        label: "Số quần (in decal)",
+        quantity: pantsNumberDecalPositions.size,
+        unitPrice: 5000,
+        total: pantsNumberDecalPositions.size * 5000
+      });
+    }
+    // "Số quần chuyển nhiệt"
+    if (pantsNumberHTPositions.size > 0) {
+      costItems.push({
+        label: "Số quần (chuyển nhiệt)",
+        quantity: pantsNumberHTPositions.size,
+        unitPrice: 5000,
+        total: pantsNumberHTPositions.size * 5000
       });
     }
 
