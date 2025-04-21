@@ -1,11 +1,10 @@
-
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderPlayersList } from "../../OrderPlayersList";
 import { OrderCostSummary } from "@/components/order-cost-summary";
 import { Player, ProductLine, Customer } from "@/types";
-import { PrintCostBreakdown } from "@/components/order/create-order/tabs/PrintCostBreakdown"; // NEW
+import { PrintCostBreakdown } from "@/components/order/create-order/tabs/PrintCostBreakdown";
 
 interface OrderSummaryTabContentProps {
   isDemoApproved: boolean;
@@ -55,7 +54,6 @@ export function OrderSummaryTabContent({
   const totalCost = calculateTotalCost();
   const costBreakdown = getPrintCostBreakdown();
 
-  // Calculate printing positions count based on player data
   const calculatePrintPositionsCount = () => {
     let count = 0;
     players.forEach(player => {
@@ -73,19 +71,10 @@ export function OrderSummaryTabContent({
 
   return (
     <div className="space-y-6">
-      <OrderCostSummary 
-        uniformCount={players.length}
-        jerseyUnitPrice={120000} 
-        goalkeeperUnitPrice={150000}
-        playerCount={playerCount}
-        goalkeeperCount={goalkeeperCount}
-        printPositionsCount={calculatePrintPositionsCount()}
-        printUnitPrice={20000}
+      <OrderCostSummary
+        breakdown={costBreakdown}
         totalCost={totalCost}
       />
-
-      {/* NEW: Detailed print cost breakdown table */}
-      <PrintCostBreakdown breakdown={costBreakdown} totalCost={totalCost} />
 
       <OrderPlayersList players={players} />
       
