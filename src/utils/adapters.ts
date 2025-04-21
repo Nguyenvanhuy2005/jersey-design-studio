@@ -231,16 +231,40 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
-  // Process logos
+  // Enhanced logo processing:
+  // Try to merge URLs from logo_urls array with positions in logos table if available.
   let processedLogos: Logo[] = [];
   if (Array.isArray(dbOrder.logo_urls) && dbOrder.logo_urls.length > 0) {
-    processedLogos = dbOrder.logo_urls.map((url: string, idx: number) => ({
-      id: `logo_${idx}`,
-      position: undefined,
-      url,
-      previewUrl: url
-    }));
-  } else if (logos) {
+    // Use info from both logo_urls and logos params if available
+    const logoUrlArr: string[] = dbOrder.logo_urls;
+    if (Array.isArray(logos) && logos.length > 0) {
+      // Try to find matching logo table records by file_path/url substring, else fallback
+      processedLogos = logoUrlArr.map((url: string, idx: number) => {
+        // Find a logos table record whose file_path ends with the part from this URL
+        const matchedLogo = logos.find((lg) => {
+          // Both file_path in DB and url should contain the unique filename
+          if (!lg?.file_path || !url) return false;
+          // Check if the file_path is included in the URL
+          return url.includes(lg.file_path);
+        });
+        return {
+          id: matchedLogo?.id ?? `logo_${idx}`,
+          position: matchedLogo?.position as LogoPosition | undefined,
+          url,
+          previewUrl: url,
+        };
+      });
+    } else {
+      // Only urls, show all but positions are undefined
+      processedLogos = logoUrlArr.map((url: string, idx: number) => ({
+        id: `logo_${idx}`,
+        position: undefined,
+        url,
+        previewUrl: url
+      }));
+    }
+  } else if (logos && logos.length > 0) {
+    // No logo_urls array, use logo table records only
     processedLogos = processLogos(logos);
   }
 
