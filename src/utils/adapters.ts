@@ -137,20 +137,21 @@ export function extractTeamName(order: DbOrder): string {
  */
 export function processLogos(dbLogos: any[] | null): Logo[] {
   if (!dbLogos || !Array.isArray(dbLogos)) return [];
-
-  return dbLogos.map(logo => {
-    // file_path always comes from storage, even if publicUrl exists, always prefer public bucket link
-    let previewUrl: string | undefined = undefined;
-    if (logo.file_path && typeof logo.file_path === "string") {
-      previewUrl = getPublicUrl(logo.file_path);
-    }
-    return {
-      id: logo.id,
-      position: logo.position as LogoPosition,
-      url: previewUrl,
-      previewUrl: previewUrl
-    };
-  });
+  return dbLogos
+    .filter(logo => logo && logo.file_path && logo.position)
+    .map(logo => {
+      // file_path luôn trỏ tới storage, tạo public url dựa vào vị trí và path
+      let previewUrl: string | undefined = undefined;
+      if (logo.file_path && typeof logo.file_path === "string") {
+        previewUrl = getPublicUrl(logo.file_path);
+      }
+      return {
+        id: logo.id ?? `logo-${logo.position}-${logo.file_path}`,
+        position: logo.position as LogoPosition,
+        url: previewUrl,
+        previewUrl: previewUrl
+      };
+    });
 }
 
 /**
