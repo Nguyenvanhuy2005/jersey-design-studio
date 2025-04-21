@@ -1,3 +1,4 @@
+
 import { Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
@@ -10,20 +11,29 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface PrintConfigProps {
   printConfig: Order['printConfig'];
+  designData?: any;
 }
 
-export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
+export const PrintConfig = ({ printConfig, designData }: PrintConfigProps) => {
   const { user } = useAuth();
   const [fontOwnerName, setFontOwnerName] = useState<string>("");
   const [canDownload, setCanDownload] = useState<boolean>(false);
+  const [fontName, setFontName] = useState<string>("Arial");
   
   useEffect(() => {
-    if (!printConfig?.font) return;
-    setCanDownload(true);
-    if (printConfig.font) {
-      setFontOwnerName(`Font: ${printConfig.font}`);
+    // First check designData for font information
+    if (designData && designData.font_text && designData.font_text.font) {
+      setFontName(designData.font_text.font);
+      setCanDownload(true);
+      return;
     }
-  }, [printConfig?.font, user]);
+    
+    // Fall back to printConfig
+    if (printConfig?.font) {
+      setFontName(printConfig.font);
+      setCanDownload(true);
+    }
+  }, [printConfig?.font, designData, user]);
   
   const checkIsAdmin = async (): Promise<boolean> => {
     try {
@@ -90,12 +100,12 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                 </TableCell>
                 <TableCell className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between">
-                    <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
-                    {canDownload && printConfig.font && (
+                    <span style={{ fontFamily: fontName }}>{fontName}</span>
+                    {canDownload && fontName && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownload(printConfig.font!)}
+                        onClick={() => handleDownload(fontName)}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Tải xuống font

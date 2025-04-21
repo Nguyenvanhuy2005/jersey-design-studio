@@ -47,7 +47,8 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           ),
           players (*),
           print_configs (*),
-          product_lines (*)
+          product_lines (*),
+          logos (*)
         `);
       
       if (statusFilter !== 'all') {
@@ -95,7 +96,8 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
           order.customers,
           order.players,
           order.product_lines,
-          order.print_configs
+          order.print_configs,
+          order.logos
         );
       });
       

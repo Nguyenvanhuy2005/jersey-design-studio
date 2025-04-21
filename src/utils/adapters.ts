@@ -1,4 +1,4 @@
-import { Order, Player } from "@/types";
+import { Order, Player, Logo } from "@/types";
 
 // Define types for raw database models
 export interface DbOrder {
@@ -133,6 +133,29 @@ export function extractTeamName(order: DbOrder): string {
 }
 
 /**
+ * Process logos from database format
+ */
+export function processLogos(dbLogos: any[] | null): Logo[] {
+  if (!dbLogos || !Array.isArray(dbLogos)) return [];
+  
+  return dbLogos.map(logo => ({
+    id: logo.id,
+    position: logo.position as LogoPosition,
+    url: logo.file_path ? getPublicUrl(logo.file_path) : undefined,
+    previewUrl: logo.file_path ? getPublicUrl(logo.file_path) : undefined
+  }));
+}
+
+/**
+ * Helper to get public URL from storage path
+ */
+function getPublicUrl(storagePath: string): string {
+  const baseUrl = "https://vvfxqlqcfibxstnjciha.supabase.co/storage/v1/object/public";
+  const bucket = storagePath.startsWith('logos/') ? 'logos' : 'reference_images';
+  return `${baseUrl}/${bucket}/${storagePath.replace(`${bucket}/`, '')}`;
+}
+
+/**
  * Converts a database order with related data to application Order model
  */
 export function dbOrderToOrder(
@@ -140,7 +163,8 @@ export function dbOrderToOrder(
   customer?: any,
   players?: any[],
   productLines?: any[],
-  printConfig?: any
+  printConfig?: any,
+  logos?: any[]
 ): Order {
   // Parse reference images
   const refImages = parseReferenceImages(dbOrder.reference_images);
@@ -198,6 +222,9 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
+  // Process logos (new)
+  const processedLogos = logos ? processLogos(logos) : [];
+
   // Create the Order object
   return {
     id: dbOrder.id,
@@ -215,6 +242,7 @@ export function dbOrderToOrder(
     customerPhone: customer?.phone || undefined,
     customerAddress: customer?.address || undefined,
     teamName,
-    logo_url: dbOrder.logo_url || undefined
+    logo_url: dbOrder.logo_url || undefined,
+    logos: processedLogos
   };
 }
