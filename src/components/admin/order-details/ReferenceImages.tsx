@@ -2,29 +2,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
-import { Logo } from "@/types";
+import { Logo, LogoPosition, LogoPositionLabel } from "@/types";
+
+// Helper to group logos by position
+function groupLogosByPosition(logos: Logo[]): Partial<Record<LogoPosition, Logo[]>> {
+  const grouped: Partial<Record<LogoPosition, Logo[]>> = {};
+  for (const logo of logos) {
+    if (!grouped[logo.position]) grouped[logo.position] = [];
+    grouped[logo.position]!.push(logo);
+  }
+  return grouped;
+}
 
 interface ReferenceImagesProps {
   referenceImages?: string[];
   logo_url?: string;
-  logos?: Logo[]; // NEW
+  logos?: Logo[];
 }
 
 export const ReferenceImages = ({ referenceImages, logo_url, logos = [] }: ReferenceImagesProps) => {
-  if ((!referenceImages || referenceImages.length === 0) && !logo_url && (!logos || logos.length === 0)) {
-    return null;
-  }
+  const hasLogoImages = (logos && logos.length > 0) || !!logo_url;
 
-  // Logos from prop (NEW: support all logos)
-  const logoAssets = (logos && logos.length > 0)
-    ? logos.map((logo, idx) => ({
-        url: logo.previewUrl || logo.url,
-        name: `Logo ${idx + 1} (${logo.position})`,
-        type: 'image' as const
-      }))
-    : logo_url
-      ? [{ url: logo_url, name: 'Logo đội', type: 'image' as const }]
-      : [];
+  // Group all logos by position
+  const logosByPosition = groupLogosByPosition(logos || []);
+  const hasLogoPosition = Object.keys(logosByPosition).length > 0;
 
   const referenceAssets = referenceImages?.map((url, index) => ({
     url,
@@ -34,22 +35,57 @@ export const ReferenceImages = ({ referenceImages, logo_url, logos = [] }: Refer
 
   return (
     <div className="space-y-4">
-      {/* Display Logo section if exists */}
-      {logoAssets.length > 0 && (
+      {/* Logo section - group by position */}
+      {hasLogoImages && hasLogoPosition && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              {logos && logos.length > 0 ? "Logo các vị trí" : "Logo đội"}
+              Logo các vị trí
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetViewer assets={logoAssets} gridCols={Math.max(logoAssets.length, 1)} />
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {Object.entries(LogoPositionLabel).map(([position, label]) => {
+                const logosForThisPos = logosByPosition[position as LogoPosition];
+                if (!logosForThisPos || logosForThisPos.length === 0) return null;
+                return (
+                  <div key={position} className="mb-4">
+                    <div className="font-semibold mb-1">{label}</div>
+                    <AssetViewer
+                      assets={logosForThisPos.map((logo, idx) => ({
+                        url: logo.previewUrl || logo.url || "",
+                        name: `Logo ${label}${logosForThisPos.length > 1 ? ` #${idx + 1}` : ""}`,
+                        type: "image"
+                      }))}
+                      gridCols={Math.max(logosForThisPos.length, 1)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Display Reference Images section if exists */}
+      {/* Backup logo (legacy field) */}
+      {!hasLogoPosition && !!logo_url && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Logo đội
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetViewer assets={[
+              { url: logo_url, name: "Logo đội", type: "image" }
+            ]} gridCols={1} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reference Images */}
       {referenceAssets.length > 0 && (
         <Card>
           <CardHeader>

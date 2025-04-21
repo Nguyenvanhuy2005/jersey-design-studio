@@ -32,6 +32,15 @@ export interface Logo {
   previewUrl?: string;
 }
 
+export const LogoPositionLabel: Record<LogoPosition, string> = {
+  chest_left: "Ngực trái",
+  chest_right: "Ngực phải",
+  chest_center: "Chính giữa ngực",
+  sleeve_left: "Tay trái",
+  sleeve_right: "Tay phải",
+  pants: "Quần"
+};
+
 export interface PrintConfig {
   id?: string;
   font: string;
@@ -193,7 +202,7 @@ export interface Order {
   user_id?: string;
   teamName?: string;
   logo_url?: string;
-  logos?: Logo[];
+  logos: Logo[];
 }
 
 export interface DbPlayer {
