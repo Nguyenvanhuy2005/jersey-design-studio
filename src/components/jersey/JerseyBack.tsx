@@ -9,6 +9,7 @@ interface JerseyBackProps {
   playerNumber?: string;
   fontFamily?: string;
   designData?: Partial<DesignData>;
+  isGoalkeeper?: boolean;
 }
 
 export const JerseyBack = ({ 
@@ -17,16 +18,21 @@ export const JerseyBack = ({
   playerName, 
   playerNumber,
   fontFamily,
-  designData
+  designData,
+  isGoalkeeper = false
 }: JerseyBackProps) => {
   console.log(`Rendering JerseyBack with fonts:`, {
     textFont: designData?.font_text?.font,
     numberFont: designData?.font_number?.font,
-    fallbackFont: fontFamily
+    fallbackFont: fontFamily,
+    isGoalkeeper: isGoalkeeper
   });
   
-  // Draw the basic jersey shape using utility function
-  drawBasicJersey(ctx);
+  // Choose color based on if it's a goalkeeper jersey
+  const jerseyColor = isGoalkeeper ? '#4CAF50' : '#FFD700';
+  
+  // Draw the basic jersey shape using utility function with appropriate color
+  drawBasicJersey(ctx, jerseyColor);
   
   // Setup canvas for text rendering
   setupCanvas(ctx);

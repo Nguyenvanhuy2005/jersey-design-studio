@@ -17,6 +17,7 @@ interface JerseyFrontProps {
   onLogoResize?: (id: string, scale: number) => void;
   onLogoDelete?: (id: string) => void;
   designData?: Partial<DesignData>;
+  isGoalkeeper?: boolean;
 }
 
 // Fixed positions for logos (in canvas coordinates)
@@ -50,15 +51,16 @@ export const JerseyFront = ({
   onLogoMove,
   onLogoResize,
   onLogoDelete,
-  designData
+  designData,
+  isGoalkeeper = false
 }: JerseyFrontProps) => {
   const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
   const canvasHeight = ctx.canvas.height / window.devicePixelRatio;
   
-  // Choose jersey color based on uniform type from designData
-  let jerseyColor = designData?.uniform_type === 'goalkeeper' ? '#4CAF50' : '#FFD700';
+  // Choose jersey color based on uniform type
+  let jerseyColor = isGoalkeeper ? '#4CAF50' : '#FFD700';
   
-  console.log(`Rendering JerseyFront on canvas ${canvasWidth}x${canvasHeight} with ${loadedLogos.size} logos`);
+  console.log(`Rendering JerseyFront on canvas ${canvasWidth}x${canvasHeight} with ${loadedLogos.size} logos, isGoalkeeper: ${isGoalkeeper}`);
   
   // Draw the basic jersey shape using utility function
   drawBasicJersey(ctx, jerseyColor);

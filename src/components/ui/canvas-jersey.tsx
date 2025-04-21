@@ -14,6 +14,7 @@ interface CanvasJerseyProps {
   teamName: string;
   playerName?: string;
   playerNumber?: string;
+  uniformType?: string;
   logos?: Logo[];
   view: 'front' | 'back' | 'pants';
   printConfig?: PrintConfig;
@@ -25,6 +26,7 @@ export function CanvasJersey({
   teamName, 
   playerName, 
   playerNumber, 
+  uniformType = 'player',
   logos = [], 
   view,
   printConfig,
@@ -43,6 +45,8 @@ export function CanvasJersey({
   const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   const canvasWidth = 300;
   const canvasHeight = 300;
+  
+  const isGoalkeeper = uniformType === 'goalkeeper' || designData?.uniform_type === 'goalkeeper';
 
   const { 
     selectedLogo,
@@ -62,7 +66,8 @@ export function CanvasJersey({
   useEffect(() => {
     console.log('Current logos prop:', logos);
     console.log('Current design data:', designData);
-  }, [logos, designData]);
+    console.log('Is goalkeeper:', isGoalkeeper);
+  }, [logos, designData, isGoalkeeper]);
 
   useEffect(() => {
     const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
@@ -273,12 +278,13 @@ export function CanvasJersey({
       return;
     }
 
-    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos`);
+    console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos, isGoalkeeper: ${isGoalkeeper}`);
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     
     const effectiveDesignData: Partial<DesignData> = {
       ...designData,
+      uniform_type: isGoalkeeper ? 'goalkeeper' : 'player',
       font_text: {
         font: designData?.font_text?.font || designData?.font_text?.font_file || printConfig?.font || 'Arial'
       },
@@ -289,7 +295,8 @@ export function CanvasJersey({
 
     console.log('Effective Design Data for Jersey:', {
       designData: effectiveDesignData,
-      view: view
+      view: view,
+      isGoalkeeper: isGoalkeeper
     });
 
     if (view === 'front') {
@@ -306,7 +313,8 @@ export function CanvasJersey({
         onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
         onLogoResize: isInteractionDisabled ? undefined : handleLogoResize,
         onLogoDelete: isInteractionDisabled ? undefined : handleLogoDelete,
-        designData: effectiveDesignData
+        designData: effectiveDesignData,
+        isGoalkeeper: isGoalkeeper
       });
     } else if (view === 'back') {
       JerseyBack({
@@ -315,7 +323,8 @@ export function CanvasJersey({
         playerName: designData?.line_1?.content || playerName,
         playerNumber,
         fontFamily: getFont(printConfig),
-        designData: effectiveDesignData
+        designData: effectiveDesignData,
+        isGoalkeeper: isGoalkeeper
       });
     } else if (view === 'pants') {
       console.log('Rendering pants view');
@@ -343,10 +352,12 @@ export function CanvasJersey({
         logo: logoImage && logoPosition ? {
           image: logoImage,
           position: logoPosition
-        } : undefined
+        } : undefined,
+        designData: effectiveDesignData,
+        printConfig
       });
     }
-  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled]);
+  }, [teamName, playerName, playerNumber, loadedLogos, view, logoPositions, logos, printConfig, designData, loadedFont, pixelRatio, selectedLogo, isDragging, isInteractionDisabled, isGoalkeeper]);
 
   function isValidUUID(id: string) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

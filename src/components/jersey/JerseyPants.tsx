@@ -12,6 +12,7 @@ interface JerseyPantsProps {
   };
   designData?: any; // Optionally pass partial DesignData for future extensibility
   printConfig?: { font?: string };
+  isGoalkeeper?: boolean;
 }
 
 export const JerseyPants = ({
@@ -21,10 +22,11 @@ export const JerseyPants = ({
   pants_number_enabled = true,
   logo,
   designData,
-  printConfig
+  printConfig,
+  isGoalkeeper = false
 }: JerseyPantsProps) => {
-  // Draw short pants (base is always yellow)
-  ctx.fillStyle = '#FFD700';
+  // Draw short pants (base color based on player type)
+  ctx.fillStyle = '#FFD700'; // Always yellow for pants regardless of player type
 
   // Left side
   ctx.beginPath();

@@ -34,9 +34,13 @@ export function UniformPreview({
   // Use index selector if multiple players, fallback to the only player or undefined
   const currentPlayer = player ||
     (players.length > 0 ? players[selectedPlayerIdx] : undefined);
+  
+  // Determine if the current player is a goalkeeper
+  const isGoalkeeper = currentPlayer?.uniform_type === "goalkeeper";
 
   // Construct effective design data (logic unchanged, always preference player lines)
   const effectiveDesignData: Partial<DesignData> = {
+    uniform_type: isGoalkeeper ? 'goalkeeper' : 'player',
     chest_number: {
       enabled: currentPlayer?.chest_number || false,
       material: printConfig?.backMaterial
@@ -78,7 +82,7 @@ export function UniformPreview({
           >
             {players.map((p, idx) => (
               <option key={p.id} value={idx}>
-                {p.name} {p.uniform_type === "goalkeeper" && "(Thủ môn)"}
+                {p.name} {p.uniform_type === "goalkeeper" ? "(Thủ môn)" : ""}
               </option>
             ))}
           </select>
@@ -95,6 +99,7 @@ export function UniformPreview({
             teamName={teamName}
             playerName={currentPlayer?.name}
             playerNumber={currentPlayer?.number}
+            uniformType={currentPlayer?.uniform_type}
             logos={logos}
             view="front"
             printConfig={printConfig}
@@ -107,6 +112,7 @@ export function UniformPreview({
             teamName={teamName}
             playerName={currentPlayer?.name}
             playerNumber={currentPlayer?.number}
+            uniformType={currentPlayer?.uniform_type}
             logos={logos}
             view="back"
             printConfig={printConfig}
@@ -118,6 +124,7 @@ export function UniformPreview({
           <CanvasJersey
             teamName={teamName}
             playerNumber={currentPlayer?.number}
+            uniformType={currentPlayer?.uniform_type}
             logos={logos}
             view="pants"
             printConfig={printConfig}
