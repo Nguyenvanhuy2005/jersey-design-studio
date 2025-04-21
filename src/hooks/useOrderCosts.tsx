@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
@@ -20,7 +19,9 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
 
   // --- NEW: Itemized cost breakdown ---
   const getPrintCostBreakdown = useCallback(() => {
-    // This matches the calculation below
+    // Debug: Log productLines at start
+    console.log("DEBUG [getPrintCostBreakdown] productLines:", productLines);
+
     let costItems: {
       label: string;
       quantity: number;
@@ -132,11 +133,17 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       });
     }
 
+    // Debug: log costItems result
+    console.log("DEBUG [getPrintCostBreakdown] costItems:", costItems);
+
     return costItems;
   }, [productLines]);
 
   const calculateTotalCost = useCallback(() => {
-    if (!players.length) return 0;
+    if (!players.length) {
+      console.log("DEBUG [calculateTotalCost] players empty, returning 0");
+      return 0;
+    }
 
     let printingCost = 0;
 
@@ -206,6 +213,9 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     });
 
     const totalCost = printingCost;
+    // Debug: log calculation result
+    console.log("DEBUG [calculateTotalCost] productLines:", productLines);
+    console.log("DEBUG [calculateTotalCost] totalCost:", totalCost);
     return totalCost;
   }, [players, productLines]);
 
