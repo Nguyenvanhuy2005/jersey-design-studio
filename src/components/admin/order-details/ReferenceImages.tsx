@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
@@ -16,12 +15,12 @@ function groupLogosByPosition(logos: Logo[]): Partial<Record<LogoPosition, Logo[
 
 interface ReferenceImagesProps {
   referenceImages?: string[];
-  logo_url?: string;
   logos?: Logo[];
 }
 
-export const ReferenceImages = ({ referenceImages, logo_url, logos = [] }: ReferenceImagesProps) => {
-  const hasLogoImages = (logos && logos.length > 0) || !!logo_url;
+export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
+  // Do not check logo_url, only use logos array
+  const hasLogoImages = logos && logos.length > 0;
 
   // Group all logos by position
   const logosByPosition = groupLogosByPosition(logos || []);
@@ -64,23 +63,6 @@ export const ReferenceImages = ({ referenceImages, logo_url, logos = [] }: Refer
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Backup logo (legacy field) */}
-      {!hasLogoPosition && !!logo_url && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5" />
-              Logo đội
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AssetViewer assets={[
-              { url: logo_url, name: "Logo đội", type: "image" }
-            ]} gridCols={1} />
           </CardContent>
         </Card>
       )}

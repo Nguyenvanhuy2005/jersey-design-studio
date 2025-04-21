@@ -40,7 +40,6 @@ export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
           
           <ReferenceImages
             referenceImages={order.referenceImages}
-            logo_url={order.logo_url}
             logos={order.logos || []}
           />
         </TabsContent>

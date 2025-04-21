@@ -143,11 +143,9 @@ export function CustomerOrderDetails() {
   const getAssets = () => {
     const assets = [];
 
-    // Process reference images to ensure we have full URLs
+    // Reference images
     if (order?.referenceImages && order.referenceImages.length > 0) {
-      // Convert reference image paths to public URLs
       const processedUrls = getReferenceImageUrls(order.referenceImages);
-      
       assets.push({
         type: 'images' as const,
         title: 'Mẫu cần in',
@@ -159,15 +157,18 @@ export function CustomerOrderDetails() {
       });
     }
 
-    if (order?.logo_url) {
+    // All logo images (grouped)
+    if (order?.logos && order.logos.length > 0) {
       assets.push({
         type: 'logos' as const,
         title: 'Logo',
-        items: [{
-          url: order.logo_url,
-          name: 'logo-doi.png',
+        items: order.logos.map((logo, i) => ({
+          url: logo.previewUrl || logo.url,
+          name: logo.position
+            ? `Logo - ${logo.position.replace('_', ' ')}`
+            : `logo${i + 1}`,
           type: 'image' as const
-        }]
+        }))
       });
     }
 
