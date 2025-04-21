@@ -37,9 +37,12 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
 
     // Đếm riêng cho decal và chuyển nhiệt cho lưng
     let backDecalCount = 0;
-    let backHTCount = 0;
+    let backHTCount = 0; // Số lượng cầu thủ sử dụng chuyển nhiệt ở lưng
     let decalBackMap: { [label: string]: number } = {};
     let htBackMap: { [label: string]: number } = {};
+
+    // Set để theo dõi player nào đã được tính chuyển nhiệt mặt lưng
+    const playersWithHeatTransferBack = new Set<string>();
 
     productLines.forEach(line => {
       const foundPos = backPositions.find(pos => line.position.includes(pos.key));
@@ -49,8 +52,9 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
           backDecalCount++;
           decalBackMap[foundPos.label] = (decalBackMap[foundPos.label] || 0) + 1;
         } else if (line.material === "In chuyển nhiệt") {
+          // Tăng số lượng chuyển nhiệt mặt lưng
+          // Nếu vị trí in thuộc mặt lưng và là chuyển nhiệt
           backHTCount++;
-          htBackMap[foundPos.label] = (htBackMap[foundPos.label] || 0) + 1;
         }
       }
 
@@ -85,15 +89,30 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       }
     });
 
-    // 2. Chuyển nhiệt mặt lưng ("In chuyển nhiệt" ở lưng - chỉ tính/mô tả 1 lần nếu bất kỳ dòng nào dùng chuyển nhiệt)
-    // Count all chuyển nhiệt positions for back, but show only one cost for all lines  
-    const backHTTotal = Object.values(htBackMap).reduce((sum, v) => sum + v, 0);
-    if (backHTTotal > 0) {
+    // 2. Chuyển nhiệt mặt lưng - tính theo số cầu thủ sử dụng
+    // Tính số lượng cầu thủ có sử dụng chuyển nhiệt ở mặt lưng
+    const htBackPlayers = new Set();
+    
+    players.forEach((player, index) => {
+      const extPlayer = player as any;
+      const playerPrintStyle = extPlayer.print_style || "In decal"; // Default if not specified
+      
+      if (playerPrintStyle === "In chuyển nhiệt") {
+        // Kiểm tra xem cầu thủ có in mặt lưng không
+        if (extPlayer.line_1 || extPlayer.line_2 || extPlayer.number || extPlayer.line_3) {
+          htBackPlayers.add(index);
+        }
+      }
+    });
+    
+    const htBackPlayersCount = htBackPlayers.size;
+    
+    if (htBackPlayersCount > 0) {
       costItems.push({
         label: "Chuyển nhiệt mặt lưng",
-        quantity: 1,
+        quantity: htBackPlayersCount,
         unitPrice: 10000,
-        total: 10000,
+        total: htBackPlayersCount * 10000,
       });
     }
 
@@ -166,7 +185,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
 
     console.log("DEBUG [getPrintCostBreakdown] costItems (final):", costItems);
     return costItems;
-  }, [productLines]);
+  }, [players, productLines]);
 
   // --- Tổng chi phí ---
   const calculateTotalCost = useCallback(() => {
@@ -185,16 +204,31 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     ];
 
     let backDecalLines: { [label: string]: number } = {};
-    let backHTUsed = false;
+    const htBackPlayers = new Set();
 
-    productLines.forEach(line => {
-      const foundPos = backPositions.find(pos => line.position.includes(pos.key));
-      if (foundPos && line.material === "In decal") {
-        backDecalLines[foundPos.label] = (backDecalLines[foundPos.label] || 0) + 1;
-      } else if (foundPos && line.material === "In chuyển nhiệt") {
-        // Only mark as used (for any line)
-        backHTUsed = true;
-      }
+    // Phân tích kiểu in và các dòng in cho từng cầu thủ
+    players.forEach((player, index) => {
+      const extPlayer = player as any;
+      const playerPrintStyle = extPlayer.print_style || "In decal"; // Mặc định nếu không có
+      
+      // Xử lý in mặt lưng
+      backPositions.forEach(pos => {
+        const positionKey = pos.key.replace("In ", "").toLowerCase();
+        // Kiểm tra xem cầu thủ có in ở vị trí này không
+        const hasThisPosition = 
+          (positionKey === "trên số lưng" && extPlayer.line_1) ||
+          (positionKey === "số lưng" && (extPlayer.line_2 || extPlayer.number)) ||
+          (positionKey === "dưới số lưng" && extPlayer.line_3);
+          
+        if (hasThisPosition) {
+          if (playerPrintStyle === "In decal") {
+            backDecalLines[pos.label] = (backDecalLines[pos.label] || 0) + 1;
+          } else if (playerPrintStyle === "In chuyển nhiệt") {
+            // Đánh dấu cầu thủ này sử dụng chuyển nhiệt mặt lưng
+            htBackPlayers.add(index);
+          }
+        }
+      });
     });
 
     // Cộng chi phí decal từng dòng lưng
@@ -204,8 +238,11 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       }
     });
 
-    // Chuyển nhiệt mặt lưng: chỉ cộng MỘT LẦN giá 10k dù in mấy dòng
-    if (backHTUsed) printingCost += 10000;
+    // Chuyển nhiệt mặt lưng: tính theo số cầu thủ sử dụng chuyển nhiệt
+    const htBackPlayersCount = htBackPlayers.size;
+    if (htBackPlayersCount > 0) {
+      printingCost += htBackPlayersCount * 10000;
+    }
 
     // 2. Tính giá cho số ngực và số quần (5k/vị trí, riêng decal/chuyển nhiệt)
     productLines.forEach(line => {
