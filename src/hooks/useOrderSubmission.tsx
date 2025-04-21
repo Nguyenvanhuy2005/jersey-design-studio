@@ -162,18 +162,18 @@ export const useOrderSubmission = ({
             console.error("Error uploading logo:", uploadError);
             throw uploadError;
           }
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('logos')
-            .getPublicUrl(filePath);
-            
-          logoUrls.push(publicUrl);
-          
+
           await supabase.from('logos').insert({
             file_path: filePath,
             order_id: orderId,
             position: logo.position
           });
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('logos')
+            .getPublicUrl(filePath);
+
+          logoUrls.push(publicUrl);
         }
       }
       

@@ -151,7 +151,7 @@ export function processLogos(dbLogos: any[] | null): Logo[] {
  */
 function getPublicUrl(storagePath: string): string {
   const baseUrl = "https://vvfxqlqcfibxstnjciha.supabase.co/storage/v1/object/public";
-  const bucket = storagePath.startsWith('logos/') ? 'logos' : 'reference_images';
+  const bucket = "logos";
   return `${baseUrl}/${bucket}/${storagePath.replace(`${bucket}/`, '')}`;
 }
 
