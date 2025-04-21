@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { Player, Logo, ProductLine, DesignData } from "@/types";
 import { toast } from "sonner";
@@ -25,120 +26,146 @@ export const useOrderProductLines = (
     
     const newProductLines: ProductLine[] = [];
     
-    const uniqueConfigs = new Set<string>();
+    // Gather unique printing configurations and their styles
+    interface PrintConfig {
+      position: string;
+      material: string;
+      count: number;
+      players: number[];
+    }
     
-    players.forEach(player => {
+    // Track unique positions and their print styles
+    const printConfigs: Record<string, PrintConfig> = {};
+    
+    // First pass - identify all print positions and their styles per player
+    players.forEach((player, playerIndex) => {
       const extPlayer = player as any;
+      const playerPrintStyle = extPlayer.print_style || printStyle;
       
+      console.log(`[generateProductLines] Processing player ${playerIndex} with style: ${playerPrintStyle}`);
+      
+      // Check back text lines
       if (extPlayer.line_1) {
-        uniqueConfigs.add("line_1");
+        const key = `line_1_${playerPrintStyle}`;
+        if (!printConfigs[key]) {
+          printConfigs[key] = {
+            position: "In trên số lưng",
+            material: playerPrintStyle,
+            count: 0,
+            players: []
+          };
+        }
+        printConfigs[key].count++;
+        printConfigs[key].players.push(playerIndex);
       }
       
-      uniqueConfigs.add("line_2");
+      // Always have number on back
+      const line2Key = `line_2_${playerPrintStyle}`;
+      if (!printConfigs[line2Key]) {
+        printConfigs[line2Key] = {
+          position: "In số lưng",
+          material: playerPrintStyle,
+          count: 0,
+          players: []
+        };
+      }
+      printConfigs[line2Key].count++;
+      printConfigs[line2Key].players.push(playerIndex);
       
       if (extPlayer.line_3) {
-        uniqueConfigs.add("line_3");
+        const key = `line_3_${playerPrintStyle}`;
+        if (!printConfigs[key]) {
+          printConfigs[key] = {
+            position: "In dưới số lưng",
+            material: playerPrintStyle,
+            count: 0,
+            players: []
+          };
+        }
+        printConfigs[key].count++;
+        printConfigs[key].players.push(playerIndex);
       }
       
+      // Chest number
       if (extPlayer.chest_number) {
-        uniqueConfigs.add("chest_number");
+        const key = `chest_number_${playerPrintStyle}`;
+        if (!printConfigs[key]) {
+          printConfigs[key] = {
+            position: "In số ngực",
+            material: playerPrintStyle,
+            count: 0,
+            players: []
+          };
+        }
+        printConfigs[key].count++;
+        printConfigs[key].players.push(playerIndex);
       }
       
+      // Pants number
       if (extPlayer.pants_number) {
-        uniqueConfigs.add("pants_number");
+        const key = `pants_number_${playerPrintStyle}`;
+        if (!printConfigs[key]) {
+          printConfigs[key] = {
+            position: "In số quần",
+            material: playerPrintStyle,
+            count: 0,
+            players: []
+          };
+        }
+        printConfigs[key].count++;
+        printConfigs[key].players.push(playerIndex);
       }
       
-      if (extPlayer.logo_chest_left) uniqueConfigs.add("logo_chest_left");
-      if (extPlayer.logo_chest_right) uniqueConfigs.add("logo_chest_right");
-      if (extPlayer.logo_chest_center) uniqueConfigs.add("logo_chest_center");
-      if (extPlayer.logo_sleeve_left) uniqueConfigs.add("logo_sleeve_left");
-      if (extPlayer.logo_sleeve_right) uniqueConfigs.add("logo_sleeve_right");
-      if (extPlayer.logo_pants) uniqueConfigs.add("logo_pants");
+      // Logo positions
+      const logoPositions = [
+        { key: 'logo_chest_left', position: 'Logo ngực trái' },
+        { key: 'logo_chest_right', position: 'Logo ngực phải' },
+        { key: 'logo_chest_center', position: 'Logo ngực giữa' },
+        { key: 'logo_sleeve_left', position: 'Logo tay trái' },
+        { key: 'logo_sleeve_right', position: 'Logo tay phải' },
+        { key: 'logo_pants', position: 'Logo quần' }
+      ];
+      
+      logoPositions.forEach(pos => {
+        if (extPlayer[pos.key]) {
+          const key = `${pos.key}_${playerPrintStyle}`;
+          if (!printConfigs[key]) {
+            printConfigs[key] = {
+              position: pos.position,
+              material: playerPrintStyle,
+              count: 0,
+              players: []
+            };
+          }
+          printConfigs[key].count++;
+          printConfigs[key].players.push(playerIndex);
+        }
+      });
     });
     
-    if (uniqueConfigs.has("line_1")) {
+    console.log("[generateProductLines] Print configurations:", printConfigs);
+    
+    // Create product lines from the collected configurations
+    Object.keys(printConfigs).forEach(key => {
+      const config = printConfigs[key];
+      const isJersey = !config.position.includes('quần') || config.position.includes('Logo quần');
+      const productType = isJersey ? "Áo cầu thủ" : "Quần";
+      
       newProductLines.push({
-        id: `product-line-1-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In trên số lưng",
-        material: printStyle,
-        size: "Trung bình",
-        points: 1,
-        content: "Tên trên số lưng"
+        id: `product-${key}-${Date.now()}`,
+        product: productType,
+        position: config.position,
+        material: config.material,
+        size: config.position.includes('số lưng') ? "Lớn" : "Trung bình",
+        points: config.count,
+        content: config.position.includes('Logo')
+          ? config.position
+          : config.position.includes('số')
+            ? "Số áo"
+            : config.position.includes('dưới số lưng')
+              ? "Tên dưới số lưng"
+              : "Tên trên số lưng"
       });
-    }
-    
-    if (uniqueConfigs.has("line_2")) {
-      newProductLines.push({
-        id: `product-line-2-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In số lưng",
-        material: printStyle,
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      });
-    }
-    
-    if (uniqueConfigs.has("line_3")) {
-      newProductLines.push({
-        id: `product-line-3-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In dưới số lưng",
-        material: printStyle,
-        size: "Trung bình",
-        points: 1,
-        content: "Tên dưới số lưng"
-      });
-    }
-    
-    if (uniqueConfigs.has("chest_number")) {
-      newProductLines.push({
-        id: `product-chest-number-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In số ngực",
-        material: printStyle,
-        size: "Nhỏ",
-        points: 1,
-        content: "Số ngực"
-      });
-    }
-    
-    if (uniqueConfigs.has("pants_number")) {
-      newProductLines.push({
-        id: `product-pants-number-${Date.now()}`,
-        product: "Quần",
-        position: "In số quần",
-        material: printStyle,
-        size: "Nhỏ",
-        points: 1,
-        content: "Số quần"
-      });
-    }
-    
-    const logoPositions = [
-      { key: 'logo_chest_left', label: 'Logo ngực trái' },
-      { key: 'logo_chest_right', label: 'Logo ngực phải' },
-      { key: 'logo_chest_center', label: 'Logo ngực giữa' },
-      { key: 'logo_sleeve_left', label: 'Logo tay trái' },
-      { key: 'logo_sleeve_right', label: 'Logo tay phải' },
-      { key: 'logo_pants', label: 'Logo quần' }
-    ];
-    
-    logoPositions.forEach(position => {
-      if (uniqueConfigs.has(position.key)) {
-        const logo = logos.find(l => l.position === position.key.replace('logo_', '') as any);
-        
-        newProductLines.push({
-          id: `product-${position.key}-${Date.now()}`,
-          product: position.key.includes('pants') ? "Quần" : "Áo cầu thủ",
-          position: position.label,
-          material: printStyle,
-          size: "Trung bình",
-          points: 1,
-          content: logo ? `Logo: ${logo.file.name.split('/').pop()?.split('.')[0]}` : position.label
-        });
-      }
     });
     
     setProductLines(newProductLines);

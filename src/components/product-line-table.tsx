@@ -14,6 +14,7 @@ interface ProductLineTableProps {
 }
 
 export function ProductLineTable({ productLines, onProductLinesChange, logos = [] }: ProductLineTableProps) {
+  // Find last used material from existing product lines
   const lastUsedMaterial = productLines.length
     ? productLines[productLines.length - 1].material
     : "In chuyển nhiệt";
@@ -46,7 +47,7 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
     setNewProductLine({
       product: "",
       position: "",
-      material: newProductLine.material,
+      material: newProductLine.material, // Keep the same material for next product
       size: "",
       points: 0,
       content: ""
@@ -140,7 +141,21 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
                 <tr key={productLine.id} className="border-b border-muted">
                   <td className="p-2">{productLine.product}</td>
                   <td className="p-2">{productLine.position}</td>
-                  <td className="p-2">{productLine.material}</td>
+                  <td className="p-2">
+                    <Select
+                      value={productLine.material}
+                      onValueChange={(value) => updateProductLine(index, 'material', value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn chất liệu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {materialOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                   <td className="p-2">{productLine.size}</td>
                   <td className="p-2">{productLine.points}</td>
                   <td className="p-2">
