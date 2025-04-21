@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Logo, PrintConfig, DesignData, Player } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { PlayerSelector } from "@/components/ui/PlayerSelector";
 
 interface UniformPreviewProps {
   teamName: string;
@@ -68,26 +69,12 @@ export function UniformPreview({
 
   return (
     <Card className={className}>
-      {/* Player selector row for demo preview */}
-      {players.length > 1 && (
-        <div className="w-full px-4 pt-4 pb-1 flex gap-2 items-center">
-          <span className="mr-2 text-gray-500">Xem demo của:</span>
-          <select
-            value={selectedPlayerIdx}
-            onChange={(e) => setSelectedPlayerIdx(Number(e.target.value))}
-            className={cn(
-              "border px-3 py-1 rounded text-sm cursor-pointer bg-white outline-none border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-blue-400"
-            )}
-            data-testid="player-demo-selector"
-          >
-            {players.map((p, idx) => (
-              <option key={p.id} value={idx}>
-                {p.name} {p.uniform_type === "goalkeeper" ? "(Thủ môn)" : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Redesigned player/goalkeeper selector */}
+      <PlayerSelector
+        players={players}
+        selectedIdx={selectedPlayerIdx}
+        onSelect={setSelectedPlayerIdx}
+      />
       <Tabs defaultValue="front" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="front">Mặt trước</TabsTrigger>
