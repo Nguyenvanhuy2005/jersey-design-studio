@@ -145,7 +145,7 @@ const CreateOrder = () => {
             onSubmitOrder={submitOrder}
             isSubmitting={isSubmitting}
             getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
-            getPrintCostBreakdown={getPrintCostBreakdown} {/* Pass to summary tab content */}
+            getPrintCostBreakdown={getPrintCostBreakdown}
           />
         </div>
       </AuthCheck>
