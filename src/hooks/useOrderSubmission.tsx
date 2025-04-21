@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -152,24 +151,30 @@ export const useOrderSubmission = ({
       
       if (logos.length > 0) {
         for (const logo of logos) {
-          if (!logo.file) continue;
+          if (!logo.file) {
+            console.log("Logo không có file tại vị trí:", logo.position, logo);
+            continue;
+          }
           const fileExt = logo.file.name.split('.').pop();
           const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
-          
+
+          console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
+
           const { data, error: uploadError } = await supabase.storage
             .from('logos')
             .upload(filePath, logo.file, {
               cacheControl: '3600',
               upsert: false
             });
-            
+
           if (uploadError) {
-            console.error("Error uploading logo:", uploadError);
-            throw uploadError;
+            console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
+            toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
+            continue;
           }
 
           if (!data) {
-            console.error("No data returned from logo upload");
+            console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
             continue;
           }
 
@@ -177,21 +182,30 @@ export const useOrderSubmission = ({
             file_path: filePath,
             position: logo.position
           });
+
+          toast.success(`[Upload logo] Đã upload thành công logo vị trí: ${logo.position}`);
+          console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
         }
 
-        const { error: insertLogosError } = await supabase
-          .from('logos')
-          .insert(
-            logoStorageEntries.map(item => ({
-              file_path: item.file_path,
-              order_id: orderId,
-              position: item.position
-            }))
-          );
-          
-        if (insertLogosError) {
-          console.error("Error inserting logo records:", insertLogosError);
-          toast.error("Không thể lưu thông tin logo vào đơn hàng");
+        if (logoStorageEntries.length > 0) {
+          console.log("[Insert logo] Chuẩn bị insert các logo vào bảng logos:", logoStorageEntries);
+          const { error: insertLogosError } = await supabase
+            .from('logos')
+            .insert(
+              logoStorageEntries.map(item => ({
+                file_path: item.file_path,
+                order_id: orderId,
+                position: item.position
+              }))
+            );
+          if (insertLogosError) {
+            console.error("[Insert logo] Lỗi insert logo vào database:", insertLogosError);
+            toast.error("Không thể lưu thông tin logo vào đơn hàng");
+          } else {
+            toast.success(`[Insert logo] Đã lưu thành công ${logoStorageEntries.length} logo vào database`);
+          }
+        } else {
+          console.log("[Insert logo] Không có logo nào để lưu vào database");
         }
       }
 
