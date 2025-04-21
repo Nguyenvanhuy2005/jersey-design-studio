@@ -14,16 +14,16 @@ interface JerseyPantsProps {
   printConfig?: { font?: string };
 }
 
-export const JerseyPants = ({ 
-  ctx, 
-  playerNumber, 
+export const JerseyPants = ({
+  ctx,
+  playerNumber,
   fontFamily,
   pants_number_enabled = true,
   logo,
   designData,
   printConfig
 }: JerseyPantsProps) => {
-  // Draw short pants
+  // Draw short pants (base is always yellow)
   ctx.fillStyle = '#FFD700';
 
   // Left side
@@ -48,8 +48,9 @@ export const JerseyPants = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
 
-  // Choose the font for the pants number (số quần) from "font_number" in designData, else printConfig.font, else fallback
-  let pantsNumberFont = (designData?.font_number?.font) 
+  // Choose font for pants number: designData.font_number.font -> printConfig.font -> fontFamily -> Arial
+  let pantsNumberFont =
+    (designData?.font_number?.font)
     || (printConfig?.font)
     || fontFamily
     || 'Arial';
@@ -57,13 +58,13 @@ export const JerseyPants = ({
   // Draw player number if enabled
   if (playerNumber !== undefined && pants_number_enabled) {
     ctx.fillStyle = '#1A1A1A';
-    // Increased font size for prominence
-    const fontSize = 40;
+    // Bump up to 52px for increased prominence
+    const fontSize = 52;
     ctx.font = `bold ${fontSize}px "${pantsNumberFont}"`;
     ctx.fillText(playerNumber.toString(), 125, 40);
   }
 
-  // Draw logo if provided
+  // Draw logo if provided (e.g., club logo on pants)
   if (logo?.image) {
     const logoWidth = 40;
     const logoHeight = 40;
@@ -71,10 +72,10 @@ export const JerseyPants = ({
     const y = 40;
 
     ctx.drawImage(
-      logo.image, 
-      x - logoWidth/2, 
-      y - logoHeight/2, 
-      logoWidth, 
+      logo.image,
+      x - logoWidth / 2,
+      y - logoHeight / 2,
+      logoWidth,
       logoHeight
     );
   }

@@ -1,10 +1,9 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
-import { Logo, PrintConfig, DesignData } from "@/types";
-import { Player } from "@/types";
+import { Logo, PrintConfig, DesignData, Player } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface UniformPreviewProps {
   teamName: string;
@@ -29,86 +28,20 @@ export function UniformPreview({
   pantCanvasRef,
   className
 }: UniformPreviewProps) {
-  const [activeView, setActiveView] = useState<"front" | "back" | "pants">("front");
-  
-  // Use first player from array if no specific player is provided
-  const currentPlayer = player || (players.length > 0 ? players[0] : undefined);
-  
-  // Create default design data if not provided
-  const getDefaultDesignData = (): Partial<DesignData> => {
-    if (designData && Object.keys(designData).length > 0) {
-      return designData;
-    }
-    
-    if (!currentPlayer) {
-      return {
-        uniform_type: "player",
-        logo_chest_left: { enabled: false },
-        logo_chest_right: { enabled: false },
-        logo_chest_center: { enabled: false },
-        logo_sleeve_left: { enabled: false },
-        logo_sleeve_right: { enabled: false },
-        logo_pants: { enabled: false },
-        chest_number: { enabled: false, material: printConfig?.backMaterial || "In chuyển nhiệt" },
-        pants_number: { enabled: false, material: printConfig?.legMaterial || "In chuyển nhiệt" },
-        font_text: { font: "Arial" },
-        font_number: { font: "Arial" }
-      };
-    }
-    
-    return {
-      uniform_type: currentPlayer.uniform_type || "player",
-      logo_chest_left: { 
-        enabled: currentPlayer.logo_chest_left || false 
-      },
-      logo_chest_right: { 
-        enabled: currentPlayer.logo_chest_right || false 
-      },
-      logo_chest_center: { 
-        enabled: currentPlayer.logo_chest_center || false 
-      },
-      logo_sleeve_left: { 
-        enabled: currentPlayer.logo_sleeve_left || false 
-      },
-      logo_sleeve_right: { 
-        enabled: currentPlayer.logo_sleeve_right || false 
-      },
-      logo_pants: { 
-        enabled: currentPlayer.logo_pants || false 
-      },
-      chest_number: { 
-        enabled: currentPlayer.chest_number || false,
-        material: printConfig?.backMaterial || "In chuyển nhiệt"
-      },
-      pants_number: { 
-        enabled: currentPlayer.pants_number || false,
-        material: printConfig?.legMaterial || "In chuyển nhiệt"
-      },
-      line_1: { 
-        enabled: !!currentPlayer.line_1,
-        content: currentPlayer.line_1 || "",
-        material: printConfig?.backMaterial || "In chuyển nhiệt"
-      },
-      line_3: { 
-        enabled: !!currentPlayer.line_3,
-        content: currentPlayer.line_3 || "",
-        material: printConfig?.backMaterial || "In chuyển nhiệt"
-      },
-      font_text: { 
-        font: "Arial" 
-      },
-      font_number: { 
-        font: "Arial" 
-      }
-    };
-  };
-  
+  // Add selector state for current previewed player (allow viewing demo of any player/goalkeeper)
+  const [selectedPlayerIdx, setSelectedPlayerIdx] = useState(0);
+
+  // Use index selector if multiple players, fallback to the only player or undefined
+  const currentPlayer = player ||
+    (players.length > 0 ? players[selectedPlayerIdx] : undefined);
+
+  // Construct effective design data (logic unchanged, always preference player lines)
   const effectiveDesignData: Partial<DesignData> = {
-    chest_number: { 
+    chest_number: {
       enabled: currentPlayer?.chest_number || false,
       material: printConfig?.backMaterial
     },
-    pants_number: { 
+    pants_number: {
       enabled: currentPlayer?.pants_number || false,
       material: printConfig?.legMaterial
     },
@@ -122,22 +55,40 @@ export function UniformPreview({
       content: currentPlayer.line_3,
       material: printConfig?.backMaterial
     } : undefined,
-    ...designData
+    ...designData,
+    // Ensure font_number follows config or designData
+    font_number: {
+      font: designData?.font_number?.font || printConfig?.font || 'Arial'
+    }
   };
 
   return (
     <Card className={className}>
+      {/* Player selector row for demo preview */}
+      {players.length > 1 && (
+        <div className="w-full px-4 pt-4 pb-1 flex gap-2 items-center">
+          <span className="mr-2 text-gray-500">Xem demo của:</span>
+          <select
+            value={selectedPlayerIdx}
+            onChange={(e) => setSelectedPlayerIdx(Number(e.target.value))}
+            className={cn(
+              "border px-3 py-1 rounded text-sm cursor-pointer bg-white outline-none border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-blue-400"
+            )}
+            data-testid="player-demo-selector"
+          >
+            {players.map((p, idx) => (
+              <option key={p.id} value={idx}>
+                {p.name} {p.uniform_type === "goalkeeper" && "(Thủ môn)"}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <Tabs defaultValue="front" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="front" onClick={() => setActiveView("front")}>
-            Mặt trước
-          </TabsTrigger>
-          <TabsTrigger value="back" onClick={() => setActiveView("back")}>
-            Mặt sau
-          </TabsTrigger>
-          <TabsTrigger value="pants" onClick={() => setActiveView("pants")}>
-            Quần
-          </TabsTrigger>
+          <TabsTrigger value="front">Mặt trước</TabsTrigger>
+          <TabsTrigger value="back">Mặt sau</TabsTrigger>
+          <TabsTrigger value="pants">Quần</TabsTrigger>
         </TabsList>
         <TabsContent value="front" className="focus:outline-none">
           <CanvasJersey
