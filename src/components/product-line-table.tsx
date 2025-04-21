@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,33 +8,43 @@ import { Plus, X } from "lucide-react";
 interface ProductLineTableProps {
   productLines: ProductLine[];
   onProductLinesChange: (productLines: ProductLine[]) => void;
-  logos?: Logo[]; // Add logos prop
+  logos?: Logo[];
 }
 
 export function ProductLineTable({ productLines, onProductLinesChange, logos = [] }: ProductLineTableProps) {
+  const lastUsedMaterial = productLines.length
+    ? productLines[productLines.length - 1].material
+    : "In chuyển nhiệt";
+
   const [newProductLine, setNewProductLine] = useState<Omit<ProductLine, 'id'>>({
     product: "",
     position: "",
-    material: "",
+    material: lastUsedMaterial,
     size: "",
     points: 0,
     content: ""
   });
 
+  React.useEffect(() => {
+    if (productLines.length === 0 && newProductLine.material !== "In chuyển nhiệt") {
+      setNewProductLine((prev) => ({ ...prev, material: "In chuyển nhiệt" }));
+    }
+  }, [productLines.length]);
+
   const addProductLine = () => {
-    if (!newProductLine.product || !newProductLine.position) return;
-    
+    if (!newProductLine.product || !newProductLine.position || !newProductLine.material) return;
+
     const updatedProductLines = [
       ...productLines, 
       { ...newProductLine, id: `product-${Date.now()}` }
     ];
-    
+
     onProductLinesChange(updatedProductLines);
-    
+
     setNewProductLine({
       product: "",
       position: "",
-      material: "",
+      material: newProductLine.material,
       size: "",
       points: 0,
       content: ""
@@ -81,11 +90,9 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
     { value: "In decal", label: "In decal" }
   ];
   
-  // New helper function to get content options based on position
   const getContentOptions = (position: string) => {
     if (isLogoPosition(position)) {
       return logos.map(logo => {
-        // Use the file name as the display name for the logo
         const fileName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${logo.id}`;
         return {
           value: fileName,
@@ -94,7 +101,6 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
       });
     }
     
-    // Default content options for non-logo positions
     if (position.includes('số')) {
       return [{ value: "Số áo", label: "Số áo" }];
     } else if (position.includes('tên') || position.includes('trên số lưng')) {
@@ -110,7 +116,6 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Sản phẩm in</h2>
       
-      {/* Product lines table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -167,7 +172,6 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
         </table>
       </div>
       
-      {/* Add product line form */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end">
         <Select
           value={newProductLine.product}
