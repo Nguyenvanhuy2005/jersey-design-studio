@@ -1,10 +1,11 @@
+
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderPlayersList } from "../../OrderPlayersList";
 import { OrderCostSummary } from "@/components/order-cost-summary";
 import { Player, ProductLine, Customer } from "@/types";
-import { PrintCostBreakdown } from "@/components/order/create-order/tabs/PrintCostBreakdown";
+import { useEffect } from "react";
 
 interface OrderSummaryTabContentProps {
   isDemoApproved: boolean;
@@ -38,6 +39,14 @@ export function OrderSummaryTabContent({
   referenceImagesPreview,
   getPrintCostBreakdown
 }: OrderSummaryTabContentProps) {
+  // ==== Debug Logging Effect ====
+  useEffect(() => {
+    console.log("[OrderSummaryTabContent] players:", players);
+    console.log("[OrderSummaryTabContent] productLines:", productLines);
+    console.log("[OrderSummaryTabContent] costBreakdown (from getPrintCostBreakdown()):", getPrintCostBreakdown());
+    console.log("[OrderSummaryTabContent] totalCost (from calculateTotalCost()):", calculateTotalCost());
+  }, [players, productLines, calculateTotalCost, getPrintCostBreakdown]);
+
   if (!isDemoApproved) {
     return (
       <Alert>
@@ -90,3 +99,4 @@ export function OrderSummaryTabContent({
     </div>
   );
 }
+
