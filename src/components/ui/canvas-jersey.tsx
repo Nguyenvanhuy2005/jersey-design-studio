@@ -331,10 +331,14 @@ export function CanvasJersey({
       const pantsNumberEnabled = designData?.pants_number?.enabled ?? false;
       console.log('Pants number enabled:', pantsNumberEnabled);
 
+      let pantsNumberFont = effectiveDesignData.font_number?.font 
+        || printConfig?.font
+        || 'Arial';
+
       JerseyPants({
         ctx,
         playerNumber,
-        fontFamily: designData?.font_number?.font || getFont(printConfig),
+        fontFamily: pantsNumberFont,
         pants_number_enabled: pantsNumberEnabled,
         logo: logoImage && logoPosition ? {
           image: logoImage,
