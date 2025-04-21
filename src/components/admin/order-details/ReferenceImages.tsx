@@ -2,19 +2,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
+import { Logo } from "@/types";
 
 interface ReferenceImagesProps {
   referenceImages?: string[];
   logo_url?: string;
+  logos?: Logo[]; // NEW
 }
 
-export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesProps) => {
-  if ((!referenceImages || referenceImages.length === 0) && !logo_url) {
+export const ReferenceImages = ({ referenceImages, logo_url, logos = [] }: ReferenceImagesProps) => {
+  if ((!referenceImages || referenceImages.length === 0) && !logo_url && (!logos || logos.length === 0)) {
     return null;
   }
 
-  // Separate assets into logos and reference images
-  const logoAssets = logo_url ? [{ url: logo_url, name: 'Logo đội', type: 'image' as const }] : [];
+  // Logos from prop (NEW: support all logos)
+  const logoAssets = (logos && logos.length > 0)
+    ? logos.map((logo, idx) => ({
+        url: logo.previewUrl || logo.url,
+        name: `Logo ${idx + 1} (${logo.position})`,
+        type: 'image' as const
+      }))
+    : logo_url
+      ? [{ url: logo_url, name: 'Logo đội', type: 'image' as const }]
+      : [];
+
   const referenceAssets = referenceImages?.map((url, index) => ({
     url,
     name: `Mẫu ${index + 1}`,
@@ -29,11 +40,11 @@ export const ReferenceImages = ({ referenceImages, logo_url }: ReferenceImagesPr
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Logo đội
+              {logos && logos.length > 0 ? "Logo các vị trí" : "Logo đội"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetViewer assets={logoAssets} gridCols={1} />
+            <AssetViewer assets={logoAssets} gridCols={Math.max(logoAssets.length, 1)} />
           </CardContent>
         </Card>
       )}

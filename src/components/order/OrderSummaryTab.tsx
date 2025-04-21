@@ -48,6 +48,7 @@ export function OrderSummaryTab({
       logo_sleeve_left: 0,
       logo_sleeve_right: 0,
       logo_pants: 0,
+      heat_transfer_back: 0,
       heat_transfer: 0,
       decal: 0
     };
@@ -61,6 +62,13 @@ export function OrderSummaryTab({
       if (player.logo_sleeve_left) counts.logo_sleeve_left++;
       if (player.logo_sleeve_right) counts.logo_sleeve_right++;
       if (player.logo_pants) counts.logo_pants++;
+      if (
+        player.print_style === "In chuyển nhiệt" &&
+        player.chest_number &&
+        (player.uniform_type !== "goalkeeper")
+      ) {
+        counts.heat_transfer_back++;
+      }
     });
     
     productLines.forEach(line => {
@@ -172,7 +180,7 @@ export function OrderSummaryTab({
                     {logos.map((logo, index) => (
                       <div key={index} className="border rounded p-2 text-center">
                         <img 
-                          src={logo.previewUrl} 
+                          src={logo.previewUrl || logo.url} 
                           alt={`Logo ${index + 1}`} 
                           className="h-16 w-16 object-contain mx-auto"
                         />
@@ -195,6 +203,9 @@ export function OrderSummaryTab({
               <div>
                 <h3 className="font-medium mb-2">Kiểu in:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-muted-foreground">In chuyển nhiệt lưng:</span> {printCounts.heat_transfer_back} vị trí
+                  </div>
                   <div>
                     <span className="text-muted-foreground">In chuyển nhiệt:</span> {printCounts.heat_transfer} vị trí
                   </div>

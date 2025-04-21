@@ -1,4 +1,3 @@
-
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Order } from "@/types";
@@ -8,6 +7,7 @@ import { PlayersList } from "./order-details/PlayersList";
 import { ProductLinesList } from "./order-details/ProductLinesList";
 import { OrderActions } from "./order-details/OrderActions";
 import { ReferenceImages } from "./order-details/ReferenceImages";
+import { Logo } from "@/types";
 
 interface OrderDetailsProps {
   order: Order;
@@ -38,9 +38,10 @@ export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
           
           <ProductLinesList productLines={order.productLines} />
           
-          <ReferenceImages 
+          <ReferenceImages
             referenceImages={order.referenceImages}
             logo_url={order.logo_url}
+            logos={order.logos || []}
           />
         </TabsContent>
         

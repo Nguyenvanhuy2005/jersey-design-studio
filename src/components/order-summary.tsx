@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Logo, Player, ProductLine, Customer } from "@/types";
@@ -10,7 +9,6 @@ interface OrderSummaryProps {
   productLines: ProductLine[];
   uniformType: 'player' | 'goalkeeper';
   quantity: number;
-  totalCost: number;
   customerInfo?: Customer;
 }
 
@@ -86,6 +84,7 @@ export function OrderSummary({
             <div>
               <h3 className="font-semibold mb-2">Logo</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {/* Show ALL logos, not just one */}
                 {logos.map((logo, index) => (
                   <div key={logo.id || index} className="border rounded p-2 text-center">
                     <img src={logo.previewUrl || logo.url} alt={`Logo ${index + 1}`} className="h-16 w-16 object-contain mx-auto" />

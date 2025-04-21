@@ -1,4 +1,3 @@
-
 import { Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
@@ -20,21 +19,10 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
   
   useEffect(() => {
     if (!printConfig?.font) return;
-    
-    const checkFontPermission = async () => {
-      try {
-        // For now, allow download for all users since we don't have permission structure
-        // This will be updated when the database is modified
-        setCanDownload(true);
-        
-        // TODO: Once the database is updated, implement proper permission checking
-        // and get font owner's name
-      } catch (error) {
-        console.error('Error checking font permission:', error);
-      }
-    };
-    
-    checkFontPermission();
+    setCanDownload(true);
+    if (printConfig.font) {
+      setFontOwnerName(`Font: ${printConfig.font}`);
+    }
   }, [printConfig?.font, user]);
   
   const checkIsAdmin = async (): Promise<boolean> => {
@@ -48,7 +36,6 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
 
   const handleDownload = async (fontName: string) => {
     try {
-      // Get font file path from database
       const { data: fontData, error: dbError } = await supabase
         .from('fonts')
         .select('file_path, file_type')
@@ -58,14 +45,12 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
       if (dbError) throw new Error(dbError.message);
       if (!fontData) throw new Error('Font not found');
 
-      // Get download URL from storage
       const { data, error: storageError } = await supabase.storage
         .from('fonts')
         .download(fontData.file_path);
 
       if (storageError) throw new Error(storageError.message);
 
-      // Create download link
       const url = URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
@@ -106,11 +91,11 @@ export const PrintConfig = ({ printConfig }: PrintConfigProps) => {
                 <TableCell className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between">
                     <span style={{ fontFamily: printConfig.font }}>{printConfig.font}</span>
-                    {canDownload && (
+                    {canDownload && printConfig.font && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownload(printConfig.font)}
+                        onClick={() => handleDownload(printConfig.font!)}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Tải xuống font
