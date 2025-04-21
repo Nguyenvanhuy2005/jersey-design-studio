@@ -63,7 +63,8 @@ const CreateOrder = () => {
     setProductLines
   );
 
-  const { calculateTotalCost, getPlayerAndGoalkeeperCounts } = useOrderCosts(players, productLines);
+  // Get printing breakdown for summary tab
+  const { calculateTotalCost, getPlayerAndGoalkeeperCounts, getPrintCostBreakdown } = useOrderCosts(players, productLines);
   
   const { submitOrder } = useOrderSubmission({
     user,
@@ -144,6 +145,7 @@ const CreateOrder = () => {
             onSubmitOrder={submitOrder}
             isSubmitting={isSubmitting}
             getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
+            getPrintCostBreakdown={getPrintCostBreakdown} {/* Pass to summary tab content */}
           />
         </div>
       </AuthCheck>

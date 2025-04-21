@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { OrderPlayersList } from "../../OrderPlayersList";
 import { OrderCostSummary } from "@/components/order-cost-summary";
 import { Player, ProductLine, Customer } from "@/types";
+import { PrintCostBreakdown } from "@/components/order/create-order/tabs/PrintCostBreakdown"; // NEW
 
 interface OrderSummaryTabContentProps {
   isDemoApproved: boolean;
@@ -17,6 +18,12 @@ interface OrderSummaryTabContentProps {
   isGeneratingDesign: boolean;
   onSubmitOrder: () => void;
   referenceImagesPreview: string[];
+  getPrintCostBreakdown: () => {
+    label: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }[];
 }
 
 export function OrderSummaryTabContent({
@@ -29,7 +36,8 @@ export function OrderSummaryTabContent({
   isSubmitting,
   isGeneratingDesign,
   onSubmitOrder,
-  referenceImagesPreview
+  referenceImagesPreview,
+  getPrintCostBreakdown
 }: OrderSummaryTabContentProps) {
   if (!isDemoApproved) {
     return (
@@ -45,7 +53,8 @@ export function OrderSummaryTabContent({
 
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
   const totalCost = calculateTotalCost();
-  
+  const costBreakdown = getPrintCostBreakdown();
+
   // Calculate printing positions count based on player data
   const calculatePrintPositionsCount = () => {
     let count = 0;
@@ -74,6 +83,9 @@ export function OrderSummaryTabContent({
         printUnitPrice={20000}
         totalCost={totalCost}
       />
+
+      {/* NEW: Detailed print cost breakdown table */}
+      <PrintCostBreakdown breakdown={costBreakdown} totalCost={totalCost} />
 
       <OrderPlayersList players={players} />
       
