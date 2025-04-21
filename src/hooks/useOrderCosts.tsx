@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
@@ -27,6 +26,13 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       { key: "In dưới số lưng", label: "Dòng dưới số lưng" }
     ];
 
+    // Mapping riêng giá từng vị trí decal mặt lưng
+    const backDecalPrices: Record<string, number> = {
+      "Dòng trên số lưng": 5000,
+      "Số lưng": 10000,
+      "Dòng dưới số lưng": 5000
+    };
+
     // Đếm riêng cho decal và chuyển nhiệt cho lưng
     let backDecalCount = 0;
     let backHTCount = 0;
@@ -54,36 +60,21 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       }
     });
 
-    console.log("DEBUG [getPrintCostBreakdown] backDecalCount:", backDecalCount);
-    console.log("DEBUG [getPrintCostBreakdown] backHTCount:", backHTCount);
-
-    // Tính và hiển thị giá cho decal mặt lưng
-    if (backDecalCount > 0) {
-      let decalBackPrice = 0;
-      if (backDecalCount === 1)      decalBackPrice = 10000;
-      else if (backDecalCount === 2) decalBackPrice = 15000;
-      else if (backDecalCount >= 3)  decalBackPrice = 20000;
-
-      // Nếu có nhiều dòng, chia đều, làm tròn 1k, gom phần dư vào mục cuối
-      let runningTotal = 0;
-      const keys = Object.keys(decalBackMap);
-      
-      keys.forEach((label, i) => {
-        const qty = decalBackMap[label];
-        let price = Math.floor((decalBackPrice * qty) / backDecalCount / 1000) * 1000;
-        if (i === keys.length - 1) price = decalBackPrice - runningTotal; // gom dư vào cuối cùng
-        runningTotal += price;
-        
+    // Tính và hiển thị giá cho decal mặt lưng theo từng dòng
+    Object.keys(decalBackMap).forEach(label => {
+      const qty = decalBackMap[label];
+      const price = backDecalPrices[label] ?? 0;
+      if (qty > 0) {
         costItems.push({
           label: `Decal mặt lưng (${label})`,
           quantity: qty,
-          unitPrice: price / qty,
-          total: price
+          unitPrice: price,
+          total: qty * price
         });
-      });
-    }
+      }
+    });
 
-    // Tính và hiển thị giá cho chuyển nhiệt mặt lưng
+    // Tính và hiển thị giá cho chuyển nhiệt mặt lưng (giữ nguyên)
     if (backHTCount > 0) {
       costItems.push({
         label: "Chuyển nhiệt mặt lưng",
@@ -184,30 +175,33 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
 
     let printingCost = 0;
 
-    // 1. Tách biệt giữa decal và chuyển nhiệt trên mặt lưng
+    // 1. Đếm riêng decal cho từng vị trí mặt lưng
     const backPositions = [
-      "In trên số lưng", "In số lưng", "In dưới số lưng"
+      { key: "In trên số lưng", label: "Dòng trên số lưng", price: 5000 },
+      { key: "In số lưng", label: "Số lưng", price: 10000 },
+      { key: "In dưới số lưng", label: "Dòng dưới số lưng", price: 5000 }
     ];
-    
-    let backDecalLines: string[] = [];
+
+    let backDecalLines: { [label: string]: number } = {};
     let backHTLines = 0;
-    
+
     productLines.forEach(line => {
-      const isBackLine = backPositions.some(pos => line.position.includes(pos));
-      
-      if (isBackLine && line.material === "In decal") {
-        backDecalLines.push(line.position);
-      } else if (isBackLine && line.material === "In chuyển nhiệt") {
+      const foundPos = backPositions.find(pos => line.position.includes(pos.key));
+      if (foundPos && line.material === "In decal") {
+        backDecalLines[foundPos.label] = (backDecalLines[foundPos.label] || 0) + 1;
+      } else if (foundPos && line.material === "In chuyển nhiệt") {
         backHTLines++;
       }
     });
-    
-    // Tính giá cho decal mặt lưng
-    if (backDecalLines.length === 1) printingCost += 10000;
-    else if (backDecalLines.length === 2) printingCost += 15000;
-    else if (backDecalLines.length >= 3) printingCost += 20000;
-    
-    // Tính giá cho chuyển nhiệt mặt lưng
+
+    // Cộng chi phí decal từng dòng lưng
+    backPositions.forEach(pos => {
+      if (backDecalLines[pos.label]) {
+        printingCost += backDecalLines[pos.label] * pos.price;
+      }
+    });
+
+    // Chuyển nhiệt mặt lưng (mỗi dòng chỉ cộng 1 lần giá 10k như cũ)
     if (backHTLines > 0) printingCost += 10000;
 
     // 2. Tính giá cho số ngực và số quần (5k/vị trí, riêng decal/chuyển nhiệt)
