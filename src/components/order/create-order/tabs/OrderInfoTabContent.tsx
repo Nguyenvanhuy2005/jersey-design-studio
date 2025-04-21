@@ -62,7 +62,7 @@ export const OrderInfoTabContent = memo(({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Hình ảnh tham khảo</CardTitle>
+              <CardTitle>Mẫu cần in</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
