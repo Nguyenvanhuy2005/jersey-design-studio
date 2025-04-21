@@ -1,3 +1,5 @@
+
+import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, Logo, Player, ProductLine } from "@/types";
 import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
@@ -218,3 +220,4 @@ export function OrderTabs({
     </Tabs>
   );
 }
+
