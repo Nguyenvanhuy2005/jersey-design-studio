@@ -148,7 +148,9 @@ export const useOrderSubmission = ({
       }[] = [];
 
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
-      
+
+      let logoUrls: string[] = [];
+
       if (logos.length > 0) {
         for (const logo of logos) {
           if (!logo.file) {
@@ -183,6 +185,14 @@ export const useOrderSubmission = ({
             position: logo.position
           });
 
+          const { data: urlData } = supabase.storage
+            .from('logos')
+            .getPublicUrl(filePath);
+
+          if (urlData?.publicUrl) {
+            logoUrls.push(urlData.publicUrl);
+          }
+
           toast.success(`[Upload logo] Đã upload thành công logo vị trí: ${logo.position}`);
           console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
         }
@@ -209,15 +219,8 @@ export const useOrderSubmission = ({
         }
       }
 
-      // Define logoUrls as let instead of const since we'll reassign it
-      let logoUrls: string[] = [];
-      if (logoStorageEntries.length > 0) {
-        logoUrls = logoStorageEntries.map(item => {
-          const { data: urlData } = supabase.storage
-            .from('logos')
-            .getPublicUrl(item.file_path);
-          return urlData.publicUrl;
-        });
+      if (!logoUrls || logoUrls.length === 0) {
+        logoUrls = [];
       }
 
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
@@ -250,6 +253,7 @@ export const useOrderSubmission = ({
           id: orderId,
           team_name: teamName,
           logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
+          logo_urls: logoUrls,
           status: 'new',
           total_cost: totalCost,
           notes: notes,

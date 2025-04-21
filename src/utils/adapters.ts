@@ -179,10 +179,10 @@ export function dbOrderToOrder(
 ): Order {
   // Parse reference images
   const refImages = parseReferenceImages(dbOrder.reference_images);
-  
+
   // Get team name
   const teamName = extractTeamName(dbOrder);
-  
+
   // Process players data with error handling
   const processedPlayers = players ? players.map(player => {
     try {
@@ -192,9 +192,7 @@ export function dbOrderToOrder(
       return null;
     }
   }).filter(Boolean) : [];
-  
-  console.log("Processed players:", processedPlayers);
-  
+
   // Default print config if none provided
   const defaultPrintConfig = {
     id: dbOrder.id,
@@ -221,7 +219,7 @@ export function dbOrderToOrder(
     legMaterial: printConfig.leg_material || 'In chuyển nhiệt',
     legColor: printConfig.leg_color || 'Đen'
   } : defaultPrintConfig;
-  
+
   // Process product lines
   const processedProductLines = productLines ? productLines.map(line => ({
     id: line.id,
@@ -233,8 +231,18 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
-  // Process logos (new)
-  const processedLogos = logos ? processLogos(logos) : [];
+  // Process logos
+  let processedLogos: Logo[] = [];
+  if (Array.isArray(dbOrder.logo_urls) && dbOrder.logo_urls.length > 0) {
+    processedLogos = dbOrder.logo_urls.map((url: string, idx: number) => ({
+      id: `logo_${idx}`,
+      position: undefined,
+      url,
+      previewUrl: url
+    }));
+  } else if (logos) {
+    processedLogos = processLogos(logos);
+  }
 
   // Create the Order object
   return {
