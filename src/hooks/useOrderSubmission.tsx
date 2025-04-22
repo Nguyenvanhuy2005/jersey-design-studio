@@ -248,8 +248,7 @@ export const useOrderSubmission = ({
           notes: notes,
           design_data: designDataJson,
           reference_images: referenceImagePaths,
-          customer_id: user.id,
-          logo_urls: [] // Initialize with empty array, will update after logo upload
+          customer_id: user.id
         });
         
       if (orderError) {
@@ -286,21 +285,7 @@ export const useOrderSubmission = ({
         } else {
           toast.success(`[Insert logo] Đã lưu thành công ${logoStorageEntries.length} logo vào database`);
           
-          // Update order with logo urls if logos were uploaded successfully
-          if (logoUrls.length > 0) {
-            const { error: updateOrderError } = await supabase
-              .from('orders')
-              .update({ 
-                logo_url: logoUrls[0], // First logo as primary
-                logo_urls: logoUrls 
-              })
-              .eq('id', orderId);
-              
-            if (updateOrderError) {
-              console.error("[Update order] Error updating order with logo URLs:", updateOrderError);
-              toast.warning("Đã tải lên logo nhưng không thể cập nhật vào đơn hàng");
-            }
-          }
+          // The code updating the order with logo_url has been removed since the column no longer exists
         }
       }
 
