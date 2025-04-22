@@ -8,13 +8,21 @@ import { ProductLinesList } from "./order-details/ProductLinesList";
 import { OrderActions } from "./order-details/OrderActions";
 import { ReferenceImages } from "./order-details/ReferenceImages";
 import { Logo } from "@/types";
+import { getReferenceImageUrls } from "@/utils/images/reference-image-utils";
 
 interface OrderDetailsProps {
   order: Order;
-  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
+  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
+  onDeleteOrder: (orderId: string) => void;
 }
 
-export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
+export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDetailsProps) => {
+  const allLogosFromUrls = Array.isArray(order.logo_urls)
+    ? order.logo_urls.map((url, idx) => ({
+        url: typeof url === "string" ? url : url.url,
+        position: typeof url === "object" && url.position ? url.position : `Logo ${idx+1}`
+      }))
+    : [];
   return (
     <>
       <DialogHeader className="mb-4">
@@ -38,6 +46,23 @@ export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
           
           <ProductLinesList productLines={order.productLines} />
           
+          {allLogosFromUrls.length > 0 && (
+            <div className="mb-4">
+              <div className="font-semibold mb-2">Logo đã tải lên:</div>
+              <div className="flex flex-wrap gap-4">
+                {allLogosFromUrls.map((logo, i) => (
+                  <div
+                    key={logo.url as string}
+                    className="flex flex-col items-center border rounded p-2 bg-muted"
+                  >
+                    <img src={logo.url} alt={`Logo ${i+1}`} className="max-w-[80px] max-h-[80px] rounded mb-1 object-contain bg-white" />
+                    <span className="text-xs text-center">{logo.position || `Logo ${i+1}`}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <ReferenceImages
             referenceImages={order.referenceImages}
             logos={order.logos || []}
@@ -56,7 +81,9 @@ export const OrderDetails = ({ order, onStatusChange }: OrderDetailsProps) => {
         <OrderActions 
           orderId={order.id}
           teamName={order.teamName || 'Không có tên'}
+          status={order.status as any}
           onStatusChange={onStatusChange}
+          onDeleteOrder={onDeleteOrder}
         />
       </div>
     </>

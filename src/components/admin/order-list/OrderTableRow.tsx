@@ -6,13 +6,15 @@ import { OrderActions } from "./OrderActions";
 type OrderTableRowProps = {
   order: Order;
   onViewDetails: (order: Order) => void;
-  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
+  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
+  onDeleteOrder: (orderId: string) => void;
 };
 
 export const OrderTableRow = ({
   order,
   onViewDetails,
-  onStatusChange
+  onStatusChange,
+  onDeleteOrder
 }: OrderTableRowProps) => {
   const formatDate = (date?: Date) => {
     if (!date) return "";
@@ -44,6 +46,7 @@ export const OrderTableRow = ({
           order={order}
           onViewDetails={onViewDetails}
           onStatusChange={onStatusChange}
+          onDeleteOrder={onDeleteOrder}
         />
       </td>
     </tr>

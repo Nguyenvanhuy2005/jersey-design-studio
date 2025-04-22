@@ -7,14 +7,16 @@ interface OrdersListProps {
   orders: Order[];
   statusFilter: string;
   onViewDetails: (order: Order) => void;
-  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed') => void;
+  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
+  onDeleteOrder: (orderId: string) => void;
 }
 
 export const OrdersList = ({
   orders,
   statusFilter,
   onViewDetails,
-  onStatusChange
+  onStatusChange,
+  onDeleteOrder
 }: OrdersListProps) => {
   // Filter orders based on statusFilter
   const filteredOrders = statusFilter === "all" 
@@ -33,6 +35,7 @@ export const OrdersList = ({
           order={order}
           onViewDetails={onViewDetails}
           onStatusChange={onStatusChange}
+          onDeleteOrder={onDeleteOrder}
         />
       ))}
     </>

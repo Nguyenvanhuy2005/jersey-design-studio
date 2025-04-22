@@ -88,7 +88,7 @@ const AdminOrders = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: 'new' | 'processing' | 'completed') => {
+  const handleStatusChange = async (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => {
     try {
       const { error } = await supabase
         .from('orders')
@@ -116,7 +116,7 @@ const AdminOrders = () => {
       toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
-        'Đã hoàn thành'
+        newStatus === 'completed' ? 'Đã hoàn thành' : 'Đã giao hàng'
       }`);
 
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
@@ -124,6 +124,27 @@ const AdminOrders = () => {
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Có lỗi khi cập nhật trạng thái đơn hàng");
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) {
+        console.error("Error deleting order:", error);
+        toast.error("Không thể xóa đơn hàng");
+        return;
+      }
+      toast.success("Đã xóa đơn hàng thành công");
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Có lỗi khi xóa đơn hàng");
     }
   };
 
@@ -246,6 +267,7 @@ const AdminOrders = () => {
                     statusFilter={statusFilter} 
                     onViewDetails={setSelectedOrder} 
                     onStatusChange={handleStatusChange} 
+                    onDeleteOrder={handleDeleteOrder}
                   />
                 )}
               </tbody>
@@ -260,6 +282,7 @@ const AdminOrders = () => {
             <OrderDetails 
               order={selectedOrder} 
               onStatusChange={handleStatusChange} 
+              onDeleteOrder={handleDeleteOrder}
             />
           )}
         </DialogContent>
