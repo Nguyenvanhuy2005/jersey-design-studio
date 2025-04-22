@@ -2,8 +2,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon, Download } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
-import { Logo, LogoPosition, LogoPositionLabel } from "@/types";
+import { Logo, LogoPosition } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // Show all 6 positions: chest_left, chest_right, chest_center, sleeve_left, sleeve_right, pants
 const ALL_POSITIONS: LogoPosition[] = [
@@ -31,18 +32,12 @@ interface ReferenceImagesProps {
 }
 
 export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
-  // Lấy logo có vị trí hợp lệ trong 6 vị trí chính
-  const filteredLogos = logos.filter(
-    (logo) => logo.position && ALL_POSITIONS.includes(logo.position)
-  );
-
-  // Tạo bản đồ [vị trí] -> logo (nếu nhiều, chỉ lấy 1 logo cho mỗi vị trí)
+  // Tạo map để lấy đúng logo theo từng vị trí (chỉ lấy 1 logo/position)
   const logoByPosition: Partial<Record<LogoPosition, Logo>> = {};
-  filteredLogos.forEach((logo) => {
-    if (logo.position && !logoByPosition[logo.position]) {
-      logoByPosition[logo.position] = logo;
-    }
-  });
+  for (const pos of ALL_POSITIONS) {
+    const logo = logos.find(l => l.position === pos && (l.previewUrl || l.url));
+    if (logo) logoByPosition[pos] = logo;
+  }
 
   const referenceAssets = referenceImages?.map((url, index) => ({
     url,
@@ -50,15 +45,19 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
     type: 'image' as const
   })) || [];
 
-  // Helper cho phép tải hình về
+  // Helper tải logo về, có thông báo nếu không có ảnh
   const handleLogoDownload = (url?: string, positionLabel?: string) => {
-    if (!url) return;
+    if (!url) {
+      toast.warning("Không tìm thấy file logo để tải về.");
+      return;
+    }
     const link = document.createElement("a");
     link.href = url;
     link.download = `${positionLabel || "logo"}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success(`Đã bắt đầu tải logo vị trí ${positionLabel}!`);
   };
 
   return (
@@ -72,53 +71,52 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {ALL_POSITIONS.map((position) => {
               const logo = logoByPosition[position];
               const label = LOGO_POSITION_LABEL_VI[position];
-              const src = logo?.previewUrl || logo?.url; // Ưu tiên previewUrl (local), fallback url (đã upload)
-              
+              const src = logo?.previewUrl || logo?.url;
+
               return (
-                <div key={position} className="bg-muted rounded-md p-3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 flex items-center justify-center bg-white rounded-md border overflow-hidden">
-                      {src ? (
-                        <img
-                          src={src}
-                          alt={label}
-                          className="max-h-20 max-w-20 object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src = "/lovable-uploads/447a2264-3805-4538-84ac-a4d65e10802c.png";
-                          }}
-                        />
-                      ) : (
-                        <div className="text-muted-foreground text-xs text-center p-2">
-                          Không có logo
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-grow">
-                      <h3 className="font-medium text-base">{label}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Vị trí in: {position}
-                      </p>
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogoDownload(src, label)}
-                      disabled={!src}
-                      title={`Tải xuống logo vị trí ${label}`}
-                      className="whitespace-nowrap"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Tải xuống logo
-                    </Button>
+                <div
+                  key={position}
+                  className="flex flex-col items-center bg-muted rounded-md p-4 border shadow-sm gap-2"
+                >
+                  <div className="w-20 h-20 flex items-center justify-center bg-white rounded border overflow-hidden mb-2">
+                    {src ? (
+                      <img
+                        src={src}
+                        alt={label}
+                        className="max-h-16 max-w-16 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/lovable-uploads/447a2264-3805-4538-84ac-a4d65e10802c.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="text-muted-foreground text-xs text-center p-1 leading-4">
+                        Không có logo
+                      </div>
+                    )}
                   </div>
+                  <div className="w-full text-center">
+                    <div className="font-medium text-sm">{label}</div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      <span>({position})</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLogoDownload(src, label)}
+                    disabled={!src}
+                    title={`Tải xuống logo vị trí ${label}`}
+                    className="w-full"
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Tải xuống
+                  </Button>
                 </div>
               );
             })}
@@ -142,4 +140,4 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
       )}
     </div>
   );
-}
+};
