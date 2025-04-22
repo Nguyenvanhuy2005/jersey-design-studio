@@ -1,3 +1,4 @@
+
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Order } from "@/types";
@@ -17,12 +18,15 @@ interface OrderDetailsProps {
 }
 
 export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDetailsProps) => {
-  const allLogosFromUrls = Array.isArray(order.logo_urls)
-    ? order.logo_urls.map((url, idx) => ({
-        url: typeof url === "string" ? url : url.url,
-        position: typeof url === "object" && url.position ? url.position : `Logo ${idx+1}`
+  // Use logo_urls if available, else fallback to logos[]
+  const logoUrls = order.logo_urls || [];
+  const allLogosFromUrls = Array.isArray(logoUrls)
+    ? logoUrls.map((url, idx) => ({
+        url,
+        position: `Logo ${idx+1}`,
       }))
     : [];
+    
   return (
     <>
       <DialogHeader className="mb-4">
@@ -56,7 +60,7 @@ export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDeta
                     className="flex flex-col items-center border rounded p-2 bg-muted"
                   >
                     <img src={logo.url} alt={`Logo ${i+1}`} className="max-w-[80px] max-h-[80px] rounded mb-1 object-contain bg-white" />
-                    <span className="text-xs text-center">{logo.position || `Logo ${i+1}`}</span>
+                    <span className="text-xs text-center">{logo.position}</span>
                   </div>
                 ))}
               </div>

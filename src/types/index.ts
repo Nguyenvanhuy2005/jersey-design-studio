@@ -189,7 +189,7 @@ export interface Order {
   productLines: ProductLine[];
   printConfig: PrintConfig;
   totalCost: number;
-  status: 'new' | 'processing' | 'completed';
+  status: 'new' | 'processing' | 'completed' | 'delivered';
   createdAt?: Date;
   notes?: string;
   referenceImages?: string[];
@@ -201,8 +201,8 @@ export interface Order {
   designData?: any;
   user_id?: string;
   teamName?: string;
-  logo_url?: string;
   logos: Logo[];
+  logo_urls?: string[];
 }
 
 export interface DbPlayer {

@@ -107,4 +107,3 @@ export const OrderActions = ({
         </AlertDialogContent>
       </AlertDialog>
     </div>;
-};

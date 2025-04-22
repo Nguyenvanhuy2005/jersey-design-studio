@@ -113,7 +113,6 @@ export type Database = {
           design_image_back: string | null
           design_image_front: string | null
           id: string
-          logo_url: string | null
           logo_urls: Json | null
           notes: string | null
           reference_images: Json | null
@@ -130,7 +129,6 @@ export type Database = {
           design_image_back?: string | null
           design_image_front?: string | null
           id?: string
-          logo_url?: string | null
           logo_urls?: Json | null
           notes?: string | null
           reference_images?: Json | null
@@ -147,7 +145,6 @@ export type Database = {
           design_image_back?: string | null
           design_image_front?: string | null
           id?: string
-          logo_url?: string | null
           logo_urls?: Json | null
           notes?: string | null
           reference_images?: Json | null

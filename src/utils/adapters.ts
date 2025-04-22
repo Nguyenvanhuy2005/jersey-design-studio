@@ -231,43 +231,34 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
+  // Handle logo_urls array from dbOrder
+  let processedLogoUrls: string[] = [];
+  if (Array.isArray(dbOrder.logo_urls)) {
+    processedLogoUrls = dbOrder.logo_urls.filter((url: any) => typeof url === "string");
+  }
+
   // Logo array (full info, position-aware)
   let processedLogos: Logo[] = [];
-  if (Array.isArray(dbOrder.logo_urls) && dbOrder.logo_urls.length > 0) {
-    const logoUrlArr: string[] = dbOrder.logo_urls;
-    if (Array.isArray(logos) && logos.length > 0) {
-      processedLogos = logoUrlArr.map((url: string, idx: number) => {
-        const matchedLogo = logos.find((lg) => {
-          if (!lg?.file_path || !url) return false;
-          return url.includes(lg.file_path);
-        });
-        return {
-          id: matchedLogo?.id ?? `logo_${idx}`,
-          position: matchedLogo?.position as LogoPosition | undefined,
-          url,
-          previewUrl: url,
-        };
-      });
-    } else {
-      processedLogos = logoUrlArr.map((url: string, idx: number) => ({
-        id: `logo_${idx}`,
-        position: undefined,
-        url,
-        previewUrl: url
-      }));
-    }
+  if (processedLogoUrls.length > 0) {
+    // Map logo_urls to array of Logo objects without position (for backward compat)
+    processedLogos = processedLogoUrls.map((url: string, idx: number) => ({
+      id: `logo_${idx}`,
+      position: undefined,
+      url,
+      previewUrl: url
+    }));
   } else if (logos && logos.length > 0) {
     processedLogos = processLogos(logos);
   }
 
-  // Create the Order object (no logo_url, use only logos array)
+  // Create the Order object (remove logo_url, use logo_urls and logos only)
   return {
     id: dbOrder.id,
     players: processedPlayers,
     printConfig: processedPrintConfig,
     productLines: processedProductLines,
     totalCost: dbOrder.total_cost || 0,
-    status: dbOrder.status as 'new' | 'processing' | 'completed',
+    status: dbOrder.status as 'new' | 'processing' | 'completed' | 'delivered',
     createdAt: new Date(dbOrder.created_at),
     notes: dbOrder.notes || "",
     referenceImages: refImages,
@@ -277,6 +268,7 @@ export function dbOrderToOrder(
     customerPhone: customer?.phone || undefined,
     customerAddress: customer?.address || undefined,
     teamName,
-    logos: processedLogos
+    logos: processedLogos,
+    logo_urls: processedLogoUrls
   };
 }

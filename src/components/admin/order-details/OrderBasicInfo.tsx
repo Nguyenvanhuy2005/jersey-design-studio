@@ -20,6 +20,8 @@ export const OrderBasicInfo = ({ order }: OrderBasicInfoProps) => {
         return <Badge className="bg-yellow-500">Đang xử lý</Badge>;
       case 'completed':
         return <Badge className="bg-green-500">Đã hoàn thành</Badge>;
+      case 'delivered':
+        return <Badge className="bg-purple-500">Đã giao hàng</Badge>;
       default:
         return <Badge>Unknown</Badge>;
     }
