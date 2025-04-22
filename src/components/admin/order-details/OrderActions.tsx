@@ -47,7 +47,8 @@ export const OrderActions = ({
     }
   };
 
-  return <div className="flex flex-wrap gap-2 items-center">
+  return (
+    <div className="flex flex-wrap gap-2 items-center">
       <Button size="sm" variant="secondary" onClick={handleConfirmPrint}>
         Xác nhận in tất cả
       </Button>
@@ -106,4 +107,6 @@ export const OrderActions = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  );
+};
