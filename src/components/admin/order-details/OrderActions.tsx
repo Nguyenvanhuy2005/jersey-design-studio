@@ -59,24 +59,22 @@ export const OrderActions = ({
       </Button>
       
       {/* Show "Chuyển sang Đang xử lý" button only for "new" or "completed" statuses */}
-      {(status === "new" || status === "completed") && (
+      {status === "new" && (
         <Button
           size="sm"
           variant="outline"
           onClick={handleStatusToProcessing}
-          disabled={status === "processing" || status === "delivered"}
         >
           Chuyển sang "Đang xử lý"
         </Button>
       )}
-      
+
       {/* Show "Chuyển sang Đã giao hàng" button only for "processing" or "completed" statuses */}
-      {(status === "processing" || status === "completed") && (
+      {status === "processing" && (
         <Button
           size="sm"
           variant="default"
           onClick={handleStatusToDelivered}
-          disabled={status === "delivered"}
         >
           Chuyển sang "Đã giao hàng"
         </Button>
