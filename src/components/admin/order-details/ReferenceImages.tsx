@@ -38,8 +38,8 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
     type: 'image' as const
   })) || [];
 
-  // Only show logos that actually have a working url/previewUrl
-  const displayLogos = (logos || []).filter(logo => logo.previewUrl || logo.url);
+  // Only show logos that actually have a working url/previewUrl (never fill to 6)
+  const displayLogos = (logos || []).filter(logo => !!(logo.previewUrl || logo.url));
 
   // Helper tải logo về, có thông báo nếu không có ảnh
   const handleLogoDownload = (src?: string, name?: string) => {
@@ -58,7 +58,6 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
 
   return (
     <div className="space-y-4">
-      {/* Logo list (show as uploaded, not forced into 6 fixed slots unless all present) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

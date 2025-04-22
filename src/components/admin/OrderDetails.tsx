@@ -8,7 +8,6 @@ import { PlayersList } from "./order-details/PlayersList";
 import { ProductLinesList } from "./order-details/ProductLinesList";
 import { OrderActions } from "./order-details/OrderActions";
 import { ReferenceImages } from "./order-details/ReferenceImages";
-import { Logo } from "@/types";
 import { getReferenceImageUrls } from "@/utils/images/reference-image-utils";
 
 interface OrderDetailsProps {
@@ -18,15 +17,18 @@ interface OrderDetailsProps {
 }
 
 export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDetailsProps) => {
-  // Use logo_urls if available, else fallback to logos[]
-  const logoUrls = order.logo_urls || [];
-  const allLogosFromUrls = Array.isArray(logoUrls)
+  // Only show logos if there’s actually something in logo_urls or logos[]
+  const logoUrls = Array.isArray(order.logo_urls) ? order.logo_urls.filter((v) => typeof v === "string" && !!v) : [];
+  const hasLogoUrls = logoUrls.length > 0;
+  const hasLogoObjects = Array.isArray(order.logos) && order.logos.some(l => l && (l.url || l.previewUrl));
+  
+  const allLogosFromUrls = hasLogoUrls
     ? logoUrls.map((url, idx) => ({
         url,
         position: `Logo ${idx+1}`,
       }))
     : [];
-    
+
   return (
     <>
       <DialogHeader className="mb-4">
@@ -49,8 +51,9 @@ export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDeta
           </div>
           
           <ProductLinesList productLines={order.productLines} />
-          
-          {allLogosFromUrls.length > 0 && (
+
+          {/* Only display logos grid if there are logos */}
+          {hasLogoUrls && allLogosFromUrls.length > 0 && (
             <div className="mb-4">
               <div className="font-semibold mb-2">Logo đã tải lên:</div>
               <div className="flex flex-wrap gap-4">
@@ -59,14 +62,15 @@ export const OrderDetails = ({ order, onStatusChange, onDeleteOrder }: OrderDeta
                     key={logo.url as string}
                     className="flex flex-col items-center border rounded p-2 bg-muted"
                   >
-                    <img src={logo.url} alt={`Logo ${i+1}`} className="max-w-[80px] max-h-[80px] rounded mb-1 object-contain bg-white" />
+                    <img src={logo.url} alt={`Logo ${i + 1}`} className="max-w-[80px] max-h-[80px] rounded mb-1 object-contain bg-white" />
                     <span className="text-xs text-center">{logo.position}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
-          
+
+          {/* Only show ReferenceImages if needed */}
           <ReferenceImages
             referenceImages={order.referenceImages}
             logos={order.logos || []}
