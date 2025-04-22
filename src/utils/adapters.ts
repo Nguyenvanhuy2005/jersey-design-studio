@@ -275,7 +275,7 @@ export function dbOrderToOrder(
     font: printConfig.font || 'Arial',
     backMaterial: printConfig.back_material || 'In chuyển nhiệt',
     backColor: printConfig.back_color || 'Đen',
-    frontMaterial: printConfig.front_material || 'In chuyển nhi���t',
+    frontMaterial: printConfig.front_material || 'In chuyển nhiệt',
     frontColor: printConfig.front_color || 'Đen',
     sleeveMaterial: printConfig.sleeve_material || 'In chuyển nhiệt',
     sleeveColor: printConfig.sleeve_color || 'Đen',
@@ -322,6 +322,6 @@ export function dbOrderToOrder(
     customerAddress: customer?.address || undefined,
     teamName,
     logos: processedLogos,
-    logoIds // <--- NEW FIELD: Expose logo_ids in Order model
+    logoIds // Using the logoIds property we added to the Order interface
   };
 }

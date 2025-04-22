@@ -202,6 +202,7 @@ export interface Order {
   user_id?: string;
   teamName?: string;
   logos: Logo[];
+  logoIds?: string[];
 }
 
 export interface DbPlayer {
