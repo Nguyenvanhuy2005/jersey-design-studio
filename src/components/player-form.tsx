@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { PlayerFormFields } from "./player/PlayerFormFields";
 import { BatchUpdateDialog } from "./player/BatchUpdateDialog";
+
 interface PlayerFormProps {
   players: Player[];
   onPlayersChange: (players: Player[]) => void;
@@ -24,6 +25,7 @@ interface PlayerFormProps {
   printColor?: string;
   className?: string;
 }
+
 export const PlayerForm = memo(({
   players,
   onPlayersChange,
@@ -50,9 +52,11 @@ export const PlayerForm = memo(({
     players,
     printStyle
   });
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+
   const downloadExcelTemplate = () => {
     const template = [{
       "STT": 1,
@@ -78,6 +82,7 @@ export const PlayerForm = memo(({
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, "danh_sach_cau_thu_template.xlsx");
   };
+
   const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,7 +97,12 @@ export const PlayerForm = memo(({
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
         const newPlayers: Player[] = jsonData.map((row, index) => {
-          let playerNumber = row["SỐ"] !== undefined ? String(row["SỐ"]) : row["SỐ ÁO"] !== undefined ? String(row["SỐ ÁO"]) : "";
+          let playerNumber: string = "";
+          if (row["SỐ"] !== undefined) {
+            playerNumber = String(row["SỐ"]).padStart( (String(row["SỐ"]).length<2 ? 2 : String(row["SỐ"]).length), '0');
+          } else if (row["SỐ ÁO"] !== undefined) {
+            playerNumber = String(row["SỐ ÁO"]).padStart( (String(row["SỐ ÁO"]).length<2 ? 2 : String(row["SỐ ÁO"]).length), '0');
+          }
           return {
             id: `player-${Date.now()}-${index}`,
             name: row["TÊN CẦU THỦ"] || "",
@@ -128,6 +138,7 @@ export const PlayerForm = memo(({
     reader.readAsArrayBuffer(file);
     e.target.value = "";
   };
+
   return <Card className={className}>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -196,4 +207,5 @@ export const PlayerForm = memo(({
       {isBatchDialogOpen && <BatchUpdateDialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen} players={players} onPlayersChange={onPlayersChange} printStyleOptions={printStyleOptions} printStyle={printStyle} />}
     </Card>;
 });
+
 PlayerForm.displayName = "PlayerForm";

@@ -9,11 +9,17 @@ interface ExcelExportProps {
   teamName: string;
 }
 
+// Helper to ensure player numbers exported as text with leading zeros
+function formatPlayerNumber(number: string) {
+  // Always output as string for Excel
+  return number != null ? number : '';
+}
+
 export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
   const handleExport = () => {
     const data = players.map((player, index) => ({
       'STT': index + 1,
-      'Số áo': player.number,
+      'Số áo': formatPlayerNumber(player.number),
       'Loại quần áo': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
       'Kích thước': player.size,
       'In dòng trên số lưng': player.line_1 || '',
@@ -32,11 +38,17 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
       'Ghi chú': player.note || ''
     }));
 
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Set cell format to text for player numbers (important for leading zeros)
+    const ws = XLSX.utils.json_to_sheet(data, { cellText: false, cellDates: true });
+    // Force the column 'Số áo' to be text in the worksheet
+    Object.keys(ws).forEach(cell => {
+      if (cell.match(/^B[0-9]+$/)) {
+        ws[cell].z = '@'; // set text format
+      }
+    });
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Players");
-    
-    // Save the file
     XLSX.writeFile(wb, `danh-sach-cau-thu-${teamName.toLowerCase().replace(/\s+/g, '-')}.xlsx`);
   };
 

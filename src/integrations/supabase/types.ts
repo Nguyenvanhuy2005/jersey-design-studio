@@ -186,7 +186,7 @@ export type Database = {
           logo_sleeve_right: boolean | null
           name: string | null
           note: string | null
-          number: number
+          number: string
           order_id: string | null
           pants_number: boolean | null
           print_image: boolean | null
@@ -209,7 +209,7 @@ export type Database = {
           logo_sleeve_right?: boolean | null
           name?: string | null
           note?: string | null
-          number: number
+          number: string
           order_id?: string | null
           pants_number?: boolean | null
           print_image?: boolean | null
@@ -232,7 +232,7 @@ export type Database = {
           logo_sleeve_right?: boolean | null
           name?: string | null
           note?: string | null
-          number?: number
+          number?: string
           order_id?: string | null
           pants_number?: boolean | null
           print_image?: boolean | null

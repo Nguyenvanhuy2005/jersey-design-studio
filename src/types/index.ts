@@ -1,6 +1,7 @@
 export interface Player {
   id: string;
   name: string;
+  // Số áo có thể có số 0 ở đầu (ví dụ: "01"). Luôn giữ dạng chuỗi (string)!
   number: string;
   size: 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
   printImage: boolean;
