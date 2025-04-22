@@ -57,7 +57,7 @@ export const OrderActions = ({
           size="sm"
           variant="outline"
           onClick={handleStatusToProcessing}
-          disabled={status === "processing"}
+          disabled={status === "processing" || status === "delivered"}
         >
           Chuyển sang "Đang xử lý"
         </Button>
