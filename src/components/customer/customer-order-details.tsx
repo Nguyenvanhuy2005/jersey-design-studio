@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Order } from "@/types";
+import { Order, Logo } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,7 +9,7 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LoaderCircle, Printer, Shirt, Download } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Printer, Shirt, Download, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { dbOrderToOrder } from "@/utils/adapters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +22,7 @@ export function CustomerOrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoLoadErrors, setLogoLoadErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user) {
@@ -92,11 +94,22 @@ export function CustomerOrderDetails() {
         console.error("Error fetching print config:", printConfigError);
       }
 
+      // Fetch logos data
+      const { data: logosData, error: logosError } = await supabase
+        .from("logos")
+        .select("*")
+        .eq("order_id", orderId);
+
+      if (logosError) {
+        console.error("Error fetching logos:", logosError);
+      }
+
       console.log("Complete order data:", {
         order: orderData,
         players: playersData,
         productLines: productLinesData,
-        printConfig: printConfigData
+        printConfig: printConfigData,
+        logos: logosData
       });
       
       const convertedOrder = dbOrderToOrder(
@@ -104,7 +117,8 @@ export function CustomerOrderDetails() {
         orderData.customer,
         playersData || [],
         productLinesData || [],
-        printConfigData
+        printConfigData,
+        logosData || []
       );
       
       setOrder(convertedOrder);
@@ -140,6 +154,11 @@ export function CustomerOrderDetails() {
     }
   };
 
+  const handleLogoError = (logoId: string) => {
+    console.error(`Failed to load logo image: ${logoId}`);
+    setLogoLoadErrors(prev => ({ ...prev, [logoId]: true }));
+  };
+
   const getAssets = () => {
     const assets = [];
 
@@ -159,17 +178,25 @@ export function CustomerOrderDetails() {
 
     // All logo images (grouped)
     if (order?.logos && order.logos.length > 0) {
-      assets.push({
-        type: 'logos' as const,
-        title: 'Logo',
-        items: order.logos.map((logo, i) => ({
-          url: logo.previewUrl || logo.url,
-          name: logo.position
-            ? `Logo - ${logo.position.replace('_', ' ')}`
-            : `logo${i + 1}`,
-          type: 'image' as const
-        }))
-      });
+      // Filter out logos without URLs or with load errors
+      const validLogos = order.logos.filter(logo => 
+        (logo.previewUrl || logo.url) && !logoLoadErrors[logo.id]
+      );
+      
+      if (validLogos.length > 0) {
+        assets.push({
+          type: 'logos' as const,
+          title: 'Logo',
+          items: validLogos.map((logo, i) => ({
+            url: logo.previewUrl || logo.url,
+            name: logo.position
+              ? `Logo - ${logo.position.replace('_', ' ')}`
+              : `logo${i + 1}`,
+            type: 'image' as const,
+            onError: () => handleLogoError(logo.id)
+          }))
+        });
+      }
     }
 
     return assets;
@@ -211,6 +238,7 @@ export function CustomerOrderDetails() {
   }
 
   const createdAt = parseDateSafely(order.createdAt);
+  const assets = getAssets();
 
   return (
     <div className="container py-6 space-y-6">
@@ -296,7 +324,7 @@ export function CustomerOrderDetails() {
               </CardContent>
             </Card>
 
-            {getAssets().map((assetGroup, index) => (
+            {assets.map((assetGroup, index) => (
               <Card key={index}>
                 <CardContent className="pt-6">
                   <AssetViewer
@@ -307,6 +335,19 @@ export function CustomerOrderDetails() {
                 </CardContent>
               </Card>
             ))}
+
+            {order.logos && order.logos.length > 0 && assets.filter(a => a.type === 'logos').length === 0 && (
+              <Card>
+                <CardContent className="py-6 flex flex-col items-center justify-center text-center">
+                  <AlertCircle className="h-10 w-10 text-amber-500 mb-2" />
+                  <h3 className="text-lg font-medium">Không thể hiển thị logo</h3>
+                  <p className="text-muted-foreground">
+                    Đơn hàng này có {order.logos.length} logo nhưng không thể tải hình ảnh.
+                    Logo có thể đã bị xóa hoặc đường dẫn không hợp lệ.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 

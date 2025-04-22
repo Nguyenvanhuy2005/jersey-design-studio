@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -41,6 +42,36 @@ export const useOrderSubmission = ({
 }: OrderSubmissionProps) => {
   const navigate = useNavigate();
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
+
+  // Helper to validate a product line
+  const validateProductLine = (productLine: ProductLine): boolean => {
+    if (!productLine.id || typeof productLine.id !== 'string') {
+      console.error("[Validation] Product line missing valid ID:", productLine);
+      return false;
+    }
+    
+    if (!productLine.product || typeof productLine.product !== 'string') {
+      console.error("[Validation] Product line missing valid product:", productLine);
+      return false;
+    }
+    
+    if (!productLine.position || typeof productLine.position !== 'string') {
+      console.error("[Validation] Product line missing valid position:", productLine);
+      return false;
+    }
+    
+    if (!productLine.material || typeof productLine.material !== 'string') {
+      console.error("[Validation] Product line missing valid material:", productLine);
+      return false;
+    }
+    
+    if (!productLine.size || typeof productLine.size !== 'string') {
+      console.error("[Validation] Product line missing valid size:", productLine);
+      return false;
+    }
+    
+    return true;
+  };
 
   const uploadReferenceImages = async (orderId: string, referenceImages: File[]): Promise<string[]> => {
     if (referenceImages.length === 0) return [];
@@ -106,49 +137,68 @@ export const useOrderSubmission = ({
       return { logoUrls, logoStorageEntries };
     }
 
+    let uploadedLogoCount = 0;
+    const totalLogos = logos.filter(logo => logo.file).length;
+    
+    if (totalLogos > 0) {
+      toast.info(`Đang tải lên logo (0/${totalLogos})...`);
+    }
+
     for (const logo of logos) {
       if (!logo.file) {
         console.log("Logo không có file tại vị trí:", logo.position, logo);
         continue;
       }
+      
       const fileExt = logo.file.name.split('.').pop();
       const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
 
       console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
 
-      const { data, error: uploadError } = await supabase.storage
-        .from('logos')
-        .upload(filePath, logo.file, {
-          cacheControl: '3600',
-          upsert: false
+      try {
+        const { data, error: uploadError } = await supabase.storage
+          .from('logos')
+          .upload(filePath, logo.file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
+          toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
+          continue;
+        }
+
+        if (!data) {
+          console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
+          continue;
+        }
+
+        logoStorageEntries.push({
+          file_path: filePath,
+          position: logo.position
         });
 
-      if (uploadError) {
-        console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
-        toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
-        continue;
+        const { data: urlData } = supabase.storage
+          .from('logos')
+          .getPublicUrl(filePath);
+
+        if (urlData?.publicUrl) {
+          logoUrls.push(urlData.publicUrl);
+        }
+
+        uploadedLogoCount++;
+        toast.info(`Đang tải lên logo (${uploadedLogoCount}/${totalLogos})...`);
+        
+        console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
+      } catch (err) {
+        console.error(`[Upload logo] Lỗi không xác định khi upload logo vị trí: ${logo.position}`, err);
+        toast.error(`Có lỗi khi tải lên logo vị trí ${logo.position}`);
       }
+    }
 
-      if (!data) {
-        console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
-        continue;
-      }
-
-      logoStorageEntries.push({
-        file_path: filePath,
-        position: logo.position
-      });
-
-      const { data: urlData } = supabase.storage
-        .from('logos')
-        .getPublicUrl(filePath);
-
-      if (urlData?.publicUrl) {
-        logoUrls.push(urlData.publicUrl);
-      }
-
-      toast.success(`[Upload logo] Đã upload thành công logo vị trí: ${logo.position}`);
-      console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
+    if (uploadedLogoCount > 0) {
+      toast.success(`[Upload logo] Đã tải lên thành công ${uploadedLogoCount}/${totalLogos} logo`);
     }
 
     return { logoUrls, logoStorageEntries };
@@ -325,23 +375,48 @@ export const useOrderSubmission = ({
         }
       }
       
-      // Step 9: Insert product lines
+      // Step 9: Insert product lines - ENHANCED ERROR HANDLING
       if (productLines.length > 0) {
-        const productLinesToInsert = productLines.map(pl => ({
-          ...pl,
-          order_id: orderId
-        }));
+        // Validate and prepare product lines before insertion
+        const validProductLines = productLines.filter(validateProductLine);
         
-        const { error: productLinesError } = await supabase
-          .from('product_lines')
-          .insert(productLinesToInsert);
-          
-        if (productLinesError) {
-          console.error("[Insert product lines] Error inserting product lines:", productLinesError);
-          toast.warning("Có lỗi khi lưu thông tin sản phẩm in");
-          // Continue with order creation even if product line insertion fails
+        if (validProductLines.length < productLines.length) {
+          console.warn(`[Insert product lines] Found ${productLines.length - validProductLines.length} invalid product lines that will be skipped`);
+        }
+        
+        if (validProductLines.length === 0) {
+          console.error("[Insert product lines] No valid product lines to insert");
+          toast.warning("Không có sản phẩm in nào hợp lệ để lưu");
         } else {
-          toast.success("Đã lưu thông tin sản phẩm in thành công");
+          // Prepare product lines with required fields
+          const productLinesToInsert = validProductLines.map(pl => ({
+            product: pl.product,
+            position: pl.position,
+            material: pl.material,
+            size: pl.size,
+            points: pl.points || 0,
+            content: pl.content || "",
+            order_id: orderId
+          }));
+
+          console.log("[Insert product lines] Preparing to insert product lines:", productLinesToInsert);
+          
+          try {
+            const { error: productLinesError } = await supabase
+              .from('product_lines')
+              .insert(productLinesToInsert);
+              
+            if (productLinesError) {
+              console.error("[Insert product lines] Error inserting product lines:", productLinesError);
+              toast.warning(`Có lỗi khi lưu thông tin sản phẩm in: ${productLinesError.message}`);
+              // Continue with order creation even if product line insertion fails
+            } else {
+              toast.success(`Đã lưu thành công ${productLinesToInsert.length} sản phẩm in`);
+            }
+          } catch (err) {
+            console.error("[Insert product lines] Exception when inserting product lines:", err);
+            toast.warning("Có lỗi khi lưu thông tin sản phẩm in");
+          }
         }
       }
       

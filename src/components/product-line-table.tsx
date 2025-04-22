@@ -1,11 +1,12 @@
 
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Logo, ProductLine } from "@/types";
-import { Plus, X } from "lucide-react";
+import { Plus, X, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProductLineTableProps {
   productLines: ProductLine[];
@@ -28,21 +29,61 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
     content: ""
   });
 
-  React.useEffect(() => {
+  // Track validation errors
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Reset validation error when form values change
+  useEffect(() => {
+    setValidationError(null);
+  }, [newProductLine]);
+
+  useEffect(() => {
     if (productLines.length === 0 && newProductLine.material !== "In chuyển nhiệt") {
       setNewProductLine((prev) => ({ ...prev, material: "In chuyển nhiệt" }));
     }
   }, [productLines.length]);
 
   const addProductLine = () => {
-    if (!newProductLine.product || !newProductLine.position || !newProductLine.material) return;
+    // Validate form before adding
+    if (!newProductLine.product) {
+      setValidationError("Vui lòng chọn sản phẩm");
+      return;
+    }
+    
+    if (!newProductLine.position) {
+      setValidationError("Vui lòng chọn vị trí in");
+      return;
+    }
+    
+    if (!newProductLine.material) {
+      setValidationError("Vui lòng chọn chất liệu");
+      return;
+    }
+
+    // If this is a logo position, make sure we have content selected when logos are available
+    const isLogoPosition = newProductLine.position.toLowerCase().includes('logo');
+    if (isLogoPosition && logos.length > 0 && !newProductLine.content) {
+      setValidationError("Vui lòng chọn logo cho vị trí in này");
+      return;
+    }
 
     const updatedProductLines = [
       ...productLines, 
-      { ...newProductLine, id: `product-${Date.now()}` }
+      { 
+        ...newProductLine, 
+        id: `product-${Date.now()}`,
+        // Ensure all required fields have valid values
+        product: newProductLine.product || "Áo thi đấu",
+        position: newProductLine.position,
+        material: newProductLine.material || "In chuyển nhiệt",
+        size: newProductLine.size || "Trung bình",
+        points: newProductLine.points || 0,
+        content: newProductLine.content || ""
+      }
     ];
 
     onProductLinesChange(updatedProductLines);
+    setValidationError(null);
 
     setNewProductLine({
       product: "",
@@ -95,8 +136,26 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
   
   const getContentOptions = (position: string) => {
     if (isLogoPosition(position)) {
-      return logos.map(logo => {
-        const fileName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${logo.id}`;
+      // Make sure we have valid logos with either file.name or url/previewUrl
+      return logos.filter(logo => {
+        return logo && (logo.file || logo.url || logo.previewUrl);
+      }).map(logo => {
+        let fileName;
+        
+        // Handle differently based on whether we have a file object or just a URL
+        if (logo.file && logo.file.name) {
+          fileName = logo.file.name.split('/').pop()?.split('.')[0] || `Logo ${logo.id}`;
+        } else {
+          // If we only have URL, create a label based on position
+          const positionName = logo.position === 'chest_left' ? 'Ngực trái' :
+                              logo.position === 'chest_right' ? 'Ngực phải' :
+                              logo.position === 'chest_center' ? 'Ngực giữa' :
+                              logo.position === 'sleeve_left' ? 'Tay trái' :
+                              logo.position === 'sleeve_right' ? 'Tay phải' :
+                              logo.position === 'pants' ? 'Quần' : 'Logo';
+          fileName = `Logo ${positionName}`;
+        }
+        
         return {
           value: fileName,
           label: fileName
@@ -114,6 +173,10 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
   };
 
   const isNewPositionLogoRelated = isLogoPosition(newProductLine.position);
+
+  // Check if we have valid logos for content selection
+  const validLogos = logos.filter(logo => logo && (logo.file || logo.url || logo.previewUrl));
+  const hasValidLogos = validLogos.length > 0;
 
   return (
     <div className="space-y-4">
@@ -189,6 +252,13 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
         </table>
       </div>
       
+      {validationError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end">
         <Select
           value={newProductLine.product}
@@ -252,7 +322,7 @@ export function ProductLineTable({ productLines, onProductLinesChange, logos = [
           placeholder="Điểm tích"
         />
         
-        {isNewPositionLogoRelated && logos.length > 0 ? (
+        {isNewPositionLogoRelated && hasValidLogos ? (
           <Select
             value={newProductLine.content}
             onValueChange={(value) => setNewProductLine(prev => ({ ...prev, content: value }))}

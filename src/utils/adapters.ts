@@ -1,3 +1,4 @@
+
 import { Order, Player, Logo, LogoPosition } from "@/types";
 
 // Define types for raw database models
@@ -70,6 +71,16 @@ export interface DbProductLine {
   content: string | null;
 }
 
+export interface DbLogo {
+  id: string;
+  file_path: string;
+  position: string;
+  order_id: string;
+  x_position?: number;
+  y_position?: number;
+  scale?: number;
+}
+
 /**
  * Converts a database player to application Player model
  */
@@ -136,22 +147,61 @@ export function extractTeamName(order: DbOrder): string {
  * Process logos from database format
  */
 export function processLogos(dbLogos: any[] | null): Logo[] {
-  if (!dbLogos || !Array.isArray(dbLogos)) return [];
-  return dbLogos
-    .filter(logo => logo && logo.file_path && logo.position)
-    .map(logo => {
-      // file_path luôn trỏ tới storage, tạo public url dựa vào vị trí và path
-      let previewUrl: string | undefined = undefined;
-      if (logo.file_path && typeof logo.file_path === "string") {
-        previewUrl = getPublicUrl(logo.file_path);
-      }
-      return {
-        id: logo.id ?? `logo-${logo.position}-${logo.file_path}`,
-        position: logo.position as LogoPosition,
-        url: previewUrl,
-        previewUrl: previewUrl
-      };
-    });
+  if (!dbLogos || !Array.isArray(dbLogos)) {
+    console.log("No logos found or logos is not an array");
+    return [];
+  }
+
+  // Enhanced logging for logo processing
+  console.log(`Processing ${dbLogos.length} logos from database:`, dbLogos);
+  
+  // Filter out invalid logos first
+  const validLogos = dbLogos.filter(logo => {
+    if (!logo) {
+      console.warn("Found null or undefined logo entry");
+      return false;
+    }
+    
+    if (!logo.position) {
+      console.warn("Found logo without position:", logo);
+      return false;
+    }
+    
+    if (!logo.file_path && !logo.url && !logo.previewUrl) {
+      console.warn("Found logo without file_path, url or previewUrl:", logo);
+      return false;
+    }
+    
+    return true;
+  });
+
+  console.log(`Found ${validLogos.length} valid logos after filtering`);
+  
+  return validLogos.map(logo => {
+    // file_path luôn trỏ tới storage, tạo public url dựa vào vị trí và path
+    let previewUrl: string | undefined = undefined;
+    
+    if (logo.file_path && typeof logo.file_path === "string") {
+      previewUrl = getPublicUrl(logo.file_path);
+      console.log(`Generated public URL for logo ${logo.id}: ${previewUrl}`);
+    } else if (logo.url) {
+      previewUrl = logo.url;
+      console.log(`Using existing URL for logo ${logo.id}: ${previewUrl}`);
+    } else if (logo.previewUrl) {
+      previewUrl = logo.previewUrl;
+      console.log(`Using existing previewUrl for logo ${logo.id}: ${previewUrl}`);
+    }
+    
+    return {
+      id: logo.id ?? `logo-${logo.position}-${Date.now()}`,
+      position: logo.position as LogoPosition,
+      url: previewUrl,
+      previewUrl: previewUrl,
+      x_position: logo.x_position,
+      y_position: logo.y_position,
+      scale: logo.scale
+    };
+  });
 }
 
 /**
@@ -160,10 +210,18 @@ export function processLogos(dbLogos: any[] | null): Logo[] {
 function getPublicUrl(storagePath: string): string {
   const baseUrl = "https://vvfxqlqcfibxstnjciha.supabase.co/storage/v1/object/public";
   const bucket = "logos";
-  // Remove leading slash or "logos/" if present
-  let cleanPath = storagePath.replace(/^logos\//, "");
-  if (cleanPath.startsWith("/")) cleanPath = cleanPath.slice(1);
-  return `${baseUrl}/${bucket}/${cleanPath}`;
+  
+  try {
+    // Remove leading slash or "logos/" if present
+    let cleanPath = storagePath.replace(/^logos\//, "");
+    if (cleanPath.startsWith("/")) cleanPath = cleanPath.slice(1);
+    
+    const fullUrl = `${baseUrl}/${bucket}/${cleanPath}`;
+    return fullUrl;
+  } catch (error) {
+    console.error("Error generating public URL for path:", storagePath, error);
+    return "";
+  }
 }
 
 /**
@@ -231,10 +289,14 @@ export function dbOrderToOrder(
     content: line.content || ''
   })) : [];
 
-  // Since logo_urls is no longer in the database schema, we only process logos from the logos table
+  // Process logos data from the logos table
   let processedLogos: Logo[] = [];
   if (logos && logos.length > 0) {
+    console.log("Processing logos from logos table:", logos);
     processedLogos = processLogos(logos);
+    console.log("Processed logos:", processedLogos);
+  } else {
+    console.log("No logos in dbOrderToOrder function");
   }
 
   // Create the Order object (remove logo_url and logo_urls references)
