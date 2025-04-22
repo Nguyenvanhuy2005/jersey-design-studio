@@ -4,6 +4,7 @@ import { Download, Eye, ImageOff } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AssetViewerProps {
   title?: string;
@@ -11,6 +12,7 @@ interface AssetViewerProps {
     url: string;
     name?: string;
     type: 'image' | 'font';
+    onError?: () => void;
   }[];
   gridCols?: number;
 }
@@ -23,6 +25,7 @@ export const AssetViewer = ({
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
 
   // Filter out invalid or empty URLs
   const validAssets = assets.filter(asset => asset.url && asset.url.trim() !== '');
@@ -34,39 +37,62 @@ export const AssetViewer = ({
       return url;
     }
     
-    // If it's a relative path in reference_images bucket
-    if (!url.includes('/')) {
-      return supabase.storage.from('reference_images').getPublicUrl(url).data.publicUrl;
+    try {
+      // If it's a relative path in reference_images bucket
+      if (!url.includes('/')) {
+        const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+        return data.publicUrl;
+      }
+      
+      // If it has path structure like orderId/filename
+      const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Error processing image URL:", url, error);
+      return url; // Return original URL as fallback
     }
-    
-    // If it has path structure like orderId/filename
-    const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
-    return data.publicUrl;
   };
 
-  const handleDownload = async (url: string, filename: string) => {
+  const handleDownload = async (url: string, filename: string, index: number) => {
     try {
+      setIsDownloading(prev => ({ ...prev, [index]: true }));
+      
       // Process the URL to ensure it's a full URL
       const processedUrl = url.startsWith('http') ? url : processImageUrl(url);
       
+      console.log(`Attempting to download: ${processedUrl}`);
+      
       const response = await fetch(processedUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
+      
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = filename;
+      link.download = `${filename || 'logo'}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
+      toast.success(`Đã tải xuống ${filename ? ` (${filename})` : ""}!`);
     } catch (error) {
       console.error('Error downloading file:', error);
+      toast.error(`Không thể tải xuống: ${error.message || 'Lỗi không xác định'}`);
+    } finally {
+      setIsDownloading(prev => ({ ...prev, [index]: false }));
     }
   };
 
   const handleImageError = (index: number) => {
     console.error(`Error loading image: ${assets[index].url}`);
     setImageErrors(prev => ({ ...prev, [index]: true }));
+    
+    // Call custom onError handler if provided
+    if (assets[index].onError) {
+      assets[index].onError();
+    }
   };
 
   if (validAssets.length === 0) {
@@ -108,7 +134,11 @@ export const AssetViewer = ({
                     size="sm"
                     className="flex-1"
                     onClick={() => {
-                      setSelectedAsset(asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url));
+                      const processedUrl = asset.url.startsWith('http') 
+                        ? asset.url 
+                        : processImageUrl(asset.url);
+                      
+                      setSelectedAsset(processedUrl);
                       setIsPreviewOpen(true);
                     }}
                   >
@@ -120,11 +150,11 @@ export const AssetViewer = ({
                   variant="outline"
                   size="sm"
                   className="flex-1"
-                  onClick={() => handleDownload(asset.url, asset.name || `mau-${index + 1}`)}
-                  disabled={asset.type === 'image' && imageErrors[index]}
+                  onClick={() => handleDownload(asset.url, asset.name || `mau-${index + 1}`, index)}
+                  disabled={asset.type === 'image' && imageErrors[index] || isDownloading[index]}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Tải xuống
+                  {isDownloading[index] ? "Đang tải..." : "Tải xuống"}
                 </Button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { Order, Player, Logo, LogoPosition } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define types for raw database models
 export interface DbOrder {
@@ -178,12 +179,22 @@ export function processLogos(dbLogos: any[] | null): Logo[] {
   console.log(`Found ${validLogos.length} valid logos after filtering`);
   
   return validLogos.map(logo => {
-    // file_path luôn trỏ tới storage, tạo public url dựa vào vị trí và path
+    // Use Supabase client to generate public URLs correctly
     let previewUrl: string | undefined = undefined;
     
     if (logo.file_path && typeof logo.file_path === "string") {
-      previewUrl = getPublicUrl(logo.file_path);
-      console.log(`Generated public URL for logo ${logo.id}: ${previewUrl}`);
+      try {
+        // Use supabase client to generate proper URLs from the storage API
+        const { data } = supabase.storage
+          .from('logos')
+          .getPublicUrl(logo.file_path.replace(/^logos\//, ""));
+        
+        previewUrl = data.publicUrl;
+        console.log(`Generated public URL for logo ${logo.id}: ${previewUrl}`);
+      } catch (error) {
+        console.error("Error generating public URL for logo:", error);
+        previewUrl = undefined;
+      }
     } else if (logo.url) {
       previewUrl = logo.url;
       console.log(`Using existing URL for logo ${logo.id}: ${previewUrl}`);
@@ -206,18 +217,14 @@ export function processLogos(dbLogos: any[] | null): Logo[] {
 
 /**
  * Helper to get public URL from storage path
+ * This function is kept for backwards compatibility but no longer used
  */
 function getPublicUrl(storagePath: string): string {
-  const baseUrl = "https://vvfxqlqcfibxstnjciha.supabase.co/storage/v1/object/public";
-  const bucket = "logos";
-  
   try {
-    // Remove leading slash or "logos/" if present
-    let cleanPath = storagePath.replace(/^logos\//, "");
-    if (cleanPath.startsWith("/")) cleanPath = cleanPath.slice(1);
-    
-    const fullUrl = `${baseUrl}/${bucket}/${cleanPath}`;
-    return fullUrl;
+    // Use Supabase's built-in getPublicUrl method for reliable URL generation
+    const cleanPath = storagePath.replace(/^logos\//, "");
+    const { data } = supabase.storage.from('logos').getPublicUrl(cleanPath);
+    return data.publicUrl;
   } catch (error) {
     console.error("Error generating public URL for path:", storagePath, error);
     return "";

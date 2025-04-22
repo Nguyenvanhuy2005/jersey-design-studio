@@ -1,10 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ImageIcon, Download } from "lucide-react";
+import { ImageIcon, Download, AlertCircle } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
 import { Logo, LogoPosition } from "@/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // All possible logo positions (for reference)
 const ALL_POSITIONS: LogoPosition[] = [
@@ -31,6 +33,9 @@ interface ReferenceImagesProps {
 }
 
 export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
+  const [downloadingLogo, setDownloadingLogo] = useState<string | null>(null);
+  const [logoErrors, setLogoErrors] = useState<Record<string, boolean>>({});
+
   // Reference assets
   const referenceAssets = referenceImages?.map((url, index) => ({
     url,
@@ -42,18 +47,62 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
   const displayLogos = (logos || []).filter(logo => !!(logo.previewUrl || logo.url));
 
   // Helper tải logo về, có thông báo nếu không có ảnh
-  const handleLogoDownload = (src?: string, name?: string) => {
-    if (!src) {
+  const handleLogoDownload = async (logo: Logo, showName: string) => {
+    if (!logo.url && !logo.previewUrl) {
       toast.warning("Không tìm thấy file logo để tải về.");
       return;
     }
-    const link = document.createElement("a");
-    link.href = src;
-    link.download = `${name || 'logo'}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Đã bắt đầu tải logo${name ? ` (${name})` : ""}!`);
+    
+    try {
+      setDownloadingLogo(logo.id);
+      
+      // Use Supabase's utility to get a proper URL
+      let logoUrl = logo.url || logo.previewUrl;
+      
+      if (logoUrl && !logoUrl.startsWith('http')) {
+        // Assumes it's a path in the Supabase storage
+        const path = logoUrl.replace(/^logos\//, "");
+        const { data } = supabase.storage
+          .from('logos')
+          .getPublicUrl(path);
+          
+        logoUrl = data.publicUrl;
+        console.log("Generated Supabase public URL:", logoUrl);
+      }
+      
+      if (!logoUrl) {
+        throw new Error("No valid logo URL found");
+      }
+      
+      console.log(`Attempting to download logo: ${logoUrl}`);
+      
+      const response = await fetch(logoUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logo: ${response.status} ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `${showName || 'logo'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success(`Đã bắt đầu tải logo${showName ? ` (${showName})` : ""}!`);
+    } catch (error) {
+      console.error('Error downloading logo:', error);
+      toast.error(`Không thể tải logo: ${error.message || 'Lỗi không xác định'}`);
+      setLogoErrors(prev => ({ ...prev, [logo.id]: true }));
+    } finally {
+      setDownloadingLogo(null);
+    }
+  };
+
+  const handleLogoError = (logoId: string) => {
+    console.error(`Error loading logo image: ${logoId}`);
+    setLogoErrors(prev => ({ ...prev, [logoId]: true }));
   };
 
   return (
@@ -78,25 +127,24 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
                 }
                 // If no position (legacy), show generic name
                 const showName = positionLabel || `Logo ${index + 1}`;
+                const hasError = logoErrors[logo.id];
+                
                 return (
                   <div
                     key={logo.id || logo.url || index}
                     className="flex flex-col items-center bg-muted rounded-md p-4 border shadow-sm gap-2"
                   >
                     <div className="w-20 h-20 flex items-center justify-center bg-white rounded border overflow-hidden mb-2">
-                      {src ? (
+                      {src && !hasError ? (
                         <img
                           src={src}
                           alt={showName}
                           className="max-h-16 max-w-16 object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src = "/lovable-uploads/447a2264-3805-4538-84ac-a4d65e10802c.png";
-                          }}
+                          onError={() => handleLogoError(logo.id)}
                         />
                       ) : (
-                        <div className="text-muted-foreground text-xs text-center p-1 leading-4">
+                        <div className="text-muted-foreground text-xs text-center p-1 leading-4 flex flex-col items-center">
+                          <AlertCircle className="h-5 w-5 mb-1" />
                           Không có logo
                         </div>
                       )}
@@ -112,13 +160,13 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleLogoDownload(src, showName)}
-                      disabled={!src}
+                      onClick={() => handleLogoDownload(logo, showName)}
+                      disabled={!src || hasError || downloadingLogo === logo.id}
                       title={`Tải xuống ${showName}`}
                       className="w-full"
                     >
                       <Download className="h-4 w-4 mr-1" />
-                      Tải xuống
+                      {downloadingLogo === logo.id ? "Đang tải..." : "Tải xuống"}
                     </Button>
                   </div>
                 );
