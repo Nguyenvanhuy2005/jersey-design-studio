@@ -12,6 +12,7 @@ interface OrderActionsProps {
   onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
   onDeleteOrder: (orderId: string) => void;
 }
+
 export const OrderActions = ({
   orderId,
   teamName,
@@ -28,18 +29,22 @@ export const OrderActions = ({
       toast.success(`Đơn hàng ${teamName} đã được xác nhận bán`);
     }
   };
+  
   const handleConfirmPrint = () => {
     toast.success(`Đã xác nhận in tất cả các sản phẩm cho đơn hàng: ${teamName}`);
   };
+  
   const handleExportCSV = () => {
     toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${teamName}`);
   };
+  
   const handleStatusToProcessing = () => {
     if (orderId) {
       onStatusChange(orderId, 'processing');
       toast.success(`Đơn hàng ${teamName} đã chuyển sang "Đang xử lý"`);
     }
   };
+  
   const handleStatusToDelivered = () => {
     if (orderId) {
       onStatusChange(orderId, 'delivered');
@@ -52,6 +57,8 @@ export const OrderActions = ({
       <Button size="sm" variant="secondary" onClick={handleConfirmPrint}>
         Xác nhận in tất cả
       </Button>
+      
+      {/* Show "Chuyển sang Đang xử lý" button only for "new" or "completed" statuses */}
       {(status === "new" || status === "completed") && (
         <Button
           size="sm"
@@ -62,6 +69,8 @@ export const OrderActions = ({
           Chuyển sang "Đang xử lý"
         </Button>
       )}
+      
+      {/* Show "Chuyển sang Đã giao hàng" button only for "processing" or "completed" statuses */}
       {(status === "processing" || status === "completed") && (
         <Button
           size="sm"
@@ -82,9 +91,11 @@ export const OrderActions = ({
           <SelectItem value="noprint">KHÔNG IN</SelectItem>
         </SelectContent>
       </Select>
+      
       <Button size="sm" variant="default" onClick={handleConfirmSale} disabled={!branch}>
         Xác nhận bán
       </Button>
+      
       {/* Nút xóa */}
       <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
         <AlertDialogTrigger asChild>
