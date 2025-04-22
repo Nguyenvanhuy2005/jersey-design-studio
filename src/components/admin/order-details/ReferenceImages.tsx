@@ -5,22 +5,44 @@ import { AssetViewer } from "@/components/customer/AssetViewer";
 import { Logo, LogoPosition, LogoPositionLabel } from "@/types";
 import { Button } from "@/components/ui/button";
 
+// Show all 6 positions: chest_left, chest_right, chest_center, sleeve_left, sleeve_right, pants
+const ALL_POSITIONS: LogoPosition[] = [
+  'chest_left',
+  'chest_right',
+  'chest_center',
+  'sleeve_left',
+  'sleeve_right',
+  'pants'
+];
+
+// Map vị trí sang tiếng Việt rõ ràng
+const LOGO_POSITION_LABEL_VI: Record<LogoPosition, string> = {
+  chest_left: "Ngực trái",
+  chest_right: "Ngực phải",
+  chest_center: "Ngực giữa",
+  sleeve_left: "Tay trái",
+  sleeve_right: "Tay phải",
+  pants: "Quần"
+};
+
 interface ReferenceImagesProps {
   referenceImages?: string[];
   logos?: Logo[];
 }
 
-// Only use the logo positions relevant for the user: 'Ngực trái' (chest_left) and 'Tay phải' (sleeve_right)
-const SELECTED_POSITIONS: LogoPosition[] = [
-  'chest_left',    // Logo 1
-  'sleeve_right'   // Logo 2
-];
-
 export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
-  // Only display logos with selected positions
+  // Lấy logo có vị trí hợp lệ trong 6 vị trí chính
   const filteredLogos = logos.filter(
-    (logo) => logo.position && SELECTED_POSITIONS.includes(logo.position)
+    (logo) => logo.position && ALL_POSITIONS.includes(logo.position)
   );
+
+  // Tạo bản đồ [vị trí] -> logo (nếu nhiều, chỉ lấy 1 logo cho mỗi vị trí)
+  const logoByPosition: Partial<Record<LogoPosition, Logo>> = {};
+  filteredLogos.forEach((logo) => {
+    if (logo.position && !logoByPosition[logo.position]) {
+      logoByPosition[logo.position] = logo;
+    }
+  });
 
   const referenceAssets = referenceImages?.map((url, index) => ({
     url,
@@ -28,10 +50,9 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
     type: 'image' as const
   })) || [];
 
-  // Helper for browser downloading
+  // Helper cho phép tải hình về
   const handleLogoDownload = (url?: string, positionLabel?: string, idx?: number) => {
     if (!url) return;
-    // In case url is relative, get its absolute version
     const link = document.createElement("a");
     link.href = url;
     link.download = `${positionLabel || "logo"}${idx !== undefined ? `_${idx+1}` : ""}.png`;
@@ -42,56 +63,54 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
 
   return (
     <div className="space-y-4">
-      {/* Only show Logo 1 and Logo 2 by their specific print positions */}
-      {filteredLogos.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5" />
-              Logo cần in (theo vị trí)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-5">
-              {SELECTED_POSITIONS.map((position) => {
-                // For each selected position, find the logo (should be at most one for each)
-                const logoForThisPosition = filteredLogos.find(l => l.position === position);
-                if (!logoForThisPosition) return null;
-                const label = LogoPositionLabel[position];
-                return (
-                  <div key={position} className="flex items-center gap-4 border rounded p-3 bg-muted">
-                    <div className="w-24 h-24 flex items-center justify-center rounded bg-white border shadow overflow-hidden">
-                      {logoForThisPosition.previewUrl || logoForThisPosition.url ? (
-                        <img
-                          src={logoForThisPosition.previewUrl || logoForThisPosition.url}
-                          alt={label}
-                          className="max-h-20 max-w-20 object-contain"
-                        />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">Không có logo</span>
-                      )}
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="font-semibold">{label}</div>
-                      <span className="text-xs text-muted-foreground truncate">Vị trí in: {label}</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogoDownload(logoForThisPosition.previewUrl || logoForThisPosition.url, label)}
-                      title="Tải xuống logo"
-                      disabled={!(logoForThisPosition.previewUrl || logoForThisPosition.url)}
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Tải xuống logo
-                    </Button>
+      {/* 6 vị trí logo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            6 vị trí logo cần in
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-3">
+            {ALL_POSITIONS.map((position, posIdx) => {
+              const logo = logoByPosition[position];
+              const label = LOGO_POSITION_LABEL_VI[position];
+              const src = logo?.previewUrl || logo?.url; // Ưu tiên previewUrl (local), fallback url (đã upload)
+              return (
+                <div key={position} className="flex items-center gap-4 border rounded p-3 bg-muted">
+                  <div className="w-24 h-24 flex items-center justify-center rounded bg-white border shadow overflow-hidden">
+                    {src ? (
+                      <img
+                        src={src}
+                        alt={label}
+                        className="max-h-20 max-w-20 object-contain"
+                        onError={e => { (e.target as HTMLImageElement).src = "/logo-placeholder.png" }}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">Không có logo</span>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="font-semibold">{label}</div>
+                    <span className="text-xs text-muted-foreground truncate">Vị trí in: {position}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLogoDownload(src, label)}
+                    title={`Tải xuống logo vị trí ${label}`}
+                    disabled={!src}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Tải xuống logo
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Reference Images */}
       {referenceAssets.length > 0 && (
@@ -110,3 +129,4 @@ export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImages
     </div>
   );
 }
+
