@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -43,7 +42,6 @@ export const useOrderSubmission = ({
   const navigate = useNavigate();
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
 
-  // Helper to validate a product line
   const validateProductLine = (productLine: ProductLine): boolean => {
     if (!productLine.id || typeof productLine.id !== 'string') {
       console.error("[Validation] Product line missing valid ID:", productLine);
@@ -231,10 +229,8 @@ export const useOrderSubmission = ({
     setIsGeneratingDesign(true);
     
     try {
-      // Step 1: Ensure storage buckets exist
       await createStorageBucketsIfNeeded();
       
-      // Step 2: Update customer info
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -255,13 +251,10 @@ export const useOrderSubmission = ({
         return;
       }
 
-      // Generate a new order ID
       const orderId = uuidv4();
       
-      // Step 3: Upload reference images
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
 
-      // Step 4: Calculate order details
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
       const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
@@ -286,7 +279,6 @@ export const useOrderSubmission = ({
 
       const designDataJson = prepareDesignDataForStorage(finalDesignData);
 
-      // Step 5: CRITICAL CHANGE - Create order record BEFORE handling logos
       console.log("[Create order] Creating order record with ID:", orderId);
       const { error: orderError } = await supabase
         .from('orders')
@@ -311,35 +303,46 @@ export const useOrderSubmission = ({
       
       toast.success("Đã tạo đơn hàng thành công, đang xử lý dữ liệu...");
 
-      // Step 6: Upload logos AFTER order creation
       const { logoUrls, logoStorageEntries } = await uploadLogos(orderId, logos);
 
-      // Step 7: Insert logo records AFTER order creation and logo upload
+      let insertedLogoIds: string[] = [];
       if (logoStorageEntries.length > 0) {
         console.log("[Insert logo] Chuẩn bị insert các logo vào bảng logos:", logoStorageEntries);
-        
-        const { error: insertLogosError } = await supabase
+
+        const { data: insertedLogos, error: insertLogosError } = await supabase
           .from('logos')
           .insert(
             logoStorageEntries.map(item => ({
               file_path: item.file_path,
-              order_id: orderId, // Now we can safely reference the created order
+              order_id: orderId,
               position: item.position
             }))
-          );
-          
+          )
+          .select("id");
         if (insertLogosError) {
           console.error("[Insert logo] Lỗi insert logo vào database:", insertLogosError);
           toast.error(`Không thể lưu thông tin logo vào đơn hàng: ${insertLogosError.message}`);
-          // Continue with order creation even if logo insertion fails
         } else {
           toast.success(`[Insert logo] Đã lưu thành công ${logoStorageEntries.length} logo vào database`);
-          
-          // The code updating the order with logo_url has been removed since the column no longer exists
+          if (Array.isArray(insertedLogos)) {
+            insertedLogoIds = insertedLogos.map(log => log.id);
+          }
         }
       }
 
-      // Step 8: Insert players
+      if (insertedLogoIds.length > 0) {
+        const { error: logoIdsUpdateError } = await supabase
+          .from('orders')
+          .update({ logo_ids: insertedLogoIds })
+          .eq('id', orderId);
+        if (logoIdsUpdateError) {
+          console.error("[Update logo_ids] Lỗi khi cập nhật logo_ids cho đơn hàng:", logoIdsUpdateError);
+          toast.warning("Có lỗi khi liên kết logo với đơn hàng (logo_ids)!");
+        } else {
+          console.log(`[Update logo_ids] Đã cập nhật logo_ids cho đơn hàng:`, insertedLogoIds);
+        }
+      }
+
       if (players.length > 0) {
         const playersToInsert = players.map(p => ({
           order_id: orderId,
@@ -369,15 +372,12 @@ export const useOrderSubmission = ({
         if (playersError) {
           console.error("[Insert players] Error inserting players:", playersError);
           toast.error(`Không thể lưu thông tin cầu thủ: ${playersError.message}`);
-          // Continue with order creation even if player insertion fails
         } else {
           toast.success("Đã lưu thông tin cầu thủ thành công");
         }
       }
       
-      // Step 9: Insert product lines - ENHANCED ERROR HANDLING
       if (productLines.length > 0) {
-        // Validate and prepare product lines before insertion
         const validProductLines = productLines.filter(validateProductLine);
         
         if (validProductLines.length < productLines.length) {
@@ -388,7 +388,6 @@ export const useOrderSubmission = ({
           console.error("[Insert product lines] No valid product lines to insert");
           toast.warning("Không có sản phẩm in nào hợp lệ để lưu");
         } else {
-          // Prepare product lines with required fields
           const productLinesToInsert = validProductLines.map(pl => ({
             product: pl.product,
             position: pl.position,
@@ -409,7 +408,6 @@ export const useOrderSubmission = ({
             if (productLinesError) {
               console.error("[Insert product lines] Error inserting product lines:", productLinesError);
               toast.warning(`Có lỗi khi lưu thông tin sản phẩm in: ${productLinesError.message}`);
-              // Continue with order creation even if product line insertion fails
             } else {
               toast.success(`Đã lưu thành công ${productLinesToInsert.length} sản phẩm in`);
             }
@@ -420,7 +418,6 @@ export const useOrderSubmission = ({
         }
       }
       
-      // Step 10: Insert print config
       if (printStyle) {
         const { error: printConfigError } = await supabase
           .from('print_configs')
@@ -436,13 +433,11 @@ export const useOrderSubmission = ({
         if (printConfigError) {
           console.error("[Insert print config] Error inserting print config:", printConfigError);
           toast.warning("Có lỗi khi lưu cấu hình in");
-          // Continue with order creation even if print config insertion fails
         }
       }
       
       toast.success("Đơn hàng đã được tạo thành công!");
       navigate('/thank-you');
-      
     } catch (err) {
       console.error(`[submitOrder] Error submitting order:`, err);
       toast.error(`Có lỗi khi đặt đơn hàng: ${err instanceof Error ? err.message : 'Lỗi không xác định'}`);

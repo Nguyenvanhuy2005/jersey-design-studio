@@ -1,4 +1,3 @@
-
 import { Order, Player, Logo, LogoPosition } from "@/types";
 
 // Define types for raw database models
@@ -14,6 +13,7 @@ export interface DbOrder {
   customer_id: string | null;
   total_cost: number;
   logo_url?: string | null; // This property may still exist in some old records
+  logo_ids?: string[]; // New field to store logo_ids
 }
 
 export interface DbCustomer {
@@ -241,6 +241,11 @@ export function dbOrderToOrder(
   // Get team name
   const teamName = extractTeamName(dbOrder);
 
+  // Get logo_ids array if present
+  const logoIds: string[] = Array.isArray(dbOrder.logo_ids)
+    ? dbOrder.logo_ids.map(String)
+    : [];
+
   // Process players data with error handling
   const processedPlayers = players ? players.map(player => {
     try {
@@ -270,7 +275,7 @@ export function dbOrderToOrder(
     font: printConfig.font || 'Arial',
     backMaterial: printConfig.back_material || 'In chuyển nhiệt',
     backColor: printConfig.back_color || 'Đen',
-    frontMaterial: printConfig.front_material || 'In chuyển nhiệt',
+    frontMaterial: printConfig.front_material || 'In chuyển nhi���t',
     frontColor: printConfig.front_color || 'Đen',
     sleeveMaterial: printConfig.sleeve_material || 'In chuyển nhiệt',
     sleeveColor: printConfig.sleeve_color || 'Đen',
@@ -316,6 +321,7 @@ export function dbOrderToOrder(
     customerPhone: customer?.phone || undefined,
     customerAddress: customer?.address || undefined,
     teamName,
-    logos: processedLogos
+    logos: processedLogos,
+    logoIds // <--- NEW FIELD: Expose logo_ids in Order model
   };
 }
