@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -94,6 +95,66 @@ export const useOrderSubmission = ({
     return uploadedPaths;
   };
 
+  const uploadLogos = async (orderId: string, logos: Logo[]): Promise<{
+    logoUrls: string[];
+    logoStorageEntries: { file_path: string; position: string }[];
+  }> => {
+    const logoStorageEntries: { file_path: string; position: string }[] = [];
+    const logoUrls: string[] = [];
+
+    if (logos.length === 0) {
+      console.log("[Upload logo] Không có logo nào để upload");
+      return { logoUrls, logoStorageEntries };
+    }
+
+    for (const logo of logos) {
+      if (!logo.file) {
+        console.log("Logo không có file tại vị trí:", logo.position, logo);
+        continue;
+      }
+      const fileExt = logo.file.name.split('.').pop();
+      const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
+
+      console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, logo.file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
+        toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
+        continue;
+      }
+
+      if (!data) {
+        console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
+        continue;
+      }
+
+      logoStorageEntries.push({
+        file_path: filePath,
+        position: logo.position
+      });
+
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        logoUrls.push(urlData.publicUrl);
+      }
+
+      toast.success(`[Upload logo] Đã upload thành công logo vị trí: ${logo.position}`);
+      console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
+    }
+
+    return { logoUrls, logoStorageEntries };
+  };
+
   const prepareDesignDataForStorage = (data: Partial<DesignData>): Record<string, any> => {
     if (data.uniform_type && !['player', 'goalkeeper', 'mixed'].includes(data.uniform_type)) {
       data.uniform_type = 'player';
@@ -121,6 +182,10 @@ export const useOrderSubmission = ({
     setIsGeneratingDesign(true);
     
     try {
+      // Step 1: Ensure storage buckets exist
+      await createStorageBucketsIfNeeded();
+      
+      // Step 2: Update customer info
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -136,96 +201,25 @@ export const useOrderSubmission = ({
       if (customerError) {
         console.error("Error updating customer info:", customerError);
         toast.error("Không thể cập nhật thông tin khách hàng");
+        setIsSubmitting(false);
+        setIsGeneratingDesign(false);
         return;
       }
 
-      await createStorageBucketsIfNeeded();
-      
+      // Generate a new order ID
       const orderId = uuidv4();
-      const logoStorageEntries: {
-        file_path: string;
-        position: string;
-      }[] = [];
-
+      
+      // Step 3: Upload reference images
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
 
-      let logoUrls: string[] = [];
-
-      if (logos.length > 0) {
-        for (const logo of logos) {
-          if (!logo.file) {
-            console.log("Logo không có file tại vị trí:", logo.position, logo);
-            continue;
-          }
-          const fileExt = logo.file.name.split('.').pop();
-          const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
-
-          console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
-
-          const { data, error: uploadError } = await supabase.storage
-            .from('logos')
-            .upload(filePath, logo.file, {
-              cacheControl: '3600',
-              upsert: false
-            });
-
-          if (uploadError) {
-            console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
-            toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
-            continue;
-          }
-
-          if (!data) {
-            console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
-            continue;
-          }
-
-          logoStorageEntries.push({
-            file_path: filePath,
-            position: logo.position
-          });
-
-          const { data: urlData } = supabase.storage
-            .from('logos')
-            .getPublicUrl(filePath);
-
-          if (urlData?.publicUrl) {
-            logoUrls.push(urlData.publicUrl);
-          }
-
-          toast.success(`[Upload logo] Đã upload thành công logo vị trí: ${logo.position}`);
-          console.log(`[Upload logo] Đã upload xong logo vị trí: ${logo.position}, file_path: ${filePath}`);
-        }
-
-        if (logoStorageEntries.length > 0) {
-          console.log("[Insert logo] Chuẩn bị insert các logo vào bảng logos:", logoStorageEntries);
-          const { error: insertLogosError } = await supabase
-            .from('logos')
-            .insert(
-              logoStorageEntries.map(item => ({
-                file_path: item.file_path,
-                order_id: orderId,
-                position: item.position
-              }))
-            );
-          if (insertLogosError) {
-            console.error("[Insert logo] Lỗi insert logo vào database:", insertLogosError);
-            toast.error("Không thể lưu thông tin logo vào đơn hàng");
-          } else {
-            toast.success(`[Insert logo] Đã lưu thành công ${logoStorageEntries.length} logo vào database`);
-          }
-        } else {
-          console.log("[Insert logo] Không có logo nào để lưu vào database");
-        }
-      }
-
-      if (!logoUrls || logoUrls.length === 0) {
-        logoUrls = [];
-      }
-
+      // Step 4: Calculate order details
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
       const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
+      const teamName = players.length > 0 
+        ? (players[0].line_3 || players[0].name?.split(' ')?.[0] || "Team") 
+        : "Team";
+        
       const finalDesignData: Partial<DesignData> = {
         ...designData,
         uniform_type: playerCount > 0 && goalkeeperCount > 0 ? 'mixed' : 
@@ -243,30 +237,75 @@ export const useOrderSubmission = ({
 
       const designDataJson = prepareDesignDataForStorage(finalDesignData);
 
-      const teamName = players.length > 0 
-        ? (players[0].line_3 || players[0].name?.split(' ')?.[0] || "Team") 
-        : "Team";
-
+      // Step 5: CRITICAL CHANGE - Create order record BEFORE handling logos
+      console.log("[Create order] Creating order record with ID:", orderId);
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           team_name: teamName,
-          logo_url: logoUrls.length > 0 ? logoUrls[0] : null,
-          logo_urls: logoUrls,
           status: 'new',
           total_cost: totalCost,
           notes: notes,
           design_data: designDataJson,
           reference_images: referenceImagePaths,
-          customer_id: user.id
+          customer_id: user.id,
+          logo_urls: [] // Initialize with empty array, will update after logo upload
         });
         
       if (orderError) {
-        console.error("Error creating order:", orderError);
-        throw orderError;
+        console.error("[Create order] Error creating order:", orderError);
+        toast.error(`Không thể tạo đơn hàng: ${orderError.message}`);
+        setIsSubmitting(false);
+        setIsGeneratingDesign(false);
+        return;
+      }
+      
+      toast.success("Đã tạo đơn hàng thành công, đang xử lý dữ liệu...");
+
+      // Step 6: Upload logos AFTER order creation
+      const { logoUrls, logoStorageEntries } = await uploadLogos(orderId, logos);
+
+      // Step 7: Insert logo records AFTER order creation and logo upload
+      if (logoStorageEntries.length > 0) {
+        console.log("[Insert logo] Chuẩn bị insert các logo vào bảng logos:", logoStorageEntries);
+        
+        const { error: insertLogosError } = await supabase
+          .from('logos')
+          .insert(
+            logoStorageEntries.map(item => ({
+              file_path: item.file_path,
+              order_id: orderId, // Now we can safely reference the created order
+              position: item.position
+            }))
+          );
+          
+        if (insertLogosError) {
+          console.error("[Insert logo] Lỗi insert logo vào database:", insertLogosError);
+          toast.error(`Không thể lưu thông tin logo vào đơn hàng: ${insertLogosError.message}`);
+          // Continue with order creation even if logo insertion fails
+        } else {
+          toast.success(`[Insert logo] Đã lưu thành công ${logoStorageEntries.length} logo vào database`);
+          
+          // Update order with logo urls if logos were uploaded successfully
+          if (logoUrls.length > 0) {
+            const { error: updateOrderError } = await supabase
+              .from('orders')
+              .update({ 
+                logo_url: logoUrls[0], // First logo as primary
+                logo_urls: logoUrls 
+              })
+              .eq('id', orderId);
+              
+            if (updateOrderError) {
+              console.error("[Update order] Error updating order with logo URLs:", updateOrderError);
+              toast.warning("Đã tải lên logo nhưng không thể cập nhật vào đơn hàng");
+            }
+          }
+        }
       }
 
+      // Step 8: Insert players
       if (players.length > 0) {
         const playersToInsert = players.map(p => ({
           order_id: orderId,
@@ -289,19 +328,20 @@ export const useOrderSubmission = ({
           print_style: p.print_style || printStyle,
         }));
         
-        const { error: playersError, data: insertedPlayers } = await supabase
+        const { error: playersError } = await supabase
           .from('players')
-          .insert(playersToInsert)
-          .select();
+          .insert(playersToInsert);
           
         if (playersError) {
-          console.error("Error inserting players:", playersError);
-          throw new Error(`Error saving player data: ${playersError.message}`);
+          console.error("[Insert players] Error inserting players:", playersError);
+          toast.error(`Không thể lưu thông tin cầu thủ: ${playersError.message}`);
+          // Continue with order creation even if player insertion fails
+        } else {
+          toast.success("Đã lưu thông tin cầu thủ thành công");
         }
-
-        console.log("Successfully inserted players:", insertedPlayers);
       }
       
+      // Step 9: Insert product lines
       if (productLines.length > 0) {
         const productLinesToInsert = productLines.map(pl => ({
           ...pl,
@@ -313,11 +353,15 @@ export const useOrderSubmission = ({
           .insert(productLinesToInsert);
           
         if (productLinesError) {
-          console.error("Error inserting product lines:", productLinesError);
-          toast.warning("Có lỗi khi lưu thông tin sản phẩm in, vui lòng kiểm tra lại");
+          console.error("[Insert product lines] Error inserting product lines:", productLinesError);
+          toast.warning("Có lỗi khi lưu thông tin sản phẩm in");
+          // Continue with order creation even if product line insertion fails
+        } else {
+          toast.success("Đã lưu thông tin sản phẩm in thành công");
         }
       }
       
+      // Step 10: Insert print config
       if (printStyle) {
         const { error: printConfigError } = await supabase
           .from('print_configs')
@@ -331,8 +375,9 @@ export const useOrderSubmission = ({
           });
           
         if (printConfigError) {
-          console.error("Error inserting print config:", printConfigError);
-          toast.warning("Có lỗi khi lưu cấu hình in, vui lòng kiểm tra lại");
+          console.error("[Insert print config] Error inserting print config:", printConfigError);
+          toast.warning("Có lỗi khi lưu cấu hình in");
+          // Continue with order creation even if print config insertion fails
         }
       }
       
@@ -340,8 +385,8 @@ export const useOrderSubmission = ({
       navigate('/orders');
       
     } catch (err) {
-      console.error(`Error submitting order:`, err);
-      toast.error(`Có lỗi khi đặt đơn hàng: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error(`[submitOrder] Error submitting order:`, err);
+      toast.error(`Có lỗi khi đặt đơn hàng: ${err instanceof Error ? err.message : 'Lỗi không xác định'}`);
     } finally {
       setIsSubmitting(false);
       setIsGeneratingDesign(false);

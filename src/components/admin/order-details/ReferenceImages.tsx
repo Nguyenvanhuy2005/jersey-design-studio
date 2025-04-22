@@ -10,10 +10,10 @@ interface ReferenceImagesProps {
   logos?: Logo[];
 }
 
-// Only use the logo positions relevant for the user: 'Ngực trái' (chest_left) and 'Ngực phải' (chest_right)
+// Only use the logo positions relevant for the user: 'Ngực trái' (chest_left) and 'Tay phải' (sleeve_right)
 const SELECTED_POSITIONS: LogoPosition[] = [
   'chest_left',    // Logo 1
-  'chest_right'    // Logo 2
+  'sleeve_right'   // Logo 2
 ];
 
 export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
