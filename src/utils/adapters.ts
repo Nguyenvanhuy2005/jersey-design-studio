@@ -1,3 +1,4 @@
+
 import { Order, Player, Logo, LogoPosition } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,7 +30,7 @@ export interface DbPlayer {
   id: string;
   name: string | null;
   size: string;
-  number: number;
+  number: string; // Changed from number to string
   print_image: boolean | null;
   uniform_type: string | null;
   line_1: string | null;
@@ -89,8 +90,8 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
   return {
     id: dbPlayer.id,
     name: dbPlayer.name || "",
-    // Convert number to string for the application model
-    number: String(dbPlayer.number),
+    // No need to convert number to string since it's already a string
+    number: dbPlayer.number,
     size: dbPlayer.size as 'S' | 'M' | 'L' | 'XL',
     printImage: dbPlayer.print_image || false,
     uniform_type: dbPlayer.uniform_type as 'player' | 'goalkeeper' || 'player',

@@ -39,7 +39,8 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
     }));
 
     // Set cell format to text for player numbers (important for leading zeros)
-    const ws = XLSX.utils.json_to_sheet(data, { cellText: false, cellDates: true });
+    const ws = XLSX.utils.json_to_sheet(data);
+    
     // Force the column 'Số áo' to be text in the worksheet
     Object.keys(ws).forEach(cell => {
       if (cell.match(/^B[0-9]+$/)) {

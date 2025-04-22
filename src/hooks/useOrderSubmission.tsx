@@ -347,7 +347,7 @@ export const useOrderSubmission = ({
         const playersToInsert = players.map(p => ({
           order_id: orderId,
           name: p.name || null,
-          number: parseInt(p.number) || 0,
+          number: p.number,
           size: p.size,
           print_image: p.printImage || false,
           uniform_type: p.uniform_type || 'player',
@@ -436,7 +436,7 @@ export const useOrderSubmission = ({
         }
       }
       
-      toast.success("Đơn hàng đã được tạo thành công!");
+      toast.success("Đơn hàng đã ��ược tạo thành công!");
       navigate('/thank-you');
     } catch (err) {
       console.error(`[submitOrder] Error submitting order:`, err);
