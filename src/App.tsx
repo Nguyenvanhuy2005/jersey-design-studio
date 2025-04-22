@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +16,7 @@ import CustomerAuth from "./pages/CustomerAuth";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerOrderDetails from "./pages/CustomerOrderDetails";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import ThankYou from "./pages/ThankYou";
 
 const queryClient = new QueryClient();
 
@@ -32,16 +32,16 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/create-order" element={<CreateOrder />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              <Route path="/thank-you" element={<ThankYou />} />
               <Route path="/admin" element={<AdminLogin />} />
+              
               <Route path="/customer/auth" element={<CustomerAuth />} />
               
-              {/* Customer routes - requires authentication */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/customer/dashboard" element={<CustomerDashboard />} />
                 <Route path="/customer/orders/:orderId" element={<CustomerOrderDetails />} />
               </Route>
               
-              {/* Admin routes - requires admin role */}
               <Route element={<ProtectedRoute requireAdmin={true} />}>
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/customers" element={<AdminCustomers />} />

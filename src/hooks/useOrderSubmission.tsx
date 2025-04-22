@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
@@ -382,7 +381,7 @@ export const useOrderSubmission = ({
       }
       
       toast.success("Đơn hàng đã được tạo thành công!");
-      navigate('/orders');
+      navigate('/thank-you');
       
     } catch (err) {
       console.error(`[submitOrder] Error submitting order:`, err);
