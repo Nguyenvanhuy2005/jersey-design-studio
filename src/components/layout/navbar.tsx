@@ -11,6 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Custom dark purple color
+const DARK_PURPLE = "bg-[#1A1F2C] text-white";
+
 export function Navbar() {
   const { user, signOut, isAdmin } = useAuth();
   const isMobile = useIsMobile();
@@ -118,14 +121,22 @@ export function Navbar() {
   );
 
   return (
-    <header className="bg-secondary text-secondary-foreground">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="font-bold text-xl">
-          Jersey Design Studio
+    <header className={`${DARK_PURPLE} shadow`}>
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <Link to="/" className="flex items-center gap-3">
+          <img
+            src="/lovable-uploads/22f702c3-6095-4e93-be50-75d861b70af2.png"
+            alt="Easy Print Logo"
+            className="h-12 w-auto object-contain"
+            style={{filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}
+          />
+          <span className="font-bold text-xl tracking-tight" style={{letterSpacing: "0.03em"}}>
+            EASY PRINT <span className="hidden md:inline font-normal text-sm ml-2 tracking-normal text-[#D6BCFA]">Sport Ecosystem Viet Nam</span>
+          </span>
         </Link>
-        
         {isMobile ? renderMobileNav() : renderDesktopNav()}
       </div>
     </header>
   );
 }
+
