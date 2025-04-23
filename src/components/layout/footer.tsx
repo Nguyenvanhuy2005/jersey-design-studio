@@ -22,9 +22,9 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 text-black">Liên hệ</h3>
             <address className="text-sm not-italic text-gray-700">
-              <p>123 Đường ABC, Quận XYZ</p>
-              <p>TP. Hồ Chí Minh, Việt Nam</p>
-              <p>Email: contact@jerseydesign.vn</p>
+              <p>Ngõ 1295 Giải Phóng</p>
+              <p>Thịnh Liệt, Hoàng Mai, Hà Nội</p>
+              <p>Email: contact@easyprint.com.vn</p>
               <p>Điện thoại: 035 673 5729</p>
             </address>
           </div>
