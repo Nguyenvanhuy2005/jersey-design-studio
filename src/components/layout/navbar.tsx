@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Custom dark purple color
-const DARK_PURPLE = "bg-[#1A1F2C] text-white";
+// Custom white background color
+const WHITE_BG = "bg-white text-black";
 
 export function Navbar() {
   const { user, signOut, isAdmin } = useAuth();
@@ -121,7 +120,7 @@ export function Navbar() {
   );
 
   return (
-    <header className={`${DARK_PURPLE} shadow`}>
+    <header className={`${WHITE_BG} shadow-sm`}>
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-3">
           <img
@@ -130,8 +129,8 @@ export function Navbar() {
             className="h-12 w-auto object-contain"
             style={{filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}
           />
-          <span className="font-bold text-xl tracking-tight" style={{letterSpacing: "0.03em"}}>
-            EASY PRINT <span className="hidden md:inline font-normal text-sm ml-2 tracking-normal text-[#D6BCFA]">Sport Ecosystem Viet Nam</span>
+          <span className="font-bold text-xl tracking-tight text-black" style={{letterSpacing: "0.03em"}}>
+            EASY PRINT <span className="hidden md:inline font-normal text-sm ml-2 tracking-normal text-gray-700">Sport Ecosystem Viet Nam</span>
           </span>
         </Link>
         {isMobile ? renderMobileNav() : renderDesktopNav()}
@@ -139,4 +138,3 @@ export function Navbar() {
     </header>
   );
 }
-
