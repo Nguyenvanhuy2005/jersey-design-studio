@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowRight, ClipboardList, LayoutDashboard, LogIn, ShoppingBag, Shirt, UserCircle } from "lucide-react";
+
 const Index = () => {
   const {
     user
@@ -45,7 +47,7 @@ const Index = () => {
                       <Shirt className="mx-auto h-16 w-16 text-muted-foreground" />
                       <p className="mt-2 text-muted-foreground">Jersey Design Studio</p>
                     </div>
-                  </div> : <img alt="Soccer jersey" className="rounded-xl shadow-lg border w-full object-cover aspect-[4/3]" onError={() => setImageError(true)} src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fthanhnien.vn%2Fchan-dung-26-hao-thu-doi-tuyen-viet-nam-quyet-lay-ngoi-vuong-aff-cup-2024-185241206125211907.htm&psig=AOvVaw3we_MQUhLz1R--K--ejna7&ust=1745134792072000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOiUyO_L44wDFQAAAAAdAAAAABAE" />}
+                  </div> : <img alt="Soccer jersey" className="rounded-xl shadow-lg border w-full object-cover aspect-[4/3]" onError={() => setImageError(true)} src="/lovable-uploads/76e6c29f-4361-49d2-a359-3c7ca475fc5c.png" />}
               </div>
             </div>
           </div>
@@ -135,3 +137,4 @@ const Index = () => {
     </Layout>;
 };
 export default Index;
+
