@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
@@ -182,32 +183,6 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       }
     });
 
-    // Count text positions for chest area
-    const chestTextCount = {
-      upper: players.filter(p => p.upper_text_enabled).length,
-      lower: players.filter(p => p.lower_text_enabled).length
-    };
-
-    // Add upper chest text cost if any players have it enabled
-    if (chestTextCount.upper > 0) {
-      costItems.push({
-        label: "Chữ trên số ngực",
-        quantity: chestTextCount.upper,
-        unitPrice: 5000,
-        total: chestTextCount.upper * 5000
-      });
-    }
-
-    // Add lower chest text cost if any players have it enabled
-    if (chestTextCount.lower > 0) {
-      costItems.push({
-        label: "Chữ dưới số ngực",
-        quantity: chestTextCount.lower,
-        unitPrice: 5000,
-        total: chestTextCount.lower * 5000
-      });
-    }
-
     console.log("DEBUG [getPrintCostBreakdown] costItems (final):", costItems);
     return costItems;
   }, [players, productLines]);
@@ -287,10 +262,6 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
         printingCost += 10000;
       }
     });
-
-    // Add costs for upper and lower chest text
-    printingCost += players.filter(p => p.upper_text_enabled).length * 5000;
-    printingCost += players.filter(p => p.lower_text_enabled).length * 5000;
 
     console.log("DEBUG [calculateTotalCost] printingCost:", printingCost);
     return printingCost;

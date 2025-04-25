@@ -184,8 +184,6 @@ export type Database = {
           logo_pants: boolean | null
           logo_sleeve_left: boolean | null
           logo_sleeve_right: boolean | null
-          lower_text: string | null
-          lower_text_enabled: boolean | null
           name: string | null
           note: string | null
           number: string
@@ -195,8 +193,6 @@ export type Database = {
           print_style: string
           size: string
           uniform_type: string
-          upper_text: string | null
-          upper_text_enabled: boolean | null
         }
         Insert: {
           chest_number?: boolean | null
@@ -211,8 +207,6 @@ export type Database = {
           logo_pants?: boolean | null
           logo_sleeve_left?: boolean | null
           logo_sleeve_right?: boolean | null
-          lower_text?: string | null
-          lower_text_enabled?: boolean | null
           name?: string | null
           note?: string | null
           number: string
@@ -222,8 +216,6 @@ export type Database = {
           print_style?: string
           size: string
           uniform_type?: string
-          upper_text?: string | null
-          upper_text_enabled?: boolean | null
         }
         Update: {
           chest_number?: boolean | null
@@ -238,8 +230,6 @@ export type Database = {
           logo_pants?: boolean | null
           logo_sleeve_left?: boolean | null
           logo_sleeve_right?: boolean | null
-          lower_text?: string | null
-          lower_text_enabled?: boolean | null
           name?: string | null
           note?: string | null
           number?: string
@@ -249,8 +239,6 @@ export type Database = {
           print_style?: string
           size?: string
           uniform_type?: string
-          upper_text?: string | null
-          upper_text_enabled?: boolean | null
         }
         Relationships: [
           {
@@ -275,11 +263,9 @@ export type Database = {
           leg_color: string | null
           leg_material: string | null
           logo_positions: Json | null
-          lower_text_material: string | null
           order_id: string | null
           sleeve_color: string | null
           sleeve_material: string | null
-          upper_text_material: string | null
         }
         Insert: {
           back_color?: string | null
@@ -293,11 +279,9 @@ export type Database = {
           leg_color?: string | null
           leg_material?: string | null
           logo_positions?: Json | null
-          lower_text_material?: string | null
           order_id?: string | null
           sleeve_color?: string | null
           sleeve_material?: string | null
-          upper_text_material?: string | null
         }
         Update: {
           back_color?: string | null
@@ -311,11 +295,9 @@ export type Database = {
           leg_color?: string | null
           leg_material?: string | null
           logo_positions?: Json | null
-          lower_text_material?: string | null
           order_id?: string | null
           sleeve_color?: string | null
           sleeve_material?: string | null
-          upper_text_material?: string | null
         }
         Relationships: [
           {
