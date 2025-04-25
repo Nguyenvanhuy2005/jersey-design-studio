@@ -48,7 +48,11 @@ export function UniformPreview({
       enabled: true,
       content: currentPlayer.upper_text || '',
       material: printConfig?.frontMaterial || 'In chuyển nhiệt'
-    } : { enabled: false },
+    } : {
+      enabled: false,
+      content: '', // Add empty content for disabled text to satisfy TypeScript
+      material: printConfig?.frontMaterial || 'In chuyển nhiệt'
+    },
     chest_number: currentPlayer?.chest_number ? {
       enabled: true,
       material: printConfig?.frontMaterial || 'In chuyển nhiệt'
@@ -57,7 +61,11 @@ export function UniformPreview({
       enabled: true,
       content: currentPlayer.lower_text || '',
       material: printConfig?.frontMaterial || 'In chuyển nhiệt'
-    } : { enabled: false },
+    } : {
+      enabled: false,
+      content: '', // Add empty content for disabled text to satisfy TypeScript
+      material: printConfig?.frontMaterial || 'In chuyển nhiệt'
+    },
     ...designData
   };
 
