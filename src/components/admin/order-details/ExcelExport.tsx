@@ -22,10 +22,13 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
       'Số áo': formatPlayerNumber(player.number),
       'Loại quần áo': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
       'Kích thước': player.size,
+      'Chữ trên số ngực': player.upper_text || '',
       'In dòng trên số lưng': player.line_1 || '',
       'In dòng dưới số lưng': player.line_3 || '',
       'Chi tiết in ấn': [
+        player.upper_text_enabled ? 'Chữ trên số ngực' : '',
         player.chest_number ? 'In số ngực' : '',
+        player.lower_text_enabled ? 'Chữ dưới số ngực' : '',
         player.pants_number ? 'In số quần' : '',
         player.logo_chest_left ? 'Logo ngực trái' : '',
         player.logo_chest_right ? 'Logo ngực phải' : '',
