@@ -1,4 +1,3 @@
-
 import { memo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,6 +86,26 @@ export const PlayerFormFields = memo(({
             </SelectGroup>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="md:col-span-2">
+        <Label htmlFor="upperText">Chữ trên số</Label>
+        <Input 
+          id="upperText"
+          value={newPlayer.upper_text || ""}
+          onChange={(e) => onInputChange("upper_text", e.target.value)}
+          placeholder="Chữ phía trên số áo"
+        />
+      </div>
+      
+      <div className="md:col-span-2">
+        <Label htmlFor="lowerText">Chữ dưới số</Label>
+        <Input 
+          id="lowerText"
+          value={newPlayer.lower_text || ""}
+          onChange={(e) => onInputChange("lower_text", e.target.value)}
+          placeholder="Chữ phía dưới số áo"
+        />
       </div>
 
       <div className="md:col-span-2">
@@ -217,6 +236,32 @@ export const PlayerFormFields = memo(({
                 }
               />
               <Label htmlFor="logoPants">Logo quần</Label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <Label className="mb-2 inline-block">Vị trí in chữ</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="upperTextEnabled"
+                checked={newPlayer.upper_text_enabled || false}
+                onCheckedChange={(checked) => 
+                  onInputChange("upper_text_enabled", checked === true)
+                }
+              />
+              <Label htmlFor="upperTextEnabled">In chữ trên số</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="lowerTextEnabled"
+                checked={newPlayer.lower_text_enabled || false}
+                onCheckedChange={(checked) => 
+                  onInputChange("lower_text_enabled", checked === true)
+                }
+              />
+              <Label htmlFor="lowerTextEnabled">In chữ dưới số</Label>
             </div>
           </div>
         </div>

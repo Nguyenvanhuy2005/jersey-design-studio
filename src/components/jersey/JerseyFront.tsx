@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
@@ -68,6 +67,16 @@ export const JerseyFront = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
+  // Draw upper text if enabled
+  if (designData?.upper_text?.enabled && designData.upper_text.content) {
+    ctx.fillStyle = '#1A1A1A';
+    const fontSize = 24;
+    const font = designData?.font_text?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.fillText(designData.upper_text.content, 150, 110);
+    console.log(`Drew upper text with font: ${font}`);
+  }
+
   // Draw chest number if enabled in designData - fixed position at center chest
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
@@ -76,6 +85,16 @@ export const JerseyFront = ({
     ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(playerNumber.toString(), 150, 140);
     console.log(`Drew chest number with font: ${font}`);
+  }
+
+  // Draw lower text if enabled
+  if (designData?.lower_text?.enabled && designData.lower_text.content) {
+    ctx.fillStyle = '#1A1A1A';
+    const fontSize = 24;
+    const font = designData?.font_text?.font || fontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.fillText(designData.lower_text.content, 150, 170);
+    console.log(`Drew lower text with font: ${font}`);
   }
   
   // Draw chest text if enabled in designData

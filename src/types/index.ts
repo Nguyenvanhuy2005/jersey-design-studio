@@ -1,7 +1,6 @@
 export interface Player {
   id: string;
   name: string;
-  // Số áo có thể có số 0 ở đầu (ví dụ: "01"). Luôn giữ dạng chuỗi (string)!
   number: string;
   size: 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
   printImage: boolean;
@@ -19,6 +18,10 @@ export interface Player {
   logo_pants?: boolean;
   note?: string;
   print_style?: string;
+  upper_text?: string;
+  lower_text?: string;
+  upper_text_enabled?: boolean;
+  lower_text_enabled?: boolean;
 }
 
 export type LogoPosition = 'chest_left' | 'chest_right' | 'chest_center' | 'sleeve_left' | 'sleeve_right' | 'pants';
@@ -172,6 +175,18 @@ export interface DesignData {
   };
   reference_images?: string[];
   print_style?: string;
+  upper_text?: {
+    enabled: boolean;
+    content: string;
+    material?: string;
+    font?: string;
+  };
+  lower_text?: {
+    enabled: boolean;
+    content: string;
+    material?: string;
+    font?: string;
+  };
 }
 
 export interface Customer {
