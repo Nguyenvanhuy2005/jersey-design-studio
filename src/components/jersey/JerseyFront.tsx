@@ -14,7 +14,7 @@ interface JerseyFrontProps {
   selectedLogo?: string | null;
   onLogoMove?: (id: string, x: number, y: number) => void;
   onLogoResize?: (id: string, scale: number) => void;
-  onLogoDelete?: (id: string) => void;
+  onLogoDelete?: (string) => void;
   designData?: Partial<DesignData>;
   isGoalkeeper?: boolean;
 }
@@ -56,7 +56,7 @@ export const JerseyFront = ({
   
   let jerseyColor = isGoalkeeper ? '#4CAF50' : '#FFD700';
   
-  console.log(`Rendering JerseyFront on canvas ${canvasWidth}x${canvasHeight} with ${loadedLogos.size} logos, isGoalkeeper: ${isGoalkeeper}`);
+  console.log(`Rendering JerseyFront with design data:`, designData);
   
   drawBasicJersey(ctx, jerseyColor);
   setupCanvas(ctx);
@@ -66,8 +66,9 @@ export const JerseyFront = ({
     const fontSize = 50;
     const font = designData?.font_number?.font || numberFontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.textAlign = 'center';
     ctx.fillText(designData.upper_text.content, 150, 90);
-    console.log(`Drew upper text with font: ${font}`);
+    console.log(`Drew upper text "${designData.upper_text.content}" with font: ${font}`);
   }
 
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
@@ -75,6 +76,7 @@ export const JerseyFront = ({
     const fontSize = 50;
     const font = designData?.font_number?.font || numberFontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.textAlign = 'center';
     ctx.fillText(playerNumber.toString(), 150, 140);
     console.log(`Drew chest number with font: ${font}`);
   }
@@ -84,8 +86,9 @@ export const JerseyFront = ({
     const fontSize = 50;
     const font = designData?.font_number?.font || numberFontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.textAlign = 'center';
     ctx.fillText(designData.lower_text.content, 150, 190);
-    console.log(`Drew lower text with font: ${font}`);
+    console.log(`Drew lower text "${designData.lower_text.content}" with font: ${font}`);
   }
   
   if (loadedLogos.size > 0) {

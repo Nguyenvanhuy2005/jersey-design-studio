@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
@@ -18,58 +19,54 @@ interface UniformPreviewProps {
   className?: string;
 }
 
-export function UniformPreview({
-  teamName,
+export function UniformPreview({ 
+  teamName, 
   player,
   players = [],
-  logos = [],
+  logos = [], 
   printConfig,
   designData,
   jerseyCanvasRef,
   pantCanvasRef,
   className
 }: UniformPreviewProps) {
-  // Add selector state for current previewed player (allow viewing demo of any player/goalkeeper)
   const [selectedPlayerIdx, setSelectedPlayerIdx] = useState(0);
-
-  // Use index selector if multiple players, fallback to the only player or undefined
-  const currentPlayer = player ||
-    (players.length > 0 ? players[selectedPlayerIdx] : undefined);
-  
-  // Determine if the current player is a goalkeeper
+  const currentPlayer = player || (players.length > 0 ? players[selectedPlayerIdx] : undefined);
   const isGoalkeeper = currentPlayer?.uniform_type === "goalkeeper";
 
-  // Construct effective design data (logic unchanged, always preference player lines)
+  // Build effective design data with text positions
   const effectiveDesignData: Partial<DesignData> = {
     uniform_type: isGoalkeeper ? 'goalkeeper' : 'player',
-    chest_number: {
-      enabled: currentPlayer?.chest_number || false,
-      material: printConfig?.backMaterial
+    font_text: {
+      font: designData?.font_text?.font || printConfig?.font || 'Arial'
     },
-    pants_number: {
-      enabled: currentPlayer?.pants_number || false,
-      material: printConfig?.legMaterial
-    },
-    line_1: currentPlayer?.line_1 ? {
-      enabled: true,
-      content: currentPlayer.line_1,
-      material: printConfig?.backMaterial
-    } : undefined,
-    line_3: currentPlayer?.line_3 ? {
-      enabled: true,
-      content: currentPlayer.line_3,
-      material: printConfig?.backMaterial
-    } : undefined,
-    ...designData,
-    // Ensure font_number follows config or designData
     font_number: {
       font: designData?.font_number?.font || printConfig?.font || 'Arial'
-    }
+    },
+    // Map text positions from current player
+    upper_text: currentPlayer?.upper_text_enabled ? {
+      enabled: true,
+      content: currentPlayer.upper_text || '',
+      material: printConfig?.frontMaterial || 'In chuyển nhiệt'
+    } : { enabled: false },
+    chest_number: currentPlayer?.chest_number ? {
+      enabled: true,
+      material: printConfig?.frontMaterial || 'In chuyển nhiệt'
+    } : { enabled: false },
+    lower_text: currentPlayer?.lower_text_enabled ? {
+      enabled: true,
+      content: currentPlayer.lower_text || '',
+      material: printConfig?.frontMaterial || 'In chuyển nhiệt'
+    } : { enabled: false },
+    ...designData
   };
+
+  // Debug logging
+  console.log('UniformPreview - Current player:', currentPlayer);
+  console.log('UniformPreview - Effective design data:', effectiveDesignData);
 
   return (
     <Card className={className}>
-      {/* Redesigned player/goalkeeper selector */}
       <PlayerSelector
         players={players}
         selectedIdx={selectedPlayerIdx}
