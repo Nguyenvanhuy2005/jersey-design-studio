@@ -1,4 +1,3 @@
-
 import { Order, Player, Logo, LogoPosition } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,6 +35,7 @@ export interface DbPlayer {
   line_1: string | null;
   line_2: string | null;
   line_3: string | null;
+  chest_text: string | null; // Added proper chest_text mapping
   chest_number: boolean | null;
   pants_number: boolean | null;
   logo_chest_left: boolean | null;
@@ -98,6 +98,7 @@ export function dbPlayerToPlayer(dbPlayer: DbPlayer): Player {
     line_1: dbPlayer.line_1 || undefined,
     line_2: dbPlayer.line_2 || undefined,
     line_3: dbPlayer.line_3 || undefined,
+    chest_text: dbPlayer.chest_text || undefined,  // Added proper chest_text mapping
     chest_number: dbPlayer.chest_number || false,
     pants_number: dbPlayer.pants_number || false,
     logo_chest_left: dbPlayer.logo_chest_left || false,
