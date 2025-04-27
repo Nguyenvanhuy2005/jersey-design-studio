@@ -7,11 +7,12 @@ import { usePlayerForm } from "@/hooks/usePlayerForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Download, Plus, Edit } from "lucide-react";
+import { Plus, Edit, Upload } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { PlayerFormFields } from "./player/PlayerFormFields";
 import { BatchUpdateDialog } from "./player/BatchUpdateDialog";
+import { ExcelTemplateDownload } from "./excel/ExcelTemplateDownload";
 
 interface PlayerFormProps {
   players: Player[];
@@ -71,7 +72,6 @@ export const PlayerForm = memo(({
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
         
-        // Process Excel data
         const newPlayers: Player[] = jsonData.map((row, index) => {
           let playerNumber: string = "";
           if (row["SỐ ÁO"] !== undefined) {
@@ -80,7 +80,6 @@ export const PlayerForm = memo(({
             playerNumber = String(row["SỐ"]).padStart(2, '0');
           }
 
-          // Helper function to convert Vietnamese Yes/No to boolean
           const convertToBoolean = (value: any): boolean => {
             if (typeof value === 'boolean') return value;
             if (typeof value === 'string') {
@@ -163,14 +162,11 @@ export const PlayerForm = memo(({
             <p className="text-sm font-medium mb-2">Nhập danh sách cầu thủ từ Excel:</p>
             <div className="flex items-center gap-2">
               <Input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} className="flex-1" />
-              <Button variant="outline" size="icon">
-                <Download className="h-4 w-4" />
-              </Button>
+              <ExcelTemplateDownload printStyleOptions={printStyleOptions} />
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            
-            
+            <p>File Excel cần có cấu trúc: STT, SỐ ÁO, TÊN IN TRÊN SỐ, TÊN ĐỘI BÓNG, KÍCH THƯỚC, KIỂU IN, LOẠI QUẦN ÁO, IN CHỮ NGỰC, v.v</p>
           </div>
         </div>
       </CardFooter>
