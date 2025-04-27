@@ -57,32 +57,6 @@ export const PlayerForm = memo(({
   const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const downloadExcelTemplate = () => {
-    const template = [{
-      "STT": 1,
-      "TÊN IN TRÊN SỐ": "Tên trên số",
-      "SỐ": "01",
-      "TÊN IN DƯỚI SỐ": "Tên đội",
-      "SIZE": "M",
-      "KIỂU IN": "decal",
-      "GHI CHÚ": "",
-      "LOẠI QUẦN ÁO": "player",
-      "IN CHỮ NGỰC": "",
-      "IN SỐ NGỰC": false,
-      "IN SỐ QUẦN": false,
-      "LOGO NGỰC TRÁI": false,
-      "LOGO NGỰC PHẢI": false,
-      "LOGO NGỰC GIỮA": false,
-      "LOGO TAY TRÁI": false,
-      "LOGO TAY PHẢI": false,
-      "LOGO QUẦN": false
-    }];
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, "danh_sach_cau_thu_template.xlsx");
-  };
-
   const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -96,37 +70,51 @@ export const PlayerForm = memo(({
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+        
+        // Process Excel data
         const newPlayers: Player[] = jsonData.map((row, index) => {
           let playerNumber: string = "";
-          if (row["SỐ"] !== undefined) {
-            playerNumber = String(row["SỐ"]).padStart( (String(row["SỐ"]).length<2 ? 2 : String(row["SỐ"]).length), '0');
-          } else if (row["SỐ ÁO"] !== undefined) {
-            playerNumber = String(row["SỐ ÁO"]).padStart( (String(row["SỐ ÁO"]).length<2 ? 2 : String(row["SỐ ÁO"]).length), '0');
+          if (row["SỐ ÁO"] !== undefined) {
+            playerNumber = String(row["SỐ ÁO"]).padStart(2, '0');
+          } else if (row["SỐ"] !== undefined) {
+            playerNumber = String(row["SỐ"]).padStart(2, '0');
           }
+
+          // Helper function to convert Vietnamese Yes/No to boolean
+          const convertToBoolean = (value: any): boolean => {
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'string') {
+              const normalized = value.toLowerCase().trim();
+              return normalized === 'có' || normalized === 'yes' || normalized === 'true';
+            }
+            return false;
+          };
+
           return {
             id: `player-${Date.now()}-${index}`,
             name: row["TÊN CẦU THỦ"] || "",
             number: playerNumber,
             size: row["KÍCH THƯỚC"] || "M",
-            printImage: row["IN HÌNH"] === "YES" || row["IN HÌNH"] === true,
-            uniform_type: row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thủ môn" || row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon" ? "goalkeeper" : "player",
+            printImage: convertToBoolean(row["IN HÌNH"]),
+            uniform_type: (row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thủ môn" || 
+                         row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? "goalkeeper" : "player",
             line_1: row["TÊN IN TRÊN SỐ"] || "",
-            line_2: playerNumber || "",
-            line_3: row["TÊN IN DƯỚI SỐ"] || "",
+            line_2: playerNumber,
+            line_3: row["TÊN ĐỘI BÓNG"] || "",
             chest_text: row["IN CHỮ NGỰC"] || "",
-            chest_number: row["IN SỐ NGỰC"] === "YES" || row["IN SỐ NGỰC"] === true,
-            pants_number: row["IN SỐ QUẦN"] === "YES" || row["IN SỐ QUẦN"] === true,
-            logo_chest_left: row["LOGO NGỰC TRÁI"] === "YES" || row["LOGO NGỰC TRÁI"] === true,
-            logo_chest_right: row["LOGO NGỰC PHẢI"] === "YES" || row["LOGO NGỰC PHẢI"] === true,
-            logo_chest_center: row["LOGO NGỰC GIỮA"] === "YES" || row["LOGO NGỰC GIỮA"] === true,
-            logo_sleeve_left: row["LOGO TAY TRÁI"] === "YES" || row["LOGO TAY TRÁI"] === true,
-            logo_sleeve_right: row["LOGO TAY PHẢI"] === "YES" || row["LOGO TAY PHẢI"] === true,
-            pet_chest: row["IN PET NGỰC"] || "",
-            logo_pants: row["LOGO QUẦN"] === "YES" || row["LOGO QUẦN"] === true,
+            chest_number: convertToBoolean(row["IN SỐ NGỰC"]),
+            pants_number: convertToBoolean(row["IN SỐ QUẦN"]),
+            logo_chest_left: convertToBoolean(row["LOGO NGỰC TRÁI"]),
+            logo_chest_right: convertToBoolean(row["LOGO NGỰC PHẢI"]),
+            logo_chest_center: convertToBoolean(row["LOGO NGỰC GIỮA"]),
+            logo_sleeve_left: convertToBoolean(row["LOGO TAY TRÁI"]),
+            logo_sleeve_right: convertToBoolean(row["LOGO TAY PHẢI"]),
+            logo_pants: convertToBoolean(row["LOGO QUẦN"]),
             note: row["GHI CHÚ"] || "",
             print_style: row["KIỂU IN"] || printStyle
           };
         });
+
         const updatedPlayers = [...players, ...newPlayers];
         onPlayersChange(updatedPlayers);
         toast.success(`Đã nhập ${newPlayers.length} cầu thủ từ file Excel`);
@@ -175,7 +163,7 @@ export const PlayerForm = memo(({
             <p className="text-sm font-medium mb-2">Nhập danh sách cầu thủ từ Excel:</p>
             <div className="flex items-center gap-2">
               <Input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} className="flex-1" />
-              <Button variant="outline" size="icon" onClick={downloadExcelTemplate}>
+              <Button variant="outline" size="icon">
                 <Download className="h-4 w-4" />
               </Button>
             </div>

@@ -11,7 +11,6 @@ interface ExcelExportProps {
 
 // Helper to ensure player numbers exported as text with leading zeros
 function formatPlayerNumber(number: string) {
-  // Always output as string for Excel
   return number != null ? number : '';
 }
 
@@ -19,33 +18,30 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
   const handleExport = () => {
     const data = players.map((player, index) => ({
       'STT': index + 1,
-      'Số áo': formatPlayerNumber(player.number),
-      'Loại quần áo': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
-      'Kích thước': player.size,
-      'In dòng trên số lưng': player.line_1 || '',
-      'In dòng dưới số lưng': player.line_3 || '',
-      'Chi tiết in ấn': [
-        player.chest_number ? 'In số ngực' : '',
-        player.chest_text ? `In chữ ngực: ${player.chest_text}` : '',
-        player.pants_number ? 'In số quần' : '',
-        player.logo_chest_left ? 'Logo ngực trái' : '',
-        player.logo_chest_right ? 'Logo ngực phải' : '',
-        player.logo_chest_center ? 'Logo ngực giữa' : '',
-        player.logo_sleeve_left ? 'Logo tay trái' : '',
-        player.logo_sleeve_right ? 'Logo tay phải' : '',
-        player.logo_pants ? 'Logo quần' : '',
-      ].filter(Boolean).join(', '),
-      'Kiểu in': player.print_style || 'In chuyển nhiệt',
-      'Ghi chú': player.note || ''
+      'SỐ ÁO': formatPlayerNumber(player.number),
+      'LOẠI QUẦN ÁO': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
+      'KÍCH THƯỚC': player.size,
+      'TÊN IN TRÊN SỐ': player.line_1 || '',
+      'TÊN ĐỘI BÓNG': player.line_3 || '',
+      'KIỂU IN': player.print_style || 'In chuyển nhiệt',
+      'IN CHỮ NGỰC': player.chest_text || '',
+      'IN SỐ NGỰC': player.chest_number ? 'Có' : 'Không',
+      'IN SỐ QUẦN': player.pants_number ? 'Có' : 'Không',
+      'LOGO NGỰC TRÁI': player.logo_chest_left ? 'Có' : 'Không',
+      'LOGO NGỰC PHẢI': player.logo_chest_right ? 'Có' : 'Không',
+      'LOGO NGỰC GIỮA': player.logo_chest_center ? 'Có' : 'Không',
+      'LOGO TAY TRÁI': player.logo_sleeve_left ? 'Có' : 'Không',
+      'LOGO TAY PHẢI': player.logo_sleeve_right ? 'Có' : 'Không',
+      'LOGO QUẦN': player.logo_pants ? 'Có' : 'Không',
+      'GHI CHÚ': player.note || ''
     }));
 
-    // Set cell format to text for player numbers (important for leading zeros)
     const ws = XLSX.utils.json_to_sheet(data);
     
-    // Force the column 'Số áo' to be text in the worksheet
+    // Force the column 'SỐ ÁO' to be text in the worksheet
     Object.keys(ws).forEach(cell => {
       if (cell.match(/^B[0-9]+$/)) {
-        ws[cell].z = '@'; // set text format
+        ws[cell].z = '@';
       }
     });
 
