@@ -6,12 +6,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  SelectLabel,
-  SelectSeparator,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { Player } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,8 +61,8 @@ export function BatchUpdateDialog({
       pants_number: selectedOptions.pants_number,
       logo_pants: selectedOptions.logo_pants,
       ...(selectedOptions.enablePrintStyle && { print_style: selectedOptions.print_style }),
-      ...(selectedOptions.enableSize && { size: selectedOptions.size }),
-      ...(selectedOptions.enableUniformType && { uniform_type: selectedOptions.uniform_type }),
+      ...(selectedOptions.enableSize && selectedOptions.size && { size: selectedOptions.size as '3' | '5' | '7' | '9' | '11' | '13' | '15' | 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '4XL' }),
+      ...(selectedOptions.enableUniformType && { uniform_type: selectedOptions.uniform_type as 'player' | 'goalkeeper' }),
     }));
 
     onPlayersChange(updatedPlayers);
