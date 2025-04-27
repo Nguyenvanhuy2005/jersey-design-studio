@@ -3,10 +3,8 @@ import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
 export const useOrderCosts = (players: Player[], productLines: ProductLine[]) => {
-
   // --- Itemized cost breakdown for decal and logo ---
   const getPrintCostBreakdown = useCallback(() => {
-    // Debug: Log productLines at start
     console.log("DEBUG [getPrintCostBreakdown] productLines:", productLines);
 
     let costItems: {
@@ -37,7 +35,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
 
     // Đếm riêng cho decal và chuyển nhiệt cho lưng
     let backDecalCount = 0;
-    let backHTCount = 0; // Số lượng cầu thủ sử dụng chuyển nhiệt ở lưng
+    let backHTCount = 0;
     let decalBackMap: { [label: string]: number } = {};
     let htBackMap: { [label: string]: number } = {};
 
@@ -52,8 +50,6 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
           backDecalCount++;
           decalBackMap[foundPos.label] = (decalBackMap[foundPos.label] || 0) + 1;
         } else if (line.material === "In chuyển nhiệt") {
-          // Tăng số lượng chuyển nhiệt mặt lưng
-          // Nếu vị trí in thuộc mặt lưng và là chuyển nhiệt
           backHTCount++;
         }
       }
@@ -90,15 +86,13 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     });
 
     // 2. Chuyển nhiệt mặt lưng - tính theo số cầu thủ sử dụng
-    // Tính số lượng cầu thủ có sử dụng chuyển nhiệt ở mặt lưng
     const htBackPlayers = new Set();
     
     players.forEach((player, index) => {
       const extPlayer = player as any;
-      const playerPrintStyle = extPlayer.print_style || "In decal"; // Default if not specified
+      const playerPrintStyle = extPlayer.print_style || "In decal";
       
       if (playerPrintStyle === "In chuyển nhiệt") {
-        // Kiểm tra xem cầu thủ có in mặt lưng không
         if (extPlayer.line_1 || extPlayer.line_2 || extPlayer.number || extPlayer.line_3) {
           htBackPlayers.add(index);
         }
@@ -116,8 +110,31 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       });
     }
 
-    // --- Số ngực & số quần: phân biệt giữa decal và chuyển nhiệt ---
-    // In số ngực
+    // 3. CHỮ NGỰC: phân biệt giữa decal và chuyển nhiệt (5k/vị trí)
+    const chestText = {
+      decal: decalPositions.get("In chữ ngực") || 0,
+      heatTransfer: htPositions.get("In chữ ngực") || 0
+    };
+
+    if (chestText.decal > 0) {
+      costItems.push({
+        label: "Chữ ngực (in decal)",
+        quantity: chestText.decal,
+        unitPrice: 5000,
+        total: chestText.decal * 5000,
+      });
+    }
+
+    if (chestText.heatTransfer > 0) {
+      costItems.push({
+        label: "Chữ ngực (chuyển nhiệt)",
+        quantity: chestText.heatTransfer,
+        unitPrice: 5000,
+        total: chestText.heatTransfer * 5000,
+      });
+    }
+
+    // 4. SỐ NGỰC: phân biệt giữa decal và chuyển nhiệt (5k/vị trí)
     const chestNumber = {
       decal: decalPositions.get("In số ngực") || 0,
       heatTransfer: htPositions.get("In số ngực") || 0
@@ -141,7 +158,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       });
     }
 
-    // In số quần
+    // 5. SỐ QUẦN: phân biệt giữa decal và chuyển nhiệt (5k/vị trí)
     const pantsNumber = {
       decal: decalPositions.get("In số quần") || 0,
       heatTransfer: htPositions.get("In số quần") || 0
@@ -165,7 +182,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       });
     }
 
-    // --- Logo các vị trí: gộp chung, không phân biệt chất liệu ---
+    // 6. Logo các vị trí: gộp chung, không phân biệt chất liệu
     const logoPositions = [
       "Logo ngực trái", "Logo ngực phải", "Logo ngực giữa",
       "Logo tay trái", "Logo tay phải", "Logo quần"
@@ -175,7 +192,7 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       const totalCount = logoPositionsAggregate.get(position) || 0;
       if (totalCount > 0) {
         costItems.push({
-          label: `${position}`,
+          label: position,
           quantity: totalCount,
           unitPrice: 10000,
           total: totalCount * 10000,
@@ -209,12 +226,11 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     // Phân tích kiểu in và các dòng in cho từng cầu thủ
     players.forEach((player, index) => {
       const extPlayer = player as any;
-      const playerPrintStyle = extPlayer.print_style || "In decal"; // Mặc định nếu không có
+      const playerPrintStyle = extPlayer.print_style || "In decal";
       
       // Xử lý in mặt lưng
       backPositions.forEach(pos => {
         const positionKey = pos.key.replace("In ", "").toLowerCase();
-        // Kiểm tra xem cầu thủ có in ở vị trí này không
         const hasThisPosition = 
           (positionKey === "trên số lưng" && extPlayer.line_1) ||
           (positionKey === "số lưng" && (extPlayer.line_2 || extPlayer.number)) ||
@@ -224,7 +240,6 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
           if (playerPrintStyle === "In decal") {
             backDecalLines[pos.label] = (backDecalLines[pos.label] || 0) + 1;
           } else if (playerPrintStyle === "In chuyển nhiệt") {
-            // Đánh dấu cầu thủ này sử dụng chuyển nhiệt mặt lưng
             htBackPlayers.add(index);
           }
         }
@@ -244,10 +259,11 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
       printingCost += htBackPlayersCount * 10000;
     }
 
-    // 2. Tính giá cho số ngực và số quần (5k/vị trí, riêng decal/chuyển nhiệt)
+    // 2. Số ngực, số quần và chữ ngực (5k/vị trí, riêng decal/chuyển nhiệt)
     productLines.forEach(line => {
       if ((line.position.toLowerCase().includes("số ngực") ||
-           line.position.toLowerCase().includes("số quần"))) {
+           line.position.toLowerCase().includes("số quần") ||
+           line.position.toLowerCase().includes("chữ ngực"))) {
         printingCost += 5000;
       }
     });
