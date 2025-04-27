@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,6 +6,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  SelectLabel,
+  SelectSeparator,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,7 +44,7 @@ export function BatchUpdateDialog({
     pants_number: false,
     logo_pants: false,
     print_style: printStyle,
-    size: "",
+    size: "" as '3' | '5' | '7' | '9' | '11' | '13' | '15' | 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '4XL' | "",
     uniform_type: "",
     enablePrintStyle: false,
     enableSize: false,
@@ -222,25 +223,30 @@ export function BatchUpdateDialog({
               </div>
               <Select
                 value={selectedOptions.size}
-                onValueChange={(value) => setSelectedOptions(prev => ({ ...prev, size: value }))}
+                onValueChange={(value) => setSelectedOptions(prev => ({ ...prev, size: value as typeof selectedOptions.size }))}
                 disabled={!selectedOptions.enableSize}
               >
                 <SelectTrigger className="h-7 text-xs">
                   <SelectValue placeholder="Chọn kích cỡ" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="S6">Trẻ em S6</SelectItem>
-                  <SelectItem value="S8">Trẻ em S8</SelectItem>
-                  <SelectItem value="S10">Trẻ em S10</SelectItem>
-                  <SelectItem value="S12">Trẻ em S12</SelectItem>
-                  <SelectItem value="S14">Trẻ em S14</SelectItem>
-                  <SelectItem value="XS">XS</SelectItem>
-                  <SelectItem value="S">S</SelectItem>
-                  <SelectItem value="M">M</SelectItem>
-                  <SelectItem value="L">L</SelectItem>
-                  <SelectItem value="XL">XL</SelectItem>
-                  <SelectItem value="2XL">2XL</SelectItem>
-                  <SelectItem value="3XL">3XL</SelectItem>
+                  <SelectLabel>Trẻ em</SelectLabel>
+                  <SelectItem value="3">Size 3</SelectItem>
+                  <SelectItem value="5">Size 5</SelectItem>
+                  <SelectItem value="7">Size 7</SelectItem>
+                  <SelectItem value="9">Size 9</SelectItem>
+                  <SelectItem value="11">Size 11</SelectItem>
+                  <SelectItem value="13">Size 13</SelectItem>
+                  <SelectItem value="15">Size 15</SelectItem>
+                  <SelectSeparator />
+                  <SelectLabel>Người lớn</SelectLabel>
+                  <SelectItem value="S">Size S</SelectItem>
+                  <SelectItem value="M">Size M</SelectItem>
+                  <SelectItem value="L">Size L</SelectItem>
+                  <SelectItem value="XL">Size XL</SelectItem>
+                  <SelectItem value="2XL">Size 2XL</SelectItem>
+                  <SelectItem value="3XL">Size 3XL</SelectItem>
+                  <SelectItem value="4XL">Size 4XL</SelectItem>
                 </SelectContent>
               </Select>
             </div>
