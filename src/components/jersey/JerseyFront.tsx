@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
@@ -68,7 +67,7 @@ export const JerseyFront = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw chest number if enabled in designData - fixed position at center chest
+  // Draw chest number OR chest text if enabled in designData
   if (designData?.chest_number?.enabled && playerNumber !== undefined) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 50;
@@ -76,15 +75,12 @@ export const JerseyFront = ({
     ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(playerNumber.toString(), 150, 140);
     console.log(`Drew chest number with font: ${font}`);
-  }
-  
-  // Draw chest text if enabled in designData
-  if (designData?.chest_text?.enabled && designData.chest_text.content) {
+  } else if (designData?.chest_text?.enabled && designData.chest_text.content) {
     ctx.fillStyle = '#1A1A1A';
-    const fontSize = 24;
+    const fontSize = 50;
     const font = designData?.font_text?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
-    ctx.fillText(designData.chest_text.content, 150, 80, 180);
+    ctx.fillText(designData.chest_text.content, 150, 140);
     console.log(`Drew chest text with font: ${font}`);
   }
   

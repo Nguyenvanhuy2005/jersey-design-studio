@@ -1,4 +1,3 @@
-
 import { memo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,28 +123,53 @@ export const PlayerFormFields = memo(({
 
       <div className="md:col-span-4 space-y-4">
         <div>
-          <Label className="mb-2 inline-block">In số</Label>
+          <Label className="mb-2 inline-block">In số & chữ ngực</Label>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="chestNumber"
                 checked={newPlayer.chest_number || false}
-                onCheckedChange={(checked) => 
-                  onInputChange("chest_number", checked === true)
-                }
+                onCheckedChange={(checked) => {
+                  onInputChange("chest_number", checked === true);
+                  if (checked) {
+                    onInputChange("chest_text", "");
+                  }
+                }}
               />
               <Label htmlFor="chestNumber">In số ngực</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
-                id="pantsNumber"
-                checked={newPlayer.pants_number || false}
-                onCheckedChange={(checked) => 
-                  onInputChange("pants_number", checked === true)
-                }
+                id="chestText"
+                checked={!!newPlayer.chest_text}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onInputChange("chest_number", false);
+                  }
+                  onInputChange("chest_text", checked ? "" : undefined);
+                }}
               />
-              <Label htmlFor="pantsNumber">In số quần</Label>
+              <Label htmlFor="chestText">In chữ ngực</Label>
             </div>
+          </div>
+          {!!newPlayer.chest_text !== undefined && (
+            <div className="mt-2">
+              <Input
+                placeholder="Nhập chữ in ngực"
+                value={newPlayer.chest_text || ""}
+                onChange={(e) => onInputChange("chest_text", e.target.value)}
+              />
+            </div>
+          )}
+          <div className="flex items-center space-x-2 mt-2">
+            <Checkbox 
+              id="pantsNumber"
+              checked={newPlayer.pants_number || false}
+              onCheckedChange={(checked) => 
+                onInputChange("pants_number", checked === true)
+              }
+            />
+            <Label htmlFor="pantsNumber">In số quần</Label>
           </div>
         </div>
 

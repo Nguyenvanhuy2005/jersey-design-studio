@@ -26,6 +26,7 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
       'In dòng dưới số lưng': player.line_3 || '',
       'Chi tiết in ấn': [
         player.chest_number ? 'In số ngực' : '',
+        player.chest_text ? `In chữ ngực: ${player.chest_text}` : '',
         player.pants_number ? 'In số quần' : '',
         player.logo_chest_left ? 'Logo ngực trái' : '',
         player.logo_chest_right ? 'Logo ngực phải' : '',
