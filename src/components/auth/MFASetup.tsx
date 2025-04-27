@@ -11,6 +11,7 @@ export function MFASetup() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [verifyCode, setVerifyCode] = useState('');
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
 
   const enrollMFA = async () => {
     try {
@@ -38,11 +39,16 @@ export function MFASetup() {
     
     try {
       setLoading(true);
-      const { error } = await supabase.auth.mfa.challenge({ factorId });
-      if (error) throw error;
-
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      
+      if (challengeError) throw challengeError;
+      if (!challengeData.id) throw new Error('No challenge ID returned');
+      
+      setChallengeId(challengeData.id);
+      
       const { data, error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
+        challengeId: challengeData.id,
         code: verifyCode
       });
 

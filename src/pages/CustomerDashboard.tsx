@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CustomerForm } from "@/components/customer-form";
 import { CustomerOrdersList } from "@/components/customer/customer-orders-list";
 import { ChangePasswordForm } from "@/components/customer/change-password-form";
+import { Separator } from "@/components/ui/separator";
+import { MFASetup } from "@/components/auth/MFASetup";
 import { dbOrderToOrder } from "@/utils/adapters";
 
 const CustomerDashboard = () => {
