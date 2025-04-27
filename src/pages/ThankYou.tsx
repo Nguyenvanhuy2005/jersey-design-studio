@@ -1,11 +1,27 @@
 
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CheckCircle, Copy, ExternalLink } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const ThankYou = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const orderId = location.state?.orderId;
+
+  const handleCopyId = async () => {
+    if (!orderId) return;
+    
+    try {
+      await navigator.clipboard.writeText(orderId);
+      toast.success("Đã sao chép ID đơn hàng");
+    } catch (err) {
+      toast.error("Không thể sao chép ID đơn hàng");
+      console.error("Copy failed:", err);
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-20 max-w-lg">
@@ -19,12 +35,36 @@ const ThankYou = () => {
               Đơn hàng của bạn đã được hoàn tất. Chúng tôi sẽ liên hệ trong thời gian sớm nhất.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+
+          {orderId && (
+            <div className="mb-6 p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">ID đơn hàng của bạn:</p>
+              <div className="flex items-center justify-center gap-2">
+                <code className="bg-background px-3 py-1 rounded text-sm">{orderId}</code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyId}
+                  title="Sao chép ID"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button variant="outline" onClick={() => navigate("/")}>
               Về trang chủ
             </Button>
             <Button onClick={() => navigate("/create-order")}>
               Tạo đơn hàng mới
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={() => window.open("https://zalo.me/g/fquqpn860", "_blank")}
+            >
+              Demo chi tiết <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
