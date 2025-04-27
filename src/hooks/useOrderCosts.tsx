@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { Player, ProductLine } from '@/types';
 
@@ -107,6 +106,28 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
         quantity: htBackPlayersCount,
         unitPrice: 10000,
         total: htBackPlayersCount * 10000,
+      });
+    }
+
+    // Add chest text cost calculation
+    const chestTextDecalCount = players.filter(p => p.chest_text && (p.print_style === "In decal" || !p.print_style)).length;
+    const chestTextHTCount = players.filter(p => p.chest_text && p.print_style === "In chuyển nhiệt").length;
+
+    if (chestTextDecalCount > 0) {
+      costItems.push({
+        label: "Chữ ngực (in decal)",
+        quantity: chestTextDecalCount,
+        unitPrice: 5000,
+        total: chestTextDecalCount * 5000
+      });
+    }
+
+    if (chestTextHTCount > 0) {
+      costItems.push({
+        label: "Chữ ngực (chuyển nhiệt)",
+        quantity: chestTextHTCount,
+        unitPrice: 5000,
+        total: chestTextHTCount * 5000
       });
     }
 
@@ -258,6 +279,13 @@ export const useOrderCosts = (players: Player[], productLines: ProductLine[]) =>
     if (htBackPlayersCount > 0) {
       printingCost += htBackPlayersCount * 10000;
     }
+
+    // Add chest text cost calculation (5k per player)
+    players.forEach(player => {
+      if (player.chest_text) {
+        printingCost += 5000;
+      }
+    });
 
     // 2. Số ngực, số quần và chữ ngực (5k/vị trí, riêng decal/chuyển nhiệt)
     productLines.forEach(line => {

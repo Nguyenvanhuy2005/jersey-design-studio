@@ -173,6 +173,7 @@ export type Database = {
       players: {
         Row: {
           chest_number: boolean | null
+          chest_text: string | null
           created_at: string | null
           design_image: string | null
           id: string
@@ -200,6 +201,7 @@ export type Database = {
         }
         Insert: {
           chest_number?: boolean | null
+          chest_text?: string | null
           created_at?: string | null
           design_image?: string | null
           id?: string
@@ -227,6 +229,7 @@ export type Database = {
         }
         Update: {
           chest_number?: boolean | null
+          chest_text?: string | null
           created_at?: string | null
           design_image?: string | null
           id?: string

@@ -353,6 +353,7 @@ export const useOrderSubmission = ({
           uniform_type: p.uniform_type || 'player',
           line_1: p.line_1 || null,
           line_3: p.line_3 || null,
+          chest_text: p.chest_text || null,  // Add this line to store chest_text
           chest_number: p.chest_number || false,
           pants_number: p.pants_number || false,
           logo_chest_left: p.logo_chest_left || false,
@@ -436,7 +437,7 @@ export const useOrderSubmission = ({
         }
       }
       
-      toast.success("Đơn hàng đã ��ược tạo thành công!");
+      toast.success("Đơn hàng đã ược tạo thành công!");
       navigate('/thank-you');
     } catch (err) {
       console.error(`[submitOrder] Error submitting order:`, err);
