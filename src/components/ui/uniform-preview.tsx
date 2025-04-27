@@ -52,6 +52,7 @@ export function UniformPreview({
       material: printConfig?.legMaterial
     },
     chest_text: currentPlayer?.chest_text ? {
+      enabled: true, // Add the required 'enabled' property
       content: currentPlayer.chest_text,
       material: printConfig?.frontMaterial
     } : undefined,
