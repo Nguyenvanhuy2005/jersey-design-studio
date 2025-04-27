@@ -192,11 +192,24 @@ const CustomerDashboard = () => {
               <CardHeader>
                 <CardTitle>Bảo mật</CardTitle>
                 <CardDescription>
-                  Quản lý mật khẩu và bảo mật tài khoản
+                  Quản lý mật khẩu và xác thực hai lớp
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChangePasswordForm />
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Đổi mật khẩu</h3>
+                  <ChangePasswordForm />
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Xác thực hai lớp (2FA)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Bảo vệ tài khoản của bạn bằng xác thực hai lớp
+                  </p>
+                  <MFASetup />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
