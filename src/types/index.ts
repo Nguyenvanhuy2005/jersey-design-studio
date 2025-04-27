@@ -2,7 +2,7 @@ export interface Player {
   id: string;
   name: string;
   number: string;
-  size: '3' | '5' | '7' | '9' | '11' | '13' | '15' | 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL' | '4XL';
+  size: 'S' | 'M' | 'L' | 'XL' | '1' | '3' | '5' | '7' | '9' | '11' | '13' | '15' | '2XL' | '3XL' | '4XL';
   printImage: boolean;
   uniform_type?: 'player' | 'goalkeeper';
   line_1?: string;
