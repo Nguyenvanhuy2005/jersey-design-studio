@@ -1,5 +1,6 @@
+
 import { useState, useCallback } from 'react';
-import { Player, Logo } from '@/types';
+import { Player } from '@/types';
 
 interface UsePlayerFormProps {
   onPlayersChange: (players: Player[]) => void;

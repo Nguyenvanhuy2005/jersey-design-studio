@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Player } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +24,18 @@ interface BatchUpdateDialogProps {
   printStyle: string;
 }
 
+interface BatchUpdateOptions {
+  logo_chest_left: boolean;
+  logo_chest_right: boolean;
+  logo_chest_center: boolean;
+  logo_sleeve_left: boolean;
+  logo_sleeve_right: boolean;
+  chest_number: boolean;
+  pants_number: boolean;
+  logo_pants: boolean;
+  print_style: string;
+}
+
 export function BatchUpdateDialog({
   open,
   onOpenChange,
@@ -31,7 +44,7 @@ export function BatchUpdateDialog({
   printStyleOptions,
   printStyle
 }: BatchUpdateDialogProps) {
-  const [selectedOptions, setSelectedOptions] = useState({
+  const [selectedOptions, setSelectedOptions] = useState<BatchUpdateOptions>({
     logo_chest_left: false,
     logo_chest_right: false,
     logo_chest_center: false,
@@ -46,15 +59,15 @@ export function BatchUpdateDialog({
   const handleApplyChanges = () => {
     const updatedPlayers = players.map(player => ({
       ...player,
-      ...(selectedOptions.logo_chest_left !== undefined && { logo_chest_left: selectedOptions.logo_chest_left }),
-      ...(selectedOptions.logo_chest_right !== undefined && { logo_chest_right: selectedOptions.logo_chest_right }),
-      ...(selectedOptions.logo_chest_center !== undefined && { logo_chest_center: selectedOptions.logo_chest_center }),
-      ...(selectedOptions.logo_sleeve_left !== undefined && { logo_sleeve_left: selectedOptions.logo_sleeve_left }),
-      ...(selectedOptions.logo_sleeve_right !== undefined && { logo_sleeve_right: selectedOptions.logo_sleeve_right }),
-      ...(selectedOptions.chest_number !== undefined && { chest_number: selectedOptions.chest_number }),
-      ...(selectedOptions.pants_number !== undefined && { pants_number: selectedOptions.pants_number }),
-      ...(selectedOptions.logo_pants !== undefined && { logo_pants: selectedOptions.logo_pants }),
-      print_style: selectedOptions.print_style || player.print_style
+      logo_chest_left: selectedOptions.logo_chest_left,
+      logo_chest_right: selectedOptions.logo_chest_right,
+      logo_chest_center: selectedOptions.logo_chest_center,
+      logo_sleeve_left: selectedOptions.logo_sleeve_left,
+      logo_sleeve_right: selectedOptions.logo_sleeve_right,
+      chest_number: selectedOptions.chest_number,
+      pants_number: selectedOptions.pants_number,
+      logo_pants: selectedOptions.logo_pants,
+      print_style: selectedOptions.print_style
     }));
 
     onPlayersChange(updatedPlayers);
@@ -72,6 +85,25 @@ export function BatchUpdateDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          <div>
+            <Label className="mb-2 inline-block">Kiểu in</Label>
+            <Select 
+              value={selectedOptions.print_style}
+              onValueChange={(value) => 
+                setSelectedOptions(prev => ({ ...prev, print_style: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn kiểu in" />
+              </SelectTrigger>
+              <SelectContent>
+                {printStyleOptions.map(style => (
+                  <SelectItem key={style} value={style}>{style}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label className="mb-2 inline-block">In số</Label>
             <div className="grid grid-cols-2 gap-4">

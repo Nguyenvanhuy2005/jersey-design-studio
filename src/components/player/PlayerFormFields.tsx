@@ -1,15 +1,16 @@
+
 import { memo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Player, UniformSize } from "@/types";
+import { Player } from "@/types";
 import { Plus } from "lucide-react";
 
 const SIZES = {
-  adult: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const,
-  kids: ['1', '3', '5', '7', '9', '11', '13', '15'] as const
+  kids: ['3', '5', '7', '9', '11', '13', '15'] as const,
+  adult: ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] as const
 };
 
 interface PlayerFormFieldsProps {
@@ -55,7 +56,7 @@ export const PlayerFormFields = memo(({
       </div>
       
       <div className="md:col-span-2">
-        <Label htmlFor="line3">Tên dưới số</Label>
+        <Label htmlFor="line3">Tên đội bóng</Label>
         <Input 
           id="line3"
           value={newPlayer.line_3 || ""}
@@ -68,20 +69,21 @@ export const PlayerFormFields = memo(({
         <Label htmlFor="playerSize">Size</Label>
         <Select 
           value={newPlayer.size}
-          onValueChange={(value) => onInputChange("size", value as UniformSize)}
+          onValueChange={(value) => onInputChange("size", value)}
         >
           <SelectTrigger id="playerSize">
             <SelectValue placeholder="Size" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>Người lớn</SelectLabel>
+              <Label className="px-2 text-xs font-semibold">Người lớn</Label>
               {SIZES.adult.map((size) => (
                 <SelectItem key={size} value={size}>{size}</SelectItem>
               ))}
             </SelectGroup>
+            <div className="h-px my-2 bg-muted" />
             <SelectGroup>
-              <SelectLabel>Trẻ em</SelectLabel>
+              <Label className="px-2 text-xs font-semibold">Trẻ em</Label>
               {SIZES.kids.map((size) => (
                 <SelectItem key={size} value={size}>{size}</SelectItem>
               ))}
@@ -136,18 +138,32 @@ export const PlayerFormFields = memo(({
                 onChange={(e) => onInputChange("chest_text", e.target.value)}
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="chestNumber"
-                disabled={hasChestText}
-                checked={!hasChestText && (newPlayer.chest_number || false)}
-                onCheckedChange={(checked) => 
-                  onInputChange("chest_number", checked === true)
-                }
-              />
-              <Label htmlFor="chestNumber" className={hasChestText ? "text-muted-foreground" : ""}>
-                In số ngực
-              </Label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="chestNumber"
+                  disabled={hasChestText}
+                  checked={!hasChestText && (newPlayer.chest_number || false)}
+                  onCheckedChange={(checked) => 
+                    onInputChange("chest_number", checked === true)
+                  }
+                />
+                <Label htmlFor="chestNumber" className={hasChestText ? "text-muted-foreground" : ""}>
+                  In số ngực
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="pantsNumber"
+                  checked={newPlayer.pants_number || false}
+                  onCheckedChange={(checked) => 
+                    onInputChange("pants_number", checked === true)
+                  }
+                />
+                <Label htmlFor="pantsNumber">
+                  In số quần
+                </Label>
+              </div>
             </div>
             {hasChestText && (
               <p className="text-sm text-destructive">
