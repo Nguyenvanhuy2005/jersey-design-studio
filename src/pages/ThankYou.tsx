@@ -50,6 +50,9 @@ const ThankYou = () => {
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                Vui lòng sao chép ID đơn hàng và gửi cho chúng tôi qua nhóm Zalo để được hỗ trợ chi tiết
+              </p>
             </div>
           )}
           

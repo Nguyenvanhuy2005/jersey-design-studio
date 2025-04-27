@@ -1,4 +1,3 @@
-
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { getReferenceImageUrls } from "@/utils/image-utils";
+import { toast } from "react-toastify";
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -66,6 +66,14 @@ const OrderConfirmation = () => {
       });
     }
   };
+
+  try {
+    const orderId = order.id;
+    toast.success("Đơn hàng đã ược tạo thành công!");
+    navigate('/thank-you', { state: { orderId } });
+  } catch (err) {
+    console.error("Error creating order:", err);
+  }
 
   return (
     <Layout>
