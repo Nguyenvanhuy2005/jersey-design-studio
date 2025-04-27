@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
@@ -50,6 +51,10 @@ export function UniformPreview({
       enabled: currentPlayer?.pants_number || false,
       material: printConfig?.legMaterial
     },
+    chest_text: currentPlayer?.chest_text ? {
+      content: currentPlayer.chest_text,
+      material: printConfig?.frontMaterial
+    } : undefined,
     line_1: currentPlayer?.line_1 ? {
       enabled: true,
       content: currentPlayer.line_1,

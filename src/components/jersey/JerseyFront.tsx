@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Logo, DesignData } from '@/types';
 import { drawBasicJersey, setupCanvas } from '@/utils/jersey-drawing-utils';
