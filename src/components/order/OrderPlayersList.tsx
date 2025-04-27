@@ -1,3 +1,4 @@
+
 import { Player } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,7 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                 <TableHead>STT</TableHead>
                 <TableHead>In dòng trên số lưng</TableHead>
                 <TableHead>In dòng dưới số lưng</TableHead>
+                <TableHead>In chữ ngực</TableHead>
                 <TableHead>Số áo</TableHead>
                 <TableHead>Kích thước</TableHead>
                 <TableHead>Loại quần áo</TableHead>
@@ -48,6 +50,7 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{player.line_1 || "-"}</TableCell>
                   <TableCell>{player.line_3 || "-"}</TableCell>
+                  <TableCell>{player.chest_text || "-"}</TableCell>
                   <TableCell className="font-semibold">{player.number}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -68,12 +71,12 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                         player.logo_pants) && (
                         <p className="font-medium mt-1">Vị trí logo:</p>
                       )}
-                      {player.logo_chest_left && (<p>- Logo ngực trái</p>)}
-                      {player.logo_chest_right && (<p>- Logo ngực phải</p>)}
-                      {player.logo_chest_center && (<p>- Logo ngực giữa</p>)}
-                      {player.logo_sleeve_left && (<p>- Logo tay trái</p>)}
-                      {player.logo_sleeve_right && (<p>- Logo tay phải</p>)}
-                      {player.logo_pants && (<p>- Logo quần</p>)}
+                      {player.logo_chest_left && <p>- Logo ngực trái</p>}
+                      {player.logo_chest_right && <p>- Logo ngực phải</p>}
+                      {player.logo_chest_center && <p>- Logo ngực giữa</p>}
+                      {player.logo_sleeve_left && <p>- Logo tay trái</p>}
+                      {player.logo_sleeve_right && <p>- Logo tay phải</p>}
+                      {player.logo_pants && <p>- Logo quần</p>}
                       <p className="font-medium mt-1">
                         <span className="inline-flex items-center gap-1">
                           <Printer className="h-4 w-4" />
@@ -94,4 +97,3 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
     </Card>
   );
 }
-

@@ -1,3 +1,4 @@
+
 import { Order } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,7 @@ export const PlayersList = ({ players, teamName }: PlayersListProps) => {
                 <TableHead>STT</TableHead>
                 <TableHead>In dòng trên số lưng</TableHead>
                 <TableHead>In dòng dưới số lưng</TableHead>
+                <TableHead>In chữ ngực</TableHead>
                 <TableHead>Số áo</TableHead>
                 <TableHead>Kích thước</TableHead>
                 <TableHead>Loại quần áo</TableHead>
@@ -53,6 +55,7 @@ export const PlayersList = ({ players, teamName }: PlayersListProps) => {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{player.line_1 || "-"}</TableCell>
                   <TableCell>{player.line_3 || "-"}</TableCell>
+                  <TableCell>{player.chest_text || "-"}</TableCell>
                   <TableCell className="font-semibold">{player.number}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
