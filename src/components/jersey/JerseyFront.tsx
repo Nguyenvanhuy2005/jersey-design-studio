@@ -68,10 +68,11 @@ export const JerseyFront = ({
   // Setup canvas for text rendering
   setupCanvas(ctx);
   
-  // Draw chest number OR chest text if enabled in designData
+  // Draw chest text OR chest number if enabled in designData
   if (designData?.chest_text && designData.chest_text.content && designData.chest_text.content.length > 0) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 50;
+    // Use the correct font for chest text (from font_text instead of font_number)
     const font = designData?.font_text?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(designData.chest_text.content, 150, 140);

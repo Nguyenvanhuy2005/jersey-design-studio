@@ -48,13 +48,24 @@ export function OrderPreviewTabContent({
   const currentPlayer = players[0];
   const teamName = currentPlayer.line_3 || currentPlayer.name?.split(' ')?.[0] || "TEAM";
   
+  // Ensure designData includes the latest font settings
+  const enhancedDesignData: Partial<DesignData> = {
+    ...designData,
+    font_text: {
+      font: designData?.font_text?.font || printConfig?.font || 'Arial'
+    },
+    font_number: {
+      font: designData?.font_number?.font || printConfig?.font || 'Arial'
+    }
+  };
+  
   return <div className="space-y-6">
       <UniformPreview 
         teamName={teamName} 
         players={players} 
         logos={logos} 
         printConfig={printConfig} 
-        designData={designData} 
+        designData={enhancedDesignData} 
         jerseyCanvasRef={jerseyCanvasRef} 
         pantCanvasRef={pantCanvasRef} 
       />

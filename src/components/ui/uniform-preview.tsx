@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { CanvasJersey } from "@/components/ui/canvas-jersey";
 import { Card } from "@/components/ui/card";
 import { Logo, PrintConfig, DesignData, Player } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 import { PlayerSelector } from "@/components/ui/PlayerSelector";
 
 interface UniformPreviewProps {
@@ -52,7 +50,7 @@ export function UniformPreview({
       material: printConfig?.legMaterial
     },
     chest_text: currentPlayer?.chest_text ? {
-      enabled: true, // Add the required 'enabled' property
+      enabled: true,
       content: currentPlayer.chest_text,
       material: printConfig?.frontMaterial
     } : undefined,
@@ -67,7 +65,10 @@ export function UniformPreview({
       material: printConfig?.backMaterial
     } : undefined,
     ...designData,
-    // Ensure font_number follows config or designData
+    // Ensure font settings follow config or designData
+    font_text: {
+      font: designData?.font_text?.font || printConfig?.font || 'Arial'
+    },
     font_number: {
       font: designData?.font_number?.font || printConfig?.font || 'Arial'
     }

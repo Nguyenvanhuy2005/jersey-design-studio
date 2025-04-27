@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -286,10 +287,10 @@ export function CanvasJersey({
       ...designData,
       uniform_type: isGoalkeeper ? 'goalkeeper' : 'player',
       font_text: {
-        font: designData?.font_text?.font || designData?.font_text?.font_file || printConfig?.font || 'Arial'
+        font: designData?.font_text?.font || printConfig?.font || 'Arial'
       },
       font_number: {
-        font: designData?.font_number?.font || designData?.font_number?.font_file || printConfig?.font || 'Arial'
+        font: designData?.font_number?.font || printConfig?.font || 'Arial'
       }
     };
 
@@ -306,8 +307,8 @@ export function CanvasJersey({
         loadedLogos,
         logoPositions,
         logos: logos || [],
-        fontFamily: getFont(printConfig),
-        numberFontFamily: designData?.font_number?.font || getFont(printConfig),
+        fontFamily: getFont(printConfig), // Used for general text
+        numberFontFamily: effectiveDesignData.font_number?.font || getFont(printConfig), // For numbers specifically
         highQuality: true,
         selectedLogo: isInteractionDisabled ? null : selectedLogo,
         onLogoMove: isInteractionDisabled ? undefined : handleLogoMove,
