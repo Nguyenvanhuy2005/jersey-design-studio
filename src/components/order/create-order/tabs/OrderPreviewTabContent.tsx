@@ -44,9 +44,11 @@ export function OrderPreviewTabContent({
       </Alert>;
   }
 
-  // Show default team name as before
+  // Modify team name logic to be empty if no line_3 or name
   const currentPlayer = players[0];
-  const teamName = currentPlayer.line_3 || currentPlayer.name?.split(' ')?.[0] || "TEAM";
+  const teamName = currentPlayer.line_3 || 
+                   (currentPlayer.line_3 === '' ? '' : 
+                   currentPlayer.name?.split(' ')?.[0] || '');
   
   // Ensure designData includes the latest font settings
   const enhancedDesignData: Partial<DesignData> = {
