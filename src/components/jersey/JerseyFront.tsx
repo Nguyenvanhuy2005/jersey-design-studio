@@ -68,20 +68,20 @@ export const JerseyFront = ({
   setupCanvas(ctx);
   
   // Draw chest number OR chest text if enabled in designData
-  if (designData?.chest_number?.enabled && playerNumber !== undefined) {
-    ctx.fillStyle = '#1A1A1A';
-    const fontSize = 50;
-    const font = designData?.font_number?.font || numberFontFamily || 'Arial';
-    ctx.font = `bold ${fontSize}px "${font}"`;
-    ctx.fillText(playerNumber.toString(), 150, 140);
-    console.log(`Drew chest number with font: ${font}`);
-  } else if (designData?.chest_text?.enabled && designData.chest_text.content) {
+  if (designData?.chest_text && designData.chest_text.content && designData.chest_text.content.length > 0) {
     ctx.fillStyle = '#1A1A1A';
     const fontSize = 50;
     const font = designData?.font_text?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${font}"`;
     ctx.fillText(designData.chest_text.content, 150, 140);
     console.log(`Drew chest text with font: ${font}`);
+  } else if (designData?.chest_number?.enabled && playerNumber !== undefined) {
+    ctx.fillStyle = '#1A1A1A';
+    const fontSize = 50;
+    const font = designData?.font_number?.font || numberFontFamily || 'Arial';
+    ctx.font = `bold ${fontSize}px "${font}"`;
+    ctx.fillText(playerNumber.toString(), 150, 140);
+    console.log(`Drew chest number with font: ${font}`);
   }
   
   // Draw logos with fixed positions and sizes

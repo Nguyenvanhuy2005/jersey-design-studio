@@ -29,6 +29,8 @@ export const PlayerFormFields = memo(({
   onAddOrUpdate,
   onCancel
 }: PlayerFormFieldsProps) => {
+  const hasChestText = newPlayer.chest_text && newPlayer.chest_text.length > 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
       <div className="md:col-span-2">
@@ -124,52 +126,34 @@ export const PlayerFormFields = memo(({
       <div className="md:col-span-4 space-y-4">
         <div>
           <Label className="mb-2 inline-block">In số & chữ ngực</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="chestNumber"
-                checked={newPlayer.chest_number || false}
-                onCheckedChange={(checked) => {
-                  onInputChange("chest_number", checked === true);
-                  if (checked) {
-                    onInputChange("chest_text", "");
-                  }
-                }}
-              />
-              <Label htmlFor="chestNumber">In số ngực</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="chestText"
-                checked={!!newPlayer.chest_text}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    onInputChange("chest_number", false);
-                  }
-                  onInputChange("chest_text", checked ? "" : undefined);
-                }}
-              />
+          <div className="space-y-4">
+            <div>
               <Label htmlFor="chestText">In chữ ngực</Label>
-            </div>
-          </div>
-          {!!newPlayer.chest_text !== undefined && (
-            <div className="mt-2">
               <Input
+                id="chestText"
                 placeholder="Nhập chữ in ngực"
                 value={newPlayer.chest_text || ""}
                 onChange={(e) => onInputChange("chest_text", e.target.value)}
               />
             </div>
-          )}
-          <div className="flex items-center space-x-2 mt-2">
-            <Checkbox 
-              id="pantsNumber"
-              checked={newPlayer.pants_number || false}
-              onCheckedChange={(checked) => 
-                onInputChange("pants_number", checked === true)
-              }
-            />
-            <Label htmlFor="pantsNumber">In số quần</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="chestNumber"
+                disabled={hasChestText}
+                checked={!hasChestText && (newPlayer.chest_number || false)}
+                onCheckedChange={(checked) => 
+                  onInputChange("chest_number", checked === true)
+                }
+              />
+              <Label htmlFor="chestNumber" className={hasChestText ? "text-muted-foreground" : ""}>
+                In số ngực
+              </Label>
+            </div>
+            {hasChestText && (
+              <p className="text-sm text-destructive">
+                Vui lòng xóa nội dung trong ô "In chữ ngực" để có thể chọn in số ngực.
+              </p>
+            )}
           </div>
         </div>
 
