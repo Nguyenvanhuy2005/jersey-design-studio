@@ -45,7 +45,7 @@ const Index = () => {
                 {imageError ? <div className="rounded-xl shadow-lg border bg-muted flex items-center justify-center aspect-[4/3]">
                     <div className="text-center p-4">
                       <Shirt className="mx-auto h-16 w-16 text-muted-foreground" />
-                      <p className="mt-2 text-muted-foreground">Jersey Design Studio</p>
+                      <p className="mt-2 text-muted-foreground">Easy Print Vietnam</p>
                     </div>
                   </div> : <img alt="Soccer jersey" className="rounded-xl shadow-lg border w-full object-cover aspect-[4/3]" onError={() => setImageError(true)} src="/lovable-uploads/76e6c29f-4361-49d2-a359-3c7ca475fc5c.png" />}
               </div>
