@@ -61,6 +61,7 @@ export function OrderPlayersList({ players }: OrderPlayersListProps) {
                   <TableCell>{getUniformTypeLabel(player.uniform_type)}</TableCell>
                   <TableCell>
                     <div className="space-y-1 text-sm">
+                      {player.chest_text && <p>- In chữ ngực: {player.chest_text}</p>}
                       {player.chest_number && <p>- In số ngực</p>}
                       {player.pants_number && <p>- In số quần</p>}
                       {(player.logo_chest_left || 
