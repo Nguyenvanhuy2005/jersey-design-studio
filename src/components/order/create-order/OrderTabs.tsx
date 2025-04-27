@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, Logo, Player, ProductLine } from "@/types";
@@ -6,7 +5,9 @@ import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
 import { OrderPreviewTabContent } from "./tabs/OrderPreviewTabContent";
 import { OrderSummaryTabContent } from "./tabs/OrderSummaryTabContent";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 interface OrderTabsProps {
   activeTab: string;
@@ -99,11 +100,8 @@ export function OrderTabs({
       setActiveTab(TAB_ORDER[tabIndex - 1]);
     }
   };
-  const goNext = () => {
-    if (tabIndex < TAB_ORDER.length - 1) {
-      setActiveTab(TAB_ORDER[tabIndex + 1]);
-    }
-  };
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("[OrderTabs] activeTab:", activeTab);
@@ -157,9 +155,19 @@ export function OrderTabs({
               onGenerateProductLines={onGenerateProductLines}
             />
           </div>
-          <div className="w-full flex justify-end gap-2 mt-8">
-            <Button onClick={goNext} variant="default" size="lg" className="ml-auto flex items-center gap-2">
-              Tiếp theo <ChevronRight className="w-4 h-4" />
+          <div className="w-full flex justify-between gap-2 mt-8">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)} 
+              className="flex items-center gap-2"
+            >
+              Hủy
+            </Button>
+            <Button 
+              onClick={onGenerateProductLines}
+              variant="default"
+            >
+              Xem thiết kế demo
             </Button>
           </div>
         </div>
@@ -186,8 +194,12 @@ export function OrderTabs({
             <Button onClick={goPrev} variant="outline" size="lg" className="flex items-center gap-2">
               <ChevronLeft className="w-4 h-4" /> Quay lại
             </Button>
-            <Button onClick={goNext} variant="default" size="lg" className="flex items-center gap-2">
-              Tiếp theo <ChevronRight className="w-4 h-4" />
+            <Button 
+              onClick={onApproveDemo} 
+              variant="default"
+              disabled={isGeneratingDesign}
+            >
+              {isGeneratingDesign ? "Đang xử lý..." : "Duyệt thiết kế demo"}
             </Button>
           </div>
         </div>
@@ -220,4 +232,3 @@ export function OrderTabs({
     </Tabs>
   );
 }
-
