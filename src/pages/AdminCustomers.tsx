@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
@@ -49,7 +48,8 @@ const AdminCustomers = () => {
     handleSearch,
     handlePageChange,
     handlePageSizeChange,
-    getCustomerWithOrdersCount
+    getCustomerWithOrdersCount,
+    deleteCustomer
   } = useCustomers();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +59,7 @@ const AdminCustomers = () => {
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [customerWithOrdersCount, setCustomerWithOrdersCount] = useState<Customer & { order_count: number } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const debouncedSearch = useCallback(
     debounce((value: string) => {
@@ -108,6 +109,18 @@ const AdminCustomers = () => {
         // Error handling is done in the hook
       }
       setIsResetPasswordDialogOpen(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (selectedCustomer) {
+      try {
+        await deleteCustomer(selectedCustomer.id);
+      } catch (error) {
+        // Error handling is done in the hook
+      }
+      setIsDeleteDialogOpen(false);
+      setSelectedCustomer(null);
     }
   };
 
@@ -174,6 +187,10 @@ const AdminCustomers = () => {
                 onResetPassword={(customer) => {
                   setSelectedCustomer(customer);
                   setIsResetPasswordDialogOpen(true);
+                }}
+                onDelete={(customer) => {
+                  setSelectedCustomer(customer);
+                  setIsDeleteDialogOpen(true);
                 }}
               />
             </TableBody>
@@ -247,6 +264,28 @@ const AdminCustomers = () => {
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleResetPasswordConfirm}>
               Gửi email đặt lại mật khẩu
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Customer Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa khách hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa khách hàng {selectedCustomer?.name}? 
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCustomer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Xóa khách hàng
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

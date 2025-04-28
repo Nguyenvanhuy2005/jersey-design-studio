@@ -224,6 +224,24 @@ export function useCustomers() {
     }
   };
 
+  const deleteCustomer = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("customers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Đã xóa khách hàng");
+      await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
+    } catch (err: any) {
+      console.error("Error deleting customer:", err);
+      toast.error(`Không thể xóa khách hàng: ${err.message}`);
+      throw err;
+    }
+  };
+
   return {
     customers,
     loading,
@@ -240,6 +258,7 @@ export function useCustomers() {
     handleSearch,
     handlePageChange,
     handlePageSizeChange,
-    getCustomerWithOrdersCount
+    getCustomerWithOrdersCount,
+    deleteCustomer
   };
 }

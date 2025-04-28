@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Customer } from "@/types";
-import { Eye, Edit, Key } from "lucide-react";
+import { Eye, Edit, Key, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import {
@@ -10,7 +10,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 
@@ -20,6 +20,7 @@ interface CustomersTableProps {
   onViewDetails: (customer: Customer) => void;
   onEdit: (customer: Customer) => void;
   onResetPassword: (customer: Customer) => void;
+  onDelete: (customer: Customer) => void;
 }
 
 export function CustomersTable({
@@ -27,7 +28,8 @@ export function CustomersTable({
   loading,
   onViewDetails,
   onEdit,
-  onResetPassword
+  onResetPassword,
+  onDelete,
 }: CustomersTableProps) {
   const navigate = useNavigate();
 
@@ -90,6 +92,15 @@ export function CustomersTable({
               disabled={!customer.email}
             >
               <Key className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              title="Xóa khách hàng"
+              onClick={() => onDelete(customer)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
             <Button 
               variant="outline" 
