@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,14 +10,11 @@ export function useCustomers() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Pagination state
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [hasMore, setHasMore] = useState<boolean>(true);
-
-  // This is needed to avoid refetching when component remounts but data hasn't changed
   const [initialFetchDone, setInitialFetchDone] = useState<boolean>(false);
 
   const fetchCustomers = useCallback(async ({
@@ -44,21 +40,17 @@ export function useCustomers() {
     try {
       console.log("Fetching customers with params:", { page, pageSize, search });
       
-      // Calculate range for pagination
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       
-      // Build the query
       let query = supabase
         .from('customers')
         .select('*', { count: 'exact' });
       
-      // Add search filter if provided
       if (search && search.trim()) {
         query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,address.ilike.%${search}%`);
       }
       
-      // Execute the query with range
       const { data: customersData, error: customersError, count } = await query
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -72,7 +64,6 @@ export function useCustomers() {
 
       setCustomers(customersData as Customer[] || []);
       
-      // Update total count and has more
       if (count !== null) {
         setTotalCount(count);
         setHasMore(from + customersData.length < count);
@@ -89,7 +80,6 @@ export function useCustomers() {
   }, [user, isAdmin]);
 
   useEffect(() => {
-    // Only fetch on initial mount or when auth state changes
     if (user && !initialFetchDone) {
       console.log("Initial fetch or auth state changed, fetching customers...");
       fetchCustomers({ page, pageSize, search: searchTerm });
@@ -99,33 +89,32 @@ export function useCustomers() {
     }
   }, [user, isAdmin, fetchCustomers, initialFetchDone, page, pageSize, searchTerm]);
 
-  // Debounced search function
   const handleSearch = useCallback((search: string) => {
     setSearchTerm(search);
-    setPage(1); // Reset to first page when searching
+    setPage(1);
     fetchCustomers({ page: 1, pageSize, search });
   }, [fetchCustomers, pageSize]);
 
-  // Page change handler
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     fetchCustomers({ page: newPage, pageSize, search: searchTerm });
   }, [fetchCustomers, pageSize, searchTerm]);
 
-  // Page size change handler
   const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
-    setPage(1); // Reset to first page when changing page size
+    setPage(1);
     fetchCustomers({ page: 1, pageSize: newPageSize, search: searchTerm });
   }, [fetchCustomers, searchTerm]);
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
       const response = await fetch(`https://qovekbaewxxdzjzbcimc.supabase.co/functions/v1/create-customer-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+          'Authorization': `Bearer ${sessionData.session?.access_token}`
         },
         body: JSON.stringify({
           profileData: {
@@ -197,10 +186,8 @@ export function useCustomers() {
     }
   };
 
-  // Get customer by ID with orders count
   const getCustomerWithOrdersCount = async (id: string): Promise<Customer & { order_count: number }> => {
     try {
-      // Get customer details
       const { data: customer, error: customerError } = await supabase
         .from("customers")
         .select("*")
@@ -209,7 +196,6 @@ export function useCustomers() {
         
       if (customerError) throw customerError;
       
-      // Get order count for this customer
       const { count, error: countError } = await supabase
         .from("orders")
         .select("*", { count: "exact", head: true })
