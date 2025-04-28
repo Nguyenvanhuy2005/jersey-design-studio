@@ -15,9 +15,11 @@ const CustomerAuth = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginPhone, setLoginPhone] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   
   // Registration form state
@@ -31,18 +33,23 @@ const CustomerAuth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!loginEmail || !loginPassword) {
-      toast.error("Vui lòng nhập email và mật khẩu");
+    const identifier = loginMethod === "email" ? loginEmail : loginPhone;
+    if (!identifier || !loginPassword) {
+      toast.error(loginMethod === "email" 
+        ? "Vui lòng nhập email và mật khẩu"
+        : "Vui lòng nhập số điện thoại và mật khẩu"
+      );
       return;
     }
     
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
+      const { error } = await supabase.auth.signInWithPassword(
+        loginMethod === "email"
+          ? { email: loginEmail, password: loginPassword }
+          : { phone: loginPhone, password: loginPassword }
+      );
       
       if (error) {
         toast.error(error.message || "Không thể đăng nhập. Vui lòng kiểm tra lại thông tin.");
@@ -63,7 +70,7 @@ const CustomerAuth = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!name || !email || !password || !phone || !address) {
+    if (!name || !password || !phone || !address) {
       toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
@@ -81,9 +88,12 @@ const CustomerAuth = () => {
     setLoading(true);
     
     try {
+      const signUpData = email 
+        ? { email, password }
+        : { phone, password };
+
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        ...signUpData,
         options: {
           data: {
             name,
@@ -99,7 +109,6 @@ const CustomerAuth = () => {
       }
       
       toast.success("Đăng ký thành công!");
-      // If email confirmation is required, show a different message
       if (data?.user && !data?.session) {
         toast("Vui lòng kiểm tra email để xác nhận tài khoản của bạn.");
         navigate("/");
@@ -136,18 +145,51 @@ const CustomerAuth = () => {
             <TabsContent value="login">
               <form onSubmit={handleLogin}>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      disabled={loading}
-                    />
+                  <div className="flex justify-center space-x-4 mb-4">
+                    <Button
+                      type="button"
+                      variant={loginMethod === "email" ? "default" : "outline"}
+                      onClick={() => setLoginMethod("email")}
+                    >
+                      Email
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={loginMethod === "phone" ? "default" : "outline"}
+                      onClick={() => setLoginMethod("phone")}
+                    >
+                      Số điện thoại
+                    </Button>
                   </div>
+
+                  {loginMethod === "email" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Số điện thoại</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="0912345678"
+                        value={loginPhone}
+                        onChange={(e) => setLoginPhone(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Mật khẩu</Label>
                     <Input

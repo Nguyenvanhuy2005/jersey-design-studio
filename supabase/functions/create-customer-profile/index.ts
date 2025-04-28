@@ -60,10 +60,38 @@ serve(async (req) => {
       throw new Error('Khách hàng với số điện thoại này đã tồn tại')
     }
 
-    // Insert the new customer directly (no auth user creation needed)
+    let authUserId = undefined;
+
+    // If password is provided, create an auth user
+    if (profileData.password) {
+      // Create auth user with phone or email
+      const signUpData = profileData.email 
+        ? { email: profileData.email, password: profileData.password }
+        : { phone: profileData.phone, password: profileData.password };
+
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        ...signUpData,
+        email_confirm: true,
+        phone_confirm: true,
+        user_metadata: {
+          name: profileData.name,
+          address: profileData.address
+        }
+      });
+
+      if (authError) {
+        console.error('Error creating auth user:', authError)
+        throw new Error(authError.message)
+      }
+
+      authUserId = authUser.user.id;
+    }
+
+    // Insert the customer profile
     const { data: customerRecord, error: customerError } = await supabaseAdmin
       .from('customers')
       .insert({
+        id: authUserId, // If auth user was created, use their ID, otherwise generates a new UUID
         name: profileData.name,
         phone: profileData.phone,
         address: profileData.address,
@@ -81,7 +109,10 @@ serve(async (req) => {
     console.log('Customer profile created successfully:', customerRecord)
 
     return new Response(
-      JSON.stringify({ customer: customerRecord }),
+      JSON.stringify({ 
+        customer: customerRecord,
+        authEnabled: !!authUserId
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

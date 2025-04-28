@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Customer } from "@/types";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface CustomerFormProps {
@@ -36,8 +36,10 @@ export function CustomerForm({
     phone: customer.phone || "",
     address: customer.address || "",
     delivery_note: customer.delivery_note || "",
-    email: customer.email || ""
+    email: customer.email || "",
+    password: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
@@ -72,7 +74,7 @@ export function CustomerForm({
           <DialogTitle>{title}</DialogTitle>
           <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
             <Info className="h-4 w-4" />
-            <span>Email là tùy chọn. Chỉ cần điền họ tên, số điện thoại và địa chỉ.</span>
+            <span>Email là tùy chọn. Chỉ cần điền họ tên, số điện thoại và địa chỉ. Thêm mật khẩu nếu muốn tạo tài khoản cho khách hàng.</span>
           </div>
         </DialogHeader>
         
@@ -119,7 +121,35 @@ export function CustomerForm({
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                placeholder="Email khách hàng"
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="password">Mật khẩu tạm thời (tùy chọn)</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Mật khẩu tạm thời cho khách hàng"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-2">

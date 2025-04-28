@@ -106,7 +106,7 @@ export function useCustomers() {
     fetchCustomers({ page: 1, pageSize: newPageSize, search: searchTerm });
   }, [fetchCustomers, searchTerm]);
 
-  const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
+  const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'> & { password?: string }) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       
@@ -122,7 +122,8 @@ export function useCustomers() {
             email: customerData.email || null,
             phone: customerData.phone,
             address: customerData.address,
-            delivery_note: customerData.delivery_note
+            delivery_note: customerData.delivery_note,
+            password: customerData.password
           }
         })
       });
@@ -133,7 +134,11 @@ export function useCustomers() {
       }
 
       const data = await response.json();
-      toast.success("Đã thêm khách hàng mới");
+      const message = data.authEnabled 
+        ? "Đã thêm khách hàng mới và tạo tài khoản đăng nhập"
+        : "Đã thêm khách hàng mới";
+      toast.success(message);
+      
       await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
       return data.customer;
     } catch (err: any) {
