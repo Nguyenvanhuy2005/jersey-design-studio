@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Dialog,
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Customer } from "@/types";
 import { Loader2, Info } from "lucide-react";
+import { toast } from "sonner";
 
 interface CustomerFormProps {
   customer: Customer;
