@@ -1,18 +1,8 @@
 
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
 import { Order } from "@/types";
-import { parseDateSafely } from "@/utils/format-utils";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
 
 interface CustomerOrdersListProps {
@@ -20,80 +10,81 @@ interface CustomerOrdersListProps {
 }
 
 export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
-  const formatStatus = (status: string) => {
-    switch (status) {
-      case "new":
-        return <Badge variant="secondary">Đơn mới</Badge>;
-      case "processing":
-        return <Badge variant="default">Đang xử lý</Badge>;
-      case "completed":
-        return <Badge variant="success" className="bg-green-500">Hoàn thành</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const sortedOrders = useMemo(() => {
-    return [...orders].sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : parseDateSafely(a.createdAt);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : parseDateSafely(b.createdAt);
-      return dateB.getTime() - dateA.getTime();
-    });
-  }, [orders]);
+  const navigate = useNavigate();
 
   if (orders.length === 0) {
     return (
-      <div className="text-center py-10">
-        <h3 className="text-lg font-medium mb-2">Bạn chưa có đơn hàng nào</h3>
-        <p className="text-muted-foreground mb-4">
-          Tạo đơn hàng mới để bắt đầu thiết kế áo đấu của bạn
-        </p>
-        <Button asChild>
-          <Link to="/create-order">Tạo đơn hàng mới</Link>
-        </Button>
+      <div className="text-center py-6 text-muted-foreground">
+        Bạn chưa có đơn hàng nào
       </div>
     );
   }
 
   return (
     <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>STT</TableHead>
-            <TableHead>Ngày đặt</TableHead>
-            <TableHead>Tên đội</TableHead>
-            <TableHead>Số lượng</TableHead>
-            <TableHead>Tổng tiền</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Thao tác</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedOrders.map((order, index) => {
-            const createdAt = parseDateSafely(order.createdAt);
-            const playerCount = order.players?.length || 0;
-            
-            return (
-              <TableRow key={order.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{createdAt.toLocaleDateString("vi-VN")}</TableCell>
-                <TableCell>{order.teamName || "Không có tên"}</TableCell>
-                <TableCell>{playerCount} áo</TableCell>
-                <TableCell>{order.totalCost?.toLocaleString("vi-VN")} đ</TableCell>
-                <TableCell>{formatStatus(order.status)}</TableCell>
-                <TableCell>
-                  <Link to={`/customer/orders/${order.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-1" /> Xem
-                    </Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              STT
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Ngày đặt
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Tên đội
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Số lượng
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Tổng tiền
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Trạng thái
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Thao tác
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {orders.map((order, index) => (
+            <tr key={order.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                {index + 1}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                {order.createdAt ? new Date(order.createdAt).toLocaleDateString("vi-VN") : "N/A"}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                {order.teamName || "Con có"}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                {order.players?.length || 0} áo
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                {order.totalCost?.toLocaleString("vi-VN")} đ
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="px-2 py-1 text-xs font-medium rounded-full bg-black text-white">
+                  Đơn mới
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/customer/orders/${order.id}`)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Xem
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
