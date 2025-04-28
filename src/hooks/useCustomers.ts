@@ -134,10 +134,15 @@ export function useCustomers() {
       }
 
       const data = await response.json();
-      const message = data.authEnabled 
-        ? "Đã thêm khách hàng mới và tạo tài khoản đăng nhập"
-        : "Đã thêm khách hàng mới";
-      toast.success(message);
+      
+      if (data.warning) {
+        toast.warning(data.warning);
+      } else {
+        const message = data.authEnabled 
+          ? "Đã thêm khách hàng mới và tạo tài khoản đăng nhập"
+          : "Đã thêm khách hàng mới";
+        toast.success(message);
+      }
       
       await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
       return data.customer;
