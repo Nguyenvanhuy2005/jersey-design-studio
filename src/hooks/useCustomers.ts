@@ -121,27 +121,32 @@ export function useCustomers() {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
-      // Generate UUID for new customer
-      const customerUuid = crypto.randomUUID();
-      
-      const { data, error } = await supabase
-        .from("customers")
-        .insert({
-          id: customerUuid,
-          name: customerData.name,
-          email: customerData.email,
-          phone: customerData.phone,
-          address: customerData.address,
-          delivery_note: customerData.delivery_note
+      const response = await fetch(`https://qovekbaewxxdzjzbcimc.supabase.co/functions/v1/create-customer-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+        },
+        body: JSON.stringify({
+          profileData: {
+            name: customerData.name,
+            email: customerData.email || null,
+            phone: customerData.phone,
+            address: customerData.address,
+            delivery_note: customerData.delivery_note
+          }
         })
-        .select()
-        .single();
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Không thể tạo khách hàng');
+      }
 
+      const data = await response.json();
       toast.success("Đã thêm khách hàng mới");
       await fetchCustomers({ page, pageSize, search: searchTerm, forceRefresh: true });
-      return data;
+      return data.customer;
     } catch (err: any) {
       console.error("Error creating customer:", err);
       toast.error(`Không thể tạo khách hàng: ${err.message}`);
@@ -157,7 +162,8 @@ export function useCustomers() {
           name: customerData.name,
           phone: customerData.phone,
           address: customerData.address,
-          delivery_note: customerData.delivery_note
+          delivery_note: customerData.delivery_note,
+          email: customerData.email
         })
         .eq("id", id)
         .select()

@@ -37,7 +37,7 @@ serve(async (req) => {
       const body = await req.json()
       profileData = body.profileData
       
-      if (!profileData?.id || !profileData?.name || !profileData?.phone || !profileData?.address) {
+      if (!profileData?.name || !profileData?.phone || !profileData?.address) {
         console.error('Missing required profile data:', profileData)
         throw new Error('Missing required profile information')
       }
@@ -48,23 +48,24 @@ serve(async (req) => {
       throw new Error('Invalid request format')
     }
 
-    // First check if customer already exists
-    const { data: existingCustomer, error: checkError } = await supabaseAdmin
+    // Generate a UUID for the customer if not provided
+    if (!profileData.id) {
+      profileData.id = crypto.randomUUID();
+    }
+
+    // First check if customer with same phone already exists
+    const { data: existingCustomerByPhone, error: checkPhoneError } = await supabaseAdmin
       .from('customers')
-      .select('id')
-      .eq('id', profileData.id)
+      .select('id, phone')
+      .eq('phone', profileData.phone)
       .single()
 
-    if (checkError && !checkError.message.includes('not found')) {
-      console.error('Error checking existing customer:', checkError)
-      throw checkError
+    if (existingCustomerByPhone) {
+      console.error('Customer already exists with phone:', profileData.phone)
+      throw new Error('Khách hàng với số điện thoại này đã tồn tại')
     }
 
-    if (existingCustomer) {
-      console.error('Customer already exists with ID:', profileData.id)
-      throw new Error('Khách hàng đã tồn tại')
-    }
-
+    // Insert the new customer
     const { data: customerRecord, error: customerError } = await supabaseAdmin
       .from('customers')
       .insert({
@@ -73,7 +74,7 @@ serve(async (req) => {
         phone: profileData.phone,
         address: profileData.address,
         delivery_note: profileData.delivery_note,
-        email: profileData.email
+        email: profileData.email || null
       })
       .select()
       .single()

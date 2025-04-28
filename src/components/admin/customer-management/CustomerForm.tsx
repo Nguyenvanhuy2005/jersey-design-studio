@@ -35,7 +35,8 @@ export function CustomerForm({
     name: customer.name || "",
     phone: customer.phone || "",
     address: customer.address || "",
-    delivery_note: customer.delivery_note || ""
+    delivery_note: customer.delivery_note || "",
+    email: customer.email || ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,6 +98,18 @@ export function CustomerForm({
                 value={formData.address}
                 onChange={handleChange}
                 required
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Không bắt buộc"
               />
             </div>
 
