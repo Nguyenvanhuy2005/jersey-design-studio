@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Customer } from "@/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 
 interface CustomerFormProps {
   customer: Customer;
@@ -49,6 +49,12 @@ export function CustomerForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
+      toast.error("Vui lòng điền đầy đủ thông tin họ tên, số điện thoại và địa chỉ");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -64,6 +70,10 @@ export function CustomerForm({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
+            <Info className="h-4 w-4" />
+            <span>Email là tùy chọn. Chỉ cần điền họ tên, số điện thoại và địa chỉ.</span>
+          </div>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -102,14 +112,13 @@ export function CustomerForm({
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email (tùy chọn)</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Không bắt buộc"
               />
             </div>
 

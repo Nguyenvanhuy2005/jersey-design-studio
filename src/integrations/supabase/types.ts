@@ -24,7 +24,7 @@ export type Database = {
           created_at?: string | null
           delivery_note?: string | null
           email?: string | null
-          id: string
+          id?: string
           name?: string | null
           phone?: string | null
         }

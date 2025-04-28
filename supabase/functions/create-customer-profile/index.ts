@@ -39,18 +39,13 @@ serve(async (req) => {
       
       if (!profileData?.name || !profileData?.phone || !profileData?.address) {
         console.error('Missing required profile data:', profileData)
-        throw new Error('Missing required profile information')
+        throw new Error('Vui lòng điền đầy đủ thông tin họ tên, số điện thoại và địa chỉ')
       }
       
       console.log('Creating customer profile:', profileData)
     } catch (parseError) {
       console.error('Error parsing request body:', parseError)
       throw new Error('Invalid request format')
-    }
-
-    // Generate a UUID for the customer if not provided
-    if (!profileData.id) {
-      profileData.id = crypto.randomUUID();
     }
 
     // First check if customer with same phone already exists
@@ -65,11 +60,10 @@ serve(async (req) => {
       throw new Error('Khách hàng với số điện thoại này đã tồn tại')
     }
 
-    // Insert the new customer
+    // Insert the new customer directly (no auth user creation needed)
     const { data: customerRecord, error: customerError } = await supabaseAdmin
       .from('customers')
       .insert({
-        id: profileData.id,
         name: profileData.name,
         phone: profileData.phone,
         address: profileData.address,
