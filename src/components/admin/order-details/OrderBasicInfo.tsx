@@ -49,6 +49,18 @@ export const OrderBasicInfo = ({ order }: OrderBasicInfoProps) => {
           )}
         </div>
         
+        {order.deliveryInformation && (
+          <div className="mt-2 pt-2 border-t">
+            <h4 className="font-medium mb-1">Thông tin giao hàng</h4>
+            <p><span className="text-muted-foreground">Người nhận:</span> {order.deliveryInformation.recipient_name}</p>
+            <p><span className="text-muted-foreground">Địa chỉ nhận:</span> {order.deliveryInformation.address}</p>
+            <p><span className="text-muted-foreground">Số điện thoại:</span> {order.deliveryInformation.phone}</p>
+            {order.deliveryInformation.delivery_note && (
+              <p><span className="text-muted-foreground">Ghi chú giao hàng:</span> {order.deliveryInformation.delivery_note}</p>
+            )}
+          </div>
+        )}
+        
         {order.notes && (
           <div className="mt-2 pt-2 border-t">
             <h4 className="font-medium">Ghi chú</h4>

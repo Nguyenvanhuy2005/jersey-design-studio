@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer, DeliveryInformation } from '@/types';
@@ -265,7 +264,7 @@ export const useOrderSubmission = ({
         .from('delivery_information')
         .insert({
           customer_id: user.id,
-          order_id: orderId,
+          order_id: orderId,  // Make sure to include orderId here to link with the order
           recipient_name: deliveryInfo.recipient_name,
           address: deliveryInfo.address,
           phone: deliveryInfo.phone,

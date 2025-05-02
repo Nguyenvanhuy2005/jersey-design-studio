@@ -1,4 +1,4 @@
-import { Order, Player, Logo, LogoPosition } from "@/types";
+import { Order, Player, Logo, LogoPosition, DeliveryInformation } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define types for raw database models
@@ -242,7 +242,8 @@ export function dbOrderToOrder(
   players?: any[],
   productLines?: any[],
   printConfig?: any,
-  logos?: any[]
+  logos?: any[],
+  deliveryInfo?: any
 ): Order {
   // Parse reference images
   const refImages = parseReferenceImages(dbOrder.reference_images);
@@ -313,7 +314,21 @@ export function dbOrderToOrder(
     console.log("No logos in dbOrderToOrder function");
   }
 
-  // Create the Order object (remove logo_url and logo_urls references)
+  // Process delivery information if available
+  let deliveryInformation: DeliveryInformation | undefined = undefined;
+  if (deliveryInfo) {
+    deliveryInformation = {
+      id: deliveryInfo.id,
+      recipient_name: deliveryInfo.recipient_name,
+      address: deliveryInfo.address,
+      phone: deliveryInfo.phone,
+      delivery_note: deliveryInfo.delivery_note,
+      customer_id: deliveryInfo.customer_id,
+      order_id: deliveryInfo.order_id
+    };
+  }
+
+  // Create the Order object
   return {
     id: dbOrder.id,
     players: processedPlayers,
@@ -331,6 +346,7 @@ export function dbOrderToOrder(
     customerAddress: customer?.address || undefined,
     teamName,
     logos: processedLogos,
-    logoIds // Using the logoIds property we added to the Order interface
+    logoIds, // Using the logoIds property we added to the Order interface
+    deliveryInformation // Add the delivery information to the order
   };
 }

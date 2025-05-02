@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Order, Logo } from "@/types";
@@ -104,12 +103,24 @@ export function CustomerOrderDetails() {
         console.error("Error fetching logos:", logosError);
       }
 
+      // Fetch delivery information
+      const { data: deliveryData, error: deliveryError } = await supabase
+        .from("delivery_information")
+        .select("*")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (deliveryError) {
+        console.error("Error fetching delivery information:", deliveryError);
+      }
+      
       console.log("Complete order data:", {
         order: orderData,
         players: playersData,
         productLines: productLinesData,
         printConfig: printConfigData,
-        logos: logosData
+        logos: logosData,
+        delivery: deliveryData
       });
       
       const convertedOrder = dbOrderToOrder(
@@ -118,7 +129,8 @@ export function CustomerOrderDetails() {
         playersData || [],
         productLinesData || [],
         printConfigData,
-        logosData || []
+        logosData || [],
+        deliveryData
       );
       
       setOrder(convertedOrder);
@@ -324,6 +336,39 @@ export function CustomerOrderDetails() {
               </CardContent>
             </Card>
 
+            {/* Add delivery information card */}
+            {order.deliveryInformation && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <span>Thông tin giao hàng</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="grid grid-cols-3 gap-2">
+                      <span className="text-muted-foreground">Người nhận:</span>
+                      <span className="col-span-2">{order.deliveryInformation.recipient_name}</span>
+                    </p>
+                    <p className="grid grid-cols-3 gap-2">
+                      <span className="text-muted-foreground">Địa chỉ:</span>
+                      <span className="col-span-2">{order.deliveryInformation.address}</span>
+                    </p>
+                    <p className="grid grid-cols-3 gap-2">
+                      <span className="text-muted-foreground">Số điện thoại:</span>
+                      <span className="col-span-2">{order.deliveryInformation.phone}</span>
+                    </p>
+                    {order.deliveryInformation.delivery_note && (
+                      <p className="grid grid-cols-3 gap-2">
+                        <span className="text-muted-foreground">Ghi chú:</span>
+                        <span className="col-span-2">{order.deliveryInformation.delivery_note}</span>
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {assets.map((assetGroup, index) => (
               <Card key={index}>
                 <CardContent className="pt-6">
