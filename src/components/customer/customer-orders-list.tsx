@@ -4,6 +4,7 @@ import { Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { OrderStatus } from "@/components/admin/order-list/OrderStatus";
 
 interface CustomerOrdersListProps {
   orders: Order[];
@@ -67,9 +68,7 @@ export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
                 {order.totalCost?.toLocaleString("vi-VN")} đ
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span className="px-2 py-1 text-xs font-medium rounded-full bg-black text-white">
-                  Đơn mới
-                </span>
+                <OrderStatus status={order.status} />
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <Button

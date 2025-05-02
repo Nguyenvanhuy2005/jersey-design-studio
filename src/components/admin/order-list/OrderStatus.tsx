@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { Check, Clock, ArrowRight, Plus, Package, X } from "lucide-react";
+import { Check, Clock, Plus, Package, X } from "lucide-react";
 
 type OrderStatusProps = {
   status: string;
