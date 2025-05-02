@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Logo, PrintConfig, DesignData } from '@/types';
 import { loadLogoImages, getFont } from '@/utils/jersey-utils';
@@ -71,7 +70,16 @@ export function CanvasJersey({
   }, [logos, designData, isGoalkeeper]);
 
   useEffect(() => {
-    const customFontUrl = designData?.font_text?.font_file || designData?.font_number?.font_file;
+    console.log('CanvasJersey fonts:', {
+      textFont: designData?.font_text?.font,
+      numberFont: designData?.font_number?.font, 
+      printConfigFont: printConfig?.font,
+      view: view
+    });
+  }, [designData, printConfig, view]);
+
+  useEffect(() => {
+    const customFontUrl = designData?.font_text?.font || designData?.font_number?.font;
     if (customFontUrl) {
       loadCustomFont(customFontUrl, 'Custom Font')
         .then(fontFace => {
@@ -280,6 +288,7 @@ export function CanvasJersey({
     }
 
     console.log(`Rendering jersey view: ${view}, with ${loadedLogos.size} loaded logos, isGoalkeeper: ${isGoalkeeper}`);
+    console.log(`Using fonts: numberFont=${designData?.font_number?.font}, textFont=${designData?.font_text?.font}`);
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     
@@ -328,7 +337,7 @@ export function CanvasJersey({
         isGoalkeeper: isGoalkeeper
       });
     } else if (view === 'pants') {
-      console.log('Rendering pants view');
+      console.log('Rendering pants view with font:', effectiveDesignData.font_number?.font);
       const pantsLogo = logos.find(logo => logo.position === 'pants');
       let logoImage;
       let logoPosition;
@@ -344,6 +353,8 @@ export function CanvasJersey({
       let pantsNumberFont = effectiveDesignData.font_number?.font 
         || printConfig?.font
         || 'Arial';
+        
+      console.log('Using pants number font:', pantsNumberFont);
 
       JerseyPants({
         ctx,

@@ -50,12 +50,14 @@ export const JerseyPants = ({
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
 
-  // Choose font for pants number: designData.font_number.font -> printConfig.font -> fontFamily -> Arial
-  let pantsNumberFont =
+  // Choose font for pants number: always prioritize designData.font_number.font
+  let pantsNumberFont = 
     (designData?.font_number?.font)
     || (printConfig?.font)
     || fontFamily
     || 'Arial';
+    
+  console.log(`JerseyPants using number font: ${pantsNumberFont}`);
 
   // Draw player number if enabled
   if (playerNumber !== undefined && pants_number_enabled) {

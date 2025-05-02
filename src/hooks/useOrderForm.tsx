@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer, DeliveryInformation } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -184,6 +183,12 @@ export const useOrderForm = () => {
       console.log('Updated design data with new number font:', updated);
       return updated;
     });
+    
+    // Also update printConfig to keep things consistent
+    setPrintConfig(prev => ({
+      ...prev,
+      font: newFont // This ensures the default font is also updated
+    }));
   };
 
   return {

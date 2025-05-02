@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Globe, Lock, Upload } from "lucide-react";
 import { useFonts } from "@/hooks/useFonts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -46,6 +46,16 @@ export function PrintGlobalSettings({
   const allTextFonts = [...new Set([...fontTextOptions, ...customFonts])];
   const allNumberFonts = [...new Set([...fontNumberOptions, ...customFonts])];
 
+  // Log current font selections to help with debugging
+  useEffect(() => {
+    console.log('PrintGlobalSettings current fonts:', {
+      fontText,
+      fontNumber,
+      allTextFonts,
+      allNumberFonts
+    });
+  }, [fontText, fontNumber, allTextFonts, allNumberFonts]);
+
   const handleToggleFontVisibility = async (fontName: string) => {
     // Find font in metadata
     const fontData = fontsWithMetadata.find(f => f.name === fontName);
@@ -76,6 +86,7 @@ export function PrintGlobalSettings({
         const { success, fontName } = await uploadFont(file);
         
         if (success) {
+          console.log(`Font upload successful: ${fontName}, type: ${type}`);
           // Update the selected font based on type
           if (type === 'text') {
             onFontTextChange(fontName);

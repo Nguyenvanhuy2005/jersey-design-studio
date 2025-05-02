@@ -55,7 +55,7 @@ export const JerseyBack = ({
     const numberFont = designData?.font_number?.font || fontFamily || 'Arial';
     ctx.font = `bold ${fontSize}px "${numberFont}"`;
     ctx.fillText(playerNumber, 150, 180);
-    console.log(`Drew player number with font: ${numberFont}`);
+    console.log(`Drew player number with font: ${numberFont}, size: ${fontSize}`);
   }
   
   // Draw team name - reduced size to 23px (35% reduction)

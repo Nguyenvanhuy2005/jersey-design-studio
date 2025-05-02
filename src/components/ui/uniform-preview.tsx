@@ -38,6 +38,13 @@ export function UniformPreview({
   // Determine if the current player is a goalkeeper
   const isGoalkeeper = currentPlayer?.uniform_type === "goalkeeper";
 
+  // Log font configurations to help debug
+  console.log("UniformPreview fonts:", {
+    textFont: designData?.font_text?.font,
+    numberFont: designData?.font_number?.font,
+    printConfigFont: printConfig?.font
+  });
+
   // Construct effective design data (logic unchanged, always preference player lines)
   const effectiveDesignData: Partial<DesignData> = {
     uniform_type: isGoalkeeper ? 'goalkeeper' : 'player',
@@ -73,6 +80,9 @@ export function UniformPreview({
       font: designData?.font_number?.font || printConfig?.font || 'Arial'
     }
   };
+
+  // Log the effective design data to help with debugging
+  console.log("Effective design data:", effectiveDesignData);
 
   return (
     <Card className={className}>
