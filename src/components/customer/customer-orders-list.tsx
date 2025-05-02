@@ -28,11 +28,6 @@ export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
       return order.players.length;
     }
     
-    // If order has a playerCount field directly (some orders might have this)
-    if (order.playerCount !== undefined && typeof order.playerCount === 'number') {
-      return order.playerCount;
-    }
-    
     // Default fallback
     return 0;
   };
