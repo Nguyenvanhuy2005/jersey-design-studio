@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +9,8 @@ import { CustomerFormLoading } from "./customer/loading-state";
 import { CustomerFormUnauthenticated } from "./customer/unauthenticated-state";
 import { CustomerFormFields } from "./customer/customer-form-fields";
 import { useCustomerForm } from "@/hooks/useCustomerForm";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface CustomerFormProps {
   onCustomerInfoChange: (customerInfo: Customer) => void;
@@ -47,6 +50,16 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
           customerInfo={customerInfo}
           handleInputChange={handleInputChange}
         />
+        
+        {!isFormComplete() && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Vui lòng điền đầy đủ thông tin</AlertTitle>
+            <AlertDescription>
+              Họ tên, địa chỉ và số điện thoại là bắt buộc để lưu thông tin khách hàng.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Button 
           type="button" 

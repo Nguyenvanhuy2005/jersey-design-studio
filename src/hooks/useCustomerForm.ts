@@ -52,6 +52,7 @@ export function useCustomerForm(initialCustomer?: Customer) {
           address: data.address || "",
           phone: data.phone || "",
           delivery_note: data.delivery_note || "",
+          email: data.email || "",
           created_at: data.created_at
         };
         
@@ -77,27 +78,57 @@ export function useCustomerForm(initialCustomer?: Customer) {
     
     setSaving(true);
     try {
-      const { error } = await supabase
+      // Kiểm tra xem khách hàng có tồn tại không
+      const { data: existingCustomer, error: checkError } = await supabase
         .from("customers")
-        .upsert({
-          id: user.id,
-          name: customerInfo.name,
-          address: customerInfo.address,
-          phone: customerInfo.phone,
-          delivery_note: customerInfo.delivery_note
-        }, {
-          onConflict: 'id'
-        });
+        .select("id")
+        .eq("id", user.id)
+        .single();
+        
+      console.log("Checking existing customer:", existingCustomer, checkError);
+      
+      let error;
+      
+      // Nếu khách hàng không tồn tại, thực hiện insert
+      if (checkError && checkError.code === 'PGRST116') {
+        console.log("Customer doesn't exist, inserting new record");
+        const { error: insertError } = await supabase
+          .from("customers")
+          .insert({
+            id: user.id,
+            name: customerInfo.name,
+            address: customerInfo.address,
+            phone: customerInfo.phone,
+            delivery_note: customerInfo.delivery_note,
+            email: customerInfo.email || null
+          });
+        error = insertError;
+      } 
+      // Nếu khách hàng đã tồn tại, thực hiện update
+      else {
+        console.log("Customer exists, updating record");
+        const { error: updateError } = await supabase
+          .from("customers")
+          .update({
+            name: customerInfo.name,
+            address: customerInfo.address,
+            phone: customerInfo.phone,
+            delivery_note: customerInfo.delivery_note,
+            email: customerInfo.email || null
+          })
+          .eq("id", user.id);
+        error = updateError;
+      }
         
       if (error) {
-        toast.error("Không thể lưu thông tin khách hàng");
         console.error("Error saving customer info:", error);
+        toast.error("Không thể lưu thông tin khách hàng");
         return;
       }
       
-      toast.success("Đã lưu thông tin khách hàng");
+      toast.success("Đã lưu thông tin khách hàng thành công");
     } catch (error) {
-      console.error("Error saving customer info:", error);
+      console.error("Error in saveCustomerInfo:", error);
       toast.error("Không thể lưu thông tin khách hàng");
     } finally {
       setSaving(false);
