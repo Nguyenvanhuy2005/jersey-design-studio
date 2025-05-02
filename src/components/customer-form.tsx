@@ -2,9 +2,7 @@
 import { useEffect } from "react";
 import { Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { LoaderCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { CustomerFormLoading } from "./customer/loading-state";
 import { CustomerFormUnauthenticated } from "./customer/unauthenticated-state";
 import { CustomerFormFields } from "./customer/customer-form-fields";
@@ -21,10 +19,8 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
   const { user } = useAuth();
   const { 
     loading, 
-    saving, 
     customerInfo, 
-    handleInputChange, 
-    saveCustomerInfo, 
+    handleInputChange,
     isFormComplete 
   } = useCustomerForm(initialCustomer);
 
@@ -56,24 +52,14 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Vui lòng điền đầy đủ thông tin</AlertTitle>
             <AlertDescription>
-              Họ tên, địa chỉ và số điện thoại là bắt buộc để lưu thông tin khách hàng.
+              Họ tên và số điện thoại là bắt buộc để xác nhận thông tin khách hàng.
             </AlertDescription>
           </Alert>
         )}
         
-        <Button 
-          type="button" 
-          onClick={saveCustomerInfo} 
-          disabled={saving || !isFormComplete()}
-          className="w-full"
-        >
-          {saving ? (
-            <>
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              Đang lưu...
-            </>
-          ) : "Lưu thông tin khách hàng"}
-        </Button>
+        <p className="text-sm text-muted-foreground">
+          Thông tin này được lưu theo tài khoản của bạn và sẽ được tự động cập nhật.
+        </p>
       </CardContent>
     </Card>
   );

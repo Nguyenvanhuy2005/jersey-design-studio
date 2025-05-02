@@ -4,6 +4,7 @@ import { Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { debounce } from "lodash";
 
 export function useCustomerForm(initialCustomer?: Customer) {
   const { user } = useAuth();
@@ -14,7 +15,6 @@ export function useCustomerForm(initialCustomer?: Customer) {
     name: initialCustomer?.name || "",
     address: initialCustomer?.address || "",
     phone: initialCustomer?.phone || "",
-    delivery_note: initialCustomer?.delivery_note || "",
     email: initialCustomer?.email || ""
   });
 
@@ -51,7 +51,6 @@ export function useCustomerForm(initialCustomer?: Customer) {
           name: data.name || "",
           address: data.address || "",
           phone: data.phone || "",
-          delivery_note: data.delivery_note || "",
           email: data.email || "",
           created_at: data.created_at
         };
@@ -67,14 +66,13 @@ export function useCustomerForm(initialCustomer?: Customer) {
   };
 
   const handleInputChange = (field: keyof Customer, value: string) => {
-    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+    const updatedInfo = { ...customerInfo, [field]: value };
+    setCustomerInfo(updatedInfo);
+    debouncedSaveCustomerInfo(updatedInfo);
   };
 
-  const saveCustomerInfo = async () => {
-    if (!user) {
-      toast.error("Bạn cần đăng nhập để lưu thông tin khách hàng");
-      return;
-    }
+  const saveCustomerInfo = async (info: Customer) => {
+    if (!user) return;
     
     setSaving(true);
     try {
@@ -84,37 +82,31 @@ export function useCustomerForm(initialCustomer?: Customer) {
         .select("id")
         .eq("id", user.id)
         .single();
-        
-      console.log("Checking existing customer:", existingCustomer, checkError);
       
       let error;
       
       // Nếu khách hàng không tồn tại, thực hiện insert
       if (checkError && checkError.code === 'PGRST116') {
-        console.log("Customer doesn't exist, inserting new record");
         const { error: insertError } = await supabase
           .from("customers")
           .insert({
             id: user.id,
-            name: customerInfo.name,
-            address: customerInfo.address,
-            phone: customerInfo.phone,
-            delivery_note: customerInfo.delivery_note,
-            email: customerInfo.email || null
+            name: info.name,
+            address: info.address,
+            phone: info.phone,
+            email: info.email || null
           });
         error = insertError;
       } 
       // Nếu khách hàng đã tồn tại, thực hiện update
       else {
-        console.log("Customer exists, updating record");
         const { error: updateError } = await supabase
           .from("customers")
           .update({
-            name: customerInfo.name,
-            address: customerInfo.address,
-            phone: customerInfo.phone,
-            delivery_note: customerInfo.delivery_note,
-            email: customerInfo.email || null
+            name: info.name,
+            address: info.address,
+            phone: info.phone,
+            email: info.email || null
           })
           .eq("id", user.id);
         error = updateError;
@@ -122,22 +114,23 @@ export function useCustomerForm(initialCustomer?: Customer) {
         
       if (error) {
         console.error("Error saving customer info:", error);
-        toast.error("Không thể lưu thông tin khách hàng");
-        return;
+        return false;
       }
       
-      toast.success("Đã lưu thông tin khách hàng thành công");
+      return true;
     } catch (error) {
       console.error("Error in saveCustomerInfo:", error);
-      toast.error("Không thể lưu thông tin khách hàng");
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  // Debounce the save function to avoid too many API calls
+  const debouncedSaveCustomerInfo = debounce(saveCustomerInfo, 1000);
   
   const isFormComplete = () => {
     return customerInfo.name.trim() !== "" && 
-           customerInfo.address.trim() !== "" && 
            customerInfo.phone.trim() !== "";
   };
 
