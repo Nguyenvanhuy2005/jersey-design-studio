@@ -19,17 +19,27 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Helper function to explicitly clear the session from localStorage
 export const clearLocalSession = () => {
   try {
+    // Clear all Supabase auth-related data from localStorage
+    const keys = Object.keys(localStorage);
+    const supabaseKeys = keys.filter(key => 
+      key.startsWith('supabase.auth.') || 
+      key.includes('supabase') && key.includes('session') ||
+      key.includes('sb-')
+    );
+
+    // Log which keys are being removed for debugging
+    console.log('Clearing Supabase session keys:', supabaseKeys);
+    
+    // Remove all Supabase-related keys
+    supabaseKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Ensure specific known keys are always cleared
     localStorage.removeItem('supabase.auth.token');
     localStorage.removeItem('supabase.auth.expires_at');
     localStorage.removeItem('supabase.auth.refresh_token');
-    
-    // Clear any other potential auth-related items
-    const keys = Object.keys(localStorage);
-    keys.forEach(key => {
-      if (key.startsWith('supabase.auth.')) {
-        localStorage.removeItem(key);
-      }
-    });
+    localStorage.removeItem('sb-qovekbaewxxdzjzbcimc-auth-token');
     
     return true;
   } catch (error) {

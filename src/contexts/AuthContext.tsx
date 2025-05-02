@@ -128,13 +128,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     setIsLoading(true);
     try {
-      // First clear local session data to ensure no stale data
-      clearLocalSession();
-      
-      // Then call Supabase signOut method
+      // First call Supabase signOut method
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signOut error:', error);
+        // Force local logout even if API call fails
+        forceLocalLogout();
+        return;
+      }
+      
+      // Then clear local session data
+      clearLocalSession();
       
       // Reset auth state
       setSession(null);
@@ -147,8 +152,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Có lỗi khi đăng xuất, vui lòng thử lại');
+      
+      // Force local logout in case of any error
+      forceLocalLogout();
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Fallback function to force local logout when API fails
+  const forceLocalLogout = () => {
+    try {
+      // Clear all local session data
+      clearLocalSession();
+      
+      // Reset auth state
+      setSession(null);
+      setUser(null);
+      setIsAdmin(false);
+      
+      toast.success('Đăng xuất cục bộ thành công');
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error('Error in force logout:', err);
+      toast.error('Không thể đăng xuất. Vui lòng tải lại trang.');
     }
   };
 

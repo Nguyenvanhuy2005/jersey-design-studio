@@ -23,11 +23,12 @@ export function Navbar() {
     setIsLoggingOut(true);
     try {
       await signOut();
+      // Note: navigation is handled in the AuthContext to ensure proper session clearing first
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Có lỗi khi đăng xuất');
-    } finally {
-      setIsLoggingOut(false);
+      // Reset the loading state after a delay to ensure UI feedback
+      setTimeout(() => setIsLoggingOut(false), 500);
     }
   };
   
