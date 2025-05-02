@@ -20,7 +20,16 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Create context with a meaningful default value
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  user: null,
+  isLoading: true,
+  isAdmin: false,
+  signOut: async () => {
+    console.warn('AuthContext not initialized');
+  },
+});
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -143,17 +152,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const contextValue: AuthContextType = {
+    session,
+    user,
+    isLoading,
+    isAdmin,
+    signOut
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, isAdmin, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Export the hook separately from the provider
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
 };
