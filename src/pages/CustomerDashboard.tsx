@@ -81,9 +81,14 @@ const CustomerDashboard = () => {
     if (!user) return;
     
     try {
+      // Updated query to include players data similar to how it's done in useOrders.ts
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          players (*), 
+          logos (*)
+        `)
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false });
         
@@ -94,11 +99,10 @@ const CustomerDashboard = () => {
       }
       
       if (data) {
-        // Convert database orders to application Order type
-        // Each order now includes players, logos, etc. as JSONB arrays
+        // Convert database orders to application Order type with players data
         const convertedOrders = data.map((order: any) => {
-          console.log("Raw order data:", order);
-          return dbOrderToOrder(order as any);
+          console.log("Raw order data with players:", order);
+          return dbOrderToOrder(order);
         });
         setOrders(convertedOrders);
       }
