@@ -1,5 +1,7 @@
-import { Customer, Logo, Player } from "@/types";
+
+import { Customer, DeliveryInformation, Logo, Player } from "@/types";
 import { CustomerForm } from "@/components/customer-form";
+import { DeliveryForm } from "@/components/delivery-form";
 import { PrintGlobalSettings } from "@/components/print-global-settings";
 import { LogoUpload } from "@/components/logo-upload";
 import { PlayerForm } from "@/components/player-form";
@@ -9,9 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { memo } from "react";
+
 interface OrderInfoTabContentProps {
   customerInfo: Customer;
   onCustomerInfoChange: (customer: Customer) => void;
+  deliveryInfo: DeliveryInformation;
+  onDeliveryInfoChange: (info: DeliveryInformation) => void;
   referenceImages: File[];
   referenceImagesPreview: string[];
   onReferenceImagesUpload: (fileList: FileList | null) => void;
@@ -32,9 +37,12 @@ interface OrderInfoTabContentProps {
   onNotesChange: (notes: string) => void;
   onGenerateProductLines: () => void;
 }
+
 export const OrderInfoTabContent = memo(({
   customerInfo,
   onCustomerInfoChange,
+  deliveryInfo,
+  onDeliveryInfoChange,
   referenceImages,
   referenceImagesPreview,
   onReferenceImagesUpload,
@@ -57,7 +65,10 @@ export const OrderInfoTabContent = memo(({
 }: OrderInfoTabContentProps) => {
   return <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
-        <CustomerForm initialCustomer={customerInfo} onCustomerInfoChange={onCustomerInfoChange} />
+        <div className="space-y-6">
+          <CustomerForm initialCustomer={customerInfo} onCustomerInfoChange={onCustomerInfoChange} />
+          <DeliveryForm initialDelivery={deliveryInfo} onDeliveryInfoChange={onDeliveryInfoChange} />
+        </div>
         
         <div className="space-y-6">
           <Card>

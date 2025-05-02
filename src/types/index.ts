@@ -184,6 +184,17 @@ export interface Customer {
   created_at?: string;
 }
 
+export interface DeliveryInformation {
+  id?: string;
+  customer_id?: string;
+  order_id?: string;
+  recipient_name: string;
+  address: string;
+  phone: string;
+  delivery_note?: string;
+  created_at?: string;
+}
+
 export interface Order {
   id: string;
   players: Player[];
@@ -204,6 +215,7 @@ export interface Order {
   teamName?: string;
   logos: Logo[];
   logoIds?: string[];
+  deliveryInformation?: DeliveryInformation;
 }
 
 export interface DbPlayer {

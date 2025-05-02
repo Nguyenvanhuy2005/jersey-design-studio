@@ -35,6 +35,8 @@ const CreateOrder = () => {
     referenceImagesPreview,
     customerInfo,
     setCustomerInfo,
+    deliveryInfo,
+    setDeliveryInfo,
     fontText,
     setFontText,
     fontNumber,
@@ -73,6 +75,7 @@ const CreateOrder = () => {
     designData,
     notes,
     customerInfo,
+    deliveryInfo,
     productLines,
     referenceImages,
     totalCost: calculateTotalCost(),
@@ -114,6 +117,8 @@ const CreateOrder = () => {
             setActiveTab={setActiveTab}
             customerInfo={customerInfo}
             onCustomerInfoChange={setCustomerInfo}
+            deliveryInfo={deliveryInfo}
+            onDeliveryInfoChange={setDeliveryInfo}
             referenceImages={referenceImages}
             referenceImagesPreview={referenceImagesPreview}
             onReferenceImagesUpload={handleReferenceImagesUpload}

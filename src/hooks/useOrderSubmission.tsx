@@ -1,6 +1,7 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Player, Logo, DesignData, ProductLine, Customer } from '@/types';
+import { Player, Logo, DesignData, ProductLine, Customer, DeliveryInformation } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +14,7 @@ interface OrderSubmissionProps {
   designData: Partial<DesignData>;
   notes: string;
   customerInfo: Customer;
+  deliveryInfo: DeliveryInformation;
   productLines: ProductLine[];
   referenceImages: File[];
   totalCost: number;
@@ -30,6 +32,7 @@ export const useOrderSubmission = ({
   designData,
   notes,
   customerInfo,
+  deliveryInfo,
   productLines,
   referenceImages,
   totalCost,
@@ -220,8 +223,13 @@ export const useOrderSubmission = ({
       return;
     }
     
-    if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
+    if (!customerInfo.name || !customerInfo.phone) {
       toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
+      return;
+    }
+    
+    if (!deliveryInfo.recipient_name || !deliveryInfo.address || !deliveryInfo.phone) {
+      toast.error("Vui lòng nhập đầy đủ thông tin giao hàng");
       return;
     }
     
@@ -231,14 +239,13 @@ export const useOrderSubmission = ({
     try {
       await createStorageBucketsIfNeeded();
       
+      // Update customer info if needed
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
           id: user.id,
           name: customerInfo.name,
-          address: customerInfo.address,
           phone: customerInfo.phone,
-          delivery_note: customerInfo.delivery_note
         }, {
           onConflict: 'id'
         });
@@ -252,6 +259,28 @@ export const useOrderSubmission = ({
       }
 
       const orderId = uuidv4();
+      
+      // Create delivery information and link to order
+      const { data: deliveryData, error: deliveryError } = await supabase
+        .from('delivery_information')
+        .insert({
+          customer_id: user.id,
+          order_id: orderId,
+          recipient_name: deliveryInfo.recipient_name,
+          address: deliveryInfo.address,
+          phone: deliveryInfo.phone,
+          delivery_note: deliveryInfo.delivery_note
+        })
+        .select('id')
+        .single();
+      
+      if (deliveryError) {
+        console.error("Error creating delivery information:", deliveryError);
+        toast.error("Không thể tạo thông tin giao hàng");
+        setIsSubmitting(false);
+        setIsGeneratingDesign(false);
+        return;
+      }
       
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
 
@@ -437,7 +466,7 @@ export const useOrderSubmission = ({
         }
       }
       
-      toast.success("Đơn hàng đã ược tạo thành công!");
+      toast.success("Đơn hàng đã được tạo thành công!");
       navigate('/thank-you');
     } catch (err) {
       console.error(`[submitOrder] Error submitting order:`, err);

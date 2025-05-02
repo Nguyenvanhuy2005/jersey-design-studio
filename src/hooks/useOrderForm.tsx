@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer } from "@/types";
+import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer, DeliveryInformation } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { parseDateSafely } from "@/utils/format-utils";
@@ -21,8 +22,13 @@ export const useOrderForm = () => {
     id: '',
     name: "",
     address: "",
+    phone: ""
+  });
+  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInformation>({
+    recipient_name: "",
+    address: "",
     phone: "",
-    email: ""
+    delivery_note: ""
   });
   
   const [fontText, setFontText] = useState<string>("Arial");
@@ -57,8 +63,7 @@ export const useOrderForm = () => {
           id: '',
           name: "",
           address: "",
-          phone: "",
-          email: ""
+          phone: ""
         });
         return;
       }
@@ -85,6 +90,14 @@ export const useOrderForm = () => {
             created_at: data.created_at ? data.created_at : undefined
           };
           setCustomerInfo(customerData);
+          
+          // Pre-fill delivery info with customer info for convenience
+          setDeliveryInfo({
+            recipient_name: data.name || "",
+            address: data.address || "",
+            phone: data.phone || "",
+            delivery_note: data.delivery_note || ""
+          });
         }
       } catch (error) {
         console.error("Error in fetchCustomerInfo:", error);
@@ -194,6 +207,8 @@ export const useOrderForm = () => {
     setReferenceImagesPreview,
     customerInfo,
     setCustomerInfo,
+    deliveryInfo,
+    setDeliveryInfo,
     fontText,
     setFontText: updateFontText,
     fontNumber,

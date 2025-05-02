@@ -1,6 +1,7 @@
+
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Customer, Logo, Player, ProductLine } from "@/types";
+import { Customer, DeliveryInformation, Logo, Player, ProductLine } from "@/types";
 import { OrderInfoTabContent } from "./tabs/OrderInfoTabContent";
 import { OrderPreviewTabContent } from "./tabs/OrderPreviewTabContent";
 import { OrderSummaryTabContent } from "./tabs/OrderSummaryTabContent";
@@ -14,6 +15,8 @@ interface OrderTabsProps {
   setActiveTab: (value: string) => void;
   customerInfo: Customer;
   onCustomerInfoChange: (customer: Customer) => void;
+  deliveryInfo: DeliveryInformation;
+  onDeliveryInfoChange: (info: DeliveryInformation) => void;
   referenceImages: File[];
   referenceImagesPreview: string[];
   onReferenceImagesUpload: (fileList: FileList | null) => void;
@@ -60,6 +63,8 @@ export function OrderTabs({
   setActiveTab,
   customerInfo,
   onCustomerInfoChange,
+  deliveryInfo,
+  onDeliveryInfoChange,
   referenceImages,
   referenceImagesPreview,
   onReferenceImagesUpload,
@@ -128,6 +133,8 @@ export function OrderTabs({
             <OrderInfoTabContent
               customerInfo={customerInfo}
               onCustomerInfoChange={onCustomerInfoChange}
+              deliveryInfo={deliveryInfo}
+              onDeliveryInfoChange={onDeliveryInfoChange}
               referenceImages={referenceImages}
               referenceImagesPreview={referenceImagesPreview}
               onReferenceImagesUpload={onReferenceImagesUpload}
@@ -213,6 +220,7 @@ export function OrderTabs({
               players={players}
               productLines={productLines}
               customerInfo={customerInfo}
+              deliveryInfo={deliveryInfo}
               calculateTotalCost={calculateTotalCost}
               getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
               isSubmitting={isSubmitting}

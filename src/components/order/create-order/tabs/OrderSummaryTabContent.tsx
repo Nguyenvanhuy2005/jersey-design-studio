@@ -1,17 +1,19 @@
 
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { OrderPlayersList } from "../../OrderPlayersList";
-import { OrderCostSummary } from "@/components/order-cost-summary";
-import { Player, ProductLine, Customer } from "@/types";
-import { useEffect } from "react";
+import { Customer, DeliveryInformation, Player, ProductLine } from "@/types";
+import { Loader2, ShoppingCart } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PrintCostBreakdown } from "./PrintCostBreakdown";
 
 interface OrderSummaryTabContentProps {
   isDemoApproved: boolean;
   players: Player[];
   productLines: ProductLine[];
   customerInfo: Customer;
+  deliveryInfo: DeliveryInformation;
   calculateTotalCost: () => number;
   getPlayerAndGoalkeeperCounts: () => { playerCount: number; goalkeeperCount: number };
   isSubmitting: boolean;
@@ -31,6 +33,7 @@ export function OrderSummaryTabContent({
   players,
   productLines,
   customerInfo,
+  deliveryInfo,
   calculateTotalCost,
   getPlayerAndGoalkeeperCounts,
   isSubmitting,
@@ -39,64 +42,176 @@ export function OrderSummaryTabContent({
   referenceImagesPreview,
   getPrintCostBreakdown
 }: OrderSummaryTabContentProps) {
-  // ==== Debug Logging Effect ====
-  useEffect(() => {
-    console.log("[OrderSummaryTabContent] players:", players);
-    console.log("[OrderSummaryTabContent] productLines:", productLines);
-    console.log("[OrderSummaryTabContent] costBreakdown (from getPrintCostBreakdown()):", getPrintCostBreakdown());
-    console.log("[OrderSummaryTabContent] totalCost (from calculateTotalCost()):", calculateTotalCost());
-  }, [players, productLines, calculateTotalCost, getPrintCostBreakdown]);
-
-  if (!isDemoApproved) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Chưa duyệt thiết kế demo</AlertTitle>
-        <AlertDescription>
-          Vui lòng xem và duyệt thiết kế demo trước khi đến bước này.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   const { playerCount, goalkeeperCount } = getPlayerAndGoalkeeperCounts();
   const totalCost = calculateTotalCost();
-  const costBreakdown = getPrintCostBreakdown();
-
-  const calculatePrintPositionsCount = () => {
-    let count = 0;
-    players.forEach(player => {
-      if (player.chest_number) count++;
-      if (player.pants_number) count++;
-      if (player.logo_chest_left) count++;
-      if (player.logo_chest_right) count++;
-      if (player.logo_chest_center) count++;
-      if (player.logo_sleeve_left) count++;
-      if (player.logo_sleeve_right) count++;
-      if (player.logo_pants) count++;
-    });
-    return count;
-  };
+  const formattedCost = new Intl.NumberFormat('vi-VN').format(totalCost);
 
   return (
     <div className="space-y-6">
-      <OrderCostSummary
-        breakdown={costBreakdown}
-        totalCost={totalCost}
-      />
-
-      <OrderPlayersList players={players} />
+      {!isDemoApproved && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <p className="text-yellow-700">
+            Vui lòng duyệt thiết kế demo trước khi đặt hàng
+          </p>
+        </div>
+      )}
       
-      <div className="flex justify-end">
-        <Button 
-          onClick={onSubmitOrder}
-          disabled={isSubmitting || isGeneratingDesign}
-          size="lg"
-        >
-          {isSubmitting ? "Đang xử lý..." : "Đặt đơn hàng"}
-        </Button>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin khách hàng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Tên khách hàng:</dt>
+                  <dd className="col-span-2">{customerInfo.name || "Chưa có thông tin"}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Số điện thoại:</dt>
+                  <dd className="col-span-2">{customerInfo.phone || "Chưa có thông tin"}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Email:</dt>
+                  <dd className="col-span-2">{customerInfo.email || "Không có"}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Thông tin giao hàng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Người nhận:</dt>
+                  <dd className="col-span-2">{deliveryInfo.recipient_name || "Chưa có thông tin"}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Địa chỉ:</dt>
+                  <dd className="col-span-2">{deliveryInfo.address || "Chưa có thông tin"}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Số điện thoại:</dt>
+                  <dd className="col-span-2">{deliveryInfo.phone || "Chưa có thông tin"}</dd>
+                </div>
+                {deliveryInfo.delivery_note && (
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Ghi chú:</dt>
+                    <dd className="col-span-2">{deliveryInfo.delivery_note}</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Thống kê đơn hàng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div className="grid grid-cols-3 gap-1">
+                  <dt className="font-semibold">Số lượng áo:</dt>
+                  <dd className="col-span-2">{players.length} áo</dd>
+                </div>
+                {playerCount > 0 && (
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Áo cầu thủ:</dt>
+                    <dd className="col-span-2">{playerCount} áo</dd>
+                  </div>
+                )}
+                {goalkeeperCount > 0 && (
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Áo thủ môn:</dt>
+                    <dd className="col-span-2">{goalkeeperCount} áo</dd>
+                  </div>
+                )}
+                {productLines.length > 0 && (
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Số mục in:</dt>
+                    <dd className="col-span-2">{productLines.length} mục</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Chi tiết in ấn</CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-[200px] overflow-y-auto">
+              {productLines.length > 0 ? (
+                <PrintCostBreakdown costBreakdown={getPrintCostBreakdown()} />
+              ) : (
+                <p className="text-muted-foreground">Chưa có thông tin chi tiết in ấn</p>
+              )}
+            </CardContent>
+          </Card>
+          
+          {referenceImagesPreview.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Mẫu tham khảo</CardTitle>
+                <CardDescription>Đã tải lên {referenceImagesPreview.length} hình ảnh</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[200px]">
+                  <div className="grid grid-cols-2 gap-2">
+                    {referenceImagesPreview.map((preview, index) => (
+                      <div key={index} className="rounded-md overflow-hidden border">
+                        <img 
+                          src={preview} 
+                          alt={`Reference ${index}`}
+                          className="w-full h-auto object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Tổng chi phí dự kiến</CardTitle>
+              <CardDescription>Các chi phí có thể thay đổi sau khi xác nhận đơn hàng</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{formattedCost} VNĐ</p>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={onSubmitOrder}
+                disabled={isSubmitting || isGeneratingDesign || !isDemoApproved || 
+                          !customerInfo.name || !customerInfo.phone || 
+                          !deliveryInfo.recipient_name || !deliveryInfo.address || !deliveryInfo.phone}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Đặt hàng
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );
 }
-

@@ -42,6 +42,54 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_information: {
+        Row: {
+          address: string
+          created_at: string | null
+          customer_id: string | null
+          delivery_note: string | null
+          id: string
+          order_id: string | null
+          phone: string
+          recipient_name: string
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_note?: string | null
+          id?: string
+          order_id?: string | null
+          phone: string
+          recipient_name: string
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_note?: string | null
+          id?: string
+          order_id?: string | null
+          phone?: string
+          recipient_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_information_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_information_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fonts: {
         Row: {
           created_at: string | null
