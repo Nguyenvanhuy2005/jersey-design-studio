@@ -48,12 +48,16 @@ serve(async (req) => {
       throw new Error('Invalid request format')
     }
 
+    // Extract email verification preference from the request
+    const requireEmailConfirm = userData.requireEmailConfirm ?? false;
+
     // Generate a random password and create user
     const password = Math.random().toString(36).slice(-8)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: userData.email,
       password: password,
-      email_confirm: true
+      email_confirm: !requireEmailConfirm, // Don't require immediate email verification
+      user_metadata: userData.metadata || {}
     })
 
     if (authError) {
@@ -73,7 +77,11 @@ serve(async (req) => {
     console.log('Auth user created successfully with ID:', authData.user.id)
 
     return new Response(
-      JSON.stringify({ user: authData.user }),
+      JSON.stringify({ 
+        user: authData.user, 
+        passwordGenerated: true,
+        password: password // Only included for temporary password flows
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

@@ -58,6 +58,12 @@ export function CustomerForm({
       return;
     }
     
+    // If password is provided, email is required
+    if (formData.password && !formData.email) {
+      toast.error("Email là bắt buộc khi tạo tài khoản đăng nhập");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -75,7 +81,7 @@ export function CustomerForm({
           <DialogTitle>{title}</DialogTitle>
           <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
             <Info className="h-4 w-4" />
-            <span>Email là tùy chọn. Chỉ cần điền họ tên, số điện thoại và địa chỉ. Thêm mật khẩu nếu muốn tạo tài khoản cho khách hàng.</span>
+            <span>Email là tùy chọn. Chỉ cần điền họ tên, số điện thoại và địa chỉ. Thêm email và mật khẩu nếu muốn tạo tài khoản đăng nhập cho khách hàng.</span>
           </div>
         </DialogHeader>
         

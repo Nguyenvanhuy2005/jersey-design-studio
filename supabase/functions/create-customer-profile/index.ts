@@ -60,15 +60,89 @@ serve(async (req) => {
       throw new Error('Khách hàng với số điện thoại này đã tồn tại')
     }
 
-    // Create the customer profile first
+    // Create auth user first if password is provided
+    let authUserId = null
+    if (profileData.password) {
+      try {
+        if (!profileData.email) {
+          throw new Error('Email là bắt buộc khi tạo tài khoản đăng nhập')
+        }
+
+        // Create auth user with email only
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+          email: profileData.email,
+          password: profileData.password,
+          email_confirm: false, // Make email verification optional
+          user_metadata: {
+            name: profileData.name,
+            address: profileData.address,
+            phone: profileData.phone
+          }
+        })
+
+        if (authError) {
+          console.error('Error creating auth user:', authError)
+          throw authError
+        }
+
+        authUserId = authUser.user.id
+        
+        // Check if a customer record was already created by the trigger
+        const { data: existingCustomer } = await supabaseAdmin
+          .from('customers')
+          .select('*')
+          .eq('id', authUserId)
+          .single()
+          
+        if (existingCustomer) {
+          console.log('Customer already exists for auth user, updating instead of creating')
+          
+          // Update the existing customer with the provided data
+          const { data: updatedCustomer, error: updateError } = await supabaseAdmin
+            .from('customers')
+            .update({
+              name: profileData.name,
+              phone: profileData.phone,
+              address: profileData.address,
+              delivery_note: profileData.delivery_note,
+              email: profileData.email
+            })
+            .eq('id', authUserId)
+            .select()
+            .single()
+            
+          if (updateError) {
+            console.error('Error updating existing customer:', updateError)
+            throw updateError
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              customer: updatedCustomer,
+              authEnabled: true
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          )
+        }
+      } catch (error) {
+        console.error('Error in auth user creation process:', error)
+        // Don't return here, continue to create a customer without auth if auth fails
+      }
+    }
+
+    // Create the customer profile
     const { data: customerRecord, error: customerError } = await supabaseAdmin
       .from('customers')
       .insert({
+        id: authUserId, // Will be null if no auth user was created
         name: profileData.name,
         phone: profileData.phone,
         address: profileData.address,
         delivery_note: profileData.delivery_note,
-        email: profileData.email || null
+        email: profileData.email
       })
       .select()
       .single()
@@ -78,96 +152,11 @@ serve(async (req) => {
       throw customerError
     }
 
-    // If password is provided, create an auth user and link it
-    if (profileData.password) {
-      try {
-        // Create auth user with phone or email
-        const signUpData = profileData.email 
-          ? { email: profileData.email, password: profileData.password }
-          : { phone: profileData.phone, password: profileData.password }
-
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          ...signUpData,
-          email_confirm: true,
-          phone_confirm: true,
-          user_metadata: {
-            name: profileData.name,
-            address: profileData.address
-          }
-        })
-
-        if (authError) {
-          // If auth user creation fails, we should handle it gracefully
-          console.error('Error creating auth user:', authError)
-          // We'll still return the customer record, just without auth
-          return new Response(
-            JSON.stringify({ 
-              customer: customerRecord,
-              authEnabled: false,
-              warning: 'Không thể tạo tài khoản đăng nhập, nhưng đã lưu thông tin khách hàng'
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            }
-          )
-        }
-
-        // Link the auth user to the customer profile
-        const { error: updateError } = await supabaseAdmin
-          .from('customers')
-          .update({ auth_user_id: authUser.user.id })
-          .eq('id', customerRecord.id)
-
-        if (updateError) {
-          console.error('Error linking auth user to customer:', updateError)
-          // We'll still return success since both records exist
-          return new Response(
-            JSON.stringify({ 
-              customer: customerRecord,
-              authEnabled: true,
-              warning: 'Tài khoản đã được tạo nhưng có lỗi khi liên kết với hồ sơ khách hàng'
-            }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            }
-          )
-        }
-
-        // Return success with both customer and auth status
-        return new Response(
-          JSON.stringify({ 
-            customer: { ...customerRecord, auth_user_id: authUser.user.id },
-            authEnabled: true
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          }
-        )
-      } catch (error) {
-        console.error('Error in auth user creation process:', error)
-        // Return customer data even if auth creation fails
-        return new Response(
-          JSON.stringify({ 
-            customer: customerRecord,
-            authEnabled: false,
-            warning: 'Đã lưu thông tin khách hàng nhưng không thể tạo tài khoản đăng nhập'
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          }
-        )
-      }
-    }
-
-    // If no password was provided, just return the customer record
+    // Return success response
     return new Response(
       JSON.stringify({ 
         customer: customerRecord,
-        authEnabled: false
+        authEnabled: authUserId !== null
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
