@@ -56,7 +56,7 @@ serve(async (req) => {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: userData.email,
       password: password,
-      email_confirm: !requireEmailConfirm, // Don't require immediate email verification
+      email_confirm: true, // Changed to true - Make email verification optional
       user_metadata: userData.metadata || {}
     })
 

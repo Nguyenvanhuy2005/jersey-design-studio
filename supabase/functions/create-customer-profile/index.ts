@@ -72,7 +72,7 @@ serve(async (req) => {
         const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: profileData.email,
           password: profileData.password,
-          email_confirm: false, // Make email verification optional
+          email_confirm: true, // Changed to true - Make email verification optional
           user_metadata: {
             name: profileData.name,
             address: profileData.address,
@@ -133,11 +133,16 @@ serve(async (req) => {
       }
     }
 
+    // Generate a UUID for the customer if no auth user was created
+    // Using crypto.randomUUID() which is available in modern browsers and Deno
+    const customerId = authUserId || crypto.randomUUID();
+    console.log('Using customer ID:', customerId, 'Auth user ID:', authUserId);
+
     // Create the customer profile
     const { data: customerRecord, error: customerError } = await supabaseAdmin
       .from('customers')
       .insert({
-        id: authUserId, // Will be null if no auth user was created
+        id: customerId, // Use the generated UUID if no auth user was created
         name: profileData.name,
         phone: profileData.phone,
         address: profileData.address,
