@@ -1,8 +1,9 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, clearLocalSession } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface UserRole {
   id: string;
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -117,11 +119,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     setIsLoading(true);
     try {
-      await supabase.auth.signOut();
+      // First clear local session data to ensure no stale data
+      clearLocalSession();
+      
+      // Then call Supabase signOut method
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) throw error;
+      
+      // Reset auth state
+      setSession(null);
+      setUser(null);
       setIsAdmin(false);
+      toast.success('Đăng xuất thành công');
+      
+      // Redirect to home page
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
-      toast.error('Có lỗi khi đăng xuất');
+      toast.error('Có lỗi khi đăng xuất, vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }
