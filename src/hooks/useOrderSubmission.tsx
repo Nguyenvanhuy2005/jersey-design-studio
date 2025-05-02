@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer, DeliveryInformation } from '@/types';
@@ -259,30 +260,7 @@ export const useOrderSubmission = ({
 
       const orderId = uuidv4();
       
-      // Create delivery information and link to order
-      const { data: deliveryData, error: deliveryError } = await supabase
-        .from('delivery_information')
-        .insert({
-          customer_id: user.id,
-          order_id: orderId,  // Make sure to include orderId here to link with the order
-          recipient_name: deliveryInfo.recipient_name,
-          address: deliveryInfo.address,
-          phone: deliveryInfo.phone,
-          delivery_note: deliveryInfo.delivery_note
-        })
-        .select('id')
-        .single();
-      
-      if (deliveryError) {
-        console.error("Error creating delivery information:", deliveryError);
-        toast.error("Không thể tạo thông tin giao hàng");
-        setIsSubmitting(false);
-        setIsGeneratingDesign(false);
-        return;
-      }
-      
-      const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
-
+      // Create order FIRST before linking delivery information
       const playerCount = players.filter(p => p.uniform_type !== 'goalkeeper').length;
       const goalkeeperCount = players.filter(p => p.uniform_type === 'goalkeeper').length;
       
@@ -295,7 +273,6 @@ export const useOrderSubmission = ({
         uniform_type: playerCount > 0 && goalkeeperCount > 0 ? 'mixed' : 
                      goalkeeperCount > 0 ? 'goalkeeper' : 'player',
         quantity: players.length,
-        reference_images: referenceImagePaths,
         font_text: {
           font: fontText
         },
@@ -317,7 +294,6 @@ export const useOrderSubmission = ({
           total_cost: totalCost,
           notes: notes,
           design_data: designDataJson,
-          reference_images: referenceImagePaths,
           customer_id: user.id
         });
         
@@ -331,6 +307,43 @@ export const useOrderSubmission = ({
       
       toast.success("Đã tạo đơn hàng thành công, đang xử lý dữ liệu...");
 
+      // AFTER creating order, now create delivery information linked to the order
+      const { data: deliveryData, error: deliveryError } = await supabase
+        .from('delivery_information')
+        .insert({
+          customer_id: user.id,
+          order_id: orderId,  // Now the order exists, so this reference is valid
+          recipient_name: deliveryInfo.recipient_name,
+          address: deliveryInfo.address,
+          phone: deliveryInfo.phone,
+          delivery_note: deliveryInfo.delivery_note
+        })
+        .select('id')
+        .single();
+      
+      if (deliveryError) {
+        console.error("Error creating delivery information:", deliveryError);
+        toast.error("Không thể tạo thông tin giao hàng");
+        // Continue with the order creation process even if delivery info fails
+      }
+
+      // Upload reference images
+      const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
+      
+      // Update the reference images in the order
+      if (referenceImagePaths.length > 0) {
+        const { error: updateRefImagesError } = await supabase
+          .from('orders')
+          .update({ reference_images: referenceImagePaths })
+          .eq('id', orderId);
+          
+        if (updateRefImagesError) {
+          console.error("Error updating reference images:", updateRefImagesError);
+          toast.warning("Có lỗi khi cập nhật hình ảnh tham khảo");
+        }
+      }
+
+      // Upload logos
       const { logoUrls, logoStorageEntries } = await uploadLogos(orderId, logos);
 
       let insertedLogoIds: string[] = [];
@@ -381,7 +394,7 @@ export const useOrderSubmission = ({
           uniform_type: p.uniform_type || 'player',
           line_1: p.line_1 || null,
           line_3: p.line_3 || null,
-          chest_text: p.chest_text || null,  // Add this line to store chest_text
+          chest_text: p.chest_text || null,
           chest_number: p.chest_number || false,
           pants_number: p.pants_number || false,
           logo_chest_left: p.logo_chest_left || false,
