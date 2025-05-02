@@ -148,7 +148,10 @@ export function OrderSummaryTabContent({
             </CardHeader>
             <CardContent className="max-h-[200px] overflow-y-auto">
               {productLines.length > 0 ? (
-                <PrintCostBreakdown costBreakdown={getPrintCostBreakdown()} />
+                <PrintCostBreakdown 
+                  breakdown={getPrintCostBreakdown()} 
+                  totalCost={calculateTotalCost()}
+                />
               ) : (
                 <p className="text-muted-foreground">Chưa có thông tin chi tiết in ấn</p>
               )}
