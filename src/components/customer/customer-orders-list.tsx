@@ -21,6 +21,22 @@ export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
     );
   }
 
+  // Helper function to calculate the total number of shirts in an order
+  const getShirtCount = (order: Order): number => {
+    // If players array exists and has items, return its length
+    if (order.players && Array.isArray(order.players)) {
+      return order.players.length;
+    }
+    
+    // If order has a playerCount field directly (some orders might have this)
+    if (order.playerCount !== undefined && typeof order.playerCount === 'number') {
+      return order.playerCount;
+    }
+    
+    // Default fallback
+    return 0;
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -62,7 +78,7 @@ export function CustomerOrdersList({ orders }: CustomerOrdersListProps) {
                 {order.teamName || "Con có"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
-                {order.players?.length || 0} áo
+                {getShirtCount(order)} áo
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 {order.totalCost?.toLocaleString("vi-VN")} đ
