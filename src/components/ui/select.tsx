@@ -83,7 +83,7 @@ const SelectContent = React.forwardRef<
       style={{
         overscrollBehavior: "contain",
         WebkitOverflowScrolling: "touch",
-        touchAction: "manipulation",
+        touchAction: "pan-y",
       }}
       {...props}
     >
