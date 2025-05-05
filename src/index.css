@@ -90,3 +90,21 @@
   background-color: transparent;
   border: 1px solid #ccc;
 }
+
+/* Improve touch scrolling for selects and dropdowns */
+select,
+[role="listbox"],
+[role="menu"],
+[data-radix-select-viewport] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* Make dropdown items easier to tap on mobile */
+[role="option"],
+[role="menuitem"] {
+  min-height: 36px;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
