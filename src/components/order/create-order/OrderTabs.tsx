@@ -117,7 +117,13 @@ export function OrderTabs({
       console.log("[OrderTabs] ĐÃ chuyển sang tab preview. Gọi onGenerateProductLines");
       onGenerateProductLines();
     }
-  }, [activeTab]);
+  }, [activeTab, onGenerateProductLines]);
+
+  // Hàm để xử lý khi nhấn nút "Xem thiết kế demo"
+  const handleViewDemoClick = () => {
+    onGenerateProductLines();
+    setActiveTab("preview");
+  };
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -171,7 +177,7 @@ export function OrderTabs({
               Hủy
             </Button>
             <Button 
-              onClick={onGenerateProductLines}
+              onClick={handleViewDemoClick}
               variant="default"
             >
               Xem thiết kế demo

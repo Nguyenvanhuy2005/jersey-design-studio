@@ -89,7 +89,7 @@ const CreateOrder = () => {
   const handleViewDemo = () => {
     if (!validateOrderForm({ players, customerInfo })) return;
     generateProductLines();
-    setActiveTab("preview");
+    setActiveTab("preview"); // Đảm bảo chuyển đến tab "preview" sau khi tạo productLines
   };
 
   const approveDemo = () => {

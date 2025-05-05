@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ interface OrderInfoTabProps {
   notes: string;
   onNotesChange: (notes: string) => void;
   onGenerateProductLines: () => void;
+  onViewDemo?: () => void;
 }
 
 export function OrderInfoTab({
@@ -54,7 +56,8 @@ export function OrderInfoTab({
   onPlayersChange,
   notes,
   onNotesChange,
-  onGenerateProductLines
+  onGenerateProductLines,
+  onViewDemo
 }: OrderInfoTabProps) {
   return (
     <div className="space-y-6">
@@ -169,6 +172,16 @@ export function OrderInfoTab({
             />
           </div>
         </CardContent>
+        <CardFooter className="flex justify-end">
+          {onViewDemo && (
+            <Button 
+              onClick={onViewDemo}
+              variant="default"
+            >
+              Xem thiết kế demo
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );
