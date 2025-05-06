@@ -153,7 +153,7 @@ export const usePlayerForm = ({ onPlayersChange, players, printStyle }: UsePlaye
     return false;
   };
 
-  // Helper function to handle Excel import
+  // Helper function to handle Excel import with updated column order
   const handleExcelImport = (data: any[]): Player[] => {
     return data.map((row, index) => {
       // Handle player number formats

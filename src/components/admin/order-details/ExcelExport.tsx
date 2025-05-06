@@ -26,13 +26,13 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
     try {
       const data = players.map((player, index) => ({
         'STT': index + 1,
-        'SỐ ÁO': formatPlayerNumber(player.number),
-        'LOẠI QUẦN ÁO': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
-        'KÍCH THƯỚC': player.size,
         'TÊN IN TRÊN SỐ': player.line_1 || '',
+        'SỐ ÁO': formatPlayerNumber(player.number),
         'TÊN ĐỘI BÓNG': player.line_3 || '',
-        'KIỂU IN': player.print_style || 'In chuyển nhiệt',
         'IN CHỮ NGỰC': player.chest_text || '',
+        'KÍCH THƯỚC': player.size,
+        'KIỂU IN': player.print_style || 'In chuyển nhiệt',
+        'LOẠI QUẦN ÁO': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
         'IN SỐ NGỰC': booleanToVietnamese(player.chest_number),
         'IN SỐ QUẦN': booleanToVietnamese(player.pants_number),
         'LOGO NGỰC TRÁI': booleanToVietnamese(player.logo_chest_left),
@@ -48,7 +48,7 @@ export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
       
       // Format all player number cells as text
       Object.keys(ws).forEach(cell => {
-        if (cell.match(/^B[0-9]+$/)) {
+        if (cell.match(/^C[0-9]+$/)) { // Updated to match column C for "SỐ ÁO"
           ws[cell].z = '@';
         }
       });

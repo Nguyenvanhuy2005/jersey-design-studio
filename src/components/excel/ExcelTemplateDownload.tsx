@@ -13,8 +13,8 @@ export const ExcelTemplateDownload = ({ printStyleOptions = ["In chuyển nhiệ
     try {
       const template = [{
         "STT": 1,
-        "SỐ ÁO": "01",
         "TÊN IN TRÊN SỐ": "Tên trên số",
+        "SỐ ÁO": "01",
         "TÊN ĐỘI BÓNG": "Tên đội",
         "IN CHỮ NGỰC": "Tên chữ ngực",
         "KÍCH THƯỚC": "M",

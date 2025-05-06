@@ -166,7 +166,7 @@ export const PlayerForm = memo(({
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            <p>File Excel cần có cấu trúc: STT, SỐ ÁO, TÊN IN TRÊN SỐ, TÊN ĐỘI BÓNG, KÍCH THƯỚC, KIỂU IN, LOẠI QUẦN ÁO, IN CHỮ NGỰC, v.v</p>
+            <p>File Excel bắt buộc phải có cột STT. Các cột khác như TÊN IN TRÊN SỐ, SỐ ÁO, TÊN ĐỘI BÓNG... là tùy chọn. Các trường không có sẽ được đặt giá trị mặc định.</p>
           </div>
         </div>
       </CardFooter>
