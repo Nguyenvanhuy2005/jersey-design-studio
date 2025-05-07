@@ -174,7 +174,4 @@ export const uploadLogo = async (
   }
 };
 
-export {
-  uploadReferenceImage,
-  uploadLogo
-};
+// Remove the duplicate export at the bottom that's causing the error
