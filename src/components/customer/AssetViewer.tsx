@@ -12,12 +12,14 @@ interface Asset {
 }
 
 interface AssetViewerProps {
+  title?: string; // Added title prop as optional
   assets: Asset[];
   gridCols?: number;
   onImageError?: (url: string) => void;
 }
 
 export const AssetViewer: React.FC<AssetViewerProps> = ({ 
+  title,
   assets,
   gridCols = 3,
   onImageError
@@ -46,6 +48,7 @@ export const AssetViewer: React.FC<AssetViewerProps> = ({
 
   return (
     <>
+      {title && <h3 className="text-lg font-medium mb-3">{title}</h3>}
       <div className={`grid grid-cols-2 sm:grid-cols-${gridCols} gap-4`}>
         {assets.map((asset, index) => {
           const hasError = errorImages[asset.url];
