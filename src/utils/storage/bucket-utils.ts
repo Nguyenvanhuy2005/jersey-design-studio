@@ -2,138 +2,110 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const REQUIRED_BUCKETS = ['design_images', 'reference_images', 'logos'];
+
 /**
- * Check if storage buckets exist in Supabase
- * @returns Promise resolving to object with buckets existence status
+ * Checks if all required storage buckets exist
+ * @returns Promise resolving to boolean indicating if all buckets exist
  */
-export const checkStorageBucketsExist = async (): Promise<{ 
-  designImages: boolean; 
-  referenceImages: boolean; 
-  error?: string;
-}> => {
+export const checkStorageBucketsExist = async (): Promise<boolean> => {
   try {
+    console.log('Checking if storage buckets exist...');
     const { data: buckets, error } = await supabase.storage.listBuckets();
     
     if (error) {
-      console.error("Error checking storage buckets:", error);
-      return { 
-        designImages: false, 
-        referenceImages: false, 
-        error: error.message 
-      };
+      console.error('Error checking buckets:', error);
+      return false;
     }
     
-    // The bucket name in Supabase might be different from what we expect
-    // Check both 'design_images' and 'Design Images'
-    const designBucketExists = buckets.some(bucket => 
-      bucket.name === 'design_images' || 
-      bucket.name === 'Design Images' ||
-      bucket.name.toLowerCase() === 'design_images'
+    if (!buckets || buckets.length === 0) {
+      console.log('No buckets found');
+      return false;
+    }
+    
+    const existingBucketNames = buckets.map(bucket => bucket.name);
+    const missingBuckets = REQUIRED_BUCKETS.filter(
+      required => !existingBucketNames.includes(required)
     );
     
-    const refBucketExists = buckets.some(bucket => 
-      bucket.name === 'reference_images' || 
-      bucket.name === 'Reference Images' ||
-      bucket.name.toLowerCase() === 'reference_images'
-    );
+    if (missingBuckets.length > 0) {
+      console.log('Missing buckets:', missingBuckets);
+      return false;
+    }
     
-    console.log("Storage buckets check:", {
-      designImages: designBucketExists,
-      referenceImages: refBucketExists,
-      bucketsFound: buckets.map(b => b.name).join(', ')
-    });
-    
-    return {
-      designImages: designBucketExists,
-      referenceImages: refBucketExists
-    };
+    console.log('All required buckets exist');
+    return true;
   } catch (err) {
-    console.error("Exception checking storage buckets:", err);
-    return { 
-      designImages: false, 
-      referenceImages: false, 
-      error: err instanceof Error ? err.message : 'Unknown error' 
-    };
+    console.error('Exception checking buckets:', err);
+    return false;
   }
 };
 
 /**
- * Create storage buckets if they don't exist
- * @returns Promise resolving when operation completes
+ * Creates all required storage buckets if they don't exist
+ * @param retries Number of retry attempts (default: 1)
+ * @returns Promise resolving to boolean indicating success
  */
-export const createStorageBucketsIfNeeded = async (): Promise<{ 
-  success: boolean; 
-  message: string; 
-  created: { designImages: boolean; referenceImages: boolean; } 
-}> => {
-  const created = { designImages: false, referenceImages: false };
-  
+export const createStorageBucketsIfNeeded = async (retries = 1): Promise<boolean> => {
   try {
-    // Check if buckets exist
-    const { designImages, referenceImages, error } = await checkStorageBucketsExist();
+    // First check which buckets we need to create
+    const { data: existingBuckets, error: listError } = await supabase.storage.listBuckets();
     
-    if (error) {
-      console.warn(`Unable to check buckets: ${error}. Assuming they exist and continuing...`);
-      return { 
-        success: true, 
-        message: 'Assuming buckets exist due to permission restrictions',
-        created 
-      };
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      // Don't return false here, try to create anyway
     }
     
-    // Create design_images bucket if it doesn't exist
-    if (!designImages) {
-      try {
-        const { error: createError } = await supabase.storage.createBucket('design_images', {
-          public: true,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (createError) {
-          console.error("Error creating design_images bucket:", createError);
-        } else {
-          console.log("Successfully created design_images bucket");
-          created.designImages = true;
+    const existingBucketNames = existingBuckets?.map(b => b.name) || [];
+    const bucketsToCreate = REQUIRED_BUCKETS.filter(
+      b => !existingBucketNames.includes(b)
+    );
+    
+    if (bucketsToCreate.length === 0) {
+      console.log('All required buckets already exist');
+      return true;
+    }
+    
+    console.log(`Creating ${bucketsToCreate.length} missing buckets:`, bucketsToCreate);
+    
+    // Create each missing bucket
+    const results = await Promise.all(
+      bucketsToCreate.map(async bucketName => {
+        try {
+          const { error } = await supabase.storage.createBucket(bucketName, {
+            public: true, // Make buckets public for easier access
+          });
+          
+          if (error) {
+            console.error(`Error creating bucket ${bucketName}:`, error);
+            return false;
+          }
+          
+          console.log(`Successfully created bucket: ${bucketName}`);
+          return true;
+        } catch (err) {
+          console.error(`Exception creating bucket ${bucketName}:`, err);
+          return false;
         }
-      } catch (err) {
-        console.warn("Exception creating design_images bucket:", err);
-      }
-    } else {
-      console.log("design_images bucket already exists");
+      })
+    );
+    
+    const allSuccess = results.every(result => result === true);
+    
+    if (!allSuccess && retries > 0) {
+      console.log(`Some buckets failed to create, retrying (${retries} attempts left)...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retry
+      return createStorageBucketsIfNeeded(retries - 1);
     }
     
-    // Create reference_images bucket if it doesn't exist
-    if (!referenceImages) {
-      try {
-        const { error: createError } = await supabase.storage.createBucket('reference_images', {
-          public: true,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (createError) {
-          console.error("Error creating reference_images bucket:", createError);
-        } else {
-          console.log("Successfully created reference_images bucket");
-          created.referenceImages = true;
-        }
-      } catch (err) {
-        console.warn("Exception creating reference_images bucket:", err);
-      }
-    } else {
-      console.log("reference_images bucket already exists");
+    if (!allSuccess) {
+      console.error('Failed to create all required buckets after retries');
+      toast.error('Không thể tạo thư mục lưu trữ hình ảnh');
     }
     
-    return { 
-      success: true, 
-      message: 'Buckets check completed',
-      created
-    };
+    return allSuccess;
   } catch (err) {
-    console.error("Exception creating storage buckets:", err);
-    return { 
-      success: false, 
-      message: err instanceof Error ? err.message : 'Unknown error',
-      created
-    };
+    console.error('Exception creating buckets:', err);
+    return false;
   }
 };

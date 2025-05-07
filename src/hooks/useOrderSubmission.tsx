@@ -1,11 +1,10 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer, DeliveryInformation } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
-import { createStorageBucketsIfNeeded } from '@/utils/image-utils';
+import { createStorageBucketsIfNeeded, uploadReferenceImage, uploadLogo } from '@/utils/image-utils';
 
 interface OrderSubmissionProps {
   user: any;
@@ -82,33 +81,23 @@ export const useOrderSubmission = ({
     
     toast.info(`Đang tải lên hình ảnh tham khảo (0/${referenceImages.length})...`);
     
+    // Ensure storage buckets exist
+    await createStorageBucketsIfNeeded();
+    
     for (const [index, file] of referenceImages.entries()) {
       try {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
+        console.log(`Uploading reference image ${index}...`);
         
-        console.log(`Uploading reference image ${index} to ${filePath}...`);
+        // Use the improved upload utility
+        const filePath = await uploadReferenceImage(orderId, file, index);
         
-        const { data, error } = await supabase.storage
-          .from('reference_images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-        
-        if (error) {
-          console.error(`Error uploading reference image ${index}:`, error);
-          toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}: ${error.message}`);
+        if (!filePath) {
+          console.error(`Failed to upload reference image ${index}`);
+          toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}`);
           continue;
         }
         
-        const { data: urlData } = supabase.storage
-          .from('reference_images')
-          .getPublicUrl(data.path);
-          
-        console.log(`Reference image ${index} public URL: ${urlData.publicUrl}`);
-        
-        uploadedPaths.push(data.path);
+        uploadedPaths.push(filePath);
         uploadProgress++;
         
         toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
@@ -121,6 +110,8 @@ export const useOrderSubmission = ({
     
     if (uploadedPaths.length > 0) {
       toast.success(`Đã tải lên ${uploadedPaths.length}/${referenceImages.length} hình ảnh tham khảo`);
+    } else if (referenceImages.length > 0) {
+      toast.error('Không thể tải lên hình ảnh tham khảo. Vui lòng thử lại sau.');
     }
     
     return uploadedPaths;
@@ -144,6 +135,9 @@ export const useOrderSubmission = ({
     if (totalLogos > 0) {
       toast.info(`Đang tải lên logo (0/${totalLogos})...`);
     }
+    
+    // Ensure storage buckets exist
+    await createStorageBucketsIfNeeded();
 
     for (const logo of logos) {
       if (!logo.file) {
@@ -151,27 +145,13 @@ export const useOrderSubmission = ({
         continue;
       }
       
-      const fileExt = logo.file.name.split('.').pop();
-      const filePath = `${orderId}/${Date.now()}-${logo.position}.${fileExt}`;
-
-      console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
-
       try {
-        const { data, error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(filePath, logo.file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position, uploadError);
-          toast.error(`Không thể tải lên logo vị trí ${logo.position}: ${uploadError.message}`);
-          continue;
-        }
-
-        if (!data) {
-          console.error("[Upload logo] Không có data trả về sau khi upload logo vị trí:", logo.position);
+        // Use the improved upload utility
+        const filePath = await uploadLogo(orderId, logo.file, logo.position);
+        
+        if (!filePath) {
+          console.error("[Upload logo] Lỗi upload logo vị trí:", logo.position);
+          toast.error(`Không thể tải lên logo vị trí ${logo.position}`);
           continue;
         }
 
@@ -200,6 +180,8 @@ export const useOrderSubmission = ({
 
     if (uploadedLogoCount > 0) {
       toast.success(`[Upload logo] Đã tải lên thành công ${uploadedLogoCount}/${totalLogos} logo`);
+    } else if (totalLogos > 0) {
+      toast.error('Không thể tải lên logo. Vui lòng thử lại sau.');
     }
 
     return { logoUrls, logoStorageEntries };
@@ -327,7 +309,7 @@ export const useOrderSubmission = ({
         // Continue with the order creation process even if delivery info fails
       }
 
-      // Upload reference images
+      // Upload reference images using improved upload utility
       const referenceImagePaths = await uploadReferenceImages(orderId, referenceImages);
       
       // Update the reference images in the order
@@ -343,7 +325,7 @@ export const useOrderSubmission = ({
         }
       }
 
-      // Upload logos
+      // Upload logos using improved upload utility
       const { logoUrls, logoStorageEntries } = await uploadLogos(orderId, logos);
 
       let insertedLogoIds: string[] = [];

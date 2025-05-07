@@ -12,29 +12,55 @@ export const checkFileExistsInStorage = async (
   path: string
 ): Promise<boolean> => {
   try {
-    if (!path) return false;
+    if (!path) {
+      console.log('Empty path provided to checkFileExistsInStorage');
+      return false;
+    }
     
     // Get the folder path and filename
     const pathParts = path.split('/');
     const fileName = pathParts.pop();
     const folderPath = pathParts.join('/');
     
-    if (!fileName) return false;
+    if (!fileName) {
+      console.log('Invalid path format (no filename) provided to checkFileExistsInStorage');
+      return false;
+    }
     
+    // Try direct download to check if file exists
     const { data, error } = await supabase.storage
+      .from(bucket)
+      .download(`${folderPath}/${fileName}`);
+    
+    if (error) {
+      if (error.message.includes('Object not found') || 
+          error.message.includes('The specified key does not exist')) {
+        console.log(`File ${path} in ${bucket} does not exist (verified via download)`);
+        return false;
+      }
+      
+      // If we get another error, fall back to list method
+      console.warn(`Error checking file via download, falling back to list method:`, error);
+    } else if (data) {
+      // File exists and we were able to download it
+      return true;
+    }
+    
+    // Fallback method: list files in the directory
+    const { data: files, error: listError } = await supabase.storage
       .from(bucket)
       .list(folderPath, {
         limit: 100,
         search: fileName
       });
       
-    if (error) {
-      console.error(`Error checking if file exists in ${bucket}:`, error);
+    if (listError) {
+      console.error(`Error listing files in ${bucket}/${folderPath}:`, listError);
       return false;
     }
     
-    const fileExists = data && data.length > 0 && data.some(file => file.name === fileName);
-    console.log(`File ${path} in ${bucket} exists: ${fileExists}`);
+    const fileExists = files && files.length > 0 && files.some(file => file.name === fileName);
+    console.log(`File ${path} in ${bucket} exists (via list method): ${fileExists}`);
     return fileExists;
   } catch (err) {
     console.error(`Error checking if file exists in ${bucket}:`, err);
@@ -69,6 +95,11 @@ export const verifyImageUpload = async (
     const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(path);
+    
+    if (!data || !data.publicUrl) {
+      console.error(`Failed to get public URL for ${bucket}/${path}`);
+      return { success: true, publicUrl: null };
+    }
     
     console.log(`Successfully verified image upload to ${bucket}: ${path}`);
     return { success: true, publicUrl: data.publicUrl };
