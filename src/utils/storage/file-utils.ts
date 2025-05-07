@@ -44,7 +44,6 @@ export const checkFileExistsInStorage = async (
       // Log specific error details
       console.warn(`Error checking file via download method:`, error);
       console.warn(`Error message: ${error.message}`);
-      console.warn(`Error status: ${error.status}`);
       
       // If we get another error, fall back to list method
       console.warn(`Falling back to list method to check if file exists`);
@@ -65,7 +64,6 @@ export const checkFileExistsInStorage = async (
     if (listError) {
       console.error(`Error listing files in ${bucket}/${folderPath}:`, listError);
       console.error(`Error message: ${listError.message}`);
-      console.error(`Error status: ${listError.status}`);
       return false;
     }
     
