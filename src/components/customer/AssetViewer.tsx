@@ -1,121 +1,186 @@
 
-// The updated component requires adding an onImageError prop for handling image load failures
-import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, Eye, ImageOff } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImageViewer } from "@/components/admin/ImageViewer";
-import { AlertCircle } from "lucide-react";
-
-interface Asset {
-  url: string;
-  name: string;
-  type: 'image' | 'pdf' | 'other';
-}
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AssetViewerProps {
-  title?: string; // Added title prop as optional
-  assets: Asset[];
+  title?: string;
+  assets: {
+    url: string;
+    name?: string;
+    type: 'image' | 'font';
+    onError?: () => void;
+  }[];
   gridCols?: number;
-  onImageError?: (url: string) => void;
 }
 
-export const AssetViewer: React.FC<AssetViewerProps> = ({ 
-  title,
-  assets,
-  gridCols = 3,
-  onImageError
-}) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [errorImages, setErrorImages] = useState<Record<string, boolean>>({});
+export const AssetViewer = ({ 
+  title = 'Mẫu cần in', 
+  assets, 
+  gridCols = 4 
+}: AssetViewerProps) => {
+  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
 
-  const handleImageClick = (url: string) => {
-    setSelectedImage(url);
-  };
-  
-  const handleImageError = (url: string) => {
-    setErrorImages(prev => ({ ...prev, [url]: true }));
-    if (onImageError) {
-      onImageError(url);
+  // Filter out invalid or empty URLs
+  const validAssets = assets.filter(asset => asset.url && asset.url.trim() !== '');
+
+  // Process image URLs to ensure they use Supabase storage URLs
+  const processImageUrl = (url: string): string => {
+    // If it's already a full URL, return it
+    if (url.startsWith('http')) {
+      return url;
+    }
+    
+    try {
+      // If it's a relative path in reference_images bucket
+      if (!url.includes('/')) {
+        const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+        return data.publicUrl;
+      }
+      
+      // If it has path structure like orderId/filename
+      const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Error processing image URL:", url, error);
+      return url; // Return original URL as fallback
     }
   };
 
-  if (!assets || assets.length === 0) {
-    return (
-      <div className="text-center p-4 text-muted-foreground">
-        Không có tài liệu nào
-      </div>
-    );
+  const handleDownload = async (url: string, filename: string, index: number) => {
+    try {
+      setIsDownloading(prev => ({ ...prev, [index]: true }));
+      
+      // Process the URL to ensure it's a full URL
+      const processedUrl = url.startsWith('http') ? url : processImageUrl(url);
+      
+      console.log(`Attempting to download: ${processedUrl}`);
+      
+      const response = await fetch(processedUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${filename || 'logo'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success(`Đã tải xuống ${filename ? ` (${filename})` : ""}!`);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error(`Không thể tải xuống: ${error.message || 'Lỗi không xác định'}`);
+    } finally {
+      setIsDownloading(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const handleImageError = (index: number) => {
+    console.error(`Error loading image: ${assets[index].url}`);
+    setImageErrors(prev => ({ ...prev, [index]: true }));
+    
+    // Call custom onError handler if provided
+    if (assets[index].onError) {
+      assets[index].onError();
+    }
+  };
+
+  if (validAssets.length === 0) {
+    return null;
   }
 
   return (
     <>
-      {title && <h3 className="text-lg font-medium mb-3">{title}</h3>}
-      <div className={`grid grid-cols-2 sm:grid-cols-${gridCols} gap-4`}>
-        {assets.map((asset, index) => {
-          const hasError = errorImages[asset.url];
-          
-          if (asset.type === 'image') {
-            return (
-              <div 
-                key={index} 
-                className="border rounded-md overflow-hidden aspect-square relative"
-              >
-                {!hasError ? (
-                  <img
-                    src={asset.url}
-                    alt={asset.name}
-                    className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => handleImageClick(asset.url)}
-                    onError={() => handleImageError(asset.url)}
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-sm p-2">
-                    <AlertCircle className="h-8 w-8 mb-2 text-muted-foreground" />
-                    <span className="text-center text-muted-foreground">Không thể tải hình ảnh</span>
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white py-1 px-2 text-xs">
-                  {asset.name}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">{title}</h3>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-${gridCols} gap-4`}>
+          {validAssets.map((asset, index) => (
+            <div key={index} className="relative border rounded-md p-2 space-y-2">
+              {asset.type === 'image' ? (
+                <div className="aspect-square relative">
+                  {imageErrors[index] ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md">
+                      <ImageOff className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Không thể tải hình ảnh</p>
+                    </div>
+                  ) : (
+                    <img
+                      src={asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url)}
+                      alt={asset.name || `Mẫu ${index + 1}`}
+                      className="w-full h-full object-contain rounded-md" // Changed from object-cover to object-contain
+                      onError={() => handleImageError(index)}
+                    />
+                  )}
                 </div>
-              </div>
-            );
-          } else if (asset.type === 'pdf') {
-            return (
-              <div key={index} className="border rounded-md p-4 flex flex-col items-center justify-center">
-                <div className="text-4xl mb-2">📄</div>
-                <div className="text-sm mb-2 text-center">{asset.name}</div>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => window.open(asset.url, '_blank')}
+              ) : (
+                <div className="aspect-square flex items-center justify-center bg-muted rounded-md">
+                  <span className="text-sm font-medium">{asset.name || 'Font file'}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-2">
+                {asset.type === 'image' && !imageErrors[index] && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      const processedUrl = asset.url.startsWith('http') 
+                        ? asset.url 
+                        : processImageUrl(asset.url);
+                      
+                      setSelectedAsset(processedUrl);
+                      setIsPreviewOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Xem
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleDownload(asset.url, asset.name || `mau-${index + 1}`, index)}
+                  disabled={asset.type === 'image' && imageErrors[index] || isDownloading[index]}
                 >
-                  Xem PDF
+                  <Download className="h-4 w-4 mr-1" />
+                  {isDownloading[index] ? "Đang tải..." : "Tải xuống"}
                 </Button>
               </div>
-            );
-          } else {
-            return (
-              <div key={index} className="border rounded-md p-4 flex flex-col items-center justify-center">
-                <div className="text-4xl mb-2">📎</div>
-                <div className="text-sm mb-2 text-center">{asset.name}</div>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => window.open(asset.url, '_blank')}
-                >
-                  Tải xuống
-                </Button>
-              </div>
-            );
-          }
-        })}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Image Viewer Dialog */}
-      <ImageViewer 
-        isOpen={!!selectedImage} 
-        onClose={() => setSelectedImage(null)}
-        imageUrl={selectedImage}
-      />
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Xem hình ảnh</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <img
+              src={selectedAsset || ''}
+              alt="Preview"
+              className="w-full h-auto max-h-[70vh] object-contain"
+              onError={(e) => {
+                console.error(`Error loading preview image: ${selectedAsset}`);
+                e.currentTarget.alt = 'Không thể tải hình ảnh';
+                e.currentTarget.classList.add('opacity-50');
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

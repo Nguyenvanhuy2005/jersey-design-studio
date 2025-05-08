@@ -1,5 +1,4 @@
 
-import React, { useState } from "react";
 import { Customer, DeliveryInformation, Logo, Player } from "@/types";
 import { CustomerForm } from "@/components/customer-form";
 import { DeliveryForm } from "@/components/delivery-form";
@@ -12,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { memo } from "react";
-import { toast } from "sonner";
 
 interface OrderInfoTabContentProps {
   customerInfo: Customer;
@@ -65,29 +63,6 @@ export const OrderInfoTabContent = memo(({
   onNotesChange,
   onGenerateProductLines
 }: OrderInfoTabContentProps) => {
-  // Add state to track loading states
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-  // Handle image upload with loading state and error handling
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setIsUploadingImage(true);
-      
-      const files = e.target.files;
-      if (!files || files.length === 0) {
-        setIsUploadingImage(false);
-        return;
-      }
-      
-      onReferenceImagesUpload(files);
-    } catch (err) {
-      console.error("Error handling image upload:", err);
-      toast.error("Có lỗi khi xử lý tải ảnh lên.");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
   return <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-6">
@@ -103,42 +78,17 @@ export const OrderInfoTabContent = memo(({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {referenceImagesPreview.map((preview, index) => <div key={index} className="relative rounded-md overflow-hidden border aspect-square">
-                    <img 
-                      src={preview} 
-                      alt={`Reference ${index}`} 
-                      className="w-full h-full object-cover" 
-                      onError={() => {
-                        console.error(`Error loading reference image preview at index ${index}`);
-                        toast.error("Không thể hiển thị hình ảnh tham khảo.");
-                      }}
-                    />
+                    <img src={preview} alt={`Reference ${index}`} className="w-full h-full object-cover" />
                     <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6" onClick={() => onRemoveReferenceImage(index)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>)}
                 
                 {referenceImages.length < 5 && <div className="border border-dashed rounded-md flex items-center justify-center aspect-square">
-                    <Label htmlFor="reference-images" className={`cursor-pointer flex flex-col items-center justify-center w-full h-full ${isUploadingImage ? 'opacity-50' : ''}`}>
-                      {isUploadingImage ? (
-                        <>
-                          <span className="text-2xl animate-pulse">⏳</span>
-                          <span className="text-xs text-center">Đang tải...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-2xl">+</span>
-                          <span className="text-xs text-center">Tải lên hình ảnh</span>
-                        </>
-                      )}
-                      <Input 
-                        id="reference-images" 
-                        type="file" 
-                        accept="image/*" 
-                        multiple 
-                        className="hidden" 
-                        onChange={handleImageUpload}
-                        disabled={isUploadingImage}
-                      />
+                    <Label htmlFor="reference-images" className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                      <span className="text-2xl">+</span>
+                      <span className="text-xs text-center">Tải lên hình ảnh</span>
+                      <Input id="reference-images" type="file" accept="image/*" multiple className="hidden" onChange={e => onReferenceImagesUpload(e.target.files)} />
                     </Label>
                   </div>}
               </div>

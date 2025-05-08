@@ -1,10 +1,11 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageIcon, Download, AlertCircle } from "lucide-react";
 import { AssetViewer } from "@/components/customer/AssetViewer";
 import { Logo, LogoPosition } from "@/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // All possible logo positions (for reference)
@@ -31,51 +32,19 @@ interface ReferenceImagesProps {
   logos?: Logo[];
 }
 
-export const ReferenceImages = ({ referenceImages = [], logos = [] }: ReferenceImagesProps) => {
+export const ReferenceImages = ({ referenceImages, logos = [] }: ReferenceImagesProps) => {
   const [downloadingLogo, setDownloadingLogo] = useState<string | null>(null);
   const [logoErrors, setLogoErrors] = useState<Record<string, boolean>>({});
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [processedReferenceUrls, setProcessedReferenceUrls] = useState<{url: string, name: string, type: 'image'}[]>([]);
-  
-  // Process reference image URLs on component mount or when referenceImages prop changes
-  useEffect(() => {
-    const processReferenceImages = async () => {
-      if (!referenceImages || referenceImages.length === 0) return;
-      
-      const processed = await Promise.all(referenceImages.map(async (path, index) => {
-        try {
-          // If it's already a full URL, use it directly
-          if (path.startsWith('http')) {
-            return {
-              url: path,
-              name: `Mẫu ${index + 1}`,
-              type: 'image' as const
-            };
-          }
-          
-          // Otherwise, generate public URL from Supabase
-          const { data } = supabase.storage
-            .from('reference_images')
-            .getPublicUrl(path);
-            
-          return {
-            url: data.publicUrl,
-            name: `Mẫu ${index + 1}`,
-            type: 'image' as const
-          };
-        } catch (err) {
-          console.error(`Error processing reference image ${index}:`, err);
-          setImageErrors(prev => ({ ...prev, [path]: true }));
-          return null;
-        }
-      }));
-      
-      // Filter out null values from processing errors
-      setProcessedReferenceUrls(processed.filter(Boolean) as {url: string, name: string, type: 'image'}[]);
-    };
-    
-    processReferenceImages();
-  }, [referenceImages]);
+
+  // Reference assets
+  const referenceAssets = referenceImages?.map((url, index) => ({
+    url,
+    name: `Mẫu ${index + 1}`,
+    type: 'image' as const
+  })) || [];
+
+  // Only show logos that actually have a working url/previewUrl (never fill to 6)
+  const displayLogos = (logos || []).filter(logo => !!(logo.previewUrl || logo.url));
 
   // Helper tải logo về, có thông báo nếu không có ảnh
   const handleLogoDownload = async (logo: Logo, showName: string) => {
@@ -135,14 +104,6 @@ export const ReferenceImages = ({ referenceImages = [], logos = [] }: ReferenceI
     console.error(`Error loading logo image: ${logoId}`);
     setLogoErrors(prev => ({ ...prev, [logoId]: true }));
   };
-  
-  const handleReferenceImageError = (url: string) => {
-    console.error(`Error loading image: ${url}`);
-    setImageErrors(prev => ({ ...prev, [url]: true }));
-  };
-
-  // Only show logos that actually have a working url/previewUrl (never fill to 6)
-  const displayLogos = (logos || []).filter(logo => !!(logo.previewUrl || logo.url));
 
   return (
     <div className="space-y-4">
@@ -215,7 +176,7 @@ export const ReferenceImages = ({ referenceImages = [], logos = [] }: ReferenceI
         </CardContent>
       </Card>
       {/* Reference Images */}
-      {processedReferenceUrls.length > 0 ? (
+      {referenceAssets.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -224,30 +185,10 @@ export const ReferenceImages = ({ referenceImages = [], logos = [] }: ReferenceI
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetViewer 
-              assets={processedReferenceUrls} 
-              gridCols={4} 
-              onImageError={handleReferenceImageError}
-            />
+            <AssetViewer assets={referenceAssets} gridCols={4} />
           </CardContent>
         </Card>
-      ) : referenceImages && referenceImages.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5" />
-              Tài nguyên hình ảnh
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center text-muted-foreground">
-              <AlertCircle className="mx-auto h-8 w-8 mb-2" />
-              <p>Có {referenceImages.length} hình ảnh tham khảo nhưng không thể hiển thị.</p>
-              <p className="text-sm">Có thể các hình ảnh đã bị xóa hoặc không còn tồn tại.</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+      )}
     </div>
   );
 };

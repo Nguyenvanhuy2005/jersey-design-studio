@@ -115,43 +115,15 @@ export const useOrderForm = () => {
   const handleReferenceImagesUpload = (fileList: FileList | null) => {
     if (!fileList) return;
     
-    // Validate file types before even trying to upload
-    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    
     const newFiles = Array.from(fileList);
-    const invalidFiles = newFiles.filter(file => !validImageTypes.includes(file.type));
-    
-    if (invalidFiles.length > 0) {
-      toast.error('Chỉ chấp nhận file hình ảnh (JPEG, PNG, GIF, WEBP).');
-      return;
-    }
-    
-    // Check file sizes
-    const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
-    const oversizedFiles = newFiles.filter(file => file.size > maxSizeInBytes);
-    
-    if (oversizedFiles.length > 0) {
-      toast.error('Kích thước file không được vượt quá 5MB.');
-      return;
-    }
-    
     const updatedFiles = [...referenceImages];
     const updatedPreviews = [...referenceImagesPreview];
     
     const filesToAdd = newFiles.slice(0, 5 - referenceImages.length);
     
-    // Process all valid files
     filesToAdd.forEach(file => {
-      try {
-        const previewUrl = URL.createObjectURL(file);
-        updatedFiles.push(file);
-        updatedPreviews.push(previewUrl);
-        
-        console.log(`Added reference image preview: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
-      } catch (err) {
-        console.error(`Error creating preview for file ${file.name}:`, err);
-        toast.error(`Không thể tạo bản xem trước cho file "${file.name}"`);
-      }
+      updatedFiles.push(file);
+      updatedPreviews.push(URL.createObjectURL(file));
     });
     
     setReferenceImages(updatedFiles);
@@ -159,34 +131,20 @@ export const useOrderForm = () => {
     
     if (filesToAdd.length < newFiles.length) {
       toast.warning("Chỉ có thể tải lên tối đa 5 hình ảnh tham khảo.");
-    } else if (filesToAdd.length > 0) {
-      toast.success(`Đã thêm ${filesToAdd.length} hình ảnh tham khảo.`);
     }
   };
   
   const removeReferenceImage = (index: number) => {
-    try {
-      const updatedFiles = [...referenceImages];
-      const updatedPreviews = [...referenceImagesPreview];
-      
-      const previewUrl = updatedPreviews[index];
-      if (previewUrl && previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
-        console.log(`Revoked object URL: ${previewUrl}`);
-      }
-      
-      updatedFiles.splice(index, 1);
-      updatedPreviews.splice(index, 1);
-      
-      setReferenceImages(updatedFiles);
-      setReferenceImagesPreview(updatedPreviews);
-      
-      console.log(`Removed reference image at index ${index}`);
-      toast.success('Đã xóa hình ảnh tham khảo.');
-    } catch (err) {
-      console.error(`Error removing reference image at index ${index}:`, err);
-      toast.error('Có lỗi khi xóa hình ảnh tham khảo.');
-    }
+    const updatedFiles = [...referenceImages];
+    const updatedPreviews = [...referenceImagesPreview];
+    
+    URL.revokeObjectURL(updatedPreviews[index]);
+    
+    updatedFiles.splice(index, 1);
+    updatedPreviews.splice(index, 1);
+    
+    setReferenceImages(updatedFiles);
+    setReferenceImagesPreview(updatedPreviews);
   };
   
   useEffect(() => {
