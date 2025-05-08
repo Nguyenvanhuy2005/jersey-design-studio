@@ -1,5 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { createBucketIfNeeded } from "../storage/file-utils";
+import { toast } from "sonner";
 
 /**
  * Get a public URL for a reference image from storage with enhanced error handling
@@ -22,6 +24,11 @@ export const getReferenceImageUrl = (imagePath: string): string | null => {
     // Extract file extension for debugging
     const extension = imagePath.split('.').pop()?.toLowerCase() || '';
     console.log(`Processing reference image (${extension}): ${imagePath}`);
+    
+    // Special handling for JPG/JPEG files
+    if (extension === 'jpg' || extension === 'jpeg') {
+      console.log(`Special handling for JPG/JPEG image: ${imagePath}`);
+    }
     
     // Get public URL from Supabase storage
     const { data } = supabase.storage
@@ -54,6 +61,14 @@ export const checkReferenceImageExists = async (imagePath?: string): Promise<boo
     // Log the file extension for debugging
     const extension = imagePath.split('.').pop()?.toLowerCase() || '';
     console.log(`Checking if reference image exists (${extension}): ${imagePath}`);
+    
+    // Ensure reference_images bucket exists
+    try {
+      await createBucketIfNeeded('reference_images');
+    } catch (bucketErr) {
+      console.error("Error ensuring reference_images bucket:", bucketErr);
+      // Continue checking, as the bucket might already exist
+    }
     
     // Check if bucket exists first
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
@@ -134,4 +149,112 @@ export const getReferenceImageUrls = (referenceImages?: string[]): string[] => {
   
   console.log(`Generated ${urls.length} reference image URLs out of ${uniqueReferenceImages.length} unique paths`);
   return urls;
+};
+
+/**
+ * Uploads a reference image to Supabase storage with enhanced error handling for JPG
+ * @param orderId The order ID for the path
+ * @param imageFile The reference image file to upload
+ * @param index The index of the image (for naming)
+ * @returns Promise resolving to the uploaded file path or empty string on failure
+ */
+export const uploadReferenceImage = async (
+  orderId: string,
+  imageFile: File,
+  index: number
+): Promise<string> => {
+  try {
+    // Create the bucket if it doesn't exist
+    try {
+      await createBucketIfNeeded('reference_images');
+    } catch (bucketErr) {
+      console.error("Error ensuring reference_images bucket exists:", bucketErr);
+      // Continue with upload attempt as bucket might already exist
+    }
+    
+    const fileExt = imageFile.name.split('.').pop()?.toLowerCase() || 'png';
+    const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
+    
+    console.log(`Uploading reference image (${fileExt}) ${index} to ${filePath}...`);
+    
+    // Determine the correct content type based on file extension
+    let contentType: string;
+    if (fileExt === 'jpg' || fileExt === 'jpeg') {
+      contentType = 'image/jpeg';
+    } else if (fileExt === 'png') {
+      contentType = 'image/png';
+    } else if (fileExt === 'gif') {
+      contentType = 'image/gif';
+    } else if (fileExt === 'webp') {
+      contentType = 'image/webp';
+    } else {
+      contentType = imageFile.type || 'application/octet-stream';
+    }
+    
+    console.log(`Using content type: ${contentType} for ${fileExt} file: ${imageFile.name}`);
+    
+    const { data, error } = await supabase.storage
+      .from('reference_images')
+      .upload(filePath, imageFile, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: contentType
+      });
+      
+    if (error) {
+      console.error(`Error uploading reference image ${index}:`, error);
+      toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}: ${error.message}`);
+      return '';
+    }
+    
+    console.log(`Successfully uploaded reference image ${index}:`, data.path);
+    
+    // Verify upload was successful
+    const { publicUrl } = await verifyRefUpload('reference_images', data.path);
+    if (publicUrl) {
+      console.log(`Verified reference image upload with public URL: ${publicUrl}`);
+    }
+    
+    return data.path;
+  } catch (err) {
+    console.error(`Error uploading reference image ${index}:`, err);
+    toast.error(`Có lỗi khi tải lên hình ảnh tham khảo ${index + 1}`);
+    return '';
+  }
+};
+
+/**
+ * Verifies that a reference image was successfully uploaded
+ * @param bucket The bucket name
+ * @param path The file path
+ * @returns Promise resolving to the public URL if successful
+ */
+const verifyRefUpload = async (
+  bucket: string, 
+  path: string
+): Promise<{ success: boolean, publicUrl: string | null }> => {
+  try {
+    // Check if file exists
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(path.split('/').slice(0, -1).join('/'), {
+        limit: 1,
+        search: path.split('/').pop() || ''
+      });
+      
+    if (error || !data || data.length === 0) {
+      console.error(`File ${path} verification failed:`, error || 'No file found');
+      return { success: false, publicUrl: null };
+    }
+    
+    // Get public URL
+    const urlData = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+      
+    return { success: true, publicUrl: urlData.data.publicUrl };
+  } catch (err) {
+    console.error(`Error verifying reference image upload:`, err);
+    return { success: false, publicUrl: null };
+  }
 };

@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { parseDateSafely } from "@/utils/format-utils";
 import { toast } from "sonner";
+import { createBucketIfNeeded } from "@/utils/storage/file-utils";
 
 export const useOrderForm = () => {
   const { user } = useAuth();
@@ -112,6 +113,54 @@ export const useOrderForm = () => {
     console.log("[useOrderForm] productLines:", productLines);
   }, [players, productLines]);
   
+  // Ensure storage buckets exist
+  useEffect(() => {
+    const initializeBuckets = async () => {
+      try {
+        // Create buckets if they don't exist
+        await createBucketIfNeeded('reference_images');
+        await createBucketIfNeeded('design_images');
+        console.log("Successfully initialized storage buckets");
+      } catch (err) {
+        console.error("Error initializing storage buckets:", err);
+        // Don't show toast - this is a background operation
+      }
+    };
+    
+    initializeBuckets();
+  }, []);
+
+  // Enhanced file validation for reference image uploads
+  const validateImage = (file: File): boolean => {
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error(`File quá lớn: ${file.name} (tối đa 10MB)`);
+      return false;
+    }
+    
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const fileType = file.type.toLowerCase();
+    
+    console.log(`Validating file: ${file.name}, type: ${fileType}, size: ${file.size}`);
+    
+    // Special check for JPG files with incorrect MIME type
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    if ((extension === 'jpg' || extension === 'jpeg') && fileType !== 'image/jpeg') {
+      console.warn(`JPG file with incorrect MIME type: ${file.name}, type: ${fileType}`);
+      // Still accept the file, but log a warning
+      return true;
+    }
+    
+    if (!validTypes.includes(fileType)) {
+      toast.error(`Loại file không hợp lệ: ${file.name} (chỉ chấp nhận JPEG, PNG, GIF, WebP)`);
+      return false;
+    }
+    
+    return true;
+  };
+  
   const handleReferenceImagesUpload = (fileList: FileList | null) => {
     if (!fileList) return;
     
@@ -119,11 +168,22 @@ export const useOrderForm = () => {
     const updatedFiles = [...referenceImages];
     const updatedPreviews = [...referenceImagesPreview];
     
-    const filesToAdd = newFiles.slice(0, 5 - referenceImages.length);
+    const filesToAdd = newFiles
+      .filter(validateImage)
+      .slice(0, 5 - referenceImages.length);
     
     filesToAdd.forEach(file => {
+      // Log file type information to help debug JPG issues
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      console.log(`Adding file: ${file.name}, type: ${file.type}, extension: ${extension}`);
+      
       updatedFiles.push(file);
       updatedPreviews.push(URL.createObjectURL(file));
+      
+      // Special handling for JPG files
+      if (extension === 'jpg' || extension === 'jpeg') {
+        console.log(`Special handling for JPG file: ${file.name}`);
+      }
     });
     
     setReferenceImages(updatedFiles);

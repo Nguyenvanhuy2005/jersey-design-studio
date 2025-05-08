@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { CustomerForm } from "@/components/customer-form";
 import { PrintGlobalSettings } from "@/components/print-global-settings";
 import { LogoUpload } from "@/components/logo-upload";
@@ -63,22 +63,51 @@ export function OrderInfoTab({
 }: OrderInfoTabProps) {
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<number, boolean>>({});
   
-  // Handle image loading errors with more information
+  // Enhanced image error handling with more detailed logging
   const handleImageError = (index: number, event: React.SyntheticEvent<HTMLImageElement>) => {
-    console.error(`Error loading reference image ${index}: ${referenceImagesPreview[index]}`);
+    const imageUrl = referenceImagesPreview[index];
+    const fileType = referenceImages[index]?.type || 'unknown';
+    const fileName = referenceImages[index]?.name || 'unknown';
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'unknown';
+    
+    console.error(`Error loading reference image ${index}: ${imageUrl}`);
+    console.error(`Image details - Type: ${fileType}, Name: ${fileName}, Extension: ${fileExtension}`);
+    
     setImageLoadErrors(prev => ({ ...prev, [index]: true }));
-    // Show toast for image loading failure
-    toast.error(`Không thể tải hình ảnh tham khảo #${index + 1}`);
+    
+    // Show toast for image loading failure with more details
+    toast.error(`Không thể tải hình ảnh tham khảo #${index + 1} (${fileExtension})`);
   };
 
+  // Enhanced file upload validation
   const handleFileUpload = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     
-    // Check for valid image types
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const allFilesValid = Array.from(fileList).every(file => 
-      validTypes.includes(file.type.toLowerCase())
-    );
+    // Check for valid image types with better JPG handling
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    
+    // Log detailed file information for debugging
+    Array.from(fileList).forEach(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      console.log(`File upload - Name: ${file.name}, Type: ${file.type}, Extension: ${extension}, Size: ${file.size} bytes`);
+      
+      // Special handling for JPG files
+      if ((extension === 'jpg' || extension === 'jpeg') && file.type !== 'image/jpeg') {
+        console.warn(`JPG file with incorrect MIME type: ${file.name}, type: ${file.type}`);
+      }
+    });
+    
+    const allFilesValid = Array.from(fileList).every(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      
+      // Special handling for JPG files with incorrect MIME type
+      if ((extension === 'jpg' || extension === 'jpeg') && !validTypes.includes(file.type.toLowerCase())) {
+        console.warn(`Accepting JPG file despite incorrect MIME type: ${file.name}, type: ${file.type}`);
+        return true;
+      }
+      
+      return validTypes.includes(file.type.toLowerCase());
+    });
     
     if (!allFilesValid) {
       toast.warning("Chỉ chấp nhận các định dạng hình ảnh: JPG, PNG, GIF, WebP");
@@ -109,8 +138,17 @@ export function OrderInfoTab({
                   <div key={index} className="relative rounded-md overflow-hidden border aspect-square">
                     {imageLoadErrors[index] ? (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md">
-                        <X className="h-8 w-8 text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">Không thể tải hình ảnh</p>
+                        <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          {referenceImages[index]?.name ? (
+                            <>
+                              Không thể tải hình ảnh<br/>
+                              <span className="text-xs">{referenceImages[index].name}</span>
+                            </>
+                          ) : (
+                            "Không thể tải hình ảnh"
+                          )}
+                        </p>
                       </div>
                     ) : (
                       <img 

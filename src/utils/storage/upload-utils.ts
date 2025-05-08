@@ -1,7 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { createStorageBucketsIfNeeded } from "./bucket-utils";
-import { checkFileExistsInStorage } from "./file-utils";
+import { checkFileExistsInStorage, createBucketIfNeeded } from "./file-utils";
+import { toast } from "sonner";
 
 /**
  * Get proper content type for image upload based on file extension
@@ -11,7 +12,9 @@ import { checkFileExistsInStorage } from "./file-utils";
 const getContentType = (imageFile: File): string => {
   const fileName = imageFile.name.toLowerCase();
   
+  // More specific handling for JPG/JPEG files
   if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+    console.log('Setting explicit MIME type for JPG/JPEG file');
     return 'image/jpeg';
   } else if (fileName.endsWith('.png')) {
     return 'image/png';
@@ -23,8 +26,21 @@ const getContentType = (imageFile: File): string => {
     return 'image/svg+xml';
   }
   
-  // Default to the file's type or a fallback
-  return imageFile.type || 'application/octet-stream';
+  // Check if file.type is available and valid
+  if (imageFile.type && imageFile.type.startsWith('image/')) {
+    console.log(`Using file's reported MIME type: ${imageFile.type}`);
+    return imageFile.type;
+  }
+  
+  // Fallback for JPG/JPEG files with wrong MIME type
+  if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+    console.log('Fallback to image/jpeg for JPG/JPEG file');
+    return 'image/jpeg';
+  }
+  
+  // Default fallback
+  console.log(`No specific MIME type determined, using default`);
+  return 'application/octet-stream';
 };
 
 /**
@@ -48,9 +64,15 @@ export const uploadDesignImage = async (
   const filePath = `${orderId}/${fileNameSuffix}.${fileExtension}`;
   
   console.log(`Uploading image with extension ${fileExtension}: ${filePath}`);
+  console.log(`Original file type: ${imageFile.type}`);
   
-  // First, ensure the bucket exists (but don't fail if we can't create it due to RLS)
-  await createStorageBucketsIfNeeded();
+  // Create the bucket directly
+  try {
+    await createBucketIfNeeded('design_images');
+  } catch (bucketErr) {
+    console.error("Error ensuring bucket exists:", bucketErr);
+    // Continue with upload attempt as bucket might already exist
+  }
   
   // Set content type based on file extension
   const contentType = getContentType(imageFile);
@@ -74,6 +96,7 @@ export const uploadDesignImage = async (
         
         // If this is the last attempt, give up
         if (attempt === retries) {
+          toast.error(`Không thể tải lên hình ảnh: ${error.message}`);
           return '';
         }
         
@@ -83,12 +106,20 @@ export const uploadDesignImage = async (
       }
       
       console.log(`Successfully uploaded design image on attempt ${attempt + 1}:`, data.path);
+      
+      // Verify the upload and get public URL
+      const { success, publicUrl } = await verifyUpload('design_images', data.path);
+      if (success && publicUrl) {
+        console.log(`Verified upload with public URL: ${publicUrl}`);
+      }
+      
       return data.path;
     } catch (err) {
       console.error(`Exception uploading design image (attempt ${attempt + 1}):`, err);
       
       // If this is the last attempt, give up
       if (attempt === retries) {
+        toast.error(`Lỗi khi tải lên hình ảnh: ${err instanceof Error ? err.message : 'Không xác định'}`);
         return '';
       }
       
@@ -98,4 +129,28 @@ export const uploadDesignImage = async (
   }
   
   return '';
+};
+
+/**
+ * Verifies that an image was successfully uploaded and returns its public URL
+ * @param bucket The bucket name
+ * @param path The file path
+ * @returns Promise resolving to success status and public URL
+ */
+const verifyUpload = async (bucket: string, path: string): Promise<{ success: boolean, publicUrl: string | null }> => {
+  try {
+    // Check if the file exists
+    const fileExists = await checkFileExistsInStorage(bucket, path);
+    if (!fileExists) {
+      console.error(`File ${path} does not exist in bucket ${bucket} after upload`);
+      return { success: false, publicUrl: null };
+    }
+    
+    // Get the public URL
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return { success: true, publicUrl: data.publicUrl };
+  } catch (err) {
+    console.error(`Error verifying upload:`, err);
+    return { success: false, publicUrl: null };
+  }
 };

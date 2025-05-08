@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Player, Logo, DesignData, ProductLine, Customer, DeliveryInformation } from '@/types';
@@ -6,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { createStorageBucketsIfNeeded } from '@/utils/image-utils';
+import { uploadReferenceImage } from '@/utils/images/reference-image-utils';
+import { createBucketIfNeeded } from '@/utils/storage/file-utils';
 
 interface OrderSubmissionProps {
   user: any;
@@ -80,39 +81,33 @@ export const useOrderSubmission = ({
     const uploadedPaths: string[] = [];
     let uploadProgress = 0;
     
+    // Ensure reference_images bucket exists
+    try {
+      await createBucketIfNeeded('reference_images');
+    } catch (bucketErr) {
+      console.error("Error ensuring reference_images bucket exists:", bucketErr);
+      // Continue with uploads as bucket might already exist
+    }
+    
     toast.info(`Đang tải lên hình ảnh tham khảo (0/${referenceImages.length})...`);
     
     for (const [index, file] of referenceImages.entries()) {
       try {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${orderId}/${Date.now()}-ref-${index}.${fileExt}`;
+        // Log file type information to help debug JPG issues
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+        console.log(`Uploading reference image ${index}: ${file.name}, type: ${file.type}, extension: ${fileExt}`);
         
-        console.log(`Uploading reference image ${index} to ${filePath}...`);
-        
-        const { data, error } = await supabase.storage
-          .from('reference_images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-        
-        if (error) {
-          console.error(`Error uploading reference image ${index}:`, error);
-          toast.error(`Không thể tải lên hình ảnh tham khảo ${index + 1}: ${error.message}`);
-          continue;
+        // Special handling for JPG files
+        if (fileExt === 'jpg' || fileExt === 'jpeg') {
+          console.log(`Special handling for JPG file: ${file.name}`);
         }
         
-        const { data: urlData } = supabase.storage
-          .from('reference_images')
-          .getPublicUrl(data.path);
-          
-        console.log(`Reference image ${index} public URL: ${urlData.publicUrl}`);
-        
-        uploadedPaths.push(data.path);
-        uploadProgress++;
-        
-        toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
-        
+        const path = await uploadReferenceImage(orderId, file, index);
+        if (path) {
+          uploadedPaths.push(path);
+          uploadProgress++;
+          toast.info(`Đang tải lên hình ảnh tham khảo (${uploadProgress}/${referenceImages.length})...`);
+        }
       } catch (err) {
         console.error(`Error uploading reference image ${index}:`, err);
         toast.error(`Có lỗi khi tải lên hình ảnh tham khảo ${index + 1}`);
@@ -138,6 +133,14 @@ export const useOrderSubmission = ({
       return { logoUrls, logoStorageEntries };
     }
 
+    // Ensure logos bucket exists
+    try {
+      await createBucketIfNeeded('logos');
+    } catch (bucketErr) {
+      console.error("Error ensuring logos bucket exists:", bucketErr);
+      // Continue with uploads as bucket might already exist
+    }
+
     let uploadedLogoCount = 0;
     const totalLogos = logos.filter(logo => logo.file).length;
     
@@ -157,11 +160,24 @@ export const useOrderSubmission = ({
       console.log(`[Upload logo] Bắt đầu upload logo vị trí: ${logo.position}, path: ${filePath}`);
 
       try {
+        // Set appropriate content type based on file extension
+        let contentType: string;
+        if (fileExt === 'jpg' || fileExt === 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (fileExt === 'png') {
+          contentType = 'image/png';
+        } else {
+          contentType = logo.file.type || 'application/octet-stream';
+        }
+        
+        console.log(`Using content type ${contentType} for logo file: ${logo.file.name}`);
+        
         const { data, error: uploadError } = await supabase.storage
           .from('logos')
           .upload(filePath, logo.file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: contentType
           });
 
         if (uploadError) {
@@ -237,7 +253,15 @@ export const useOrderSubmission = ({
     setIsGeneratingDesign(true);
     
     try {
-      await createStorageBucketsIfNeeded();
+      // Ensure all required buckets exist
+      try {
+        await createBucketIfNeeded('design_images');
+        await createBucketIfNeeded('reference_images');
+        await createBucketIfNeeded('logos');
+      } catch (bucketErr) {
+        console.error("Error ensuring buckets exist:", bucketErr);
+        // Continue with order creation as buckets might already exist
+      }
       
       // Update customer info if needed
       const { error: customerError } = await supabase

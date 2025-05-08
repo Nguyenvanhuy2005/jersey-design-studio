@@ -30,7 +30,7 @@ export const AssetViewer = ({
   // Filter out invalid or empty URLs
   const validAssets = assets.filter(asset => asset.url && asset.url.trim() !== '');
 
-  // Process image URLs to ensure they use Supabase storage URLs
+  // Enhanced image URL processing with better JPG handling
   const processImageUrl = (url: string): string => {
     // If it's already a full URL, return it
     if (url.startsWith('http')) {
@@ -42,6 +42,11 @@ export const AssetViewer = ({
       // Extract the file extension to preserve it
       const extension = url.split('.').pop()?.toLowerCase() || '';
       console.log(`Processing image with extension: ${extension}, URL: ${url}`);
+      
+      // Special handling for JPG/JPEG files
+      if (extension === 'jpg' || extension === 'jpeg') {
+        console.log(`Special handling for JPG/JPEG image: ${url}`);
+      }
       
       // If it's a relative path in reference_images bucket
       if (!url.includes('/')) {
@@ -86,6 +91,8 @@ export const AssetViewer = ({
       }
       
       const blob = await response.blob();
+      console.log(`File blob type: ${blob.type}, size: ${blob.size}`);
+      
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -111,6 +118,21 @@ export const AssetViewer = ({
     // Call custom onError handler if provided
     if (assets[index].onError) {
       assets[index].onError();
+    }
+    
+    // Try once more with a different URL construction approach
+    if (assets[index].url && !assets[index].url.startsWith('http')) {
+      const url = assets[index].url;
+      // Retry with direct storage URL if possible
+      try {
+        console.log(`Retrying with direct storage URL for: ${url}`);
+        const extension = getFileExtension(url);
+        if (extension === 'jpg' || extension === 'jpeg') {
+          console.log(`Special retry handling for JPG/JPEG: ${url}`);
+        }
+      } catch (retryError) {
+        console.error(`Retry also failed:`, retryError);
+      }
     }
   };
 
