@@ -19,6 +19,10 @@ export const getReferenceImageUrl = (imagePath: string): string | null => {
       return imagePath;
     }
     
+    // Extract file extension for debugging
+    const extension = imagePath.split('.').pop()?.toLowerCase() || '';
+    console.log(`Processing reference image (${extension}): ${imagePath}`);
+    
     // Get public URL from Supabase storage
     const { data } = supabase.storage
       .from('reference_images')
@@ -47,6 +51,10 @@ export const checkReferenceImageExists = async (imagePath?: string): Promise<boo
       return response.ok;
     }
     
+    // Log the file extension for debugging
+    const extension = imagePath.split('.').pop()?.toLowerCase() || '';
+    console.log(`Checking if reference image exists (${extension}): ${imagePath}`);
+    
     // Check if bucket exists first
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     if (bucketsError) {
@@ -54,7 +62,11 @@ export const checkReferenceImageExists = async (imagePath?: string): Promise<boo
       return false;
     }
     
-    const refBucketExists = buckets.some(bucket => bucket.name === 'reference_images');
+    const refBucketExists = buckets.some(bucket => 
+      bucket.name === 'reference_images' || 
+      bucket.name.toLowerCase() === 'reference_images'
+    );
+    
     if (!refBucketExists) {
       console.error("Bucket 'reference_images' does not exist");
       return false;
@@ -63,6 +75,11 @@ export const checkReferenceImageExists = async (imagePath?: string): Promise<boo
     // Otherwise, check in Supabase storage
     const folderPath = imagePath.split('/').slice(0, -1).join('/');
     const fileName = imagePath.split('/').pop();
+    
+    if (!fileName) {
+      console.error("Invalid file path:", imagePath);
+      return false;
+    }
     
     const { data, error } = await supabase.storage
       .from('reference_images')
@@ -77,7 +94,9 @@ export const checkReferenceImageExists = async (imagePath?: string): Promise<boo
       return false;
     }
     
-    return data && data.length > 0 && data.some(file => file.name === fileName);
+    const fileExists = data && data.length > 0 && data.some(file => file.name === fileName);
+    console.log(`Reference image ${imagePath} exists: ${fileExists}`);
+    return fileExists;
   } catch (error) {
     console.error("Error checking if reference image exists:", error);
     return false;
@@ -97,10 +116,14 @@ export const getReferenceImageUrls = (referenceImages?: string[]): string[] => {
   
   // Remove any duplicate entries
   const uniqueReferenceImages = [...new Set(referenceImages)];
-  console.log(`Deduplicating ${referenceImages.length} images to ${uniqueReferenceImages.length} unique images`);
+  console.log(`Processing ${uniqueReferenceImages.length} unique images from ${referenceImages.length} total`);
   
   const urls = uniqueReferenceImages
     .map(path => {
+      // Log file extension for debugging
+      const extension = path.split('.').pop()?.toLowerCase() || '';
+      console.log(`Getting URL for image (${extension}): ${path}`);
+      
       const url = getReferenceImageUrl(path);
       if (!url) {
         console.warn(`Could not get URL for reference image: ${path}`);

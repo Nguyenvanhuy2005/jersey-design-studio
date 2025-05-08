@@ -34,23 +34,40 @@ export const AssetViewer = ({
   const processImageUrl = (url: string): string => {
     // If it's already a full URL, return it
     if (url.startsWith('http')) {
+      console.log("Using existing URL:", url);
       return url;
     }
     
     try {
+      // Extract the file extension to preserve it
+      const extension = url.split('.').pop()?.toLowerCase() || '';
+      console.log(`Processing image with extension: ${extension}, URL: ${url}`);
+      
       // If it's a relative path in reference_images bucket
       if (!url.includes('/')) {
         const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+        console.log("Generated URL for simple path:", data.publicUrl);
         return data.publicUrl;
       }
       
       // If it has path structure like orderId/filename
       const { data } = supabase.storage.from('reference_images').getPublicUrl(url);
+      console.log("Generated URL for path with structure:", data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error("Error processing image URL:", url, error);
       return url; // Return original URL as fallback
     }
+  };
+
+  const getFileExtension = (url: string): string => {
+    const parts = url.split('.');
+    return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : '';
+  };
+
+  const getFileNameFromUrl = (url: string): string => {
+    const parts = url.split('/');
+    return parts[parts.length - 1] || 'file';
   };
 
   const handleDownload = async (url: string, filename: string, index: number) => {
@@ -59,8 +76,9 @@ export const AssetViewer = ({
       
       // Process the URL to ensure it's a full URL
       const processedUrl = url.startsWith('http') ? url : processImageUrl(url);
+      const extension = getFileExtension(url) || 'png';
       
-      console.log(`Attempting to download: ${processedUrl}`);
+      console.log(`Attempting to download: ${processedUrl} with extension ${extension}`);
       
       const response = await fetch(processedUrl);
       if (!response.ok) {
@@ -71,7 +89,8 @@ export const AssetViewer = ({
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${filename || 'logo'}.png`;
+      // Use the original extension if available
+      link.download = `${filename || 'file'}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -79,7 +98,7 @@ export const AssetViewer = ({
       toast.success(`Đã tải xuống ${filename ? ` (${filename})` : ""}!`);
     } catch (error) {
       console.error('Error downloading file:', error);
-      toast.error(`Không thể tải xuống: ${error.message || 'Lỗi không xác định'}`);
+      toast.error(`Không thể tải xuống: ${error instanceof Error ? error.message : 'Lỗi không xác định'}`);
     } finally {
       setIsDownloading(prev => ({ ...prev, [index]: false }));
     }
@@ -117,8 +136,9 @@ export const AssetViewer = ({
                     <img
                       src={asset.url.startsWith('http') ? asset.url : processImageUrl(asset.url)}
                       alt={asset.name || `Mẫu ${index + 1}`}
-                      className="w-full h-full object-contain rounded-md" // Changed from object-cover to object-contain
+                      className="w-full h-full object-contain rounded-md"
                       onError={() => handleImageError(index)}
+                      loading="lazy"
                     />
                   )}
                 </div>
@@ -150,7 +170,11 @@ export const AssetViewer = ({
                   variant="outline"
                   size="sm"
                   className="flex-1"
-                  onClick={() => handleDownload(asset.url, asset.name || `mau-${index + 1}`, index)}
+                  onClick={() => handleDownload(
+                    asset.url, 
+                    asset.name || `mau-${index + 1}`, 
+                    index
+                  )}
                   disabled={asset.type === 'image' && imageErrors[index] || isDownloading[index]}
                 >
                   <Download className="h-4 w-4 mr-1" />

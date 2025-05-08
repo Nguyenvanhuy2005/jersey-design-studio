@@ -9,6 +9,8 @@ import { PrintGlobalSettings } from "@/components/print-global-settings";
 import { LogoUpload } from "@/components/logo-upload";
 import { PlayerForm } from "@/components/player-form";
 import { Customer, Logo, Player } from "@/types";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface OrderInfoTabProps {
   customerInfo: Customer;
@@ -59,6 +61,35 @@ export function OrderInfoTab({
   onGenerateProductLines,
   onViewDemo
 }: OrderInfoTabProps) {
+  const [imageLoadErrors, setImageLoadErrors] = useState<Record<number, boolean>>({});
+  
+  // Handle image loading errors with more information
+  const handleImageError = (index: number, event: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error(`Error loading reference image ${index}: ${referenceImagesPreview[index]}`);
+    setImageLoadErrors(prev => ({ ...prev, [index]: true }));
+    // Show toast for image loading failure
+    toast.error(`Không thể tải hình ảnh tham khảo #${index + 1}`);
+  };
+
+  const handleFileUpload = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    
+    // Check for valid image types
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allFilesValid = Array.from(fileList).every(file => 
+      validTypes.includes(file.type.toLowerCase())
+    );
+    
+    if (!allFilesValid) {
+      toast.warning("Chỉ chấp nhận các định dạng hình ảnh: JPG, PNG, GIF, WebP");
+      return;
+    }
+    
+    // Reset errors when new images are uploaded
+    setImageLoadErrors({});
+    onReferenceImagesUpload(fileList);
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
@@ -76,11 +107,19 @@ export function OrderInfoTab({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {referenceImagesPreview.map((preview, index) => (
                   <div key={index} className="relative rounded-md overflow-hidden border aspect-square">
-                    <img 
-                      src={preview} 
-                      alt={`Reference ${index}`}
-                      className="w-full h-full object-cover"
-                    />
+                    {imageLoadErrors[index] ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md">
+                        <X className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">Không thể tải hình ảnh</p>
+                      </div>
+                    ) : (
+                      <img 
+                        src={preview} 
+                        alt={`Reference ${index}`}
+                        className="w-full h-full object-contain" // Changed from object-cover to object-contain
+                        onError={(e) => handleImageError(index, e)}
+                      />
+                    )}
                     <Button
                       variant="destructive"
                       size="icon"
@@ -100,17 +139,17 @@ export function OrderInfoTab({
                       <Input
                         id="reference-images"
                         type="file"
-                        accept="image/*"
+                        accept="image/*" // Accept all image types
                         multiple
                         className="hidden"
-                        onChange={(e) => onReferenceImagesUpload(e.target.files)}
+                        onChange={(e) => handleFileUpload(e.target.files)}
                       />
                     </Label>
                   </div>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Tối đa 5 hình ảnh. Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong muốn.
+                Tối đa 5 hình ảnh (JPG, PNG). Hình ảnh tham khảo sẽ giúp chúng tôi hiểu rõ hơn về thiết kế bạn mong muốn.
               </p>
             </CardContent>
           </Card>

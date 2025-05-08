@@ -21,6 +21,10 @@ export const checkFileExistsInStorage = async (
     
     if (!fileName) return false;
     
+    // Log the file extension for debugging
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    console.log(`Checking if file exists (${extension}): ${path} in bucket ${bucket}`);
+    
     const { data, error } = await supabase.storage
       .from(bucket)
       .list(folderPath, {
@@ -57,6 +61,10 @@ export const verifyImageUpload = async (
       return { success: false, publicUrl: null };
     }
     
+    // Log file extension for debugging
+    const extension = path.split('.').pop()?.toLowerCase() || '';
+    console.log(`Verifying image upload (${extension}): ${path} in bucket ${bucket}`);
+    
     // Check if file exists in storage
     const fileExists = await checkFileExistsInStorage(bucket, path);
     
@@ -73,7 +81,7 @@ export const verifyImageUpload = async (
     console.log(`Successfully verified image upload to ${bucket}: ${path}`);
     return { success: true, publicUrl: data.publicUrl };
   } catch (err) {
-    console.error(`Error verifying image upload to ${bucket}:`, err);
+    console.error(`Error verifying image upload to ${bucket}:`, err instanceof Error ? err.message : err);
     return { success: false, publicUrl: null };
   }
 };
