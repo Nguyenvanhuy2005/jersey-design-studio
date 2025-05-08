@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -119,6 +118,7 @@ export function OrderInfoTab({
     onReferenceImagesUpload(fileList);
   };
 
+  
   return (
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
