@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 /**
  * Checks if a file exists in a Supabase storage bucket
@@ -132,10 +131,10 @@ export const createBucketIfNeeded = async (bucketName: string): Promise<void> =>
       
       if (error) {
         console.error(`Error creating bucket '${bucketName}':`, error);
-        toast.error(`Không thể tạo bucket '${bucketName}'. Có thể bạn không có quyền admin.`);
+        // Removed toast.error notification
       } else {
         console.log(`Successfully created bucket '${bucketName}'`);
-        toast.success(`Đã tạo bucket '${bucketName}' thành công`);
+        // Removed toast.success notification
       }
     } else {
       console.log(`Bucket '${bucketName}' already exists`);
