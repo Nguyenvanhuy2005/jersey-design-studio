@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -129,6 +130,20 @@ const AdminOrders = () => {
 
   const handleDeleteOrder = async (orderId: string) => {
     try {
+      console.log(`Attempting to delete order: ${orderId}`);
+      
+      // First, delete related delivery_information records
+      const { error: deliveryError } = await supabase
+        .from('delivery_information')
+        .delete()
+        .eq('order_id', orderId);
+      
+      if (deliveryError) {
+        console.error("Error deleting delivery information:", deliveryError);
+        // Continue with deletion anyway, as delivery info might not exist
+      }
+      
+      // Delete the order - this should cascade to related records
       const { error } = await supabase
         .from('orders')
         .delete()
@@ -136,14 +151,15 @@ const AdminOrders = () => {
 
       if (error) {
         console.error("Error deleting order:", error);
-        toast.error("Không thể xóa đơn hàng");
+        toast.error(`Không thể xóa đơn hàng: ${error.message}`);
         return;
       }
+      
       toast.success("Đã xóa đơn hàng thành công");
       fetchOrders();
       setSelectedOrder(null);
     } catch (error) {
-      console.error("Error deleting order:", error);
+      console.error("Exception in handleDeleteOrder:", error);
       toast.error("Có lỗi khi xóa đơn hàng");
     }
   };
