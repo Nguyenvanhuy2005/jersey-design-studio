@@ -201,7 +201,7 @@ export interface Order {
   productLines: ProductLine[];
   printConfig: PrintConfig;
   totalCost: number;
-  status: 'new' | 'processing' | 'completed' | 'delivered';
+  status: 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled';
   createdAt?: Date;
   notes?: string;
   referenceImages?: string[];

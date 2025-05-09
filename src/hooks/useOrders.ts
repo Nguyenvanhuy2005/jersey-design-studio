@@ -114,7 +114,7 @@ export const useOrders = ({ statusFilter, customerFilter, dateRange }: UseOrders
     }
   };
 
-  // Automatically fetch orders when user or filters change
+  // Fetch orders when component mounts or when dependencies change
   useEffect(() => {
     if (user) {
       fetchOrders();

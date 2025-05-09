@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { OrderStatus } from "../order-list/OrderStatus";
 
 interface OrderActionsProps {
   orderId: string | undefined;
   teamName: string;
-  status: "new" | "processing" | "completed" | "delivered";
-  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
+  status: "new" | "processing" | "completed" | "delivered" | "cancelled";
+  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled') => void;
   onDeleteOrder: (orderId: string) => void;
 }
 
@@ -37,18 +38,16 @@ export const OrderActions = ({
   const handleExportCSV = () => {
     toast.success(`Đã xuất file danh sách cầu thủ cho đơn hàng: ${teamName}`);
   };
-  
-  const handleStatusToProcessing = () => {
-    if (orderId) {
-      onStatusChange(orderId, 'processing');
-      toast.success(`Đơn hàng ${teamName} đã chuyển sang "Đang xử lý"`);
-    }
-  };
-  
-  const handleStatusToDelivered = () => {
-    if (orderId) {
-      onStatusChange(orderId, 'delivered');
-      toast.success(`Đơn hàng ${teamName} đã chuyển sang "Đã giao hàng"`);
+
+  const handleStatusChange = (value: string) => {
+    if (orderId && value !== status) {
+      onStatusChange(orderId, value as 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled');
+      toast.success(`Đơn hàng ${teamName} đã chuyển sang "${
+        value === 'new' ? 'Mới' :
+        value === 'processing' ? 'Đang xử lý' :
+        value === 'completed' ? 'Đã hoàn thành' :
+        value === 'delivered' ? 'Đã giao hàng' : 'Đã hủy'
+      }"`);
     }
   };
 
@@ -58,27 +57,20 @@ export const OrderActions = ({
         Xác nhận in tất cả
       </Button>
       
-      {/* Show "Chuyển sang Đang xử lý" button only for "new" or "completed" statuses */}
-      {status === "new" && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleStatusToProcessing}
-        >
-          Chuyển sang "Đang xử lý"
-        </Button>
-      )}
-
-      {/* Show "Chuyển sang Đã giao hàng" button only for "processing" or "completed" statuses */}
-      {status === "processing" && (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={handleStatusToDelivered}
-        >
-          Chuyển sang "Đã giao hàng"
-        </Button>
-      )}
+      <Select value={status} onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue>
+            <OrderStatus status={status} />
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="new">Mới</SelectItem>
+          <SelectItem value="processing">Đang xử lý</SelectItem>
+          <SelectItem value="completed">Đã hoàn thành</SelectItem>
+          <SelectItem value="delivered">Đã giao hàng</SelectItem>
+          <SelectItem value="cancelled">Đã hủy</SelectItem>
+        </SelectContent>
+      </Select>
 
       <Select value={branch} onValueChange={setBranch}>
         <SelectTrigger className="w-[180px]">

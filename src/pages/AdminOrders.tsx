@@ -89,7 +89,7 @@ const AdminOrders = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => {
+  const handleStatusChange = async (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled') => {
     try {
       const { error } = await supabase
         .from('orders')
@@ -105,11 +105,12 @@ const AdminOrders = () => {
         return;
       }
       
+      // Update local state to avoid full page refresh
       const updatedOrders = orders.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
       );
-      fetchOrders();
       
+      // Update the selected order if it's currently being viewed
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -117,8 +118,12 @@ const AdminOrders = () => {
       toast.success(`Trạng thái đơn hàng đã được cập nhật thành ${
         newStatus === 'new' ? 'Mới' : 
         newStatus === 'processing' ? 'Đang xử lý' : 
-        newStatus === 'completed' ? 'Đã hoàn thành' : 'Đã giao hàng'
+        newStatus === 'completed' ? 'Đã hoàn thành' : 
+        newStatus === 'delivered' ? 'Đã giao hàng' : 'Đã hủy'
       }`);
+
+      // Re-fetch orders to ensure data consistency
+      fetchOrders();
 
       const oldStatus = orders.find(order => order.id === orderId)?.status || '';
       console.log("Order " + orderId + " status changed from " + oldStatus + " to " + newStatus);
@@ -132,18 +137,7 @@ const AdminOrders = () => {
     try {
       console.log(`Attempting to delete order: ${orderId}`);
       
-      // First, delete related delivery_information records
-      const { error: deliveryError } = await supabase
-        .from('delivery_information')
-        .delete()
-        .eq('order_id', orderId);
-      
-      if (deliveryError) {
-        console.error("Error deleting delivery information:", deliveryError);
-        // Continue with deletion anyway, as delivery info might not exist
-      }
-      
-      // Delete the order - this should cascade to related records
+      // With the new ON DELETE CASCADE constraint, we only need to delete the order
       const { error } = await supabase
         .from('orders')
         .delete()
@@ -156,8 +150,17 @@ const AdminOrders = () => {
       }
       
       toast.success("Đã xóa đơn hàng thành công");
+      
+      // Update local state to avoid full page refresh
+      const updatedOrders = orders.filter(order => order.id !== orderId);
+      
+      // Close the details dialog if the deleted order was selected
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
+      }
+      
+      // Re-fetch orders to ensure data consistency
       fetchOrders();
-      setSelectedOrder(null);
     } catch (error) {
       console.error("Exception in handleDeleteOrder:", error);
       toast.error("Có lỗi khi xóa đơn hàng");

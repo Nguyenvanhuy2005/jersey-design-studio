@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { Check, Clock, Plus, Package, X } from "lucide-react";
+import { Check, Clock, Plus, Package, X, Ban } from "lucide-react";
 
 type OrderStatusProps = {
   status: string;
@@ -16,6 +16,8 @@ export const OrderStatus = ({ status }: OrderStatusProps) => {
       return <Badge className="bg-green-500 flex items-center gap-1"><Check className="w-3 h-3" /> Đã hoàn thành</Badge>;
     case 'delivered':
       return <Badge className="bg-purple-500 flex items-center gap-1"><Package className="w-3 h-3" /> Đã giao hàng</Badge>;
+    case 'cancelled':
+      return <Badge className="bg-red-500 flex items-center gap-1"><Ban className="w-3 h-3" /> Đã hủy</Badge>;
     default:
       return <Badge><X className="w-3 h-3" /> Unknown</Badge>;
   }

@@ -1,5 +1,4 @@
 
-
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Mail, Eye, Trash2, ArrowRight } from "lucide-react";
@@ -7,11 +6,13 @@ import { toast } from "sonner";
 import { Order } from "@/types";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OrderStatus } from "./OrderStatus";
 
 type OrderActionsProps = {
   order: Order;
   onViewDetails: (order: Order) => void;
-  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered') => void;
+  onStatusChange: (orderId: string, newStatus: 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled') => void;
   onDeleteOrder: (orderId: string) => void;
 };
 
@@ -27,15 +28,10 @@ export const OrderActions = ({
     toast.success(`Email đã được gửi đến khách hàng về đơn hàng: ${order.teamName || 'Không có tên'}`);
   };
 
-  // Thêm nút chuyển trạng thái delivered
-  const handleStatusForward = () => {
-    if (!order.id) return;
-    let nextStatus: 'processing' | 'completed' | 'delivered' | null = null;
-    if (order.status === 'new') nextStatus = 'processing';
-    else if (order.status === 'processing') nextStatus = 'completed';
-    else if (order.status === 'completed') nextStatus = 'delivered';
-    if (nextStatus)
-      onStatusChange(order.id, nextStatus);
+  const handleStatusChange = (value: string) => {
+    if (order.id && value !== order.status) {
+      onStatusChange(order.id, value as 'new' | 'processing' | 'completed' | 'delivered' | 'cancelled');
+    }
   };
 
   return (
@@ -48,6 +44,21 @@ export const OrderActions = ({
         <Eye className="h-4 w-4 mr-1" /> Chi tiết
       </Button>
       
+      <Select value={order.status} onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue>
+            <OrderStatus status={order.status} />
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="new">Mới</SelectItem>
+          <SelectItem value="processing">Đang xử lý</SelectItem>
+          <SelectItem value="completed">Đã hoàn thành</SelectItem>
+          <SelectItem value="delivered">Đã giao hàng</SelectItem>
+          <SelectItem value="cancelled">Đã hủy</SelectItem>
+        </SelectContent>
+      </Select>
+      
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
@@ -55,21 +66,6 @@ export const OrderActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {order.status === 'new' && (
-            <DropdownMenuItem onClick={() => order.id && onStatusChange(order.id, 'processing')}>
-              Chuyển sang "Đang xử lý"
-            </DropdownMenuItem>
-          )}
-          {order.status === 'processing' && (
-            <DropdownMenuItem onClick={() => order.id && onStatusChange(order.id, 'completed')}>
-              Chuyển sang "Đã hoàn thành"
-            </DropdownMenuItem>
-          )}
-          {order.status === 'completed' && (
-            <DropdownMenuItem onClick={() => order.id && onStatusChange(order.id, 'delivered')}>
-              Chuyển sang "Đã giao hàng"
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem onClick={() => handleSendEmail(order)}>
             <Mail className="h-4 w-4 mr-2" /> Gửi email
           </DropdownMenuItem>
@@ -78,6 +74,7 @@ export const OrderActions = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      
       {/* Dialog xác nhận xóa */}
       <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
         <AlertDialogContent>
