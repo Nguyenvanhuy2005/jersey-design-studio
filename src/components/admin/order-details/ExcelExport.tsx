@@ -1,82 +1,78 @@
 
-import { Order, Player } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import * as XLSX from "xlsx";
+import { FileSpreadsheet } from "lucide-react";
+import { Player } from "@/types";
+import * as XLSX from 'xlsx';
+import { toast } from "sonner";
 
 interface ExcelExportProps {
-  order?: Order;
-  players?: Player[];
-  teamName?: string;
+  players: Player[];
+  teamName: string;
 }
 
-export const ExcelExport = ({ order, players: providedPlayers, teamName: providedTeamName }: ExcelExportProps) => {
-  const formatPlayerNumber = (number: string): string => {
-    // Return the number as-is without zero-padding
-    return number;
-  };
+// Helper to ensure player numbers exported as text with leading zeros
+function formatPlayerNumber(number: string) {
+  if (!number) return '';
+  return number.padStart(2, '0');
+}
 
+// Helper to convert boolean to Vietnamese Yes/No
+function booleanToVietnamese(value: boolean | undefined): string {
+  return value ? 'Có' : 'Không';
+}
+
+export const ExcelExport = ({ players, teamName }: ExcelExportProps) => {
   const handleExport = () => {
-    // Use provided players or get from order
-    const players = providedPlayers || order?.players || [];
-    // Use provided teamName or get from order
-    const teamName = providedTeamName || order?.teamName || "team";
-    
-    // Prepare data for Excel export
-    const playerData = players.map((player, index) => {
-      return {
-        "#": index + 1,
-        "Tên": player.name || "",
-        "Số áo": formatPlayerNumber(player.number) || "",
-        "Kích thước": player.size || "",
-        "Vị trí": getPlayerPosition(player.uniform_type),
-        "Ghi chú": player.note || ""
-      };
-    });
-    
-    const ws = XLSX.utils.json_to_sheet(playerData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Players");
-    
-    // Add more styling information
-    const colWidths = [
-      { wch: 5 },   // #
-      { wch: 25 },  // Tên
-      { wch: 8 },   // Số áo
-      { wch: 12 },  // Kích thước
-      { wch: 15 },  // Vị trí
-      { wch: 25 },  // Ghi chú
-    ];
-    
-    ws["!cols"] = colWidths;
-    
-    // Generate filename
-    const fileName = `${teamName}_players.xlsx`;
-    
-    // Save the Excel file
-    XLSX.writeFile(wb, fileName);
-  };
-  
-  const getPlayerPosition = (uniformType: string): string => {
-    switch (uniformType) {
-      case 'goalkeeper':
-        return 'Thủ môn';
-      case 'player':
-        return 'Cầu thủ';
-      default:
-        return uniformType || '';
+    try {
+      const data = players.map((player, index) => ({
+        'STT': index + 1,
+        'TÊN IN TRÊN SỐ': player.line_1 || '',
+        'SỐ ÁO': formatPlayerNumber(player.number),
+        'TÊN ĐỘI BÓNG': player.line_3 || '',
+        'IN CHỮ NGỰC': player.chest_text || '',
+        'KÍCH THƯỚC': player.size,
+        'KIỂU IN': player.print_style || 'In chuyển nhiệt',
+        'LOẠI QUẦN ÁO': player.uniform_type === 'goalkeeper' ? 'Thủ môn' : 'Cầu thủ',
+        'IN SỐ NGỰC': booleanToVietnamese(player.chest_number),
+        'IN SỐ QUẦN': booleanToVietnamese(player.pants_number),
+        'LOGO NGỰC TRÁI': booleanToVietnamese(player.logo_chest_left),
+        'LOGO NGỰC PHẢI': booleanToVietnamese(player.logo_chest_right),
+        'LOGO NGỰC GIỮA': booleanToVietnamese(player.logo_chest_center),
+        'LOGO TAY TRÁI': booleanToVietnamese(player.logo_sleeve_left),
+        'LOGO TAY PHẢI': booleanToVietnamese(player.logo_sleeve_right),
+        'LOGO QUẦN': booleanToVietnamese(player.logo_pants),
+        'GHI CHÚ': player.note || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      
+      // Format all player number cells as text
+      Object.keys(ws).forEach(cell => {
+        if (cell.match(/^C[0-9]+$/)) { // Updated to match column C for "SỐ ÁO"
+          ws[cell].z = '@';
+        }
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Players");
+      XLSX.writeFile(wb, `danh-sach-cau-thu-${teamName.toLowerCase().replace(/\s+/g, '-')}.xlsx`);
+      
+      toast.success("Xuất Excel thành công");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error("Có lỗi khi xuất file Excel");
     }
   };
 
   return (
     <Button
-      onClick={handleExport}
-      variant="secondary"
+      variant="outline"
       size="sm"
+      onClick={handleExport}
       className="flex items-center gap-2"
     >
-      <Download className="h-4 w-4" />
-      Xuất Excel
+      <FileSpreadsheet className="h-4 w-4" />
+      Xuất danh sách Excel
     </Button>
   );
 };

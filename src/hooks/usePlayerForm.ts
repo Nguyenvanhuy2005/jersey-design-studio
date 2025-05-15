@@ -1,150 +1,210 @@
-
-import { useState, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useState, useCallback } from 'react';
 import { Player } from '@/types';
 
-// Default player used when creating new players
-const createDefaultPlayer = (): Player => ({
-  id: uuidv4(),
-  name: '',
-  number: '',
-  size: 'M',
-  uniform_type: 'player',
-  note: '',
-  printImage: null,
-  line_1: '',
-  line_2: '',
-  line_3: '',
-  print_style: ''
-});
+interface UsePlayerFormProps {
+  onPlayersChange: (players: Player[]) => void;
+  players: Player[];
+  printStyle: string;
+}
 
-export const usePlayerForm = () => {
-  const [player, setPlayer] = useState<Player>(createDefaultPlayer());
-  const [errors, setErrors] = useState<Record<string, string>>({});
+export const usePlayerForm = ({ onPlayersChange, players, printStyle }: UsePlayerFormProps) => {
+  const [newPlayer, setNewPlayer] = useState<Player>({
+    id: `temp-${Date.now()}`,
+    name: "",
+    number: "",
+    size: "M",
+    printImage: true,
+    uniform_type: "player",
+    line_1: "",
+    line_3: "",
+    chest_text: "",
+    chest_number: false,
+    pants_number: false,
+    logo_chest_left: false,
+    logo_chest_right: false,
+    logo_chest_center: false,
+    logo_sleeve_left: false,
+    logo_sleeve_right: false,
+    logo_pants: false,
+    print_style: printStyle
+  });
 
-  const resetForm = () => {
-    setPlayer(createDefaultPlayer());
-    setErrors({});
-  };
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editingPlayerIndex, setEditingPlayerIndex] = useState<number | null>(null);
 
-  const validatePlayer = (playerToValidate: Player): Record<string, string> => {
-    const newErrors: Record<string, string> = {};
+  const handleInputChange = useCallback((field: keyof Player, value: any) => {
+    setNewPlayer(prev => ({ ...prev, [field]: value }));
+  }, []);
 
-    if (!playerToValidate.name?.trim()) {
-      newErrors.name = 'Yêu cầu nhập tên cầu thủ';
-    }
-
-    if (!playerToValidate.number?.trim()) {
-      newErrors.number = 'Yêu cầu nhập số áo';
-    }
-
-    if (!playerToValidate.size) {
-      newErrors.size = 'Vui lòng chọn kích thước';
-    }
-
-    return newErrors;
-  };
-
-  const handlePlayerChange = (updatedPlayer: Partial<Player>) => {
-    setPlayer(prevPlayer => ({
-      ...prevPlayer,
-      ...updatedPlayer
-    }));
-
-    // Clear errors for fields that are now valid
-    const fieldsToCheck = Object.keys(updatedPlayer);
-    if (fieldsToCheck.some(field => errors[field])) {
-      const updatedErrors = { ...errors };
-      fieldsToCheck.forEach(field => {
-        const value = updatedPlayer[field as keyof Player];
-        if (value && typeof value === 'string' && value.trim() !== '') {
-          delete updatedErrors[field];
-        }
-      });
-      setErrors(updatedErrors);
-    }
-  };
-
-  const handleSubmit = (event?: React.FormEvent): { player: Player; isValid: boolean } => {
-    if (event) {
-      event.preventDefault();
-    }
-
-    const validationErrors = validatePlayer(player);
-    setErrors(validationErrors);
-    const isValid = Object.keys(validationErrors).length === 0;
-
-    return { player, isValid };
-  };
-
-  const addPlayer = (players: Player[], formData: Partial<Player>): Player[] => {
-    const newPlayer: Player = {
-      ...createDefaultPlayer(),
-      ...formData,
-      id: uuidv4()
-    };
-
-    return [...players, newPlayer];
-  };
-
-  const updatePlayer = (players: Player[], playerId: string, formData: Partial<Player>): Player[] => {
-    return players.map(p => 
-      p.id === playerId 
-        ? { ...p, ...formData }
-        : p
-    );
-  };
-
-  const deletePlayer = (players: Player[], playerId: string): Player[] => {
-    return players.filter(p => p.id !== playerId);
-  };
-
-  const duplicatePlayer = (players: Player[], playerId: string): Player[] => {
-    const playerToDuplicate = players.find(p => p.id === playerId);
-    if (!playerToDuplicate) return players;
-
-    const duplicatedPlayer: Player = {
-      ...playerToDuplicate,
-      id: uuidv4(),
-      name: `${playerToDuplicate.name} (Copy)`,
-    };
-
-    return [...players, duplicatedPlayer];
-  };
-
-  const importPlayers = (players: Player[], importedData: any[]): Player[] => {
-    if (!importedData || !importedData.length) return players;
-
-    const newPlayers = importedData.map(item => {
-      const newPlayer: Player = {
-        id: uuidv4(),
-        name: item.name || '',
-        number: item.number?.toString() || '',
-        size: item.size || 'M',
-        uniform_type: item.uniform_type || 'player',
-        note: item.note || '',
-        printImage: null,
-        line_1: item.line_1 || '',
-        line_2: item.line_2 || '',
-        line_3: item.line_3 || '',
-        print_style: item.print_style || ''
+  const addOrUpdatePlayer = useCallback(() => {    
+    const updatedPlayers = [...players];
+    
+    if (isEditing && editingPlayerIndex !== null) {
+      updatedPlayers[editingPlayerIndex] = { 
+        ...newPlayer, 
+        id: players[editingPlayerIndex].id 
       };
-      return newPlayer;
+      onPlayersChange(updatedPlayers);
+      setIsEditing(false);
+      setEditingPlayerIndex(null);
+    } else {
+      updatedPlayers.push({ ...newPlayer, id: `player-${Date.now()}` });
+      onPlayersChange(updatedPlayers);
+    }
+    
+    setNewPlayer({
+      id: `temp-${Date.now()}`,
+      name: "",
+      number: "",
+      size: "M",
+      printImage: true,
+      uniform_type: "player",
+      line_1: "",
+      line_3: "",
+      chest_text: "",
+      chest_number: false,
+      pants_number: false,
+      logo_chest_left: false,
+      logo_chest_right: false,
+      logo_chest_center: false,
+      logo_sleeve_left: false,
+      logo_sleeve_right: false,
+      logo_pants: false,
+      print_style: printStyle
     });
+  }, [newPlayer, players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
 
-    return [...players, ...newPlayers];
+  const editPlayer = useCallback((index: number) => {
+    const playerToEdit = players[index];
+    setNewPlayer({
+      ...playerToEdit,
+      line_1: playerToEdit.line_1 || playerToEdit.name || "",
+      line_3: playerToEdit.line_3 || "",
+    });
+    setIsEditing(true);
+    setEditingPlayerIndex(index);
+  }, [players]);
+
+  const removePlayer = useCallback((index: number) => {
+    const updatedPlayers = [...players];
+    updatedPlayers.splice(index, 1);
+    onPlayersChange(updatedPlayers);
+    
+    if (isEditing && editingPlayerIndex === index) {
+      setIsEditing(false);
+      setEditingPlayerIndex(null);
+      setNewPlayer({
+        id: `temp-${Date.now()}`,
+        name: "",
+        number: "",
+        size: "M",
+        printImage: true,
+        uniform_type: "player",
+        line_1: "",
+        line_3: "",
+        chest_text: "",
+        chest_number: false,
+        pants_number: false,
+        logo_chest_left: false,
+        logo_chest_right: false,
+        logo_chest_center: false,
+        logo_sleeve_left: false,
+        logo_sleeve_right: false,
+        logo_pants: false,
+        print_style: printStyle
+      });
+    }
+  }, [players, onPlayersChange, isEditing, editingPlayerIndex, printStyle]);
+
+  const cancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditingPlayerIndex(null);
+    setNewPlayer({
+      id: `temp-${Date.now()}`,
+      name: "",
+      number: "",
+      size: "M",
+      printImage: true,
+      uniform_type: "player",
+      line_1: "",
+      line_3: "",
+      chest_text: "",
+      chest_number: false,
+      pants_number: false,
+      logo_chest_left: false,
+      logo_chest_right: false,
+      logo_chest_center: false,
+      logo_sleeve_left: false,
+      logo_sleeve_right: false,
+      logo_pants: false,
+      print_style: printStyle
+    });
+  }, [printStyle]);
+
+  // Helper function to convert Vietnamese Yes/No to boolean
+  const convertVietnameseToBoolean = (value: any): boolean => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.toLowerCase().trim();
+      return normalized === 'có' || normalized === 'co' || 
+             normalized === 'yes' || normalized === 'true' || 
+             normalized === 'ok';
+    }
+    return false;
+  };
+
+  // Helper function to handle Excel import with updated column order
+  const handleExcelImport = (data: any[]): Player[] => {
+    return data.map((row, index) => {
+      // Handle player number formats
+      let playerNumber: string = "";
+      if (row["SỐ ÁO"] !== undefined) {
+        playerNumber = String(row["SỐ ÁO"]).padStart(2, '0');
+      } else if (row["SỐ"] !== undefined) {
+        playerNumber = String(row["SỐ"]).padStart(2, '0');
+      }
+
+      // Default values for required fields
+      const uniformType = (row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thủ môn" || 
+                          row["LOẠI QUẦN ÁO"]?.toLowerCase() === "thu mon") ? "goalkeeper" : "player";
+                          
+      const size = row["KÍCH THƯỚC"] || "M";
+      
+      return {
+        id: `player-${Date.now()}-${index}`,
+        name: row["TÊN CẦU THỦ"] || "",
+        number: playerNumber,
+        size: size,
+        printImage: true,
+        uniform_type: uniformType,
+        line_1: row["TÊN IN TRÊN SỐ"] || "",
+        line_2: playerNumber,
+        line_3: row["TÊN ĐỘI BÓNG"] || "",
+        chest_text: row["IN CHỮ NGỰC"] || "",
+        chest_number: convertVietnameseToBoolean(row["IN SỐ NGỰC"]),
+        pants_number: convertVietnameseToBoolean(row["IN SỐ QUẦN"]),
+        logo_chest_left: convertVietnameseToBoolean(row["LOGO NGỰC TRÁI"]),
+        logo_chest_right: convertVietnameseToBoolean(row["LOGO NGỰC PHẢI"]),
+        logo_chest_center: convertVietnameseToBoolean(row["LOGO NGỰC GIỮA"]),
+        logo_sleeve_left: convertVietnameseToBoolean(row["LOGO TAY TRÁI"]),
+        logo_sleeve_right: convertVietnameseToBoolean(row["LOGO TAY PHẢI"]),
+        logo_pants: convertVietnameseToBoolean(row["LOGO QUẦN"]),
+        note: row["GHI CHÚ"] || "",
+        print_style: row["KIỂU IN"] || printStyle
+      };
+    });
   };
 
   return {
-    player,
-    errors,
-    resetForm,
-    handlePlayerChange,
-    handleSubmit,
-    addPlayer,
-    updatePlayer,
-    deletePlayer,
-    duplicatePlayer,
-    importPlayers
+    newPlayer,
+    isEditing,
+    editingPlayerIndex,
+    handleInputChange,
+    addOrUpdatePlayer,
+    editPlayer,
+    removePlayer,
+    cancelEdit,
+    handleExcelImport,
+    convertVietnameseToBoolean
   };
 };

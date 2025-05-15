@@ -1,3 +1,4 @@
+
 import { Customer, DeliveryInformation, Logo, Player } from "@/types";
 import { CustomerForm } from "@/components/customer-form";
 import { DeliveryForm } from "@/components/delivery-form";
@@ -190,7 +191,13 @@ export const OrderInfoTabContent = memo(({
           <PlayerForm 
             players={players} 
             onPlayersChange={onPlayersChange} 
-            printStyle={printStyle}
+            logos={logos} 
+            fontSize={fontText} 
+            fontNumber={fontNumber} 
+            printStyleOptions={["In chuyển nhiệt", "In decal"]} 
+            printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]} 
+            printStyle={printStyle} 
+            printColor={printColor} 
           />
         </CardContent>
       </Card>
