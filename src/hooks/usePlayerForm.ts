@@ -1,173 +1,150 @@
 
-import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import * as XLSX from "xlsx";
-import { toast } from "sonner";
-import { Player } from "@/types";
+import { useState, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { Player } from '@/types';
 
-export interface UsePlayerFormProps {
-  players: Player[];
-  onPlayersChange: (players: Player[]) => void;
-  printStyle: string;
-}
+// Default player used when creating new players
+const createDefaultPlayer = (): Player => ({
+  id: uuidv4(),
+  name: '',
+  number: '',
+  size: 'M',
+  uniform_type: 'player',
+  note: '',
+  printImage: null,
+  line_1: '',
+  line_2: '',
+  line_3: '',
+  print_style: ''
+});
 
-export function usePlayerForm({ players, onPlayersChange, printStyle }: UsePlayerFormProps) {
-  const [newPlayer, setNewPlayer] = useState<Player>({
-    id: uuidv4(),
-    name: "",
-    number: "",
-    size: "M",
-    uniform_type: "player",
-    print_style: printStyle,
-    note: ""
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingPlayerIndex, setEditingPlayerIndex] = useState(-1);
+export const usePlayerForm = () => {
+  const [player, setPlayer] = useState<Player>(createDefaultPlayer());
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Handle player form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewPlayer((prev) => ({ ...prev, [name]: value }));
+  const resetForm = () => {
+    setPlayer(createDefaultPlayer());
+    setErrors({});
   };
 
-  // Add or update player
-  const addOrUpdatePlayer = () => {
-    if (!newPlayer.name.trim()) {
-      toast.error("Vui lòng nhập tên cầu thủ");
-      return;
+  const validatePlayer = (playerToValidate: Player): Record<string, string> => {
+    const newErrors: Record<string, string> = {};
+
+    if (!playerToValidate.name?.trim()) {
+      newErrors.name = 'Yêu cầu nhập tên cầu thủ';
     }
 
-    if (!newPlayer.number.trim()) {
-      toast.error("Vui lòng nhập số áo");
-      return;
+    if (!playerToValidate.number?.trim()) {
+      newErrors.number = 'Yêu cầu nhập số áo';
     }
 
-    if (isEditing && editingPlayerIndex > -1) {
-      const updatedPlayers = [...players];
-      updatedPlayers[editingPlayerIndex] = { ...newPlayer };
-      onPlayersChange(updatedPlayers);
-    } else {
-      onPlayersChange([...players, { ...newPlayer, id: uuidv4() }]);
+    if (!playerToValidate.size) {
+      newErrors.size = 'Vui lòng chọn kích thước';
     }
 
-    // Reset form
-    setNewPlayer({
-      id: uuidv4(),
-      name: "",
-      number: "",
-      size: "M",
-      uniform_type: "player",
-      print_style: printStyle,
-      note: ""
-    });
-    setIsEditing(false);
-    setEditingPlayerIndex(-1);
+    return newErrors;
   };
 
-  // Function to handle Excel import
-  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Reset the input value to allow the same file to be selected again
-    e.target.value = '';
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        if (jsonData.length === 0) {
-          toast.error('Không tìm thấy dữ liệu trong file Excel.');
-          return;
+  const handlePlayerChange = (updatedPlayer: Partial<Player>) => {
+    setPlayer(prevPlayer => ({
+      ...prevPlayer,
+      ...updatedPlayer
+    }));
+
+    // Clear errors for fields that are now valid
+    const fieldsToCheck = Object.keys(updatedPlayer);
+    if (fieldsToCheck.some(field => errors[field])) {
+      const updatedErrors = { ...errors };
+      fieldsToCheck.forEach(field => {
+        const value = updatedPlayer[field as keyof Player];
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          delete updatedErrors[field];
         }
-        
-        // Create players array from Excel data
-        const newPlayers = jsonData.map((row: any) => {
-          // Extract number - preserve it as is without any zero-padding
-          const playerNumber = row['Số áo'] || row['Number'] || row['Số'] || '';
-          
-          // Create a player object
-          const player: Player = {
-            id: uuidv4(),
-            name: row['Tên'] || row['Name'] || '',
-            number: String(playerNumber), // Convert to string but don't pad
-            size: row['Kích thước'] || row['Size'] || 'M',
-            uniform_type: getUniformTypeFromExcel(row),
-            print_style: printStyle,
-            note: row['Ghi chú'] || row['Note'] || '',
-          };
-          
-          return player;
-        });
-        
-        if (newPlayers.length > 0) {
-          // Update players array
-          onPlayersChange(newPlayers);
-          toast.success(`Đã nhập ${newPlayers.length} cầu thủ từ file Excel.`);
-        }
-      } catch (error) {
-        console.error('Error reading Excel file:', error);
-        toast.error('Đã xảy ra lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng file.');
-      }
+      });
+      setErrors(updatedErrors);
+    }
+  };
+
+  const handleSubmit = (event?: React.FormEvent): { player: Player; isValid: boolean } => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const validationErrors = validatePlayer(player);
+    setErrors(validationErrors);
+    const isValid = Object.keys(validationErrors).length === 0;
+
+    return { player, isValid };
+  };
+
+  const addPlayer = (players: Player[], formData: Partial<Player>): Player[] => {
+    const newPlayer: Player = {
+      ...createDefaultPlayer(),
+      ...formData,
+      id: uuidv4()
     };
-    
-    reader.readAsArrayBuffer(file);
+
+    return [...players, newPlayer];
   };
 
-  // Helper function to determine uniform type from Excel data
-  const getUniformTypeFromExcel = (row: any): "goalkeeper" | "player" => {
-    const position = row['Vị trí'] || row['Position'] || '';
-    if (position.toLowerCase().includes('thủ môn') || position.toLowerCase().includes('goalkeeper')) {
-      return 'goalkeeper';
-    }
-    return 'player';
+  const updatePlayer = (players: Player[], playerId: string, formData: Partial<Player>): Player[] => {
+    return players.map(p => 
+      p.id === playerId 
+        ? { ...p, ...formData }
+        : p
+    );
   };
 
-  // Edit player
-  const editPlayer = (index: number) => {
-    setNewPlayer({ ...players[index] });
-    setIsEditing(true);
-    setEditingPlayerIndex(index);
+  const deletePlayer = (players: Player[], playerId: string): Player[] => {
+    return players.filter(p => p.id !== playerId);
   };
 
-  // Remove player
-  const removePlayer = (index: number) => {
-    const updatedPlayers = [...players];
-    updatedPlayers.splice(index, 1);
-    onPlayersChange(updatedPlayers);
-  };
+  const duplicatePlayer = (players: Player[], playerId: string): Player[] => {
+    const playerToDuplicate = players.find(p => p.id === playerId);
+    if (!playerToDuplicate) return players;
 
-  // Cancel edit
-  const cancelEdit = () => {
-    setNewPlayer({
+    const duplicatedPlayer: Player = {
+      ...playerToDuplicate,
       id: uuidv4(),
-      name: "",
-      number: "",
-      size: "M",
-      uniform_type: "player",
-      print_style: printStyle,
-      note: ""
+      name: `${playerToDuplicate.name} (Copy)`,
+    };
+
+    return [...players, duplicatedPlayer];
+  };
+
+  const importPlayers = (players: Player[], importedData: any[]): Player[] => {
+    if (!importedData || !importedData.length) return players;
+
+    const newPlayers = importedData.map(item => {
+      const newPlayer: Player = {
+        id: uuidv4(),
+        name: item.name || '',
+        number: item.number?.toString() || '',
+        size: item.size || 'M',
+        uniform_type: item.uniform_type || 'player',
+        note: item.note || '',
+        printImage: null,
+        line_1: item.line_1 || '',
+        line_2: item.line_2 || '',
+        line_3: item.line_3 || '',
+        print_style: item.print_style || ''
+      };
+      return newPlayer;
     });
-    setIsEditing(false);
-    setEditingPlayerIndex(-1);
+
+    return [...players, ...newPlayers];
   };
 
   return {
-    newPlayer,
-    isEditing,
-    editingPlayerIndex,
-    handleInputChange,
-    addOrUpdatePlayer,
-    editPlayer,
-    removePlayer,
-    cancelEdit,
-    handleExcelImport
+    player,
+    errors,
+    resetForm,
+    handlePlayerChange,
+    handleSubmit,
+    addPlayer,
+    updatePlayer,
+    deletePlayer,
+    duplicatePlayer,
+    importPlayers
   };
-}
+};
