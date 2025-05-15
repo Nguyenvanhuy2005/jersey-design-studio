@@ -27,10 +27,18 @@ export const PlayerFormFields = memo(({
   onCancel
 }: PlayerFormFieldsProps) => {
   const hasChestText = newPlayer.chest_text && newPlayer.chest_text.length > 0;
+
+  // When handling number input, keep the number as entered without padding
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Pass the number directly without any formatting
+    onInputChange("number", value);
+  };
+
   return <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
       <div className="md:col-span-2">
         <Label htmlFor="playerNumber">Số áo</Label>
-        <Input id="playerNumber" type="text" value={newPlayer.number} onChange={e => onInputChange("number", e.target.value)} placeholder="Số áo" />
+        <Input id="playerNumber" type="text" value={newPlayer.number} onChange={handleNumberChange} placeholder="Số áo" />
       </div>
       
       <div className="md:col-span-2">

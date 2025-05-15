@@ -75,9 +75,9 @@ export const PlayerForm = memo(({
         const newPlayers: Player[] = jsonData.map((row, index) => {
           let playerNumber: string = "";
           if (row["SỐ ÁO"] !== undefined) {
-            playerNumber = String(row["SỐ ÁO"]).padStart(2, '0');
+            playerNumber = String(row["SỐ ÁO"]);
           } else if (row["SỐ"] !== undefined) {
-            playerNumber = String(row["SỐ"]).padStart(2, '0');
+            playerNumber = String(row["SỐ"]);
           }
 
           const convertToBoolean = (value: any): boolean => {
@@ -124,6 +124,15 @@ export const PlayerForm = memo(({
     };
     reader.readAsArrayBuffer(file);
     e.target.value = "";
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Update player number directly without any padding
+    setPlayer(prev => ({
+      ...prev,
+      number: value
+    }));
   };
 
   return <Card className={className}>
