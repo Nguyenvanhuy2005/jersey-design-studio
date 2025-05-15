@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toastAPI } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,17 +18,17 @@ export function ChangePasswordForm() {
     
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
+      toastAPI.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu mới không khớp");
+      toastAPI.error("Mật khẩu mới không khớp");
       return;
     }
     
     if (newPassword.length < 6) {
-      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự");
+      toastAPI.error("Mật khẩu mới phải có ít nhất 6 ký tự");
       return;
     }
     
@@ -42,7 +42,7 @@ export function ChangePasswordForm() {
       });
       
       if (signInError) {
-        toast.error("Mật khẩu hiện tại không đúng");
+        toastAPI.error("Mật khẩu hiện tại không đúng");
         setLoading(false);
         return;
       }
@@ -53,17 +53,17 @@ export function ChangePasswordForm() {
       });
       
       if (error) {
-        toast.error(error.message || "Không thể cập nhật mật khẩu");
+        toastAPI.error(error.message || "Không thể cập nhật mật khẩu");
         return;
       }
       
-      toast.success("Cập nhật mật khẩu thành công!");
+      toastAPI.success("Cập nhật mật khẩu thành công!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
       console.error("Error updating password:", error);
-      toast.error("Có lỗi khi cập nhật mật khẩu");
+      toastAPI.error("Có lỗi khi cập nhật mật khẩu");
     } finally {
       setLoading(false);
     }

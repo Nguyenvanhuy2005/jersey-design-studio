@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,6 +19,7 @@ import CustomerOrderDetails from "./pages/CustomerOrderDetails";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import ThankYou from "./pages/ThankYou";
 
+// Create a new query client instance
 const queryClient = new QueryClient();
 
 const App = () => (
