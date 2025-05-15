@@ -1,22 +1,29 @@
 
-import { Order } from "@/types";
+import { Order, Player } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface ExcelExportProps {
-  order: Order;
+  order?: Order;
+  players?: Player[];
+  teamName?: string;
 }
 
-export const ExcelExport = ({ order }: ExcelExportProps) => {
+export const ExcelExport = ({ order, players: providedPlayers, teamName: providedTeamName }: ExcelExportProps) => {
   const formatPlayerNumber = (number: string): string => {
     // Return the number as-is without zero-padding
     return number;
   };
 
   const handleExport = () => {
+    // Use provided players or get from order
+    const players = providedPlayers || order?.players || [];
+    // Use provided teamName or get from order
+    const teamName = providedTeamName || order?.teamName || "team";
+    
     // Prepare data for Excel export
-    const players = order.players.map((player, index) => {
+    const playerData = players.map((player, index) => {
       return {
         "#": index + 1,
         "Tên": player.name || "",
@@ -27,7 +34,7 @@ export const ExcelExport = ({ order }: ExcelExportProps) => {
       };
     });
     
-    const ws = XLSX.utils.json_to_sheet(players);
+    const ws = XLSX.utils.json_to_sheet(playerData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Players");
     
@@ -44,7 +51,6 @@ export const ExcelExport = ({ order }: ExcelExportProps) => {
     ws["!cols"] = colWidths;
     
     // Generate filename
-    const teamName = order.teamName || "team";
     const fileName = `${teamName}_players.xlsx`;
     
     // Save the Excel file

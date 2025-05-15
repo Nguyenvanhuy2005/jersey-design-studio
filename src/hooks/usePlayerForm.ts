@@ -1,23 +1,67 @@
-import { useState, useCallback } from 'react';
-import { Player } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
-import * as XLSX from 'xlsx';
-import { toast } from 'sonner';
-import { useOrderContext } from '@/contexts/OrderContext';
 
-interface UsePlayerFormProps {
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
+import { Player } from "@/types";
+
+export interface UsePlayerFormProps {
+  players: Player[];
+  onPlayersChange: (players: Player[]) => void;
   printStyle: string;
 }
 
-export const usePlayerForm = ({ printStyle }: UsePlayerFormProps) => {
-  const { onPlayersChange } = useOrderContext();
+export function usePlayerForm({ players, onPlayersChange, printStyle }: UsePlayerFormProps) {
+  const [newPlayer, setNewPlayer] = useState<Player>({
+    id: uuidv4(),
+    name: "",
+    number: "",
+    size: "M",
+    uniform_type: "player",
+    print_style: printStyle,
+    note: ""
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPlayerIndex, setEditingPlayerIndex] = useState(-1);
 
-  const getUniformTypeFromExcel = (row: any): string => {
-    const position = row['Vị trí'] || row['Position'] || '';
-    if (typeof position === 'string' && position.toLowerCase().includes('thủ môn')) {
-      return 'goalkeeper';
+  // Handle player form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewPlayer((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Add or update player
+  const addOrUpdatePlayer = () => {
+    if (!newPlayer.name.trim()) {
+      toast.error("Vui lòng nhập tên cầu thủ");
+      return;
     }
-    return 'player';
+
+    if (!newPlayer.number.trim()) {
+      toast.error("Vui lòng nhập số áo");
+      return;
+    }
+
+    if (isEditing && editingPlayerIndex > -1) {
+      const updatedPlayers = [...players];
+      updatedPlayers[editingPlayerIndex] = { ...newPlayer };
+      onPlayersChange(updatedPlayers);
+    } else {
+      onPlayersChange([...players, { ...newPlayer, id: uuidv4() }]);
+    }
+
+    // Reset form
+    setNewPlayer({
+      id: uuidv4(),
+      name: "",
+      number: "",
+      size: "M",
+      uniform_type: "player",
+      print_style: printStyle,
+      note: ""
+    });
+    setIsEditing(false);
+    setEditingPlayerIndex(-1);
   };
 
   // Function to handle Excel import
@@ -77,7 +121,53 @@ export const usePlayerForm = ({ printStyle }: UsePlayerFormProps) => {
     reader.readAsArrayBuffer(file);
   };
 
-  return {
-    handleExcelImport,
+  // Helper function to determine uniform type from Excel data
+  const getUniformTypeFromExcel = (row: any): "goalkeeper" | "player" => {
+    const position = row['Vị trí'] || row['Position'] || '';
+    if (position.toLowerCase().includes('thủ môn') || position.toLowerCase().includes('goalkeeper')) {
+      return 'goalkeeper';
+    }
+    return 'player';
   };
-};
+
+  // Edit player
+  const editPlayer = (index: number) => {
+    setNewPlayer({ ...players[index] });
+    setIsEditing(true);
+    setEditingPlayerIndex(index);
+  };
+
+  // Remove player
+  const removePlayer = (index: number) => {
+    const updatedPlayers = [...players];
+    updatedPlayers.splice(index, 1);
+    onPlayersChange(updatedPlayers);
+  };
+
+  // Cancel edit
+  const cancelEdit = () => {
+    setNewPlayer({
+      id: uuidv4(),
+      name: "",
+      number: "",
+      size: "M",
+      uniform_type: "player",
+      print_style: printStyle,
+      note: ""
+    });
+    setIsEditing(false);
+    setEditingPlayerIndex(-1);
+  };
+
+  return {
+    newPlayer,
+    isEditing,
+    editingPlayerIndex,
+    handleInputChange,
+    addOrUpdatePlayer,
+    editPlayer,
+    removePlayer,
+    cancelEdit,
+    handleExcelImport
+  };
+}
