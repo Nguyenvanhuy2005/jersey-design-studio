@@ -223,13 +223,7 @@ export function OrderInfoTab({
           <PlayerForm
             players={players}
             onPlayersChange={onPlayersChange}
-            logos={logos}
-            fontSize={fontText}
-            fontNumber={fontNumber}
-            printStyleOptions={["In chuyển nhiệt", "In decal"]}
-            printColorOptions={["Đen", "Trắng", "Vàng", "Đỏ", "Xanh dương", "Xanh lá"]}
             printStyle={printStyle}
-            printColor={printColor}
           />
         </CardContent>
       </Card>
