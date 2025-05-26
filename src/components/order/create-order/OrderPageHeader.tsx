@@ -65,17 +65,7 @@ export function OrderPageHeader({
                 <span>{selectedCustomer.phone}</span>
               </div>}
             
-            <div className="flex items-center gap-4">
-              
-              <div className="flex items-center gap-2">
-                <TabStatus status={getTabStatus("preview")} />
-                
-              </div>
-              <div className="flex items-center gap-2">
-                <TabStatus status={getTabStatus("summary")} />
-                
-              </div>
-            </div>
+            
           </div>
           
           <div className="flex gap-2">
