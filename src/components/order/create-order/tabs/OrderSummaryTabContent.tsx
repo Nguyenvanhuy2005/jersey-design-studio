@@ -46,6 +46,9 @@ export function OrderSummaryTabContent({
   const totalCost = calculateTotalCost();
   const formattedCost = new Intl.NumberFormat('vi-VN').format(totalCost);
 
+  // Add null checking for customerInfo
+  const safeCustomerInfo = customerInfo || {};
+
   return (
     <div className="space-y-6">
       {!isDemoApproved && (
@@ -66,15 +69,15 @@ export function OrderSummaryTabContent({
               <dl className="space-y-2">
                 <div className="grid grid-cols-3 gap-1">
                   <dt className="font-semibold">Tên khách hàng:</dt>
-                  <dd className="col-span-2">{customerInfo.name || "Chưa có thông tin"}</dd>
+                  <dd className="col-span-2">{safeCustomerInfo.name || "Chưa có thông tin"}</dd>
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   <dt className="font-semibold">Số điện thoại:</dt>
-                  <dd className="col-span-2">{customerInfo.phone || "Chưa có thông tin"}</dd>
+                  <dd className="col-span-2">{safeCustomerInfo.phone || "Chưa có thông tin"}</dd>
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   <dt className="font-semibold">Email:</dt>
-                  <dd className="col-span-2">{customerInfo.email || "Không có"}</dd>
+                  <dd className="col-span-2">{safeCustomerInfo.email || "Không có"}</dd>
                 </div>
               </dl>
             </CardContent>
@@ -196,7 +199,7 @@ export function OrderSummaryTabContent({
                 size="lg"
                 onClick={onSubmitOrder}
                 disabled={isSubmitting || isGeneratingDesign || !isDemoApproved || 
-                          !customerInfo.name || !customerInfo.phone || 
+                          !safeCustomerInfo.name || !safeCustomerInfo.phone || 
                           !deliveryInfo.recipient_name || !deliveryInfo.address || !deliveryInfo.phone}
               >
                 {isSubmitting ? (
