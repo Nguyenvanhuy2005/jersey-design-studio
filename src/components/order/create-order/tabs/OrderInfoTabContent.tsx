@@ -7,6 +7,7 @@ import { UniformInfoForm } from "@/components/uniform-info-form";
 import { PlayerForm } from "@/components/player-form";
 import { LogoUpload } from "@/components/logo-upload";
 import { PrintGlobalSettings } from "@/components/print-global-settings";
+import { ReferenceImageUpload } from "./ReferenceImageUpload";
 import { Separator } from "@/components/ui/separator";
 
 interface OrderInfoTabContentProps {
@@ -71,24 +72,26 @@ export function OrderInfoTabContent({
 
   return (
     <div className="space-y-6">
-      <CustomerForm 
-        onCustomerInfoChange={onCustomerInfoChange} 
-        initialCustomer={customerInfo} 
-        isAdminMode={isAdminMode} 
-        selectedCustomer={selectedCustomer} 
-        onCustomerSelect={onCustomerSelect} 
-      />
+      {/* Thông tin khách hàng và giao hàng */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <CustomerForm 
+          onCustomerInfoChange={onCustomerInfoChange} 
+          initialCustomer={customerInfo} 
+          isAdminMode={isAdminMode} 
+          selectedCustomer={selectedCustomer} 
+          onCustomerSelect={onCustomerSelect} 
+        />
+        
+        <DeliveryForm 
+          initialDelivery={deliveryInfo} 
+          onDeliveryInfoChange={onDeliveryInfoChange}
+          externalDeliveryInfo={isAdminMode && selectedCustomer ? deliveryInfo : undefined}
+        />
+      </div>
       
       <Separator />
       
-      <DeliveryForm 
-        initialDelivery={deliveryInfo} 
-        onDeliveryInfoChange={onDeliveryInfoChange}
-        externalDeliveryInfo={isAdminMode && selectedCustomer ? deliveryInfo : undefined}
-      />
-      
-      <Separator />
-      
+      {/* Thông tin đội bóng */}
       <UniformInfoForm 
         teamName={notes} 
         onTeamNameChange={onNotesChange} 
@@ -100,21 +103,32 @@ export function OrderInfoTabContent({
       
       <Separator />
       
-      <PrintGlobalSettings 
-        fontTextOptions={[fontText]} 
-        fontText={fontText} 
-        onFontTextChange={onFontTextChange} 
-        fontNumberOptions={[fontNumber]} 
-        fontNumber={fontNumber} 
-        onFontNumberChange={onFontNumberChange} 
-      />
+      {/* Cài đặt in ấn và hình ảnh tham khảo */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <PrintGlobalSettings 
+            fontTextOptions={[fontText]} 
+            fontText={fontText} 
+            onFontTextChange={onFontTextChange} 
+            fontNumberOptions={[fontNumber]} 
+            fontNumber={fontNumber} 
+            onFontNumberChange={onFontNumberChange} 
+          />
+          
+          <LogoUpload logos={logos} onLogosChange={onLogosChange} />
+        </div>
+        
+        <ReferenceImageUpload
+          referenceImages={referenceImages}
+          referenceImagesPreview={referenceImagesPreview}
+          onReferenceImagesUpload={onReferenceImagesUpload}
+          onRemoveReferenceImage={onRemoveReferenceImage}
+        />
+      </div>
       
       <Separator />
       
-      <LogoUpload logos={logos} onLogosChange={onLogosChange} />
-      
-      <Separator />
-      
+      {/* Danh sách cầu thủ */}
       <PlayerForm 
         players={players} 
         onPlayersChange={onPlayersChange} 
