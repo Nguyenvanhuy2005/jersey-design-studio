@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer, DeliveryInformation, Logo, Player, ProductLine } from "@/types";
@@ -54,6 +53,9 @@ interface OrderTabsProps {
     unitPrice: number;
     total: number;
   }[];
+  isAdminMode?: boolean;
+  selectedCustomer?: Customer | null;
+  onCustomerSelect?: (customer: Customer) => void;
 }
 
 const TAB_ORDER = ["info", "preview", "summary"] as const;
@@ -96,7 +98,10 @@ export function OrderTabs({
   onSubmitOrder,
   isSubmitting,
   getPlayerAndGoalkeeperCounts,
-  getPrintCostBreakdown
+  getPrintCostBreakdown,
+  isAdminMode = false,
+  selectedCustomer = null,
+  onCustomerSelect
 }: OrderTabsProps) {
   const tabIndex = TAB_ORDER.indexOf(activeTab as typeof TAB_ORDER[number]);
 
@@ -166,6 +171,9 @@ export function OrderTabs({
               notes={notes}
               onNotesChange={onNotesChange}
               onGenerateProductLines={onGenerateProductLines}
+              isAdminMode={isAdminMode}
+              selectedCustomer={selectedCustomer}
+              onCustomerSelect={onCustomerSelect}
             />
           </div>
           <div className="w-full flex justify-between gap-2 mt-8">

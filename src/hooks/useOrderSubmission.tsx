@@ -24,6 +24,8 @@ interface OrderSubmissionProps {
   fontNumber: string;
   printStyle: string;
   printColor: string;
+  isAdminMode?: boolean;
+  selectedCustomer?: Customer | null;
 }
 
 export const useOrderSubmission = ({
@@ -41,7 +43,9 @@ export const useOrderSubmission = ({
   fontText,
   fontNumber,
   printStyle,
-  printColor
+  printColor,
+  isAdminMode = false,
+  selectedCustomer = null
 }: OrderSubmissionProps) => {
   const navigate = useNavigate();
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
@@ -239,7 +243,10 @@ export const useOrderSubmission = ({
       return;
     }
     
-    if (!customerInfo.name || !customerInfo.phone) {
+    // In admin mode, use selected customer info
+    const finalCustomerInfo = isAdminMode && selectedCustomer ? selectedCustomer : customerInfo;
+    
+    if (!finalCustomerInfo.name || !finalCustomerInfo.phone) {
       toast.error("Vui lòng nhập đầy đủ thông tin khách hàng");
       return;
     }
@@ -263,13 +270,17 @@ export const useOrderSubmission = ({
         // Continue with order creation as buckets might already exist
       }
       
-      // Update customer info if needed
+      // Update customer info if needed - for admin mode, use selected customer's ID
+      const customerId = isAdminMode && selectedCustomer ? selectedCustomer.id : user.id;
+      
       const { error: customerError } = await supabase
         .from('customers')
         .upsert({
-          id: user.id,
-          name: customerInfo.name,
-          phone: customerInfo.phone,
+          id: customerId,
+          name: finalCustomerInfo.name,
+          phone: finalCustomerInfo.phone,
+          address: finalCustomerInfo.address,
+          email: finalCustomerInfo.email
         }, {
           onConflict: 'id'
         });
@@ -318,7 +329,7 @@ export const useOrderSubmission = ({
           total_cost: totalCost,
           notes: notes,
           design_data: designDataJson,
-          customer_id: user.id
+          customer_id: customerId // Use the determined customer ID
         });
         
       if (orderError) {
@@ -335,7 +346,7 @@ export const useOrderSubmission = ({
       const { data: deliveryData, error: deliveryError } = await supabase
         .from('delivery_information')
         .insert({
-          customer_id: user.id,
+          customer_id: customerId, // Use the determined customer ID
           order_id: orderId,  // Now the order exists, so this reference is valid
           recipient_name: deliveryInfo.recipient_name,
           address: deliveryInfo.address,
