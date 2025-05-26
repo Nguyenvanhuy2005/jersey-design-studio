@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -26,11 +26,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface DeliveryFormProps {
   initialDelivery?: DeliveryInformation;
   onDeliveryInfoChange: (info: DeliveryInformation) => void;
+  externalDeliveryInfo?: DeliveryInformation;
 }
 
 export function DeliveryForm({
   initialDelivery,
-  onDeliveryInfoChange
+  onDeliveryInfoChange,
+  externalDeliveryInfo
 }: DeliveryFormProps) {
   const {
     loading,
@@ -41,7 +43,7 @@ export function DeliveryForm({
     handleInputChange,
     selectSavedDelivery,
     saveDeliveryInfo
-  } = useDeliveryForm(initialDelivery);
+  } = useDeliveryForm(initialDelivery, externalDeliveryInfo);
   
   const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -51,6 +53,12 @@ export function DeliveryForm({
     const updatedInfo = { ...deliveryInfo, [field]: value };
     onDeliveryInfoChange(updatedInfo);
   };
+
+  // When delivery info from hook changes, notify parent
+  useEffect(() => {
+    console.log("DeliveryForm: delivery info changed:", deliveryInfo);
+    onDeliveryInfoChange(deliveryInfo);
+  }, [deliveryInfo, onDeliveryInfoChange]);
 
   const onSaveDeliveryInfo = async () => {
     const result = await saveDeliveryInfo();
@@ -112,7 +120,7 @@ export function DeliveryForm({
           </div>
         ) : (
           <div className="space-y-4">
-            {deliveryInfoList.length > 0 && !isAddingNew && (
+            {deliveryInfoList.length > 0 && !isAddingNew && !externalDeliveryInfo && (
               <div className="space-y-2">
                 <Label htmlFor="saved-address">Địa chỉ đã lưu</Label>
                 <Select value={selectedDeliveryId || ''} onValueChange={onSelectDelivery}>
@@ -132,7 +140,7 @@ export function DeliveryForm({
               </div>
             )}
 
-            {(isAddingNew || deliveryInfoList.length === 0) && (
+            {(isAddingNew || deliveryInfoList.length === 0 || externalDeliveryInfo) && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="recipient_name">Tên người nhận *</Label>
@@ -182,7 +190,7 @@ export function DeliveryForm({
           </div>
         )}
       </CardContent>
-      {(isAddingNew || deliveryInfoList.length === 0) && (
+      {(isAddingNew || deliveryInfoList.length === 0) && !externalDeliveryInfo && (
         <CardFooter className="flex justify-end space-x-2">
           {isAddingNew && (
             <Button

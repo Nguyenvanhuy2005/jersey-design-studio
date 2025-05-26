@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Customer, DeliveryInformation, Logo, Player } from "@/types";
 import { CustomerForm } from "@/components/customer-form";
@@ -7,6 +8,7 @@ import { PlayerForm } from "@/components/player-form";
 import { LogoUpload } from "@/components/logo-upload";
 import { PrintGlobalSettings } from "@/components/print-global-settings";
 import { Separator } from "@/components/ui/separator";
+
 interface OrderInfoTabContentProps {
   customerInfo: Customer;
   onCustomerInfoChange: (customer: Customer) => void;
@@ -35,6 +37,7 @@ interface OrderInfoTabContentProps {
   selectedCustomer?: Customer | null;
   onCustomerSelect?: (customer: Customer) => void;
 }
+
 export function OrderInfoTabContent({
   customerInfo,
   onCustomerInfoChange,
@@ -63,20 +66,48 @@ export function OrderInfoTabContent({
   selectedCustomer = null,
   onCustomerSelect
 }: OrderInfoTabContentProps) {
-  return <div className="space-y-6">
-      <CustomerForm onCustomerInfoChange={onCustomerInfoChange} initialCustomer={customerInfo} isAdminMode={isAdminMode} selectedCustomer={selectedCustomer} onCustomerSelect={onCustomerSelect} />
+  console.log("OrderInfoTabContent: deliveryInfo =", deliveryInfo);
+  console.log("OrderInfoTabContent: selectedCustomer =", selectedCustomer);
+
+  return (
+    <div className="space-y-6">
+      <CustomerForm 
+        onCustomerInfoChange={onCustomerInfoChange} 
+        initialCustomer={customerInfo} 
+        isAdminMode={isAdminMode} 
+        selectedCustomer={selectedCustomer} 
+        onCustomerSelect={onCustomerSelect} 
+      />
       
       <Separator />
       
-      <DeliveryForm initialDelivery={deliveryInfo} onDeliveryInfoChange={onDeliveryInfoChange} />
-      
-      
-      
-      <UniformInfoForm teamName={notes} onTeamNameChange={onNotesChange} uniformType="player" onUniformTypeChange={() => {}} designData={{}} onDesignDataChange={() => {}} />
+      <DeliveryForm 
+        initialDelivery={deliveryInfo} 
+        onDeliveryInfoChange={onDeliveryInfoChange}
+        externalDeliveryInfo={isAdminMode && selectedCustomer ? deliveryInfo : undefined}
+      />
       
       <Separator />
       
-      <PrintGlobalSettings fontTextOptions={[fontText]} fontText={fontText} onFontTextChange={onFontTextChange} fontNumberOptions={[fontNumber]} fontNumber={fontNumber} onFontNumberChange={onFontNumberChange} />
+      <UniformInfoForm 
+        teamName={notes} 
+        onTeamNameChange={onNotesChange} 
+        uniformType="player" 
+        onUniformTypeChange={() => {}} 
+        designData={{}} 
+        onDesignDataChange={() => {}} 
+      />
+      
+      <Separator />
+      
+      <PrintGlobalSettings 
+        fontTextOptions={[fontText]} 
+        fontText={fontText} 
+        onFontTextChange={onFontTextChange} 
+        fontNumberOptions={[fontNumber]} 
+        fontNumber={fontNumber} 
+        onFontNumberChange={onFontNumberChange} 
+      />
       
       <Separator />
       
@@ -84,6 +115,17 @@ export function OrderInfoTabContent({
       
       <Separator />
       
-      <PlayerForm players={players} onPlayersChange={onPlayersChange} logos={logos} fontSize={fontText} fontNumber={fontNumber} printStyleOptions={[printStyle]} printColorOptions={[printColor]} printStyle={printStyle} printColor={printColor} />
-    </div>;
+      <PlayerForm 
+        players={players} 
+        onPlayersChange={onPlayersChange} 
+        logos={logos} 
+        fontSize={fontText} 
+        fontNumber={fontNumber} 
+        printStyleOptions={[printStyle]} 
+        printColorOptions={[printColor]} 
+        printStyle={printStyle} 
+        printColor={printColor} 
+      />
+    </div>
+  );
 }
