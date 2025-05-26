@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -45,14 +46,13 @@ export function OrderSummaryTabContent({
   const totalCost = calculateTotalCost();
   const formattedCost = new Intl.NumberFormat('vi-VN').format(totalCost);
 
-  // Add null checking for customerInfo with proper typing
-  const safeCustomerInfo: Partial<Customer> = customerInfo || {
-    id: '',
-    name: '',
-    phone: '',
-    email: '',
-    address: ''
-  };
+  // Log để debug
+  console.log('OrderSummaryTabContent - customerInfo:', customerInfo);
+  console.log('OrderSummaryTabContent - deliveryInfo:', deliveryInfo);
+
+  // Kiểm tra và xử lý thông tin khách hàng an toàn
+  const hasCustomerInfo = customerInfo && (customerInfo.name || customerInfo.phone || customerInfo.email);
+  const hasDeliveryInfo = deliveryInfo && (deliveryInfo.recipient_name || deliveryInfo.address || deliveryInfo.phone);
 
   return (
     <div className="space-y-6">
@@ -71,20 +71,30 @@ export function OrderSummaryTabContent({
               <CardTitle>Thông tin khách hàng</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="space-y-2">
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Tên khách hàng:</dt>
-                  <dd className="col-span-2">{safeCustomerInfo.name || "Chưa có thông tin"}</dd>
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Số điện thoại:</dt>
-                  <dd className="col-span-2">{safeCustomerInfo.phone || "Chưa có thông tin"}</dd>
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Email:</dt>
-                  <dd className="col-span-2">{safeCustomerInfo.email || "Không có"}</dd>
-                </div>
-              </dl>
+              {hasCustomerInfo ? (
+                <dl className="space-y-2">
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Tên khách hàng:</dt>
+                    <dd className="col-span-2">{customerInfo.name || "Chưa có thông tin"}</dd>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Số điện thoại:</dt>
+                    <dd className="col-span-2">{customerInfo.phone || "Chưa có thông tin"}</dd>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Email:</dt>
+                    <dd className="col-span-2">{customerInfo.email || "Không có"}</dd>
+                  </div>
+                  {customerInfo.address && (
+                    <div className="grid grid-cols-3 gap-1">
+                      <dt className="font-semibold">Địa chỉ:</dt>
+                      <dd className="col-span-2">{customerInfo.address}</dd>
+                    </div>
+                  )}
+                </dl>
+              ) : (
+                <p className="text-muted-foreground">Chưa có thông tin khách hàng</p>
+              )}
             </CardContent>
           </Card>
           
@@ -93,26 +103,30 @@ export function OrderSummaryTabContent({
               <CardTitle>Thông tin giao hàng</CardTitle>
             </CardHeader>
             <CardContent>
-              <dl className="space-y-2">
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Người nhận:</dt>
-                  <dd className="col-span-2">{deliveryInfo.recipient_name || "Chưa có thông tin"}</dd>
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Địa chỉ:</dt>
-                  <dd className="col-span-2">{deliveryInfo.address || "Chưa có thông tin"}</dd>
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  <dt className="font-semibold">Số điện thoại:</dt>
-                  <dd className="col-span-2">{deliveryInfo.phone || "Chưa có thông tin"}</dd>
-                </div>
-                {deliveryInfo.delivery_note && (
+              {hasDeliveryInfo ? (
+                <dl className="space-y-2">
                   <div className="grid grid-cols-3 gap-1">
-                    <dt className="font-semibold">Ghi chú:</dt>
-                    <dd className="col-span-2">{deliveryInfo.delivery_note}</dd>
+                    <dt className="font-semibold">Người nhận:</dt>
+                    <dd className="col-span-2">{deliveryInfo.recipient_name || "Chưa có thông tin"}</dd>
                   </div>
-                )}
-              </dl>
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Địa chỉ:</dt>
+                    <dd className="col-span-2">{deliveryInfo.address || "Chưa có thông tin"}</dd>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <dt className="font-semibold">Số điện thoại:</dt>
+                    <dd className="col-span-2">{deliveryInfo.phone || "Chưa có thông tin"}</dd>
+                  </div>
+                  {deliveryInfo.delivery_note && (
+                    <div className="grid grid-cols-3 gap-1">
+                      <dt className="font-semibold">Ghi chú:</dt>
+                      <dd className="col-span-2">{deliveryInfo.delivery_note}</dd>
+                    </div>
+                  )}
+                </dl>
+              ) : (
+                <p className="text-muted-foreground">Chưa có thông tin giao hàng</p>
+              )}
             </CardContent>
           </Card>
           
@@ -204,8 +218,7 @@ export function OrderSummaryTabContent({
                 size="lg"
                 onClick={onSubmitOrder}
                 disabled={isSubmitting || isGeneratingDesign || !isDemoApproved || 
-                          !safeCustomerInfo.name || !safeCustomerInfo.phone || 
-                          !deliveryInfo.recipient_name || !deliveryInfo.address || !deliveryInfo.phone}
+                          !hasCustomerInfo || !hasDeliveryInfo}
               >
                 {isSubmitting ? (
                   <>
