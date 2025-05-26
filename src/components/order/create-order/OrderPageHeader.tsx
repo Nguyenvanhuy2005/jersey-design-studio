@@ -1,11 +1,9 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, AlertCircle, User, ShieldCheck } from "lucide-react";
 import { Customer } from "@/types";
-
 interface OrderPageHeaderProps {
   activeTab: string;
   isDemoApproved: boolean;
@@ -17,7 +15,6 @@ interface OrderPageHeaderProps {
   isAdminMode?: boolean;
   selectedCustomer?: Customer | null;
 }
-
 export function OrderPageHeader({
   activeTab,
   isDemoApproved,
@@ -36,20 +33,21 @@ export function OrderPageHeader({
     if (tab === "preview" && isDemoApproved) return "completed";
     return "pending";
   };
-
-  const TabStatus = ({ status }: { status: string }) => {
+  const TabStatus = ({
+    status
+  }: {
+    status: string;
+  }) => {
     switch (status) {
       case "current":
         return <Clock className="h-4 w-4 text-blue-500" />;
       case "completed":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />;
+        return;
     }
   };
-
-  return (
-    <Card>
+  return <Card>
       <CardContent className="pt-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-2">
@@ -60,56 +58,40 @@ export function OrderPageHeader({
               </h1>
             </div>
             
-            {isAdminMode && selectedCustomer && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {isAdminMode && selectedCustomer && <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
                 <span>Khách hàng: <strong>{selectedCustomer.name}</strong></span>
                 <span>•</span>
                 <span>{selectedCustomer.phone}</span>
-              </div>
-            )}
+              </div>}
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <TabStatus status={getTabStatus("info")} />
-                <span className="text-sm">Thông tin</span>
-              </div>
+              
               <div className="flex items-center gap-2">
                 <TabStatus status={getTabStatus("preview")} />
-                <span className="text-sm">Thiết kế</span>
+                
               </div>
               <div className="flex items-center gap-2">
                 <TabStatus status={getTabStatus("summary")} />
-                <span className="text-sm">Tổng kết</span>
+                
               </div>
             </div>
           </div>
           
           <div className="flex gap-2">
-            {activeTab === "info" && (
-              <Button onClick={onViewDemo} disabled={isGeneratingDesign}>
+            {activeTab === "info" && <Button onClick={onViewDemo} disabled={isGeneratingDesign}>
                 {isGeneratingDesign ? "Đang tạo..." : "Xem thiết kế demo"}
-              </Button>
-            )}
+              </Button>}
             
-            {activeTab === "preview" && !isDemoApproved && (
-              <Button onClick={onApproveDemo} disabled={isGeneratingDesign}>
+            {activeTab === "preview" && !isDemoApproved && <Button onClick={onApproveDemo} disabled={isGeneratingDesign}>
                 {isGeneratingDesign ? "Đang xử lý..." : "Duyệt thiết kế demo"}
-              </Button>
-            )}
+              </Button>}
             
-            {activeTab === "summary" && isDemoApproved && (
-              <Button 
-                onClick={onSubmitOrder} 
-                disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700"
-              >
+            {activeTab === "summary" && isDemoApproved && <Button onClick={onSubmitOrder} disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
                 {isSubmitting ? "Đang gửi..." : "Gửi đơn hàng"}
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
