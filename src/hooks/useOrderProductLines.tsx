@@ -26,97 +26,89 @@ export const useOrderProductLines = (
     
     const newProductLines: ProductLine[] = [];
     
-    // Gather unique printing configurations and their styles
-    interface PrintConfig {
-      position: string;
-      material: string;
-      count: number;
-      players: number[];
-    }
-    
-    // Track unique positions and their print styles
-    const printConfigs: Record<string, PrintConfig> = {};
-    
-    // First pass - identify all print positions and their styles per player
+    // Process each player individually to create separate product lines
     players.forEach((player, playerIndex) => {
       const extPlayer = player as any;
       const playerPrintStyle = extPlayer.print_style || printStyle;
       
-      console.log(`[generateProductLines] Processing player ${playerIndex} with style: ${playerPrintStyle}`);
+      console.log(`[generateProductLines] Processing player ${playerIndex} (${player.name}) with style: ${playerPrintStyle}`);
       
-      // Check back text lines
+      // Back text lines - each player creates individual product lines
       if (extPlayer.line_1) {
-        const key = `line_1_${playerPrintStyle}`;
-        if (!printConfigs[key]) {
-          printConfigs[key] = {
-            position: "In trên số lưng",
-            material: playerPrintStyle,
-            count: 0,
-            players: []
-          };
-        }
-        printConfigs[key].count++;
-        printConfigs[key].players.push(playerIndex);
+        newProductLines.push({
+          id: `line1-player-${playerIndex}-${Date.now()}`,
+          product: "Áo cầu thủ",
+          position: "In trên số lưng",
+          material: playerPrintStyle,
+          size: "Trung bình",
+          points: 1,
+          content: "Tên trên số lưng"
+        });
       }
       
-      // Always have number on back
-      const line2Key = `line_2_${playerPrintStyle}`;
-      if (!printConfigs[line2Key]) {
-        printConfigs[line2Key] = {
-          position: "In số lưng",
-          material: playerPrintStyle,
-          count: 0,
-          players: []
-        };
-      }
-      printConfigs[line2Key].count++;
-      printConfigs[line2Key].players.push(playerIndex);
+      // Always have number on back - each player gets their own line
+      newProductLines.push({
+        id: `line2-player-${playerIndex}-${Date.now()}`,
+        product: "Áo cầu thủ",
+        position: "In số lưng",
+        material: playerPrintStyle,
+        size: "Lớn",
+        points: 1,
+        content: "Số áo"
+      });
       
       if (extPlayer.line_3) {
-        const key = `line_3_${playerPrintStyle}`;
-        if (!printConfigs[key]) {
-          printConfigs[key] = {
-            position: "In dưới số lưng",
-            material: playerPrintStyle,
-            count: 0,
-            players: []
-          };
-        }
-        printConfigs[key].count++;
-        printConfigs[key].players.push(playerIndex);
+        newProductLines.push({
+          id: `line3-player-${playerIndex}-${Date.now()}`,
+          product: "Áo cầu thủ",
+          position: "In dưới số lưng",
+          material: playerPrintStyle,
+          size: "Trung bình",
+          points: 1,
+          content: "Tên dưới số lưng"
+        });
+      }
+      
+      // Chest text
+      if (extPlayer.chest_text) {
+        newProductLines.push({
+          id: `chest-text-player-${playerIndex}-${Date.now()}`,
+          product: "Áo cầu thủ",
+          position: "In chữ ngực",
+          material: playerPrintStyle,
+          size: "Trung bình",
+          points: 1,
+          content: "Chữ ngực"
+        });
       }
       
       // Chest number
       if (extPlayer.chest_number) {
-        const key = `chest_number_${playerPrintStyle}`;
-        if (!printConfigs[key]) {
-          printConfigs[key] = {
-            position: "In số ngực",
-            material: playerPrintStyle,
-            count: 0,
-            players: []
-          };
-        }
-        printConfigs[key].count++;
-        printConfigs[key].players.push(playerIndex);
+        newProductLines.push({
+          id: `chest-number-player-${playerIndex}-${Date.now()}`,
+          product: "Áo cầu thủ",
+          position: "In số ngực",
+          material: playerPrintStyle,
+          size: "Trung bình",
+          points: 1,
+          content: "Số ngực"
+        });
       }
       
       // Pants number
       if (extPlayer.pants_number) {
-        const key = `pants_number_${playerPrintStyle}`;
-        if (!printConfigs[key]) {
-          printConfigs[key] = {
-            position: "In số quần",
-            material: playerPrintStyle,
-            count: 0,
-            players: []
-          };
-        }
-        printConfigs[key].count++;
-        printConfigs[key].players.push(playerIndex);
+        newProductLines.push({
+          id: `pants-number-player-${playerIndex}-${Date.now()}`,
+          product: "Quần",
+          position: "In số quần",
+          material: playerPrintStyle,
+          size: "Trung bình",
+          points: 1,
+          content: "Số quần"
+        });
       }
       
-      // Logo positions
+      // Logo positions - each player creates individual product lines for each logo position
       const logoPositions = [
         { key: 'logo_chest_left', position: 'Logo ngực trái' },
         { key: 'logo_chest_right', position: 'Logo ngực phải' },
@@ -128,49 +120,27 @@ export const useOrderProductLines = (
       
       logoPositions.forEach(pos => {
         if (extPlayer[pos.key]) {
-          const key = `${pos.key}_${playerPrintStyle}`;
-          if (!printConfigs[key]) {
-            printConfigs[key] = {
-              position: pos.position,
-              material: playerPrintStyle,
-              count: 0,
-              players: []
-            };
-          }
-          printConfigs[key].count++;
-          printConfigs[key].players.push(playerIndex);
+          const isJersey = pos.position !== 'Logo quần';
+          const productType = isJersey ? "Áo cầu thủ" : "Quần";
+          
+          newProductLines.push({
+            id: `${pos.key}-player-${playerIndex}-${Date.now()}`,
+            product: productType,
+            position: pos.position,
+            material: playerPrintStyle,
+            size: "Trung bình",
+            points: 1,
+            content: pos.position
+          });
         }
       });
     });
     
-    console.log("[generateProductLines] Print configurations:", printConfigs);
-    
-    // Create product lines from the collected configurations
-    Object.keys(printConfigs).forEach(key => {
-      const config = printConfigs[key];
-      const isJersey = !config.position.includes('quần') || config.position.includes('Logo quần');
-      const productType = isJersey ? "Áo cầu thủ" : "Quần";
-      
-      newProductLines.push({
-        id: `product-${key}-${Date.now()}`,
-        product: productType,
-        position: config.position,
-        material: config.material,
-        size: config.position.includes('số lưng') ? "Lớn" : "Trung bình",
-        points: config.count,
-        content: config.position.includes('Logo')
-          ? config.position
-          : config.position.includes('số')
-            ? "Số áo"
-            : config.position.includes('dưới số lưng')
-              ? "Tên dưới số lưng"
-              : "Tên trên số lưng"
-      });
-    });
+    console.log("[generateProductLines] Generated productLines:", newProductLines);
+    console.log("[generateProductLines] Total product lines created:", newProductLines.length);
     
     setProductLines(newProductLines);
-    console.log("[generateProductLines] SET productLines:", newProductLines);
-    toast.success("Đã tạo danh sách sản phẩm in từ cấu hình cầu thủ");
+    toast.success(`Đã tạo danh sách sản phẩm in từ cấu hình ${players.length} cầu thủ với ${newProductLines.length} dòng sản phẩm`);
     
     updateDesignDataFromPlayers();
   }, [players, logos, printStyle, setProductLines]);
