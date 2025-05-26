@@ -79,32 +79,30 @@ export function OrderInfoTabContent({
       <Separator />
       
       <DeliveryForm
-        deliveryInfo={deliveryInfo}
+        initialDelivery={deliveryInfo}
         onDeliveryInfoChange={onDeliveryInfoChange}
       />
       
       <Separator />
       
       <UniformInfoForm
-        referenceImages={referenceImages}
-        referenceImagesPreview={referenceImagesPreview}
-        onReferenceImagesUpload={onReferenceImagesUpload}
-        onRemoveReferenceImage={onRemoveReferenceImage}
-        notes={notes}
-        onNotesChange={onNotesChange}
+        teamName={notes}
+        onTeamNameChange={onNotesChange}
+        uniformType="player"
+        onUniformTypeChange={() => {}}
+        designData={{}}
+        onDesignDataChange={() => {}}
       />
       
       <Separator />
       
       <PrintGlobalSettings
+        fontTextOptions={[fontText]}
         fontText={fontText}
-        fontNumber={fontNumber}
-        printStyle={printStyle}
-        printColor={printColor}
         onFontTextChange={onFontTextChange}
+        fontNumberOptions={[fontNumber]}
+        fontNumber={fontNumber}
         onFontNumberChange={onFontNumberChange}
-        onPrintStyleChange={onPrintStyleChange}
-        onPrintColorChange={onPrintColorChange}
       />
       
       <Separator />
@@ -119,10 +117,11 @@ export function OrderInfoTabContent({
       <PlayerForm
         players={players}
         onPlayersChange={onPlayersChange}
-        onGenerateProductLines={onGenerateProductLines}
         logos={logos}
-        fontText={fontText}
+        fontSize={fontText}
         fontNumber={fontNumber}
+        printStyleOptions={[printStyle]}
+        printColorOptions={[printColor]}
         printStyle={printStyle}
         printColor={printColor}
       />
