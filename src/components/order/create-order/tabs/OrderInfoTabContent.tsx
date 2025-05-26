@@ -37,6 +37,9 @@ interface OrderInfoTabContentProps {
   notes: string;
   onNotesChange: (notes: string) => void;
   onGenerateProductLines: () => void;
+  isAdminMode?: boolean;
+  selectedCustomer?: Customer | null;
+  onCustomerSelect?: (customer: Customer) => void;
 }
 
 export const OrderInfoTabContent = memo(({
@@ -62,7 +65,10 @@ export const OrderInfoTabContent = memo(({
   onPlayersChange,
   notes,
   onNotesChange,
-  onGenerateProductLines
+  onGenerateProductLines,
+  isAdminMode = false,
+  selectedCustomer = null,
+  onCustomerSelect
 }: OrderInfoTabContentProps) => {
   const [imageLoadErrors, setImageLoadErrors] = useState<Record<number, boolean>>({});
   
@@ -102,7 +108,13 @@ export const OrderInfoTabContent = memo(({
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <CustomerForm initialCustomer={customerInfo} onCustomerInfoChange={onCustomerInfoChange} />
+          <CustomerForm 
+            initialCustomer={customerInfo} 
+            onCustomerInfoChange={onCustomerInfoChange}
+            isAdminMode={isAdminMode}
+            selectedCustomer={selectedCustomer}
+            onCustomerSelect={onCustomerSelect}
+          />
           <DeliveryForm initialDelivery={deliveryInfo} onDeliveryInfoChange={onDeliveryInfoChange} />
         </div>
         
@@ -124,7 +136,7 @@ export const OrderInfoTabContent = memo(({
                       <img 
                         src={preview} 
                         alt={`Reference ${index}`}
-                        className="w-full h-full object-contain" // Changed from object-cover to object-contain
+                        className="w-full h-full object-contain"
                         onError={() => handleImageError(index)}
                       />
                     )}
@@ -147,7 +159,7 @@ export const OrderInfoTabContent = memo(({
                       <Input
                         id="reference-images"
                         type="file"
-                        accept="image/*" // Accept all image types
+                        accept="image/*"
                         multiple
                         className="hidden"
                         onChange={(e) => handleFileUpload(e.target.files)}

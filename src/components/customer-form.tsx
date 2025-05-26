@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Customer } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,14 +9,26 @@ import { CustomerFormFields } from "./customer/customer-form-fields";
 import { useCustomerForm } from "@/hooks/useCustomerForm";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { CustomerSelector } from "@/components/admin/CustomerSelector";
+import { CreateCustomerDialog } from "@/components/admin/CreateCustomerDialog";
 
 interface CustomerFormProps {
   onCustomerInfoChange: (customerInfo: Customer) => void;
   initialCustomer?: Customer;
+  isAdminMode?: boolean;
+  selectedCustomer?: Customer | null;
+  onCustomerSelect?: (customer: Customer) => void;
 }
 
-export function CustomerForm({ onCustomerInfoChange, initialCustomer }: CustomerFormProps) {
+export function CustomerForm({ 
+  onCustomerInfoChange, 
+  initialCustomer, 
+  isAdminMode = false,
+  selectedCustomer = null,
+  onCustomerSelect 
+}: CustomerFormProps) {
   const { user } = useAuth();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { 
     loading, 
     customerInfo, 
@@ -27,6 +39,29 @@ export function CustomerForm({ onCustomerInfoChange, initialCustomer }: Customer
   useEffect(() => {
     onCustomerInfoChange(customerInfo);
   }, [customerInfo, onCustomerInfoChange]);
+
+  const handleCustomerCreated = (customer: Customer) => {
+    if (onCustomerSelect) {
+      onCustomerSelect(customer);
+    }
+  };
+
+  if (isAdminMode) {
+    return (
+      <>
+        <CustomerSelector
+          selectedCustomer={selectedCustomer}
+          onCustomerSelect={onCustomerSelect || (() => {})}
+          onCreateNew={() => setShowCreateDialog(true)}
+        />
+        <CreateCustomerDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onCustomerCreated={handleCustomerCreated}
+        />
+      </>
+    );
+  }
 
   if (!user) {
     return <CustomerFormUnauthenticated />;

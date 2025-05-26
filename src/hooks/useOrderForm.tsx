@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer, DeliveryInformation } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,8 +7,8 @@ import { parseDateSafely } from "@/utils/format-utils";
 import { toast } from "sonner";
 import { createBucketIfNeeded } from "@/utils/storage/file-utils";
 
-export const useOrderForm = () => {
-  const { user } = useAuth();
+export const useOrderForm = (isAdminMode = false) => {
+  const { user, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState("info");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isGeneratingDesign, setIsGeneratingDesign] = useState<boolean>(false);
@@ -18,6 +19,7 @@ export const useOrderForm = () => {
   const [notes, setNotes] = useState<string>("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referenceImagesPreview, setReferenceImagesPreview] = useState<string[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerInfo, setCustomerInfo] = useState<Customer>({
     id: '',
     name: "",
@@ -58,7 +60,8 @@ export const useOrderForm = () => {
 
   useEffect(() => {
     const fetchCustomerInfo = async () => {
-      if (!user) {
+      // If admin mode, don't auto-fetch user info
+      if (isAdminMode || !user) {
         setCustomerInfo({
           id: '',
           name: "",
@@ -86,7 +89,6 @@ export const useOrderForm = () => {
         if (data) {
           const customerData: Customer = {
             ...data,
-            // Fix this line: parse the created_at as a string instead of a Date
             created_at: data.created_at ? data.created_at : undefined
           };
           setCustomerInfo(customerData);
@@ -106,7 +108,21 @@ export const useOrderForm = () => {
     };
     
     fetchCustomerInfo();
-  }, [user]);
+  }, [user, isAdminMode]);
+
+  // Handle customer selection in admin mode
+  const handleCustomerSelect = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerInfo(customer);
+    
+    // Auto-fill delivery info from selected customer
+    setDeliveryInfo({
+      recipient_name: customer.name || "",
+      address: customer.address || "",
+      phone: customer.phone || "",
+      delivery_note: customer.delivery_note || ""
+    });
+  };
   
   useEffect(() => {
     console.log("[useOrderForm] players:", players);
@@ -270,6 +286,8 @@ export const useOrderForm = () => {
     setReferenceImages,
     referenceImagesPreview,
     setReferenceImagesPreview,
+    selectedCustomer,
+    setSelectedCustomer,
     customerInfo,
     setCustomerInfo,
     deliveryInfo,
@@ -289,6 +307,8 @@ export const useOrderForm = () => {
     productLines,
     setProductLines,
     handleReferenceImagesUpload,
-    removeReferenceImage
+    removeReferenceImage,
+    handleCustomerSelect,
+    isAdminMode: isAdminMode && isAdmin
   };
 };

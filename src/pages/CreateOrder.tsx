@@ -15,7 +15,7 @@ import { toast } from "sonner";
 const CreateOrder = () => {
   const jerseyCanvasRef = useRef<HTMLCanvasElement>(null);
   const pantCanvasRef = useRef<HTMLCanvasElement>(null);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   const {
     activeTab,
@@ -33,6 +33,7 @@ const CreateOrder = () => {
     setNotes,
     referenceImages,
     referenceImagesPreview,
+    selectedCustomer,
     customerInfo,
     setCustomerInfo,
     deliveryInfo,
@@ -51,8 +52,10 @@ const CreateOrder = () => {
     productLines,
     setProductLines,
     handleReferenceImagesUpload,
-    removeReferenceImage
-  } = useOrderForm();
+    removeReferenceImage,
+    handleCustomerSelect,
+    isAdminMode
+  } = useOrderForm(isAdmin);
   
   const { generateProductLines } = useOrderProductLines(
     players,
@@ -83,13 +86,15 @@ const CreateOrder = () => {
     fontText,
     fontNumber,
     printStyle,
-    printColor
+    printColor,
+    isAdminMode,
+    selectedCustomer
   });
 
   const handleViewDemo = () => {
     if (!validateOrderForm({ players, customerInfo })) return;
     generateProductLines();
-    setActiveTab("preview"); // Đảm bảo chuyển đến tab "preview" sau khi tạo productLines
+    setActiveTab("preview");
   };
 
   const approveDemo = () => {
@@ -110,6 +115,8 @@ const CreateOrder = () => {
             onViewDemo={handleViewDemo}
             onApproveDemo={approveDemo}
             onSubmitOrder={submitOrder}
+            isAdminMode={isAdminMode}
+            selectedCustomer={selectedCustomer}
           />
           
           <OrderTabs
@@ -151,6 +158,9 @@ const CreateOrder = () => {
             isSubmitting={isSubmitting}
             getPlayerAndGoalkeeperCounts={getPlayerAndGoalkeeperCounts}
             getPrintCostBreakdown={getPrintCostBreakdown}
+            isAdminMode={isAdminMode}
+            selectedCustomer={selectedCustomer}
+            onCustomerSelect={handleCustomerSelect}
           />
         </div>
       </AuthCheck>
