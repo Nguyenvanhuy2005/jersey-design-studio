@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Player, Logo, PrintConfig, ProductLine, DesignData, Customer, DeliveryInformation } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,16 +111,22 @@ export const useOrderForm = (isAdminMode = false) => {
 
   // Handle customer selection in admin mode
   const handleCustomerSelect = (customer: Customer) => {
+    console.log("Selecting customer:", customer);
     setSelectedCustomer(customer);
     setCustomerInfo(customer);
     
     // Auto-fill delivery info from selected customer
-    setDeliveryInfo({
+    const newDeliveryInfo = {
       recipient_name: customer.name || "",
       address: customer.address || "",
       phone: customer.phone || "",
       delivery_note: customer.delivery_note || ""
-    });
+    };
+    
+    console.log("Setting delivery info:", newDeliveryInfo);
+    setDeliveryInfo(newDeliveryInfo);
+    
+    toast.success(`Đã chọn khách hàng: ${customer.name}`);
   };
   
   useEffect(() => {

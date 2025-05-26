@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function useDeliveryForm(initialDelivery?: DeliveryInformation) {
+export function useDeliveryForm(initialDelivery?: DeliveryInformation, externalDeliveryInfo?: DeliveryInformation) {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -17,6 +17,15 @@ export function useDeliveryForm(initialDelivery?: DeliveryInformation) {
     phone: initialDelivery?.phone || "",
     delivery_note: initialDelivery?.delivery_note || "",
   });
+
+  // Update delivery info when external data changes (from customer selection)
+  useEffect(() => {
+    if (externalDeliveryInfo) {
+      console.log("External delivery info updated:", externalDeliveryInfo);
+      setDeliveryInfo(externalDeliveryInfo);
+      setSelectedDeliveryId(null); // Clear selected saved delivery when external data is provided
+    }
+  }, [externalDeliveryInfo]);
   
   // Fetch saved delivery information for this customer
   useEffect(() => {
@@ -47,14 +56,16 @@ export function useDeliveryForm(initialDelivery?: DeliveryInformation) {
       
       if (data && data.length > 0) {
         setDeliveryInfoList(data);
-        // Pre-select the most recently used delivery info
-        setSelectedDeliveryId(data[0].id);
-        setDeliveryInfo({
-          recipient_name: data[0].recipient_name,
-          address: data[0].address,
-          phone: data[0].phone,
-          delivery_note: data[0].delivery_note || "",
-        });
+        // Only pre-select if no external delivery info is provided
+        if (!externalDeliveryInfo) {
+          setSelectedDeliveryId(data[0].id);
+          setDeliveryInfo({
+            recipient_name: data[0].recipient_name,
+            address: data[0].address,
+            phone: data[0].phone,
+            delivery_note: data[0].delivery_note || "",
+          });
+        }
       }
     } catch (error) {
       console.error("Error in fetchDeliveryInformation:", error);
