@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -46,8 +45,14 @@ export function OrderSummaryTabContent({
   const totalCost = calculateTotalCost();
   const formattedCost = new Intl.NumberFormat('vi-VN').format(totalCost);
 
-  // Add null checking for customerInfo
-  const safeCustomerInfo = customerInfo || {};
+  // Add null checking for customerInfo with proper typing
+  const safeCustomerInfo: Partial<Customer> = customerInfo || {
+    id: '',
+    name: '',
+    phone: '',
+    email: '',
+    address: ''
+  };
 
   return (
     <div className="space-y-6">
