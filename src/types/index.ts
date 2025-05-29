@@ -8,6 +8,7 @@ export interface Player {
   line_1?: string;
   line_2?: string;
   line_3?: string;
+  back_number?: boolean;
   chest_text?: string;
   chest_number?: boolean;
   pants_number?: boolean;

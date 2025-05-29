@@ -107,6 +107,7 @@ export const PlayerForm = memo(({
             line_1: row["TÊN IN TRÊN SỐ"] || "",
             line_2: playerNumber,
             line_3: row["TÊN ĐỘI BÓNG"] || "",
+            back_number: convertToBoolean(row["IN SỐ LƯNG"]),
             chest_text: row["IN CHỮ NGỰC"] || "",
             chest_number: convertToBoolean(row["IN SỐ NGỰC"]),
             pants_number: convertToBoolean(row["IN SỐ QUẦN"]),

@@ -46,16 +46,18 @@ export const useOrderProductLines = (
         });
       }
       
-      // Always have number on back - each player gets their own line
-      newProductLines.push({
-        id: `line2-player-${playerIndex}-${Date.now()}`,
-        product: "Áo cầu thủ",
-        position: "In số lưng",
-        material: playerPrintStyle,
-        size: "Lớn",
-        points: 1,
-        content: "Số áo"
-      });
+      // Only create back number product line if explicitly selected
+      if (extPlayer.back_number) {
+        newProductLines.push({
+          id: `line2-player-${playerIndex}-${Date.now()}`,
+          product: "Áo cầu thủ",
+          position: "In số lưng",
+          material: playerPrintStyle,
+          size: "Lớn",
+          points: 1,
+          content: "Số áo"
+        });
+      }
       
       if (extPlayer.line_3) {
         newProductLines.push({
