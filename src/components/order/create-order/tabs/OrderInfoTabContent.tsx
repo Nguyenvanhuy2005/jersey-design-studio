@@ -70,6 +70,10 @@ export function OrderInfoTabContent({
   console.log("OrderInfoTabContent: deliveryInfo =", deliveryInfo);
   console.log("OrderInfoTabContent: selectedCustomer =", selectedCustomer);
 
+  // Define available print style options
+  const printStyleOptions = ["In chuyển nhiệt", "In decal"];
+  const printColorOptions = ["Đen", "Trắng", "Đỏ", "Xanh dương", "Vàng"];
+
   return (
     <div className="space-y-6">
       {/* Thông tin khách hàng và giao hàng */}
@@ -135,8 +139,8 @@ export function OrderInfoTabContent({
         logos={logos} 
         fontSize={fontText} 
         fontNumber={fontNumber} 
-        printStyleOptions={[printStyle]} 
-        printColorOptions={[printColor]} 
+        printStyleOptions={printStyleOptions}
+        printColorOptions={printColorOptions}
         printStyle={printStyle} 
         printColor={printColor} 
       />

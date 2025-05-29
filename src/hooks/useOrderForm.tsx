@@ -272,6 +272,28 @@ export const useOrderForm = (isAdminMode = false) => {
     }));
   };
 
+  // Update print style function with proper handling
+  const updatePrintStyle = (newPrintStyle: string) => {
+    console.log('Updating print style to:', newPrintStyle);
+    setPrintStyle(newPrintStyle);
+    
+    // Update all existing players to use the new print style
+    const updatedPlayers = players.map(player => ({
+      ...player,
+      print_style: newPrintStyle
+    }));
+    setPlayers(updatedPlayers);
+    
+    // Also update printConfig to keep things consistent
+    setPrintConfig(prev => ({
+      ...prev,
+      backMaterial: newPrintStyle,
+      frontMaterial: newPrintStyle,
+      sleeveMaterial: newPrintStyle,
+      legMaterial: newPrintStyle
+    }));
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -302,7 +324,7 @@ export const useOrderForm = (isAdminMode = false) => {
     fontNumber,
     setFontNumber: updateFontNumber,
     printStyle,
-    setPrintStyle,
+    setPrintStyle: updatePrintStyle,
     printColor,
     setPrintColor,
     designData,

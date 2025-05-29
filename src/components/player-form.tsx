@@ -1,3 +1,4 @@
+
 import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player, Logo } from "@/types";
@@ -89,6 +90,12 @@ export const PlayerForm = memo(({
             return false;
           };
 
+          // Handle print style from Excel
+          const excelPrintStyle = row["KIỂU IN"];
+          const playerPrintStyle = (excelPrintStyle === "In decal" || excelPrintStyle === "In chuyển nhiệt") 
+            ? excelPrintStyle 
+            : printStyle;
+
           return {
             id: `player-${Date.now()}-${index}`,
             name: row["TÊN CẦU THỦ"] || "",
@@ -110,7 +117,7 @@ export const PlayerForm = memo(({
             logo_sleeve_right: convertToBoolean(row["LOGO TAY PHẢI"]),
             logo_pants: convertToBoolean(row["LOGO QUẦN"]),
             note: row["GHI CHÚ"] || "",
-            print_style: row["KIỂU IN"] || printStyle
+            print_style: playerPrintStyle
           };
         });
 
@@ -126,34 +133,59 @@ export const PlayerForm = memo(({
     e.target.value = "";
   };
 
-  return <Card className={className}>
+  return (
+    <Card className={className}>
       <CardHeader>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle>Danh sách cầu thủ ({players.length})</CardTitle>
           <div className="flex flex-wrap gap-2">
-            {players.length > 0 && <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)} className="flex-1 md:flex-none">
+            {players.length > 0 && (
+              <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)} className="flex-1 md:flex-none">
                 <Edit className="h-4 w-4 mr-1" /> Cập nhật hàng loạt
-              </Button>}
-            {isMobile && <Button onClick={() => setIsFormOpen(true)} className="flex-1 md:flex-none">
+              </Button>
+            )}
+            {isMobile && (
+              <Button onClick={() => setIsFormOpen(true)} className="flex-1 md:flex-none">
                 <Plus className="h-4 w-4 mr-1" /> Thêm cầu thủ
-              </Button>}
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {players.length > 0 ? <div className="grid gap-3">
-            {players.map((player, index) => <PlayerCard key={player.id || index} player={player} onEdit={() => {
-          if (isMobile) {
-            setIsFormOpen(true);
-          }
-          editPlayer(index);
-        }} onRemove={() => removePlayer(index)} />)}
-          </div> : <div className="text-center p-4 bg-muted/30 rounded-md">
+        {players.length > 0 ? (
+          <div className="grid gap-3">
+            {players.map((player, index) => (
+              <PlayerCard 
+                key={player.id || index} 
+                player={player} 
+                onEdit={() => {
+                  if (isMobile) {
+                    setIsFormOpen(true);
+                  }
+                  editPlayer(index);
+                }} 
+                onRemove={() => removePlayer(index)} 
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-4 bg-muted/30 rounded-md">
             <p className="text-muted-foreground">Chưa có cầu thủ nào trong danh sách</p>
-          </div>}
+          </div>
+        )}
         
-        {!isMobile && <PlayerFormFields newPlayer={newPlayer} isEditing={isEditing} printStyleOptions={printStyleOptions} onInputChange={handleInputChange} onAddOrUpdate={addOrUpdatePlayer} onCancel={cancelEdit} />}
+        {!isMobile && (
+          <PlayerFormFields 
+            newPlayer={newPlayer} 
+            isEditing={isEditing} 
+            printStyleOptions={printStyleOptions} 
+            onInputChange={handleInputChange} 
+            onAddOrUpdate={addOrUpdatePlayer} 
+            onCancel={cancelEdit} 
+          />
+        )}
       </CardContent>
       
       <CardFooter className="flex flex-col p-4 space-y-4 bg-muted/30 rounded-md">
@@ -171,25 +203,44 @@ export const PlayerForm = memo(({
         </div>
       </CardFooter>
 
-      {isMobile && <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+      {isMobile && (
+        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
           <SheetContent side="bottom" className="h-[90vh] px-0">
             <SheetHeader className="px-4 mb-4">
               <SheetTitle>{isEditing ? 'Sửa thông tin cầu thủ' : 'Thêm cầu thủ mới'}</SheetTitle>
             </SheetHeader>
             <div className="overflow-y-auto h-full pb-20 px-4">
-              <PlayerFormFields newPlayer={newPlayer} isEditing={isEditing} printStyleOptions={printStyleOptions} onInputChange={handleInputChange} onAddOrUpdate={() => {
-            addOrUpdatePlayer();
-            setIsFormOpen(false);
-          }} onCancel={() => {
-            cancelEdit();
-            setIsFormOpen(false);
-          }} />
+              <PlayerFormFields 
+                newPlayer={newPlayer} 
+                isEditing={isEditing} 
+                printStyleOptions={printStyleOptions} 
+                onInputChange={handleInputChange} 
+                onAddOrUpdate={() => {
+                  addOrUpdatePlayer();
+                  setIsFormOpen(false);
+                }} 
+                onCancel={() => {
+                  cancelEdit();
+                  setIsFormOpen(false);
+                }} 
+              />
             </div>
           </SheetContent>
-        </Sheet>}
+        </Sheet>
+      )}
 
-      {isBatchDialogOpen && <BatchUpdateDialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen} players={players} onPlayersChange={onPlayersChange} printStyleOptions={printStyleOptions} printStyle={printStyle} />}
-    </Card>;
+      {isBatchDialogOpen && (
+        <BatchUpdateDialog 
+          open={isBatchDialogOpen} 
+          onOpenChange={setIsBatchDialogOpen} 
+          players={players} 
+          onPlayersChange={onPlayersChange} 
+          printStyleOptions={printStyleOptions} 
+          printStyle={printStyle} 
+        />
+      )}
+    </Card>
+  );
 });
 
 PlayerForm.displayName = "PlayerForm";

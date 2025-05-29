@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Player } from '@/types';
 
@@ -170,6 +171,12 @@ export const usePlayerForm = ({ onPlayersChange, players, printStyle }: UsePlaye
                           
       const size = row["KÍCH THƯỚC"] || "M";
       
+      // Handle print style from Excel, default to current print style
+      const excelPrintStyle = row["KIỂU IN"];
+      const playerPrintStyle = (excelPrintStyle === "In decal" || excelPrintStyle === "In chuyển nhiệt") 
+        ? excelPrintStyle 
+        : printStyle;
+      
       return {
         id: `player-${Date.now()}-${index}`,
         name: row["TÊN CẦU THỦ"] || "",
@@ -190,7 +197,7 @@ export const usePlayerForm = ({ onPlayersChange, players, printStyle }: UsePlaye
         logo_sleeve_right: convertVietnameseToBoolean(row["LOGO TAY PHẢI"]),
         logo_pants: convertVietnameseToBoolean(row["LOGO QUẦN"]),
         note: row["GHI CHÚ"] || "",
-        print_style: row["KIỂU IN"] || printStyle
+        print_style: playerPrintStyle
       };
     });
   };
