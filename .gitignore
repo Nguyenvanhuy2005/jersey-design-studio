@@ -22,27 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Database backups and sensitive files
-*.sql
-*.backup
-.env
-.env.local
-.env.production
-
-# Supabase exports and storage files
-supabase-storage-export/
-supabase-storage-files/
-supabase_full_backup.sql
-test_backup.sql
-export_database.sh
-get_database_info.js
-get_schema.sql
-
-# Storage info files (contain file paths)
-*-info.json
-orders-images-info.json
-players-images-info.json
-
-# Temporary files
-supabase/.temp/
